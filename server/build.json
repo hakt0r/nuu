@@ -1,0 +1,11 @@
+{
+  "sources": [
+    "ping",
+    "db",
+    "user",
+    "engine",
+    "render",
+    "console",
+    "server"
+  ]
+}

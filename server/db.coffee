@@ -1,0 +1,39 @@
+###
+  ## NUU # drake
+###
+
+_ = require 'underscore'
+fs = require 'fs'
+util = require 'util'
+path = require 'path'
+events = require 'events'
+
+flatfile = require 'flat-file-db'
+
+functions =
+  create: (name,data) ->
+    if @fields then for k,v of @fields when not data[k]
+      data[k] = (
+        if typeof v is 'function' then v.apply @
+        else v )
+    @put name, data
+
+Db = (name,obj={}) ->
+  console.log 'db', 'register', name # util.inspect obj
+  ( obj.ready = -> ) unless obj.ready
+  dbPath = path.join 'db',name + '.db'
+  initialize = fs.existsSync dbPath
+  Db[obj.name] = db = flatfile dbPath
+  _.defaults db, functions
+  _.defaults db, obj
+  db.on 'open', ->
+    if initialize
+      if db.bootstrap? then for k,v of db.bootstrap
+        db.put k,v
+      db.put 'db.init', true, -> obj.ready null
+    else obj.ready null
+    null
+    $static name, db
+  db
+
+$static 'Db', Db

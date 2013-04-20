@@ -1,0 +1,39 @@
+{
+  "libs": [
+    "jssha",
+    "jquery",
+    "async",
+    "pixi.js",
+    "buffer",
+    "steering",
+    "underscore",
+    "voronoi-map"
+  ],
+  "contrib": {
+    "sm2.js": {
+      "name": "SoundManager 2",
+      "homepage": "http://www.schillmania.com/projects/soundmanager2/",
+      "url":  "https://raw.github.com/scottschiller/SoundManager2/master/script/soundmanager2-nodebug-jsmin.js"}
+  },
+  "sources": [
+    "client",
+    "rtsync",
+    "ping",
+    "gui",
+    "cache",
+    "engine",
+    "keymap",
+    "sound",
+    "sprite",
+    "vt100",
+    "target",
+    "scanner",
+    "hud",
+    "render"
+  ],
+  "scripts": [
+    "sm2.js",
+    "lib.js",
+    "client/client.js"
+  ]
+}
