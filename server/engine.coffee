@@ -1,5 +1,23 @@
 ###
-  ## NUU # drake
+
+  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2008 flyc0r
+
+  This file is part of NUU.
+
+  NUU is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  NUU is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with NUU.  If not, see <http://www.gnu.org/licenses/>.
+
 ###
 
 $public class Engine extends CommonEngine
@@ -53,11 +71,11 @@ $public class Engine extends CommonEngine
       slot = s.slots.weapon[0]
       weap = s.slots.weapon[0].equip
       inRange = vec.dist < 300
-      if false and not fire and inRange
+      if not fire and inRange
         # console.log 'engage', weap.id
         NET.weap.write('ai',1,slot,s,s.target)
         fire = on
-      else if false and fire and not inRange
+      else if fire and not inRange
         # console.log 'disengage', weap.id
         NET.weap.write('ai',2,slot,s,s.target)
         fire = off

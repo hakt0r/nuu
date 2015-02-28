@@ -190,6 +190,7 @@ class Keyboard extends EventEmitter
       for key, macro of Kbd.help
         h.push '\t' + key + ": " + Kbd.d10[macro]
       console.user h.join '\n'
+      vt.focus()
 
     mouseturn : (new MouseInput).macro
 
@@ -240,12 +241,14 @@ class Keyboard extends EventEmitter
       list = Object.keys(cl)
       NUU.targetId = id = Math.min(++NUU.targetId,list.length-1)
       NUU.target = cl[list[id]]
+      NUU.emit 'newTarget', NUU.target
     targetPrev : ->
       list = [Ship.byId,Stellar.byId,Debris.byId]
       cl = list[NUU.targetClass]
       NUU.targetId = id = Math.max(--NUU.targetId,0)
       list = Object.keys(cl)
       NUU.target = cl[list[id]]
+      NUU.emit 'newTarget', NUU.target
 
     console : ->
       vt.prompt 'nuu #', (text) ->
@@ -327,6 +330,7 @@ class Keyboard extends EventEmitter
     scanMinus:        "Zoom scanner out"
     land:             "Land"
     dock:             "Dock"
+    orbit:            "Orbit"
     toolbar:          "Toolbar"
     inventory:        "Inventory"
     outfit:           "Outfit (slot selection)"

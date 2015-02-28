@@ -21,139 +21,143 @@
 ###
 
 mblur = []
+PIXI = require 'pixi.js'
 
 VT100 = class VT100 extends EventEmitter
+  line: []
+  hist: []
   frame: null
-  line : []
-  hist : []
-  cursor : x : 0, y: 0
+  input: 'nuu console / v 0.4.68'
+  cursor: x: 0, y: 0
+  inputBuffer: ''
+  promptActive: no
   
-  motionblur:->
-    for i in [0...9]
-      clearTimeout mblur[i] if mblur[i] 
-      mblur[i] = $timeout 50+i*50, @sprite.draw
-
-  constructor: (options={}) ->
-    wd = hg = hw = hh = 0; $c = null
+  constructor: (opts={}) ->
     window.vt = @
+    @[k] = v for k,v of opts
+    $cue => @focus()
+    @frame = new PIXI.DisplayObjectContainer
+    @frame.alpha = 1.0
+    @frame.addChild @bg    = new PIXI.TilingSprite PIXI.Texture.fromImage 'build/imag/starfield.png', 0, 0    
+    @frame.addChild @image = PIXI.Sprite.fromImage 'build/imag/nuulogo.png'
+    @frame.addChild @text  = new PIXI.Text 'nuu console',
+      font: "10px monospace"
+      fill: 'green'
+    @text.position.set 23,23
+    @image.alpha = 0.2
+    @bg.alpha = 0.5
+    Sprite.stage.addChild @frame
 
-    Sprite.layer 'vt', draw : (c,@sprite) => # spritesurface inited
-      @frame$ = $c = $ c.canvas
-      c.strokeStyle = "black"
-      console.user = @write
-      $cue -> Sprite.vt.draw()
-      return => # drawing function
-        c.font = "10px monospace"
-        c.globalAlpha = 0.3 unless @__prompt
-        c.fillStyle = 'black'
-        c.fillRect 0,0,wd,hg
+    console.user = @write
+    @$win = $(window)
+    @$win.on 'resize', @resize
+    setTimeout @resize, 100
+    null
 
-        if (i = Sprite.imag.nuulogo) and Sprite.imag.nuulogo.constructor.name is 'HTMLImageElement'
-          c.drawImage i, wd/2 - i.naturalWidth/2, 100 # draw logo
+  draw : =>
+    c = @cursor.x
+    @text.setText @input +
+      ( if @promptQuery then "\n" + @promptQuery + ": " else '' ) +
+     @inputBuffer.substr(0,c) + '|' + @inputBuffer.substr(c)
 
-        if (i = Sprite.lastload)
-          c.drawImage i, wd/2 - i.naturalWidth/2, 300 # draw loadimg
+  resize : =>
+    x = ( w = @$win.width() ) / 2 - @image.width / 2
+    y = ( h = @$win.height() ) / 2 - @image.height / 2
+    @image.position.set x, y
+    @bg.width = w
+    @bg.height = h
+    @draw()
+    null
 
-        oy = if @__prompt then 24 else 12
-        ct = 0
-
-        c.fillStyle = "green"
-        for i,l of @line
-          c.strokeText l, 5, hg - oy - i * 12
-          c.fillText   l, 5, hg - oy - i * 12
-          break if ct++ is 40
-
-        if @__prompt
-          cw = c.measureText('w').width
-          c.fillStyle = "grey"
-          c.fillRect (@cursor.x+@__query.length+3) * cw, hg - 20, cw, 10
-          c.fillStyle = "green"
-          l = @__query + ': ' + @__input
-          c.strokeText l, 5, hg - 12
-          c.fillText   l, 5, hg - 12
-
-    @[k] = v for k,v of options
-
-    _resize = =>
-      wd = _win.width();  hw = wd / 2
-      hg = _win.height(); hh = hg / 2
-      $c.css 'width', wd+'px'
-      $c.attr 'width', wd
-      $c.css 'height', hg+'px'
-      $c.attr 'height', hg
-      @sprite.draw()
-      null
-
-    _win = $ window
-    _win.on 'resize', _resize
-    _resize()
-    @focus()
-  
   focus : =>
     return if @focused
     @focused = yes
     Kbd.unfocus()
-    $(window).on 'keydown', @__dn
-    @frame$.fadeIn()
+    $(window).on 'keydown', @keyDown
+    @draw()
+
+    Sprite.stage.addChild @frame
+    @frame.alpha = 0.0
+    fade = =>
+      @frame.alpha += 0.1
+      if @frame.alpha >= 1.0
+        clearInterval i
+        @frame.alpha = 1.0
+    i = setInterval fade, 33
+    null
 
   unfocus : =>
     return unless @focused
     @focused = no
-    $(window).off 'keydown', @__dn
+    $(window).off 'keydown', @keyDown
     Kbd.focus()
-    @frame$.fadeOut()
+    @draw()
+
+    if @frame.alpha is 1.0
+      @frame.alpha = 1.0
+      fade = =>
+        @frame.alpha -= 0.1
+        if @frame.alpha <= 0.0
+          clearInterval i
+          @frame.alpha = 0.0
+      i = setInterval fade, 33
+      null
 
   write : (lines) =>
-    @line = lines.trim().split('\n').reverse().concat @line
-    @sprite.draw(); @motionblur()
+    @draw @input = lines.trim().split('\n').reverse().concat(@input).join('\n')
 
   prompt : (p,callback) =>
-    return false if @__prompt
+    return false if @promptActive
     @focus()
-    @__prompt = yes
-    @__query = p
-    @__input = ''
+    @promptActive = yes
+    @promptQuery = p
+    @inputBuffer = ''
     @onReturn = callback
     @cursor.x = 0
-    @sprite.draw(); @motionblur()
+    @draw()
     true
 
-  __prompt : no
-  __input : ''
-  __dn : (e) =>
+  keyDown : (e) =>
     code = e.keyCode
+    c = @cursor.x
     # console.log Kbd.cmap[code], code
-    if Kbd.cmap[code] is 'del'
-    else if Kbd.cmap[code] is 'return'
+    if Kbd.cmap[code] is 'return'
       if (fnc = @onReturn)?
-        i = @__input
+        i = @inputBuffer
         delete @onReturn
-        @write @__query + ': ' + @__input
-        @hist.cursor = @hist.push(@__input) - 1
+        @write @promptQuery + ': ' + @inputBuffer
+        @hist.cursor = @hist.push(@inputBuffer) - 1
         @cursor.x = 0
-        @__prompt = no
-        @__input  = ''
+        @promptActive = no
+        @inputBuffer  = ''
         @unfocus()
         fnc i
+    else if Kbd.cmap[code] is 'esc'
+      fnc null if (fnc = @onReturn)?
+      @unfocus()
+    else if Kbd.cmap[code] is 'left'
+      @cursor.x = max(0,--@cursor.x)
+    else if Kbd.cmap[code] is 'right'
+      @cursor.x = min(@inputBuffer.length,++@cursor.x)
     else if Kbd.cmap[code] is 'up'
       @hist.cursor = max(0,--@hist.cursor)
-      @__input = @hist[@hist.cursor]
-      @cursor.x =  @__input.length
+      @inputBuffer = @hist[@hist.cursor]
+      @cursor.x =  @inputBuffer.length
     else if Kbd.cmap[code] is 'down'
       @hist.cursor = min(@hist.length-1,++@hist.cursor)
-      @__input = @hist[@hist.cursor]
-      @cursor.x =  @__input.length
-    else if Kbd.cmap[code] is 'esc'
-      @unfocus()
+      @inputBuffer = @hist[@hist.cursor]
+      @cursor.x = @inputBuffer.length
+    else if Kbd.cmap[code] is 'del'      
+      @inputBuffer = @inputBuffer.substr(0,c) + @inputBuffer.substr(c+1)
     else if Kbd.cmap[code] is 'bksp'
-      @__input = @__input.substr 0, @__input.length - 1
+      @inputBuffer = @inputBuffer.substr(0,c-1) + @inputBuffer.substr(c)
       @cursor.x = max(0,--@cursor.x)
     else if Kbd.cmap[code]
       k = Kbd.cmap[code]
       k = k.toUpperCase() if e.shiftKey
-      @__input += k
+      @inputBuffer = @inputBuffer.substr(0,c) + k + @inputBuffer.substr(c)
       @cursor.x++
-    @sprite.draw(); @motionblur()
-    return true
+    @draw()
+    false
 
 $public VT100

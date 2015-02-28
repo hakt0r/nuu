@@ -1,44 +1,67 @@
+###
+
+  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2008 flyc0r
+
+  This file is part of NUU.
+
+  NUU is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  NUU is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with NUU.  If not, see <http://www.gnu.org/licenses/>.
+
+###
 
 class Ship extends $obj
-  @byId : {}
-  @byTpl : {}
-  @byName : {}
+  @byId: {}
+  @byTpl: {}
+  @byName: {}
 
-  d : 0
-  mx : 0
-  my : 0
-  iff : ''
-  name : ''
-  accel : no
-  retro : no
-  right : no
-  left : no
+  d: 0
+  mx: 0
+  my: 0
+  iff: ''
+  name: ''
+  accel: no
+  retro: no
+  right: no
+  left: no
 
-  thrust : 0.1
-  turn : 10.0
-  type : 0
-  cargo : 10
+  thrust: 0.1
+  turn: 10.0
+  type: 0
+  cargo: 10
 
-  reactorOut : 10.0
-  cap : 100
-  capMax : 100
+  reactorOut: 10.0
+  energy: 100
+  energyMax: 100
 
-  armor : 100
-  shield : 100
-  shieldMax : 100
-  shieldRegen : 0.1
+  armor: 100
+  armorMax: 100
+  shield: 100
+  shieldMax: 100
+  shieldRegen: 0.1
 
-  fuel : 100
+  fuel: 100
+  fuelMax: 100
 
-  sprite : 'shuttle'
-  size : 32
-  cols : 18
-  rows : 6
-  count : 108
+  sprite: 'shuttle'
+  size: 32
+  cols: 18
+  rows: 6
+  count: 108
 
-  mount : []
-  inventory : []
-  slot : []
+  mount: []
+  inventory: []
+  slot: []
 
   loadAssets: (callback) ->
     @img = Sprite.imag.loading
@@ -62,12 +85,16 @@ class Ship extends $obj
         Sprite.load 'ship',name+'_engine',url+'_engine', (img) =>
           @img_engine = img
           cb null
-    ], callback
+    ], => 
+      Sprite.main.updateShip @
+      callback null
 
   constructor : (opts) ->
     super opts
     @slots = _.clone @slots
+
     @loadAssets(->) if isClient
+
     console.log "Ship", @id
     State.change @, fixed
     # register with engine
@@ -125,9 +152,9 @@ class Ship extends $obj
     @[k] += @[k] * ( v / 100 ) for k,v of map
 
     # scale model values
-    @fuel   = @fuel   * 1000
-    @turn   = @turn   / 10
-    @thrust = @thrust / 100
+    @fuelMax = @fuel = @fuel * 1000
+    @turn   = @turn    / 10
+    @thrust = @thrust  / 100
     null
 
   nextWeap : (player,trigger='primary') ->
@@ -144,8 +171,7 @@ class Ship extends $obj
 
   hit : (src,wp) ->
     return if @destructing
-    NUU.emit 'hitTarget', @, src
-    NUU.emit 'hitTarget', @id, src.id
+    NUU.emit 'targetHit', @, src
     dmg = wp.specific.damage
     if @shield > 0
       @shield -= dmg.penetrate * 4
@@ -154,7 +180,6 @@ class Ship extends $obj
         @armor -= dmg.physical
         @shield = 0
         NUU.emit 'shieldDown', @, src
-        NUU.emit 'shieldDown', @id, src.id
       else if @armor > 75
         @armor -= dmg.physical
     else
@@ -162,14 +187,12 @@ class Ship extends $obj
       @armor -= dmg.physical
     if @armor < 25 and @disabled > 10
       NUU.emit 'targetDisabled', @, src
-      NUU.emit 'targetDisabled', @id, src.id
     else if @armor < 0
       @armor = 0
       @shield = 0
       @shieldRegen = 0
       @destructing = true
       NUU.emit 'targetDestroyed', @, src
-      NUU.emit 'targetDestroyed', @id, src.id
 
   toJSON : -> return {
     tpl   : @tpl
@@ -186,9 +209,9 @@ class Ship extends $obj
   @model : (s) ->
     add = null
     return ->
-      s.cap = min(s.cap + s.reactorOut,s.capMax)
-      add = min(s.shield+min(s.shieldRegen,s.cap),s.shieldMax) - s.shield
-      s.shield += add; s.cap -= add
+      s.energy = min(s.energy + s.reactorOut,s.energyMax)
+      add = min(s.shield+min(s.shieldRegen,s.energy),s.shieldMax) - s.shield
+      s.shield += add; s.energy -= add
       null
 
 $public Ship

@@ -1,6 +1,6 @@
 {
   "name": "nuu",
-  "version": "0.4.66",
+  "version": "0.4.68",
   "description": "escape velocity clone space sim browser game",
   "main": "index.js",
   "scripts": {

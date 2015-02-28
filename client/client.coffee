@@ -20,10 +20,6 @@
 
 ###
 
-
-#pixi = require 'pixi.js'
-#return
-
 window.isClient  = yes
 window.$public   = (args...) -> window[a.name] = a for a in args
 window.$static   = (name,value) -> window[name] = value
@@ -60,3 +56,4 @@ require './build/client/' + lib for lib in window.deps.client.sources when lib i
 $ ->
   console.log 'NUU.initializing'
   new Engine
+  app.emit 'ready'

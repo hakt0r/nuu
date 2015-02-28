@@ -20,73 +20,69 @@
 
 ###
 
-FUNCTION  = 'function'
-
-$public class AnimatedSprite
-  constructor : (@name,@img) ->
-    AnimatedSprite.byName[@name] = @
-    @rows = @cols = 6; @count = 36
-    @size = @img.naturalWidth / @cols
-    @state = []
-    @state[i] = [] for i in [0...@count-1]
-    null
-  create : (x,y) -> @state[0].push [x,y]
-  @byName : {}
-  @shift : =>
-    for name, ani of @byName
-      ani.state.unshift []
-      ani.state.pop()
-    null
-  @render : (dx,dy,c) =>
-    for name, ani of @byName
-      img = ani.img
-      size = ani.size
-      cols = ani.cols
-      for imgNumber, state of ani.state
-        for i in state 
-          ix = Math.floor(imgNumber % cols) * size
-          iy = Math.floor(imgNumber / cols) * size
-          c.drawImage img, ix, iy, size, size, i[0]+dx, i[1]+dy, size, size
-    null
+$static 'PIXI', require 'pixi.js'
 
 class SpriteSurface extends EventEmitter
   thread : {}
-  ship : {}
+  stel: {}
+  ship: {}
 
   init : (callback) =>
-    NUU.on 'hitTarget', (v) -> Sprite.spfx.exps.create(v.x,v.y)
-    ready  = (cb) -> -> cb null
+
+    animate = ->
+      requestAnimationFrame animate
+      renderer.render stage
+      return
+
+    stage.addChild game
+    document.body.appendChild renderer.view
+    requestAnimationFrame animate
+
     async.parallel [
-      (cb) => @imag 'nuulogo',   ready cb
-      (cb) => @imag 'starfield', ready cb
-      (cb) => @imag 'parallax',  ready cb
-      (cb) => @imag 'loading'  , ready cb
-      (cb) => @spfx  'exps',     ready cb
-      (cb) => @spfx  'expm',     ready cb
-      (cb) => @spfx  'expm2',    ready cb
-      (cb) => @spfx  'expl',     ready cb
-      (cb) => @spfx  'expl2',    ready cb
+      (c) => @imag 'nuulogo',   -> c null
+      (c) => @imag 'nuuseal',   -> c null
+      (c) => @imag 'starfield', -> c null
+      (c) => @imag 'parallax',  -> c null
+      (c) => @imag 'loading'  , -> c null
+      (c) => @spfx 'exps',      -> c null
+      (c) => @spfx 'expm',      -> c null
+      (c) => @spfx 'expm2',     -> c null
+      (c) => @spfx 'expl',      -> c null
+      (c) => @spfx 'expl2',     -> c null
     ], ->
       callback null if callback
 
   gameLayer : (name,opts={}) ->
     @on 'gameLayer', => @layer name, opts
 
-  layer : (name,opts={}) ->
-    opts = draw : opts if typeof opts is FUNCTION
-    opts.name = name
-    opts.width = Sprite.width unless opts.width
-    opts.height = Sprite.height unless opts.height
-    Sprite[name] = opts
-    Sprite.paint opts.width, opts.height, (c) =>
-      $c = $ c.canvas
-      $c.attr 'id', 'u_' + name
-      $c.appendTo 'body'
-      Sprite[name].ctx = c
-      opts.draw = opts.draw(c,opts).bind @
-    opts.start = (time=TICK) -> opts.timer = setInterval Sprite[name].draw, time
-    opts.stop = -> clearInterval opts.timer
+  layer : (opts={}) ->
+    return unless opts.name
+    Sprite[opts.name] = opts
+    opts.width  = w = Sprite.width unless opts.width
+    opts.height = h = Sprite.height unless opts.height
+    opts.graphics = graphics = new PIXI.Graphics w, h
+    # opts.sprite = sprite = PIXI.Sprite.fromImage 'build/imag/loading.png'
+    # opts.ctx = ctx = graphics.context
+    game.addChild graphics
+    opts.tick  = -> opts.draw graphics, opts, w, h
+    # sprite.setTexture graphics.generateTexture()
+    opts.start = (time=TICK) ->
+      opts.timer = setInterval opts.tick, time
+    opts.stop  = -> clearInterval opts.timer
+    opts.init(graphics,opts,w,h)
     opts
+
+  offscreen : (w, h, fnc) ->
+    b = new PIXI.CanvasBuffer w, h
+    fnc b.context, w, h
+    b
+
+  paint : (w, h, fnc) ->
+    opts.buffer = buffer = new PIXI.CanvasBuffer w, h
+    opts.sprite = sprite = PIXI.Sprite.fromImage 'build/imag/loading.png'
+    game.addChild sprite
+    fnc buffer, sprite, w, h
+    buffer
 
   load : (type,name,url,callback) =>
     return @[type][name].listen.push callback if @[type][name]?
@@ -109,34 +105,24 @@ class SpriteSurface extends EventEmitter
 
   outfit  : (name, callback) => @load( 'outfit', name, name, (img) => callback img )
 
-  asteroid : (data, callback) =>
-    name = data.sprite
-    @load 'stel',name,name+'/sprites', (img) ->
-      data.img = img
-      callback new Asteroid data
-
-  stel : (data, callback) =>
-    name = data.sprite
-    @load 'stel',name,name+'/sprites', (img) ->
-      data.img = img
-      callback new Stellar data
-
   start : (opts, callback) =>
     @emit 'gameLayer'
-    Sprite.main.start 33
     callback null if callback
 
   update : (s) ->
-    return unless s?
-    image_num = (s.count - Math.round(s.d / (360 / (s.count - 1)))) % s.count
-    s.ix = Math.floor(image_num % s.cols) * s.size
-    s.iy = Math.floor(image_num / s.cols) * s.size
-
-  paint : (w, h, fnc) ->
-    c = document.createElement("canvas")
-    c.width = w
-    c.height = h
-    fnc c.getContext("2d"), w, h
-    c
+    return unless s and s.currentSprite
+    n = (s.count - round(s.d / (360 / (s.count - 1)))) % s.count
+    s.currentSprite.tilePosition.set(
+      - ( floor(n % s.cols) * s.size )
+      - ( floor(n / s.cols) * s.size )
+    )
 
 $static 'Sprite', new SpriteSurface
+Sprite.stage = stage = new PIXI.Stage 0x000000
+Sprite.renderer = renderer = PIXI.autoDetectRenderer 640,480, antialias: yes
+Sprite.game = game = new PIXI.DisplayObjectContainer
+
+$ ->
+  $win = $(window)
+  $win.on 'resize', -> renderer.resize $win.width(), $win.height()
+  renderer.resize $win.width(), $win.height()

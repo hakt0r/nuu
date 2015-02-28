@@ -25,8 +25,8 @@
     "keymap",
     "sound",
     "sprite",
+    "animation",
     "vt100",
-    "target",
     "scanner",
     "hud",
     "render"

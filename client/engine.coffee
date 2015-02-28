@@ -30,11 +30,13 @@ $public class Engine extends CommonEngine
   targetClass : 0
 
   constructor : (callback) ->
-    super
     console.log 'Engine'
-    new VT100; console.user 'Welcome to NUU'
+    super
+
+    new VT100
+    console.user 'Welcome to NUU'
+
     @time = Ping.remoteTime
-    @hookEvents()
     rules @
     window.Cache = new FSCache =>
       console.log 'cache:initialized'
@@ -50,17 +52,12 @@ $public class Engine extends CommonEngine
           callback null if callback
         else @loginPrompt()
 
-  hookEvents : ->  
-    @on 'targetDestroyed', (v) ->
-      splode = ->
-        Sprite.spfx.exps.create(v.x-50+Math.random()*50,v.y-50+Math.random()*50)
-        Sound['explosion0.wav'].play() if Sound.on
-      $timeout Math.min(10000,Math.round(Math.random()*10000)), splode for i in [0...25]
-      $timeout 10000, -> console.log 'mayhem'
-
-  loginPrompt : -> vt.prompt 'Login', (user) => vt.prompt 'Password', (pass) =>
-    NET.login user, sha512(pass), (success) =>
-      return @loginPrompt() unless success
+  loginPrompt : -> vt.prompt 'Login', (user) =>
+    return @loginPrompt() if user is null
+    vt.prompt 'Password', (pass) =>
+      return @loginPrompt() if pass is null
+      NET.login user, sha512(pass), (success) =>
+        return @loginPrompt() unless success
 
   sync : (opts, callback) =>
     console.log 'NUU.sync'
@@ -76,7 +73,7 @@ $public class Engine extends CommonEngine
       secondary : {id:0}
     Sprite.start opts, =>
       v.sx = v.sy = v.psx = v.psy = 0
-      Sprite.resize()
+      # Sprite.resize()
       @start callback
 
   start : (callback) =>
