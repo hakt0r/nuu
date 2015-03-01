@@ -22,67 +22,39 @@
 
 debug = off
 
-$public class Engine extends CommonEngine
-  threads : ['manouver','move','accelerate']
-  frame : 0
-  target : null
-  targetId : 0
-  targetClass : 0
+$public class Player
+  _vehicle: null
+  primary: id: 0
+  secondary: id: 0
+  constructor: (@vehicle)->
 
-  constructor : (callback) ->
-    console.log 'Engine'
-    super
+Object.defineProperty Player::, 'vehicle',
+  set: (v) ->
+    console.log 'enterVehicle', v.id
+    NUU.vehicle = @_vehicle = v
+    v.hide()
+    v.layer = 'play'
+    v.show()
+    Sprite.repositionPlayer()
+  get: -> @_vehicle
 
-    new VT100
-    console.user 'Welcome to NUU'
+NUU.frame = 0
+NUU.target = null
+NUU.targetId = 0
+NUU.targetClass = 0
 
-    @time = Ping.remoteTime
+NUU.init = (callback)->
+  $.ajax('/build/objects.json').success (result) =>
+    Item.init result
+    if debug then $timeout 500, => NET.login 'anx', sha512(''), =>
+      vt.unfocus()
+      callback null if callback
+    else @loginPrompt()
     rules @
-    window.Cache = new FSCache =>
-      console.log 'cache:initialized'
-      async.parallel [
-        (cb) => Sprite.init => cb null
-        (cb) => $.ajax('/build/objects.json').success (result) =>
-          Item.init result
-          cb null
-        (cb) => Sound.init => cb null
-      ], =>
-        if debug then $timeout 500, => NET.login 'anx', sha512(''), =>
-          vt.unfocus()
-          callback null if callback
-        else @loginPrompt()
-
-  loginPrompt : -> vt.prompt 'Login', (user) =>
-    return @loginPrompt() if user is null
-    vt.prompt 'Password', (pass) =>
-      return @loginPrompt() if pass is null
-      NET.login user, sha512(pass), (success) =>
-        return @loginPrompt() unless success
-
-  sync : (opts, callback) =>
-    console.log 'NUU.sync'
-    objectToClassName = [ Ship,Stellar,Asteroid ]
-    sid = opts.shipid
-    for list, type in opts.objects
-      className = objectToClassName[type]
-      new className(o) for id, o of list
-    @vehicle = v = $obj.byId[sid]
-    @player  = p =
-      vehicle : v,
-      primary : {id:0},
-      secondary : {id:0}
-    Sprite.start opts, =>
-      v.sx = v.sy = v.psx = v.psy = 0
-      # Sprite.resize()
-      @start callback
-
-  start : (callback) =>
-    super
-    @thread 'animation', TICK, AnimatedSprite.shift
-    @thread 'ping',      500,  Ping.send
-    @emit   'start'
     callback null if callback
+    null
+  null
 
-  stop : =>
-    $(window).removeListener 'resize', Sprite.resize
-    clearInterval @[thread].run for thread in @threads
+NUU.on 'start', ->
+  @time = -> Ping.remoteTime()
+  @thread 'ping', 500,  Ping.send

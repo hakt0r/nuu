@@ -20,167 +20,92 @@
 
 ###
 
-class SpaceRenderer
-  sprite: {}
-  constructor: ->
+Sprite.on 'resize', repositionPlayer = (w,h,hw,hh)->
+  return unless ( v = NUU.vehicle )
+  hs = v.size / 2
+  v.currentSprite.position.set hw - hs, hh - hs
 
-    Sprite.main = @
-    Sprite.stage.addChild @frame = new PIXI.DisplayObjectContainer
-    @frame.addChild @bg    = new PIXI.DisplayObjectContainer
-    @frame.addChild @stel  = new PIXI.DisplayObjectContainer
-    @frame.addChild @debr  = new PIXI.DisplayObjectContainer
-    @frame.addChild @ship  = new PIXI.DisplayObjectContainer
-    @frame.addChild @weap  = new PIXI.Graphics
-    @frame.addChild @play  = new PIXI.DisplayObjectContainer
-    @frame.addChild @fg    = new PIXI.DisplayObjectContainer
-    ( @window = $(window) ).on 'resize', @resize
-    @start @updatePlayer @resize()
-    Sprite.stage.addChild Sprite.scanner.gfx
-    Sprite.stage.addChild Sprite.hud.gfx
+Sprite.repositionPlayer = ->
+  repositionPlayer @wd,@hg,@hw,@hh
 
-  resize: =>
-    return unless Sprite.imag.starfield
-    @bg.addChild @starfield = new PIXI.TilingSprite PIXI.Texture.fromImage Sprite.imag.starfield.src
-    @fg.addChild @parallax  = new PIXI.TilingSprite PIXI.Texture.fromImage Sprite.imag.parallax.src
-    @starfield.width  = @parallax.width = @wd = @window.width();   @hw = @wd / 2
-    @starfield.height = @parallax.height = @hg = @window.height(); @hh = @hg / 2
+Sprite.renderSpace = ->
+  return unless ( p = NUU.player )
 
-  stop: ->
-    clearInterval @timer 
-    @bg.removeChildren()
-    @sprite = {}
+  px = py = 0
+  alerts = []
+  pl = null
+  sc = 1
+  now = Ping.remoteTime()
 
-  start: ->
-    @startTime = Ping.remoteTime()
-    @timer = setInterval @update
+  log = (args...) -> alerts.push args.join ' ' 
+  dist = (s) -> sqrt(pow(px-s.x,2)+pow(py-s.y,2))
 
-  updateShip: (s,remove=false,layer='ship') =>
-    layer = 'play' if s is NUU.vehicle
-    console.log 'updateShip', layer, s
-    @[layer].removeChild @sprite[s.id] if @sprite[s.id]
-    unless remove
-      @sprite[s.id] = s.currentSprite = t = new PIXI.TilingSprite PIXI.Texture.fromImage s.img.src, s.size, s.size
-      t.width  = s.size
-      t.height = s.size
-      Sprite.update s
-      @[layer].addChild t
-    else delete @sprite[s.id]
-    t
-    
-  updateSprite: (layer='bg',s,remove=false) =>
-    console.log 'updateSprite', s
-    @[layer].removeChild @sprite[s.id] if @sprite[s.id]
-    unless remove
-      @sprite[s.id] = s = PIXI.Sprite.fromImage s.img.src
-      @[layer].addChild s
-    else delete @sprite[s.id]
-    s
+  pl = NUU.vehicle
+  pl.update()
+  pl.updateTile()
+  ps = pl.size / 2
+  pox = @hw - ps
+  poy = @hh - ps
 
-  updatePlayer: =>
-    return unless NUU.player
-    return unless NUU.player.vehicle
-    @updateShip('play',NUU.player.vehicle)
+  scanner = Sprite.scanner
+  target  = Sprite.target
+  hud     = Sprite.hud
 
-  update: =>
-    return unless ( p = NUU.player )
+  # sc = (abs(@m[0])+abs(@m[1]))*0.01 + 1 if NUU.scale # speedscale  
+  px = floor pl.x
+  py = floor pl.y
+  dx = floor px * -1 + @hw
+  dy = floor py * -1 + @hh
+  rdst = @hw + @hh
 
-    px = py = 0
-    alerts = []
-    pl = null
-    sc = 1
-    now = Ping.remoteTime()
+  AnimatedSprite.render dx, dy
 
-    log = (args...) -> alerts.push args.join ' ' 
-    dist = (s) -> sqrt(pow(px-s.x,2)+pow(py-s.y,2))
+  # STARS
+  @starfield.tilePosition.x -= pl.m[0] * 0.1
+  @starfield.tilePosition.y -= pl.m[1] * 0.1
+  @parallax.tilePosition.x  -= pl.m[0] * 1.25
+  @parallax.tilePosition.y  -= pl.m[1] * 1.25
+  @parallax2.tilePosition.x -= pl.m[0] * 1.5
+  @parallax2.tilePosition.y -= pl.m[1] * 1.5
 
-    pl = NUU.vehicle
-    pl.update() unless pl.state is manouvering
-    ps = pl.size / 2
-    pox = @hw - ps
-    poy = @hh - ps
+  # STELLARS / ASTEROIDS / CARGO / DEBRIS
+  for s in @visible.stel.concat(@visible.debr).concat(@visible.pwep)
+    s.update()
+    size = parseInt s.size
+    hs = size / 2
+    ox = floor s.x + dx - hs
+    oy = floor s.y + dy - hs
+    s.currentSprite.position.set ox, oy
 
-    scanner = Sprite.scanner
-    target  = Sprite.target
-    hud     = Sprite.hud
+  @weap.clear()
 
-    # sc = (abs(@mx)+abs(@my))*0.01 + 1 if NUU.scale # speedscale  
-    px = floor pl.x
-    py = floor pl.y
-    dx = floor px * -1 + @hw
-    dy = floor py * -1 + @hh
-    rdst = (@hw + @hh)
+  # SHIPS
+  for s in @visible.ship.concat pl
+    s.update() unless s.state.S is $maneuvering
+    size = parseInt s.size
+    hs = size / 2
+    dir  = s.d / RAD
+    rx = floor s.x + dx
+    ry = floor s.y + dy
+    ox = floor rx  - hs
+    oy = floor ry  - hs
+    s.currentSprite.position.set ox, oy
+    s.updateTile()
+    # draw beam weapon
+    if ( beam = Weapon.beam[s.id] )
+      @weap.beginFill 0xFF0000, 0.7
+      @weap.lineStyle 1+random(), 0xFF0000, 0.7
+      @weap.moveTo rx, ry
+      @weap.lineTo rx + cos(dir) * beam.range, ry + sin(dir) * beam.range
+      @weap.endFill()
 
-    # STARS
-    @starfield.tilePosition.x -= pl.mx * 0.1
-    @starfield.tilePosition.y -= pl.my * 0.1
+  # WEAPONS
+  for s in Weapon.proj
+    ticks = (now - s.ms) / TICK
+    x = dx + floor(s.sx + s.m[0] * ticks)
+    y = dy + floor(s.sy + s.m[1] * ticks)
+    if x > 0 and x < @wd and y > 0 and y < @hg
+      @weap.beginFill 0xFF0000, 0.7
+      @weap.drawCircle x-1, y-1, 3
+      @weap.endFill()
 
-    # STELLARS
-    for i,s of Stellar.byId
-      s.update()
-      size = parseInt s.size
-      if ( s.pdist = dist s ) < rdst + size
-        hs = size / 2
-        ox = floor s.x + dx - hs
-        oy = floor s.y + dy - hs
-        unless @sprite[s.id]
-          @updateSprite('stel',s).position.set ox, oy
-        else @sprite[s.id].position.set ox, oy
-      else if @sprite[s.id] then @updateSprite 'stel',s,yes
-
-    # DEBRIS
-    for i,s of Debris.byId
-      s.update()
-      size = parseInt s.size
-      if ( s.pdist = dist s ) < rdst + size
-        hs = size / 2
-        ox = floor s.x + dx - hs
-        oy = floor s.y + dy - hs
-        unless @sprite[s.id]
-          @updateSprite('debr',s).position.set ox, oy
-        else @sprite[s.id].position.set ox, oy
-      else if @sprite[s.id] then @updateSprite 'debr',s,yes
-
-    # WEAPONS
-    @weap.clear()
-    for k,s of Weapon.proj
-      ticks = (now - s.ms) / TICK
-      x = dx + floor(s.sx + s.mx * ticks)
-      y = dy + floor(s.sy + s.my * ticks)
-      if x > 0 and x < @wd and y > 0 and y < @hg
-        @weap.beginFill 0xFF0000, 0.3
-        @weap.drawCircle x-1, y-1, 3
-        @weap.endFill()
-
-    # OTHER SHIPS
-    for i,s of Ship.byId
-      s.update() unless s.state is manouvering
-      size = parseInt s.size
-      dir  = s.d / RAD
-      if ( s.pdist = dist s ) < rdst + size
-        rx = floor s.x + dx
-        ry = floor s.y + dy
-        hs = size / 2
-        ox = floor rx  - hs
-        oy = floor ry  - hs
-        # img = if moving < s.state then s.img_engine else s.img
-        unless @sprite[s.id]
-          @updateShip(s).position.set ox, oy
-        else
-          @sprite[s.id].position.set ox, oy
-          Sprite.update s
-        # draw beam weapon
-        #if (beam = Weapon.beam[s.id])? then for k,b of beam
-        #  @weap.beginFill 0xFF0000, 1
-        #  @weap.lineStyle 2, 0xFF0000, 1
-        #  @weap.moveTo rx, ry
-        #  @weap.lineTo rx + cos(dir) * 300, ry + sin(dir) * 300
-        #  @weap.endFill()
-      else if @sprite[s.id] then @updateShip s, yes
-
-    AnimatedSprite.render dx, dy, @weap
-    
-    # STARFIELD OR ATMOSPHERE    
-    @parallax.tilePosition.x -= pl.mx * 1.5
-    @parallax.tilePosition.y -= pl.my * 1.5
-
-Sprite.on 'gameLayer', -> new SpaceRenderer

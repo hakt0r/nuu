@@ -20,93 +20,89 @@
 
 ###
 
-mblur = []
 PIXI = require 'pixi.js'
 
-VT100 = class VT100 extends EventEmitter
+$public class VT100 extends EventEmitter
   line: []
   hist: []
   frame: null
-  input: 'nuu console / v 0.4.68'
+  input: 'nuu console / v ' + $version
   cursor: x: 0, y: 0
   inputBuffer: ''
   promptActive: no
   
   constructor: (opts={}) ->
-    window.vt = @
     @[k] = v for k,v of opts
-    $cue => @focus()
-    @frame = new PIXI.DisplayObjectContainer
+
+    @frame = Sprite.layer 'vt', new PIXI.DisplayObjectContainer
     @frame.alpha = 1.0
     @frame.addChild @bg    = new PIXI.TilingSprite PIXI.Texture.fromImage 'build/imag/starfield.png', 0, 0    
-    @frame.addChild @image = PIXI.Sprite.fromImage 'build/imag/nuulogo.png'
     @frame.addChild @text  = new PIXI.Text 'nuu console',
       font: "10px monospace"
       fill: 'green'
     @text.position.set 23,23
-    @image.alpha = 0.2
     @bg.alpha = 0.5
-    Sprite.stage.addChild @frame
 
+    app.on 'assets:ready', =>
+      @frame.addChildAt (@image = PIXI.Sprite.fromImage Asset.imag.nuulogo.src), 1
+      @image.alpha = 0.2
+      Sprite.resize()
+
+    Sprite.on 'resize', @resize()
     console.user = @write
-    @$win = $(window)
-    @$win.on 'resize', @resize
-    setTimeout @resize, 100
     null
 
-  draw : =>
+  draw: =>
     c = @cursor.x
     @text.setText @input +
       ( if @promptQuery then "\n" + @promptQuery + ": " else '' ) +
      @inputBuffer.substr(0,c) + '|' + @inputBuffer.substr(c)
 
-  resize : =>
-    x = ( w = @$win.width() ) / 2 - @image.width / 2
-    y = ( h = @$win.height() ) / 2 - @image.height / 2
-    @image.position.set x, y
-    @bg.width = w
-    @bg.height = h
+  resize: -> (wd,hg,hw,hh) =>
     @draw()
+    @bg.width = wd
+    @bg.height = hg
+    return unless @image
+    $timeout( 33, => @resize() wd,hg,hw,hh ) if @image.width is 1
+    @bgOffsetH = @image.width / 2
+    @bgOffsetV = @image.height / 2
+    @image.position.set hw - @bgOffsetH, hh - @bgOffsetV
     null
 
-  focus : =>
+  stopAnimation: =>
+    clearInterval @animation if @animation
+    @animation = null
+
+  focus: =>
     return if @focused
     @focused = yes
     Kbd.unfocus()
     $(window).on 'keydown', @keyDown
     @draw()
 
-    Sprite.stage.addChild @frame
-    @frame.alpha = 0.0
-    fade = =>
+    @stopAnimation()
+    @animation = $interval 33, fade = =>
       @frame.alpha += 0.1
-      if @frame.alpha >= 1.0
-        clearInterval i
-        @frame.alpha = 1.0
-    i = setInterval fade, 33
+      @stopAnimation @frame.alpha = 1.0 if @frame.alpha >= 1.0
     null
 
-  unfocus : =>
+  unfocus: =>
     return unless @focused
     @focused = no
     $(window).off 'keydown', @keyDown
     Kbd.focus()
     @draw()
 
-    if @frame.alpha is 1.0
-      @frame.alpha = 1.0
-      fade = =>
-        @frame.alpha -= 0.1
-        if @frame.alpha <= 0.0
-          clearInterval i
-          @frame.alpha = 0.0
-      i = setInterval fade, 33
-      null
+    @stopAnimation()
+    @animation = $interval 33, fade = =>
+      @frame.alpha -= 0.1
+      @stopAnimation @frame.alpha = 0.0 if @frame.alpha <= 0.0
+    null
 
-  write : (lines) =>
+  write: (lines) =>
     @draw @input = lines.trim().split('\n').reverse().concat(@input).join('\n')
 
-  prompt : (p,callback) =>
+  prompt: (p,callback) =>
     return false if @promptActive
     @focus()
     @promptActive = yes
@@ -117,7 +113,7 @@ VT100 = class VT100 extends EventEmitter
     @draw()
     true
 
-  keyDown : (e) =>
+  keyDown: (e) =>
     code = e.keyCode
     c = @cursor.x
     # console.log Kbd.cmap[code], code
@@ -160,4 +156,8 @@ VT100 = class VT100 extends EventEmitter
     @draw()
     false
 
-$public VT100
+Kbd.macro 'console', 'return', 'Show / hide console', ->
+  vt.prompt 'nuu #', (text) ->
+    console.user eval(text).toString()
+
+$static 'vt', new VT100

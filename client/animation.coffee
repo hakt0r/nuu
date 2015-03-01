@@ -24,7 +24,7 @@ $public class AnimatedSprite
 
   # AnmiatedSprite, sadly, follows the factory-pattern
   #  an instance reprensents one sprite-animation
-  constructor : (@name,@img) ->
+  constructor: (@name,@img) ->
     AnimatedSprite.byName[@name] = @
     @rows = @cols = 6
     @count = 36
@@ -36,44 +36,70 @@ $public class AnimatedSprite
 
   # You can use the ::create(x,y):: function to
   #  get an actual instance of an animation.  
-  create : (x,y) ->
-    @state[0].push [x,y,t = new PIXI.TilingSprite @Texture]
+  create: (x,y,endless=no,parent=no) ->
+    t = new PIXI.TilingSprite @Texture
     t.height = t.width = @size
-    Sprite.main.weap.addChild t
+    s = new AnimationState t, x, y, endless, parent
+    @state[0].push s
+    return s
 
-  # The static part handles shifting the state-groups
-  @byName : {}
-  @shift : =>
-    for name, ani of @byName
-      ani.state.unshift []
-      for i in ani.state.pop()
-        Sprite.main.weap.removeChild i[2]
-    null
+class AnimationState
+  x:0
+  y:0
+  sprite: null
+  parent: no
+  endless: no
+  constructor: (@sprite,@x,@y,@endless,@parent) ->
+    if @parent
+      Sprite.stage.addChild @sprite
+    @sprite.position.set @x, @y
 
-  #  and removing ended animations.
-  @render : (dx,dy,c) =>
-    for name, ani of @byName
-      img = ani.img
-      size = ani.size
-      cols = ani.cols
-      for imgNumber, state of ani.state
-        for i in state 
-          ix = floor(imgNumber % cols) * size
-          iy = floor(imgNumber / cols) * size
-          i[2].position.set i[0]+dx, i[1]+dy
-          i[2].tilePosition.set -ix,-iy
-    null
+# The static part handles shifting the state-groups
+#  and removing ended animations.
+AnimatedSprite.byName = {}
+
+AnimatedSprite.shift = ->
+  for name, ani of @byName
+    n = []
+    for i in ani.state.pop()
+      if i.endless then n.push i
+      else i.obj.destructor()
+    ani.state.unshift n
+  null
+
+AnimatedSprite.render = (dx,dy) ->
+  @shift()
+  for name, ani of @byName
+    size = ani.size
+    cols = ani.cols
+    for state, imgNumber in ani.state
+      ix = floor(imgNumber % cols) * size
+      iy = floor(imgNumber / cols) * size
+      i.sprite.tilePosition.set -ix,-iy for i in state
+  null
 
   # A collage animation to 'splode ships and stuff :>
-  @splode = (v) -> ->
-    Sprite.spfx.exps.create(v.x-50+Math.random()*50,v.y-50+Math.random()*50)
-    Sound['explosion0.wav'].play() if Sound.on
+  @splode = (v,t) -> setTimeout ( ->
+    qs = v.size/4
+    hs = v.size/2
+    new Explosion state:
+      S: $relative
+      relto: v.id
+      x: -qs+Math.random()*hs
+      y: -qs+Math.random()*hs
+    Sound['explosion0.wav'].play() if Sound.on ), t
 
-app.on 'ready', ->
+$obj.register class Explosion extends Animated
+  @interfaces: [$obj,Animated]
+  id: 'animation'
+  layer: 'pwep'
+  endless: no
+  animation: 'exps'
 
-  NUU.on 'targetDestroyed', (v) ->
-    $timeout Math.min(10000,Math.round(Math.random()*10000)), AnimatedSprite.splode(v) for i in [0...25]
-    $timeout 10000, -> console.log 'mayhem'
+NUU.on 'ship:destroyed', (v) ->
+  for i in [0...25]
+    AnimatedSprite.splode v, Math.min(10000,Math.round(Math.random()*10000))
+  $timeout 9000, ->
+    v.invisible = yes
 
-  NUU.on 'targetHit', (v) ->
-    Sprite.spfx.exps.create(v.x,v.y)
+NUU.on 'ship:hit', (v) -> Ship.splode v, 0

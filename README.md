@@ -1,17 +1,25 @@
 ## nuu - space game :D
+NUU is to be a (massive) multiplayer game heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s "[Escape Velocity](http://www.ambrosiasw.com/games/evn/)" and it's excellent open-source clone "[naev](http://blog.naev.org/)". It's not finished yet and probably will stay that way for a long time ;)
 
 ### Building
 
-  npm install
-  coffee tools/build.coffee deps
-
+    npm install
+    coffee tools/build.coffee deps
+  
 ### Running the server
 
-  coffee tools/build.coffee run
+    coffee tools/build.coffee run
+  
+To debug the server (with the nodejs debugger) just replace **run** with **debug**.
 
 ### To play
 
-  http://localhost:9999/
+  Direct you browser to the following url, once the game is loaded you will be prompted to login.
+
+    http://localhost:9999/
+
+  * Right now we only support Chrome/Chromium
+  * Enable **WebGL** for the best gfx-experience (chrome://flags)
 
 ### Copyrights
 
@@ -27,8 +35,8 @@
 
   All assets are downloaded from their source repo to the contrib
   folder during the build process and LICENSE information is copied
-  to the build directory as well as bein made available in the
-  client's about screen and the server splash.
+  to the build directory, as well as being made available in the
+  client's about-screen and the server-splash.
 
 ### Licensed under GNU GPLv3
 

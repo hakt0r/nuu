@@ -20,7 +20,7 @@
 
 ###
 
-class Scanner
+$static 'Scanner', new class ScannerRenderer
   ox     : 0
   oy     : 0
   id     : 0
@@ -29,67 +29,66 @@ class Scanner
   height : 150
   scale  : 1.0
   active : true
+  label  : {}
 
-  constructor: ->
-    Sprite.scanner = @
-    Sprite.stage.addChild @gfx = new PIXI.Graphics
-    label = {}
-    # TODO: labels need gc or be properly implemented
-    ####### needs to be done :) :D
-    update = =>
-      @gfx.clear()
-      $win = $(window)
-      wd = $win.width()
-      hg = $win.height()
-      px = py = 0
-      pl = NUU.player
-      tg = NUU.target
+  render : ->
+    return unless NUU.vehicle
+    @gfx = Sprite.scan
+    @gfx.clear()
+    $win = $(window)
+    wd = $win.width()
+    hg = $win.height()
+    px = py = 0
+    pl = NUU.player
+    tg = NUU.target
+    px = floor pl.x
+    py = floor pl.y
+    hw = wd / 2
+    hh = hg / 2
+    dist = (s) -> Math.sqrt(Math.pow(px-s.x,2)+Math.pow(py-s.y,2))
+    if (pl = NUU.vehicle) # re-using pl reference
       px = floor pl.x
       py = floor pl.y
-      hw = wd / 2
-      hh = hg / 2
-      dist = (s) -> Math.sqrt(Math.pow(px-s.x,2)+Math.pow(py-s.y,2))
-      if (pl = NUU.vehicle) # re-using pl reference
-        px = floor pl.x
-        py = floor pl.y
-        dx = floor px * -1 + @ox
-        dy = floor py * -1 + @oy
-        for i,s of Stellar.byId 
-          x    = max 10, min wd-10, hw + (s.x - px) / @scale
-          y    = max 10, min wd-10, hh + (s.y - py) / @scale
-          size = max 1,  min 5,     floor s.size / @scale
-          s.pdist = dist s
-          @gfx.beginFill 0xFFFF00
-          @gfx.drawRect x,y,size,size
-          @gfx.endFill()
-          unless label[s.id]
-            @gfx.addChild label[s.id] = new PIXI.Text ( s.name || 'ukn' ), font: '10px monospace', fill: 'red'
-          else label[s.id].position.set x, y
-        @gfx.fillAlpha = .5
-        for i,s of Debris.byId
-          x    = max 10, min wd-10, hw + (s.x - px) / @scale
-          y    = max 10, min hg-10, hh + (s.y - py) / @scale
-          size = max 1.5, min 3,    floor s.size / @scale
-          x = wd if x > wd; x = 0  if x < 0
-          y = hg if y > hg; y = 0  if y < 0
-          s.pdist = dist s
-          @gfx.beginFill 0xCCCCCC
-          @gfx.drawRect x,y,size,size
-          @gfx.endFill()
-        @gfx.fillAlpha = 1
-        for i,s of Ship.byId
-          s.pdist = dist s
-          x    = max 10, min wd-10, hw + (s.x - px) / @scale
-          y    = max 10, min wd-10, hh + (s.y - py) / @scale
-          size = max 1, min 2.5,    floor s.size / @scale
-          @gfx.beginFill 0xFF00FF
-          @gfx.drawRect x,y,size,size
-          @gfx.endFill()
-          unless label[s.id]
-            @gfx.addChild label[s.id] = new PIXI.Text ( s.name || 'ukn' ), font: '10px monospace', fill: 'red'
-          else label[s.id].position.set x, y
-      null
-    setInterval update, 33
+      dx = floor px * -1 + @ox
+      dy = floor py * -1 + @oy
+      for i,s of Stellar.byId 
+        x    = max 10, min wd-10, hw + (s.x - px) / @scale
+        y    = max 10, min wd-10, hh + (s.y - py) / @scale
+        size = max 1,  min 5,     floor s.size / @scale
+        s.pdist = dist s
+        @gfx.beginFill 0xFFFF00
+        @gfx.drawRect x,y,size,size
+        @gfx.endFill()
+        unless @label[s.id]
+          @gfx.addChild @label[s.id] = new PIXI.Text ( s.name || 'ukn' ), font: '10px monospace', fill: 'red'
+        else @label[s.id].position.set x, y
+      @gfx.fillAlpha = .5
+      for s in Debris.list.concat(Cargo.list).concat(Asteroid.list)
+        x    = max 10, min wd-10, hw + (s.x - px) / @scale
+        y    = max 10, min hg-10, hh + (s.y - py) / @scale
+        size = max 1.5, min 3,    floor s.size / @scale
+        x = wd if x > wd; x = 0  if x < 0
+        y = hg if y > hg; y = 0  if y < 0
+        s.pdist = dist s
+        @gfx.beginFill 0xCCCCCC
+        @gfx.drawRect x,y,size,size
+        @gfx.endFill()
+      @gfx.fillAlpha = 1
+      for i,s of Ship.byId
+        s.pdist = dist s
+        x    = max 10, min wd-10, hw + (s.x - px) / @scale
+        y    = max 10, min wd-10, hh + (s.y - py) / @scale
+        size = max 1, min 2.5,    floor s.size / @scale
+        @gfx.beginFill 0xFF00FF
+        @gfx.drawRect x,y,size,size
+        @gfx.endFill()
+        unless @label[s.id]
+          @gfx.addChild @label[s.id] = new PIXI.Text ( s.name || 'ukn' ), font: '10px monospace', fill: 'red'
+        else @label[s.id].position.set x, y
+    null
 
+Kbd.macro 'scanPlus',  '+', 'Zoom scanner in', ->
+  Scanner.scale = Scanner.scale / 2
 
-Sprite.on 'gameLayer', -> new Scanner
+Kbd.macro 'scanMinus', '-', 'Zoom scanner out', ->
+  Scanner.scale = Scanner.scale * 2

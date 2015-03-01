@@ -20,38 +20,55 @@
 
 ###
 
-$public class RTSync extends CommonRTSync
-  login : (name, pass, callback) =>
-    console.log 'NET.login'
-    bind = (s) =>
-      @sock = s
-      @send = (msg) => s.send msg
-      NUU.emit 'connect', s
+NUU.sync = (list,callback) ->
+  new $obj.byClass[obj.key] obj for obj in list when not $obj.byId[obj.id]
+  callback null if callback
 
-      NET.on 'join', (vc) ->
-        return if Ship.byId[vc.id]
-        new Ship vc
+NUU.firstSync = (opts,callback)->
+  @sync opts.objects
+  @player = new Player $obj.byId[opts.ship.id]
+  Sprite.start => @start callback
 
-      NET.on 'user.login.success', (opts) ->
-        log "Login successful."
-        NUU.sync opts, ->
-          callback true
+NUU.loginPrompt = ->
+  vt.prompt 'Login', (user) =>
+    return @loginPrompt() if user is null
+    vt.prompt 'Password', (pass) =>
+      return @loginPrompt() if pass is null
+      NET.login user, sha512(pass), (success) =>
+        return @loginPrompt() unless success
 
-      NET.on 'user.login.failed', (opts) ->
-        log "Login failed."
-        callback false
+NET.login = (name, pass, callback) ->
+  console.log 'NET.login'
+  NET.once 'user.login.success', (opts) ->
+    log "Login successful."
+    NUU.firstSync opts, -> callback true
 
-      s.onmessage = (msg) => @route(s)(msg.data)
-
-      s.onopen = (e) ->
-        log "Connected. Sending credentials."
-        NET.json.write login: user:name, pass:pass
-
-      s.onerror = (e) ->
-        console.log "sock:error", e
-        NUU.emit 'disconnect'
-
-    loc = window.location.toString()
-    addr = loc.replace('http','ws').replace(/#.*/,'').replace(/\/$/,'') + '/nuu'
+  NET.once 'user.login.failed', (opts) ->
+    log "Login failed."
+    callback false
+  connect = (addr) =>
     console.log 'NET.connect', addr
-    bind(if WebSocket? then new WebSocket(addr) else new MozWebSocket(addr))
+    s = if WebSocket? then new WebSocket addr else new MozWebSocket addr
+    @sock = s
+    @send = (msg) => s.send msg
+    NUU.emit 'connect', s
+    s.onmessage = (msg) => @route(s) msg.data
+    s.onopen = (e) ->
+      log "Connected. Sending credentials."
+      NET.json.write login: user:name, pass:pass
+    s.onerror = (e) ->
+      console.log "NET.sock:error", e
+      NUU.emit 'disconnect'
+  loc = window.location.toString()
+  addr = loc.
+    replace('http','ws').
+    replace(/#.*/,'').
+    replace(/\/$/,'') + '/nuu'
+  connect addr
+
+NET.on 'join', (vc) ->
+  return if Ship.byId[vc.id]
+  new Ship vc
+
+NET.on 'sync', (opts) ->
+  NUU.sync opts

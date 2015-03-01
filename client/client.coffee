@@ -20,40 +20,36 @@
 
 ###
 
-window.isClient  = yes
-window.$public   = (args...) -> window[a.name] = a for a in args
 window.$static   = (name,value) -> window[name] = value
+$static.list     = window
+window.$public   = (args...) -> window[a.name] = a for a in args
+window.$cue      = (f) -> setTimeout 0,f
 
-$public class EventEmitter
-  __subcribers : {}
-  on : (event, callback) ->
-    @__subcribers[event] = [] unless @__subcribers[event]?
-    @__subcribers[event].push callback
-  emit : (event, args...) -> if @__subcribers[event]?
-    i.apply this, args for i in @__subcribers[event]
-    null
-  off : (event, callback) -> if @__subcribers[event]?
-    callbacks.splice i, 1 while i = @__subcribers.indexOf(callback)
-    null
+$static 'isClient', yes
+$static 'isServer', no
 
-$static 'app', new EventEmitter
-$static '$',   require 'jquery'
-
-console.log 'NUU.loading.libs'
+console.log 'NUU.loading.deps'
+$public require('events').EventEmitter
+$public require('buffer').Buffer
+$static 'app',   new EventEmitter
+$static '$',     require 'jquery'
 $static '_',     require('underscore')
 $static 'vm',    require('voronoi-map')
 $static 'async', require 'async'
-$public          require('buffer').Buffer
+$static 'PIXI',  require 'pixi.js'
 
 SHA = require('jssha')
 $static 'sha512', (data) ->
   h = new SHA data, 'TEXT'
   h.getHash 'SHA-512', 'HEX'
 
-require './build/'        + lib for lib in window.deps.common
+console.log 'NUU.libs.loading'
+require './build/common/' + lib for lib in window.deps.common
 require './build/client/' + lib for lib in window.deps.client.sources when lib isnt 'client'
+console.log 'NUU.libs.loaded'
 
 $ ->
-  console.log 'NUU.initializing'
-  new Engine
-  app.emit 'ready'
+  console.log 'NUU.runtime.ready'
+  app.emit 'runtime:ready'
+
+app.on 'assets:ready', -> NUU.init()

@@ -1,10 +1,9 @@
 {
   "sources": [
-    "ping",
+    "objects",
     "db",
     "user",
     "engine",
-    "render",
     "console",
     "server"
   ]

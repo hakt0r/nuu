@@ -49,7 +49,7 @@ class Sound
       async.parallel list, callback
 
   @defaults : ->
-    NUU.on 'targetHit', -> Sound['explosion1.wav'].play() if Sound.on
+    NUU.on 'ship:hit', -> Sound['explosion1.wav'].play() if Sound.on
     NUU.on 'shot', -> Sound['laser.wav'].play() if Sound.on
 
 $public Sound

@@ -52,8 +52,8 @@ class Bottle
 $b = new Bottle(3)
 
 class FSCache
-  constructor : (callback) ->
-    requestFSSuccess = (@fs) => callback()
+  constructor : ->
+    requestFSSuccess = (@fs) => app.emit 'cache:ready'
     requestStorageSuccess = (@grantedBytes) =>
       window.webkitRequestFileSystem(PERSISTENT,@grantedBytes,requestFSSuccess,@errorHandler)
     navigator.webkitPersistentStorage.requestQuota(500*1024*1024,requestStorageSuccess,@errorHandler)
@@ -139,4 +139,4 @@ class FSCache
   errorHandler : (e) =>
     console.log "FileSystem Api :Error:", e.name, e.message
 
-$public FSCache
+$static 'Cache', new FSCache

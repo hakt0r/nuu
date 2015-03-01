@@ -20,46 +20,139 @@
 
 ###
 
-DRONES_ACTIVE = on
-DRONES_MAX    = 2
+DRONES_ACTIVE = yes
+DRONES_MAX    = 1
+ROIDS_MAX     = 1
 
-$static 'rules', ->
-  console.log 'mode'.yellow, 'deathmatch'.red
+server = ->
+  rules.stats = stats = {}
 
-  if isClient
-    NET.on 'stats', (v) -> for id, stat of v
-      console.log stat.name + " #{stat.k}  #{stat.d}"
+  NUU.on 'playerJoined', (p) ->
+    stats[p.vehicle.id] = name : p.name, k:0, d:0
+    console.log 'new player', p.name, stats
 
-  else
-    rules.stats = stats = {}
-    rules.drone = drone = {}
+  NUU.on 'playerLeft', (p) ->
+    delete stats[p.vehicle.id]
 
-    NUU.on 'playerJoined', (p) ->
-      stats[p.vehicle.id] = name : p.name, k:0, d:0
-      console.log 'new player', p.name, stats
+  NUU.on 'ship:destroyed', (victim,perp) ->
+    if victim.npc is yes then $timeout 10000, ->
+      victim.destroyed = yes
+      # victim.destructor()
+    else
+      stats[victim.id].d++
+      console.log victim.name.red, stats[victim.id].d
+    unless perp.npc is yes
+      stats[perp.id].k++
+      console.log perp.name.green, stats[perp.id].k
+    $timeout 10000, ->
+      victim.dropLoot()
+      victim.respawn()
+    NUU.jsoncast stats: stats
 
-    NUU.on 'playerLeft', (p) ->
-      delete stats[p.vehicle.id]
+  Asteroid.autospawn max: ROIDS_MAX
+  Drone.autospawn max: DRONES_MAX if DRONES_ACTIVE
 
-    NUU.on 'targetDestroyed', (victim,perp) ->
-      stats[victim.id].d++ unless drone[victim.id]
-      if drone[victim.id] then $timeout 10000, ->
-        victim.destructor()
-        delete drone[victim.id]
-      unless drone[perp.id]
-        stats[perp.id].k++
-      NUU.jsoncast stats : stats
-      console.log stats
+client = ->
+  NET.on 'stats', (v) -> for id, stat of v
+    notice 5000, stat.name + " K: #{stat.k} D: #{stat.d}"
 
-    $worker.push ->
-      roids  = Object.keys(Asteroid.byId).length
-      drones = Object.keys(drone).length
-      if DRONES_ACTIVE and drones < DRONES_MAX
-        dt = DRONES_MAX - drones
-        for i in [0...dt]
-          s = NUU.spawnDrone()
-          drone[s.id] = s
-      if roids < 100
-        dt = 100 - roids
-        new Asteroid for i in [0...dt]
-      1000
+$static 'rules', -> if isClient then client() else server()
+
+rules.stars = [
+  [ 0,   'Sol',                 'yellow02',              0,           $fixed ],
+  [ 20,  'Hades Bootcamp',      'station-battlestation', 1000000,     $orbit, 0 ],
+
+  [ 1,   'Mercury',             'A01',                   58000000,    $orbit, 0 ],
+  [ 2,   'Venus',               'A02',                   108000000,   $orbit, 0 ],
+            
+  [ 3,   'Earth',               'M00',                   149600000,   $orbit, 0 ],
+  [ 30,  'Moon',                'moon-M01',              375000,      $orbit, 3 ],
+  [ 31,  'UEG Agriculture-01',  'station-agriculture',   400,         $orbit, 3 ],
+  [ 32,  'UEG Battlestation-01','station-battlestation', 500,         $orbit, 3 ],
+  [ 33,  'UEG Commerce-01',     'station-commerce',      600,         $orbit, 3 ],
+  [ 34,  'UEG Commerce-02',     'station-commerce2',     700,         $orbit, 3 ],
+  [ 35,  'UEG Commerce-03',     'station-commerce3',     800,         $orbit, 3 ],
+  [ 36,  'UEG Cylinder-01',     'station-cylinder',      900,         $orbit, 3 ],
+  [ 37,  'UEG Fleetbase-01',    'station-fleetbase',     1000,        $orbit, 3 ],
+  [ 38,  'UEG Fleetbase-02',    'station-fleetbase2',    1100,        $orbit, 3 ],
+  [ 39,  'UEG Fleetbase-03',    'station-fleetbase3',    1200,        $orbit, 3 ],
+  [ 40,  'UEG Powerplant-01',   'station-powerplant',    1300,        $orbit, 3 ],
+  [ 41,  'UEG Shipyard-01',     'station-shipyard',      1400,        $orbit, 3 ],
+  [ 42,  'UEG Shipyard-02',     'station-shipyard2',     1500,        $orbit, 3 ],
+
+  [ 5,   'Mars',                'K04',                   228000000,   $orbit, 0 ],
+
+  [ 6,   'Jupiter',             'J01',                   778500000,   $orbit, 0 ],
+  [ 60,  "Metis",               'moon-M01',              127690,      $orbit, 6, 7.1472222222 ]
+  [ 61,  "Adrastea",            'moon-I01',              128690,      $orbit, 6, 7.2333333333 ]
+  [ 62,  "Amalthea",            'moon-P02',              181366,      $orbit, 6, 12.0138888889 ]
+  [ 63,  "Thebe",               'moon-P00',              221889,      $orbit, 6, 16.2305555556 ]
+  [ 64,  "Io",                  'M05',                   421700,      $orbit, 6, 10120800 ]
+  [ 65,  "Europa",              'M02',                   671034,      $orbit, 6, 16104816 ]
+  [ 66,  "Ganymede",            'A04',                   1070412,     $orbit, 6, 25689888 ]
+  [ 67,  "Callisto",            'C00',                   1882709,     $orbit, 6, 45185016 ]
+  [ 68,  "Themisto",            'moon-I02',              7393216,     $orbit, 6, 177437184 ]
+  [ 69,  "Leda",                'moon-X00',              11187781,    $orbit, 6, 268506744 ]
+  [ 70,  "Himalia",             'moon-P03',              11451971,    $orbit, 6, 274847304 ]
+  [ 71,  "Lysithea",            '36',                    11740560,    $orbit, 6, 281773440 ]
+  [ 72,  "Elara",               '86',                    11778034,    $orbit, 6, 282672816 ]
+  [ 73,  "S/2000 J11",          'D7',                    12570424,    $orbit, 6, 301690176 ]
+  [ 74,  "Carpo",               'D6',                    17144873,    $orbit, 6, 411476952 ]
+  [ 75,  "S/2003 J12",          'D3',                    17739539,    $orbit, 6, 425748936 ]
+  [ 76,  "Euporie",             'D4',                    19088434,    $orbit, 6, 458122416 ]
+  [ 77,  "S/2003 J3",           'D4',                    19621780,    $orbit, 6, 470922720 ]
+  [ 78,  "S/2003 J18",          'D4',                    19812577,    $orbit, 6, 475501848 ]
+  [ 79,  "S/2011 J1",           'D3',                    20155290,    $orbit, 6, 483726960 ]
+  [ 80,  "S/2010 J2",           'D3',                    20307150,    $orbit, 6, 487371600 ]
+  [ 81,  "Thelxinoe",           'D4',                    20453753,    $orbit, 6, 490890072 ]
+  [ 82,  "Euanthe",             'D6',                    20464854,    $orbit, 6, 491156496 ]
+  [ 83,  "Helike",              'D7',                    20540266,    $orbit, 6, 492966384 ]
+  [ 84,  "Orthosie",            'D4',                    20567971,    $orbit, 6, 493631304 ]
+  [ 85,  "Iocaste",             'moon-A01',              20722566,    $orbit, 6, 497341584 ]
+  [ 86,  "S/2003 J16",          'D4',                    20743779,    $orbit, 6, 497850696 ]
+  [ 87,  "Praxidike",           'moon-A00',              20823948,    $orbit, 6, 499774752 ]
+  [ 88,  "Harpalyke",           'D7',                    21063814,    $orbit, 6, 505531536 ]
+  [ 89,  "Mneme",               'D4',                    21129786,    $orbit, 6, 507114864 ]
+  [ 90,  "Hermippe",            'D7',                    21182086,    $orbit, 6, 508370064 ]
+  [ 91,  "Thyone",              'D7',                    21405570,    $orbit, 6, 513733680 ]
+  [ 92,  "Ananke",              'D6',                    640,         $orbit, 6, 15369.12  ]
+  [ 93,  "Herse",               'D4',                    22134306,    $orbit, 6, 531223344 ]
+  [ 94,  "Aitne",               'D6',                    22285161,    $orbit, 6, 534843864 ]
+  [ 95,  "Kale",                'D4',                    22409207,    $orbit, 6, 537820968 ]
+  [ 96,  "Taygete",             'moon-A01',              22438648,    $orbit, 6, 538527552 ]
+  [ 97,  "S/2003 J19",          'D4',                    22709061,    $orbit, 6, 545017464 ]
+  [ 98,  "Chaldene",            'D7',                    22713444,    $orbit, 6, 545122656 ]
+  [ 99,  "S/2003 J15",          'D4',                    22720999,    $orbit, 6, 545303976 ]
+  [ 100, "S/2003 J10",          'D4',                    22730813,    $orbit, 6, 545539512 ]
+  [ 101, "S/2003 J23",          'D4',                    22739654,    $orbit, 6, 545751696 ]
+  [ 102, "Erinome",             'D6',                    22986266,    $orbit, 6, 551670384 ]
+  [ 103, "Aoede",               'D7',                    23044175,    $orbit, 6, 553060200 ]
+  [ 104, "Kallichore",          'D4',                    23111823,    $orbit, 6, 554683752 ]
+  [ 105, "Kalyke",              'moon-A01',              23180773,    $orbit, 6, 556338552 ]
+  [ 106, "Carme",               'moon-M02',              23197992,    $orbit, 6, 556751808 ]
+  [ 107, "Callirrhoe",          'moon-M03',              23214986,    $orbit, 6, 557159664 ]
+  [ 108, "Eurydome",            'D6',                    23230858,    $orbit, 6, 557540592 ]
+  [ 109, "S/2011 J2",           'D3',                    23329710,    $orbit, 6, 559913040 ]
+  [ 110, "Pasithee",            'D4',                    23307318,    $orbit, 6, 559375632 ]
+  [ 111, "S/2010 J1",           'D4',                    23314335,    $orbit, 6, 559544040 ]
+  [ 112, "Kore",                'D4',                    23345093,    $orbit, 6, 560282232 ]
+  [ 113, "Cyllene",             'D4',                    23396269,    $orbit, 6, 561510456 ]
+  [ 114, "Eukelade",            'D7',                    23483694,    $orbit, 6, 563608656 ]
+  [ 115, "S/2003 J4",           'D4',                    23570790,    $orbit, 6, 565698960 ]
+  [ 116, "Pasiphae",            '60',                    23609042,    $orbit, 6, 566617008 ]
+  [ 117, "Hegemone",            'D6',                    23702511,    $orbit, 6, 568860264 ]
+  [ 118, "Arche",               'D6',                    23717051,    $orbit, 6, 569209224 ]
+  [ 119, "Isonoe",              'D7',                    23800647,    $orbit, 6, 571215528 ]
+  [ 120, "S/2003 J9",           'D3',                    23857808,    $orbit, 6, 572587392 ]
+  [ 121, "S/2003 J5",           'D7',                    23973926,    $orbit, 6, 575374224 ]
+  [ 122, "Sinope",              '38',                    24057865,    $orbit, 6, 577388760 ]
+  [ 123, "Sponde",              'D4',                    24252627,    $orbit, 6, 582063048 ]
+  [ 124, "Autonoe",             'D7',                    24264445,    $orbit, 6, 582346680 ]
+  [ 125, "Megaclite",           'moon-A01',              24687239,    $orbit, 6, 592493736 ]
+  [ 126, "S/2003 J2",           'D4',                    30290846,    $orbit, 6, 726980304 ]
+
+  [ 7,  'Saturn',                'I07',                  1430000000,  $orbit, 0 ],
+  [ 8,  'Uranus',                'O04',                  2880000000,  $orbit, 0 ],
+  [ 9,  'Neptun',                'P04',                  4500000000,  $orbit, 0 ],
+  [ 10, 'Pluto',                 'D07',                  6500000000,  $orbit, 0 ],
+  [ 12, 'Nibiru',                'station-sphere',       10000000000, $orbit, 0 ]]

@@ -20,20 +20,3 @@
 
 ###
 
-
-NUU.server = null
-NUU.drone = {}
-NUU.userState = {}
-NUU.states = []
-NUU.players = []
-
-NUU.init =->
-  Item.init(JSON.parse fs.readFileSync './build/objects.json')
-  for i in rules.stars
-    new Stellar id:i[0], name:i[1], sprite:i[2], state: { S:i[4], relto:i[5], orbit:i[3] }
-  rules @
-  @thread 'group', 1000, =>
-    TIME = @time()
-    for o in $obj.list
-      o.update()
-  @start()

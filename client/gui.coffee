@@ -28,37 +28,21 @@ window.Notice = class Notice
     @timeout += Date.now()
   toString : -> @msg
 
-  setInterval ( =>
-    n = Date.now()
-    Notice.queue = Notice.queue.filter (e) -> e.timeout > n
-  ), 100
+setInterval ( =>
+  n = Date.now()
+  Notice.queue = Notice.queue.filter (e) -> e.timeout > n
+), 100
+
+console.real = console.log
+console.log = (args...) ->
+  notice 200, args.join ' '
+  console.real.apply console, args
 
 window.log = (args...) -> console.user args.join(' ')
 
 window.notice = (timeout,msg) ->
   msg = [msg] if typeof msg is 'string'
   Notice.queue.push new Notice line, timeout for line in msg
-
-window.hdist = (m) ->
-  if m < 1000 then            (m).toFixed(0) + " px"
-  else if m < 1000000 then    (m / 1000).toFixed(2) + " Kpx"
-  else if m < 1000000000 then (m / 1000000).toFixed(2) + " Mpx"
-  else                        (m / 1000000000).toFixed(2) + " Gpx"
-
-window.htime = (t) ->
-  s  = Math.floor(t % 60)
-  m  = Math.floor(t / 60 % 60)
-  h  = Math.floor(t / 60 / 60)
-  d  = Math.floor(t / 60 / 60 / 24)
-  y  = Math.floor(t / 60 / 60 / 24 / 365)
-  ky = Math.floor(t / 60 / 60 / 24 / 365 / 1000)
-  my = Math.floor(t / 60 / 60 / 24 / 365 / 1000 / 1000)
-  gy = Math.floor(t / 60 / 60 / 24 / 365 / 1000 / 1000 / 1000)
-  if t < 60 then s + "s"
-  else if t < 60 * 60 then m + "m" + s + "s"
-  else if t < 60 * 60 * 24 then h + "h" + m + "m" + s + "s"
-  else if t < 60 * 60 * 24 * 356 then d + "d " + h + ":" + m + ":" + s + "h"
-  else t.toFixed 0
 
 class Window
   constructor : (opts={}) ->
@@ -67,7 +51,7 @@ class Window
     @$ = $('body > div').last()
     @body = @$.find('div')
     @head = @$.find('header')
-    @head.prepend '<img src="var/imag/screw.png">'
+    @head.prepend '<img src="build/imag/screw.png">'
     @closeBtn = @head.find('img').last()
     @closeBtn.on 'click', =>
       @$.remove()
@@ -102,7 +86,7 @@ window.showSlots = ->
         if (sp = Sprite.outfit[sprite = tpl.general.gfx_store]) and sp.obj
           img.src = sp.obj.src
         else
-          img.src = Sprite.imag.loading.src
+          img.src = Asset.imag.loading.src
           Sprite.outfit sprite, (i) -> img.src = i.src
 
   mkslot = (type,slot) ->
@@ -125,7 +109,7 @@ window.showSlots = ->
       if (sp = Sprite.outfit[sprite = e.general.gfx_store]) and sp.obj
         img.src = sp.obj.src
       else
-        img.src = Sprite.imag.loading.src
+        img.src = Asset.imag.loading.src
         Sprite.outfit sprite, (i) -> img.src = i.src
     x.appendTo w.body
   for type, slots of NUU.vehicle.slots

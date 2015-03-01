@@ -20,9 +20,26 @@
 
 ###
 
-$public class RTPing extends CommonRTPing
-  constructor : ->
+$obj.register class Asteroid extends $obj
+  @interfaces: [$obj,Shootable,Debris,Asteroid]
+
+  constructor: (opts) -> if opts then super else
+    id = @size - 10
+    id = '0' + id if id < 10
+    r = 0.8 + random()/5
+    phi = random()*TAU
     super
-    NET.define 'PING', read : server : (msg,src) =>
-      msg.writeDoubleLE Date.now(), 2
-      src.send msg
+      sprite: 'asteroid-D' + id
+      resource: []
+      size: max 10, floor random() * 73
+      state:
+        S: $orbit
+        orbit: sqrt(r) * cos(phi) * 7000000000
+        relto: 0
+
+  @autospawn: (opts={})-> $worker.push =>
+    roids  = @list.length
+    if roids < opts.max
+      dt = opts.max - roids
+      new Asteroid for i in [0...dt]
+    1000

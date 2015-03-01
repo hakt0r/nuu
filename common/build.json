@@ -1,13 +1,15 @@
 [
-  "deathmatch",
   "defines",
-  "elements",
   "engine",
-  "navcom",
-  "objects",
   "rtsync",
   "ping",
+  "elements",
+  "navcom",
+  "objects",
+  "asteroid",
   "ship",
+  "drone",
   "state",
-  "weapon"
+  "weapon",
+  "deathmatch"
 ]

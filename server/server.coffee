@@ -24,16 +24,19 @@ console.log """
 """
 
 global.$static   = (name,value) -> global[name] = value
+$static.list     = global
 global.$library  = (args...) -> for a in args
   if Array.isArray a then global[a[0]] = require a[1] else global[a] = require a
 global.$public   = (args...) -> global[a.name] = a for a in args
+global.$cue      = (f) -> setImmediate f
+
+$static 'isClient', no
+$static 'isServer', yes
 
 $library 'colors', 'fs', 'crypto', 'express', ['_','underscore'], ['UglifyJS',"uglify-js"]
 $static 'browserify',   require('browserify')()
 $static 'EventEmitter', require('events').EventEmitter
 $static 'sha512', (str) -> crypto.createHash('sha512').update(str).digest 'hex'
-
-$static 'isClient', no
 
 ## Initialize express
 
@@ -46,7 +49,7 @@ app.deps =
   client : JSON.parse fs.readFileSync './client/build.json'
   server : JSON.parse fs.readFileSync './server/build.json'
 
-require '../build/' + lib                 for lib in app.deps.common
+require '../build/common/' + lib          for lib in app.deps.common
 require '../build/server/'  + lib + '.js' for lib in app.deps.server.sources when lib isnt 'server'
 
 ## Initialize WebSockets
@@ -56,24 +59,45 @@ app.ws "/nuu", (c, req) ->
   console.log 'ws'.yellow, 'connection'.grey
   c.json = (msg) -> c.send NET.JSON + JSON.stringify msg
   c.on "message", NET.route(c)
+  c.on "error", (e) -> console.log 'ws'.yellow, 'error'.red, e
   # lag and jitter emulation # c.on "message", (msg) -> setTimeout (-> NET.route(c)(msg)), 100 # + Math.floor Math.random() * 40
 wss = ws.getWss '/nuu'
 
-Engine::bincast = (data,origin) ->
+NUU.bincast = (data,origin) ->
   c.send data for c in wss.clients
 
-Engine::nearcast  = (data,o) ->
+NUU.nearcast  = (data,o) ->
   wss.clients.map (c) -> if Math.abs(c.x) - Math.abs(o.x) < 5000 and Math.abs(c.y) - Math.abs(o.y) < 5000
     c.send data
 
-Engine::jsoncast = (data) ->
+NUU.jsoncast = (data) ->
   data = NET.JSON + JSON.stringify data
   c.send data for c in wss.clients
+
+## Sync - queue object-creation notification
+
+$static 'Sync', ( ->
+  list = []
+  inst = false
+  cue = (obj)->
+    list.push obj
+    inst = setImmediate flush unless inst
+    obj
+  flush =->
+    NUU.jsoncast sync: list
+    list = []
+    inst = false
+  cue.flush = flush
+  return cue )()
+
+app.on '$obj:add', (o)->
+  console.log 'sync::', o.id, o.constructor.name, o.name
+  Sync o
 
 ## Initialize Engine
 
 console.log 'NUU'.yellow, 'initializing'.yellow
-new Engine
+NUU.init()
 
 ## Setup Webserver
 
@@ -96,9 +120,9 @@ app.get '/', (req,res) ->
     h.push """<script src='build/#{n}'></script>"""
   res.send """
     <html><head>
-      <title>nuu v0.4-dev.65 (drake, francis)</title>
+      <title>nuu v#{$version} (drake, francis)</title>
       <link rel="shortcut icon" href="build/favicon.ico" />
-      <link rel="stylesheet" type="text/css" href="build/gui.css"/>
+      <link rel="stylesheet" type="text/css" href="build/imag/gui.css"/>
       <script>
         window.deps = JSON.parse('#{JSON.stringify common:app.deps.common, client:app.deps.client}')
       </script>
@@ -111,9 +135,9 @@ app.get '/build/lib.js', (req,res) ->
   res.set 'Content-Type', 'text/javascript'
   res.send jsLIB
 
-app.bundle lib                     for lib      in app.deps.client.libs
-app.bundle './build/' + lib        for lib      in app.deps.common
-app.bundle './build/client/' + lib for lib      in app.deps.client.sources
+app.bundle lib                     for lib in app.deps.client.libs
+app.bundle './build/common/' + lib for lib in app.deps.common
+app.bundle './build/client/' + lib for lib in app.deps.client.sources
 
 console.log "pack".yellow, 'lib.js'
 jsLIB = ''

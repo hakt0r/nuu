@@ -20,11 +20,11 @@
 
 ###
 
-fs = require 'fs'
-path = require 'path'
-cp = require 'child_process'
+fs    = require 'fs'
+path  = require 'path'
+cp    = require 'child_process'
 async = require 'async'
-_ = require 'underscore'
+_     = require 'underscore'
 
 Array.prototype.uniq = ->
   b = {}; c = []; for k,v of @ when b[v] isnt true
