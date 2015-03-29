@@ -21,7 +21,11 @@
 ###
 
 NUU.sync = (list,callback) ->
-  new $obj.byClass[obj.key] obj for obj in list when not $obj.byId[obj.id]
+  for obj in list 
+    unless $obj.byId[obj.id]
+      new $obj.byClass[obj.key] obj
+    else
+      console.log '$obj:exists', obj.id
   callback null if callback
 
 NUU.firstSync = (opts,callback)->
@@ -41,6 +45,7 @@ NET.login = (name, pass, callback) ->
   console.log 'NET.login'
   NET.once 'user.login.success', (opts) ->
     log "Login successful."
+    $worker.setTimer -> Ping.remoteTime()
     NUU.firstSync opts, -> callback true
 
   NET.once 'user.login.failed', (opts) ->

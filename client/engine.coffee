@@ -30,7 +30,7 @@ $public class Player
 
 Object.defineProperty Player::, 'vehicle',
   set: (v) ->
-    console.log 'enterVehicle', v.id
+    # console.log 'enterVehicle', v.id
     NUU.vehicle = @_vehicle = v
     v.hide()
     v.layer = 'play'
@@ -44,15 +44,17 @@ NUU.targetId = 0
 NUU.targetClass = 0
 
 NUU.init = (callback)->
-  $.ajax('/build/objects.json').success (result) =>
-    Item.init result
+  async.parallel [
+    (c) -> $.ajax('/build/objects.json').success (result) ->
+      Item.init result
+      c null
+  ], =>
     if debug then $timeout 500, => NET.login 'anx', sha512(''), =>
       vt.unfocus()
       callback null if callback
     else @loginPrompt()
     rules @
     callback null if callback
-    null
   null
 
 NUU.on 'start', ->

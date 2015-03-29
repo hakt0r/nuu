@@ -21,11 +21,12 @@
 ###
 
 $public class Drone extends Ship
+  npc: true
   fire: no
   inRange: no
   primarySlot: null
   primaryWeap: null
-  worker: null
+  autopilot: null
 
   constructor: ->
     super tpl:5,target:false,npc:yes,state:
@@ -34,12 +35,13 @@ $public class Drone extends Ship
       y: floor random() * 1000 - 500
       d: floor random() * 359
       relto: 0
+
     @name = "ai[##{@id}]"
-    $worker.push =>
-      if @destroyed
-        Array.remove Drone.list, @
-        # @destructor()
-        return false
+    @primarySlot = @slots.weapon[0]
+    @primaryWeap = @slots.weapon[0].equip
+    Drone.list.push @
+
+    $worker.push @autopilot = =>
       if ( not @target or @target.destructing ) and NUU.players[0]?
         closest = null
         closestDist = Infinity
@@ -49,27 +51,35 @@ $public class Drone extends Ship
             closest =  p.vehicle
         @target = closest
       return 1000 unless @target
-      vec = NavCom.autopilot(@,@target)
-      @primarySlot = @slots.weapon[0]
-      @primaryWeap = @slots.weapon[0].equip
+      vec = NavCom.autopilot @, @target
       @inRange = vec.dist < 300
       if not @fire and @inRange
         # console.log 'engage', @primaryWeap.id
-        NET.weap.write('ai',1,@primarySlot,@,@target)
+        NET.weap.write('ai',0,@primarySlot,@,@target)
         @fire = on
       else if @fire and not @inRange
         # console.log 'disengage', @primaryWeap.id
-        NET.weap.write('ai',2,@primarySlot,@,@target)
+        NET.weap.write('ai',1,@primarySlot,@,@target)
         @fire = off
       unless vec.flags is @flags
         # console.log 'update', @id, vec.state
         @left  = vec.left
         @right = vec.right
         @accel = vec.accel
-        NET.state.write(@,vec.flags)
+        @changeState()
       null
-    Drone.list.push @
     null
+
+  destructor: ->
+    Array.remove Drone.list, @
+    $worker.remove @autopilot
+    NET.operation.write @, 'remove'
+    super
+    off
+
+  ###
+    Static Members
+  ###
 
   @list: []
   @autospawn: (opts={})-> $worker.push =>

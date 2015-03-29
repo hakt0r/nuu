@@ -132,13 +132,6 @@ Kbd.macro 'targetMode', 'Sn', 'Toggle Land / Orbit', ->
 Kbd.macro 'orbit', 'm', 'Land / Dock / Enter Orbit', ->
   NET.action.write(NUU.target,NUU.targetMode) if NUU.target
 
-Kbd.macro 'help', 'h', 'Show help', ->
-    h = ['Help:']
-    for key, macro of Kbd.help
-      h.push '\t' + key + ": " + Kbd.d10[macro]
-    console.user h.join '\n'
-    vt.focus()
-
 Kbd.macro 'weapNext',    'i', 'Next weapon (primary)', ->
   NUU.vehicle.nextWeap(NUU.player)
 

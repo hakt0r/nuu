@@ -18,7 +18,6 @@
       "url":  "https://raw.github.com/scottschiller/SoundManager2/master/script/soundmanager2-nodebug-jsmin.js"}
   },
   "sources": [
-    "client",
     "keyboard",
     "sprite",
     "vt100",
@@ -28,17 +27,19 @@
     "about",
     "mouse",
     "autopilot",
-    "rtsync",
+    "net",
     "sound",
     "gui",
     "animation",
+    "explosion",
     "scanner",
     "hud",
-    "render"
+    "render",
+    "client"
   ],
   "scripts": [
     "sm2.js",
     "lib.js",
-    "client/client.js"
+    "client.js"
   ]
 }

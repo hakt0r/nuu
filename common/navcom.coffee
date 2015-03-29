@@ -77,10 +77,10 @@ class NavCom
 
   @FIX: PI / 2
   @steer: (ship,target,strategy='seek') ->
-    ship.update()   unless ship.state   is $maneuvering
-    target.update() unless target.state is $maneuvering
-    maxSpeed        = @maxSpeed ship, target
-    slowingRadius   = @slowingRadius ship, target
+    ship.update()
+    target.update()
+    maxSpeed = @maxSpeed ship, target
+    slowingRadius = @slowingRadius ship, target
     force = @[strategy] ship, target, maxSpeed, slowingRadius
     rad = @absRad( @FIX + atan2(-force[0],force[1]) )
     dir = @absAngle parseInt(rad * RAD)

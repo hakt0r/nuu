@@ -97,9 +97,10 @@ $public class RTPing extends Mean
     @jitter.reset()
     @error.reset()
 
-if isClient then RTPing::remoteTime = ->
-  now = Date.now()
-  skew = (now - @lastLocalTime) / @INTERVAL * @skew.avrg # total skew since last sync 
-  return now - @delta.avrg + skew                        # now - delta to server + clock skew
+if isClient
+  RTPing::remoteTime = ->
+    now = Date.now()
+    skew = (now - @lastLocalTime) / @INTERVAL * @skew.avrg # total skew since last sync 
+    return now - @delta.avrg + skew                        # now - delta to server + clock skew
 
 $static 'Ping', new RTPing

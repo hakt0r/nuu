@@ -27,8 +27,8 @@ module.exports = (destinationFile,callback)->
   np   = path.join path.dirname(__dirname), 'contrib', 'naev-master', 'dat'
   nu   = path.join path.dirname(__dirname), 'build'
 
-  ship = []
-  outf = []
+  ship  = []
+  outf  = []
   src   = {}
   wait  = {}
   first = {}
@@ -38,6 +38,19 @@ module.exports = (destinationFile,callback)->
     txt = fs.readFileSync dir + f, 'utf8'
     d = JSON.parse(xml.toJson(txt))
     call f,d
+
+  flatten = (d) ->
+    specific = d.specific
+    general  = d.general
+    d.stats  = {}
+    d.stats[k] = v for k,v of d.specific
+    d.stats[k] = v for k,v of d.general
+    for k in ['gfx_store','size','price'] when d.stats[k]
+      d[k] = d.stats[k]
+      delete d.stats[k]
+    delete d.specific
+    delete d.general
+
 
   readShip = (f,d) ->
     d = d.ship
@@ -68,6 +81,7 @@ module.exports = (destinationFile,callback)->
         d.rows = 8
         d.sprite = d.GFX
       delete d.GFX
+    flatten d
     ship.push d
 
   readOutfit = (f,d) ->
@@ -87,6 +101,7 @@ module.exports = (destinationFile,callback)->
       d.specific.blowup = d.specific.range.blowup
       d.specific.range = d.specific.range.$t
     src[d.className] = d
+    flatten d
     outf.push d
 
   parseDir np + '/ships/', readShip

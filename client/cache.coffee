@@ -33,7 +33,6 @@ fetch = (path, write) ->
     x.responseType = 'blob'
     x.open 'GET', '/build/' + path, true
     x.onload = ->
-      # console.log 'fetch:done', path
       release write x.response
     x.onerror = (e) ->
       console.log 'fetch:error', path, e
@@ -59,7 +58,6 @@ class FSCache
     navigator.webkitPersistentStorage.requestQuota(500*1024*1024,requestStorageSuccess,@errorHandler)
 
   get : (path,callback) ->
-    # console.log 'cache', 'get', path
     fail = -> callback false, console.log 'cache:fail', path
     fileOpened = (file) -> callback URL.createObjectURL(file)
     Cache.exists path, (file) ->

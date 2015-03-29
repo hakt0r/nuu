@@ -58,7 +58,7 @@ Sprite.renderSpace = ->
   dy = floor py * -1 + @hh
   rdst = @hw + @hh
 
-  AnimatedSprite.render dx, dy
+  Animation.render dx, dy
 
   # STARS
   @starfield.tilePosition.x -= pl.m[0] * 0.1
@@ -77,11 +77,20 @@ Sprite.renderSpace = ->
     oy = floor s.y + dy - hs
     s.currentSprite.position.set ox, oy
 
+  for s in @visible.tile
+    s.update()
+    size = parseInt s.size
+    hs = size / 2
+    ox = floor s.x + dx - hs
+    oy = floor s.y + dy - hs
+    s.currentSprite.position.set ox, oy
+    s.updateTile()
+
   @weap.clear()
 
   # SHIPS
   for s in @visible.ship.concat pl
-    s.update() unless s.state.S is $maneuvering
+    s.update()
     size = parseInt s.size
     hs = size / 2
     dir  = s.d / RAD
@@ -108,4 +117,3 @@ Sprite.renderSpace = ->
       @weap.beginFill 0xFF0000, 0.7
       @weap.drawCircle x-1, y-1, 3
       @weap.endFill()
-

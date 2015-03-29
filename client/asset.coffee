@@ -21,36 +21,66 @@
 ###
 
 $public class Asset
+  @meta: {}
+  @outfit: {}
   @stel: {}
   @ship: {}
 
+  @loadSprite: (url) ->
+    if ( @img = Asset[url] )
+      meta = Asset.meta['build/'+url]
+      @size = meta.width
+      @show()
+    else
+      @img = Asset.imag.loading.src
+      Cache.get url, (cached) =>
+        Asset[url] = cached
+        Asset.loadSprite.call @, url
+
+  @loadTile: (url,dest='img',callback) ->
+    if ( @[dest] = Asset[url] )
+      meta = Asset.meta['build/'+url]
+      @size = ( meta.width - ( meta.width % @cols ) ) / @cols
+      @count = @cols * @rows
+      @updateTile @show()
+      callback null if callback
+    else
+      @[dest] = Asset.imag.loading.src
+      Cache.get url, (cached) =>
+        Asset[url] = cached
+        Asset.loadTile.call @, url, dest, callback
+
+  @loadAnimation: (url) -> 
+    if ( @img = Asset[url] )
+      meta = Asset.meta['build/'+url]
+      @size = ( meta.width - ( meta.width % 6 ) ) / 6
+      @count = 36
+      @updateTile @show()
+    else
+      @img = Asset.imag.loading.src
+      Cache.get url, (cached) =>
+        Asset[url] = new Animation name, cached, Asset.meta['build/'+url]
+        Asset.loadAnimation.call @, url
+
   @init: (callback) =>
     async.parallel [
+      (c)=> $.ajax('/build/images.json').success (result) =>
+        @meta[file] = meta for file, meta of result
+        c null
       (c) => @imag 'nuulogo',   -> c null
       (c) => @imag 'nuuseal',   -> c null
       (c) => @imag 'starfield', -> c null
       (c) => @imag 'parallax',  -> c null
       (c) => @imag 'loading'  , -> c null
-      (c) => @spfx 'exps',      -> c null
-      (c) => @spfx 'expm',      -> c null
-      (c) => @spfx 'expm2',     -> c null
-      (c) => @spfx 'expl',      -> c null
-      (c) => @spfx 'expl2',     -> c null
-      (c) => @spfx 'debris0',   -> c null
-      (c) => @spfx 'debris1',   -> c null
-      (c) => @spfx 'debris2',   -> c null
-      (c) => @spfx 'debris3',   -> c null
-      (c) => @spfx 'debris4',   -> c null
-      (c) => @spfx 'debris5',   -> c null
-      (c) => @spfx 'cargo',     -> c null
       (c) -> Sound.init c
     ], ->
       console.log 'NUU.assets.ready'
       app.emit 'assets:ready'
 
+  @waiting = {}
   @load: (type,name,url,callback) =>
     if ( rec = @[type][name] )
-      if rec.listen is 'done'
+      if typeof rec is 'object' or rec.listen is 'done'
         callback rec.obj
       else rec.listen.push callback
     else
@@ -69,13 +99,6 @@ $public class Asset
   @imag: (name, callback) ->
     @load 'imag', name, name, (img) =>
       @['imag'][name] = img
-      callback null
-      null
-    null
-
-  @spfx: (name, callback) =>
-    @load 'spfx', name, name, (img) =>
-      @['spfx'][name] = new AnimatedSprite name, img
       callback null
       null
     null

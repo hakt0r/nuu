@@ -44,9 +44,6 @@ $static 'sha512', (data) ->
   h.getHash 'SHA-512', 'HEX'
 
 console.log 'NUU.libs.loading'
-require './build/common/' + lib for lib in window.deps.common
-require './build/client/' + lib for lib in window.deps.client.sources when lib isnt 'client'
-console.log 'NUU.libs.loaded'
 
 $ ->
   console.log 'NUU.runtime.ready'

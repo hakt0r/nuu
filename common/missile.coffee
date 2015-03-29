@@ -20,29 +20,23 @@
 
 ###
 
-$obj.register class Asteroid extends $obj
-  @interfaces: [$obj,Shootable,Debris,Asteroid]
+$abstract 'Missile',
+  d: 0
+  thrust: 0.1
+  turn: 1
+  accel: true
+  size: 22
+  tpl: 193 # Spearhead Missile
+  init: $void
+  toJSON: -> id:@id,key:@key,state:@state,target:@target.id,ttl:@ttl
 
-  constructor: (opts) ->
-    unless opts
-      size = max 10, floor random() * 73
-      r = 0.8 + random()/5
-      phi = random()*TAU
-      opts =
-        resource: []
-        size: size
-        state:
-          S: $orbit
-          x: sqrt(r) * cos(phi) * 7000000000
-          relto: 0
-    img = opts.size - 10
-    img = '0' + img if img < 10
-    opts.sprite = 'asteroid-D' + img
-    super opts
+# client implements the simple case 
+return unless isClient
 
-  @autospawn: (opts={})-> $worker.push =>
-    roids  = @list.length
-    if roids < opts.max
-      dt = opts.max - roids
-      new Asteroid for i in [0...dt]
-    1000
+Weapon.Launcher =->
+  @release = $void
+  @trigger = $void
+
+$obj.register class Missile extends $obj
+  @implements: [$abstract.Missile]
+  @interfaces: [$obj,Debris]

@@ -53,7 +53,7 @@ User = Db 'User',
           console.log userRec.nick, 'joined'.green, userRec.id, vehicleType
           vehicle = new Ship
             tpl: Ship.byName[vehicleType]
-            state: S:$relative,relto:0
+            state: S:$fixed
           vehicle.mount[0] = userRec.id
           vehicle.flags = String.fromCharCode 0
           @userState[userRec.id] = vehicle

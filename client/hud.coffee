@@ -45,11 +45,11 @@ $static 'HUD', new class HUDRenderer
         @gfx.removeChild @targetSprite
         delete @targetSprite
       img = t.img
-      img = t.img_comm if t.img_comm
-      @gfx.addChild @targetSprite = s = PIXI.Sprite.fromImage img.src
+      img = t.imgCom if t.imgCom
+      @gfx.addChild @targetSprite = s = PIXI.Sprite.fromImage img
       s.width  = 100
       s.height = 100
-      s.alpha  = 0.1
+      s.alpha  = 0.3
       s.position.set 10, 55
       null
     null
@@ -79,10 +79,10 @@ $static 'HUD', new class HUDRenderer
 
     # STATS
     @gfx.clear()
-    @gfx.beginFill(0x0000FF,.5); @gfx.endFill @gfx.drawRect 10, 40, pl.shield / pl.shieldMax * 100, 8, 5
-    @gfx.beginFill(0xFFFF00,.5); @gfx.endFill @gfx.drawRect 10, 30, pl.armor  / pl.armorMax  * 100, 8, 5
-    @gfx.beginFill(0xFF0000,.5); @gfx.endFill @gfx.drawRect 10, 20, pl.energy / pl.energyMax * 100, 8, 5
-    @gfx.beginFill(0x00FF00,.5); @gfx.endFill @gfx.drawRect 10, 10, pl.fuel   / pl.fuelMax   * 100, 8, 5
+    @gfx.beginFill(0x00FF00,.5); @gfx.endFill @gfx.drawRect 200, 10, pl.fuel   / pl.fuelMax   * 100, 8, 5
+    @gfx.beginFill(0xFF0000,.5); @gfx.endFill @gfx.drawRect 300, 10, pl.energy / pl.energyMax * 100, 8, 5
+    @gfx.beginFill(0xFFFF00,.5); @gfx.endFill @gfx.drawRect 400, 10, pl.armour  / pl.armourMax  * 100, 8, 5
+    @gfx.beginFill(0x0000FF,.5); @gfx.endFill @gfx.drawRect 500, 10, pl.shield / pl.shieldMax * 100, 8, 5
     # DIR
     @gfx.beginFill 0, 0
     @gfx.lineStyle 3, 0xFFFF00, 1 
@@ -150,16 +150,10 @@ $static 'HUD', new class HUDRenderer
       @gfx.moveTo @hw - cos(vec.rad) * radius,       @hh - sin(vec.rad) * radius
       @gfx.lineTo @hw - cos(vec.rad) * radius * 1.1, @hh - sin(vec.rad) * radius * 1.1
 
-      # - SHIELDS
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 5, 0x00FF00, 0.5
-      @gfx.drawRect ox, oy - hsize, min(0, s.shield / s.shieldMax * 100), 5
-      @gfx.endFill()
-      # - ARMOR
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 5, 0xFFFF00, 0.5
-      @gfx.drawRect ox, oy - hsize + 7, min(0, s.armor / s.armorMax * 100), 5
-      @gfx.endFill()
+      # STATS
+      @gfx.beginFill(0xFFFF00,.5); @gfx.endFill @gfx.drawRect 10, 120, s.armour  / s.armourMax  * 100, 8, 5
+      @gfx.beginFill(0x0000FF,.5); @gfx.endFill @gfx.drawRect 10, 130, s.shield / s.shieldMax * 100, 8, 5
+
 
     # TEXT
     t = ''
@@ -246,4 +240,3 @@ Kbd.macro 'targetClosest','u','Select closest target', ->
   NUU.targetId = id = closest.id
   NUU.target = closest
   NUU.emit 'newTarget', NUU.target
-

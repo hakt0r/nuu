@@ -69,22 +69,57 @@ require('./csmake.coffee')(
     fetch 'build/'+lib, data.url for lib, data of targets.client.contrib
    ), c )
 
-  sources: (c)-> depend(dirs)( -> 
-    list = []
-    list.push compile 'common/'+lib+'.coffee', 'build/common/'+lib+'.js' for lib in targets.common
-    list.push compile 'client/'+lib+'.coffee', 'build/client/'+lib+'.js' for lib in targets.client.sources
-    list.push compile 'server/'+lib+'.coffee', 'build/server/'+lib+'.js' for lib in targets.server.sources
-    $p list, c )
+  libs: (c)-> depend(dirs)( ->
+    if exists 'build/lib.js'
+      console.log 'build/lib.js'.green
+      return c null
+    browserify = require('browserify')()
+    bundle  = (module) -> browserify.require module, expose : module
+    bundle lib for lib in targets.client.libs
+    browserify.bundle().pipe(fs.createWriteStream('build/lib.js')).on 'close', ->
+      c null )
 
-  deps: (c)-> depend(contrib,sources)( -> $s [
+  sources: (c)-> depend(libs)( ->
+    $s [
+      (c) ->
+        list = []
+        list.push compile 'common/'+lib+'.coffee', 'build/common/'+lib+'.js' for lib in targets.common
+        list.push compile 'client/'+lib+'.coffee', 'build/client/'+lib+'.js' for lib in targets.client.sources
+        list.push compile 'server/'+lib+'.coffee', 'build/server/'+lib+'.js' for lib in targets.server.sources
+        $p list, c
+      (c) ->
+        list = []
+        targets.common.filter (i) -> list.push 'build/common/' + i + '.js'
+        targets.client.sources.filter (i) -> list.push 'build/client/' + i + '.js'
+        list.unshift list.pop()
+        exec('cat ' + list.join(' ') + ' > build/client.js')(c)
+    ], c )
+
+  assets: (c)-> depend(contrib,sources)( -> $s [
     mkdir 'build/imag'
     linkFilesIn 'client/gfx', 'build/imag'
+    (c) ->
+      list = {}
+      read = (dir)->
+        for file in fs.readdirSync dir
+          p = dir + '/' + file
+          stat = fs.statSync p
+          if stat.isDirectory()
+            read p
+          else if file.match /\.(png|jpg|gif)$/
+            r = fast_image_size p
+            delete r.image
+            delete r.type
+            list[p] = r
+      read 'build'
+      fs.writeFileSync 'build/images.json', JSON.stringify list
+      c null
    ],c )
 
-  run: (c)-> depend(deps)(->
+  run: (c)-> depend(assets)(->
     exec("coffee server/server.coffee")(c))
 
-  debug: (c)-> depend(deps)(->
+  debug: (c)-> depend(assets)(->
     exec("coffee --nodejs debug server/server.coffee")(c))
 
   all: (c)-> run c

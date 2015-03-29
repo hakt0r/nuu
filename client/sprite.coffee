@@ -32,6 +32,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @layer 'debr', new PIXI.DisplayObjectContainer
     @layer 'ship', new PIXI.DisplayObjectContainer
     @layer 'weap', new PIXI.Graphics
+    @layer 'tile', new PIXI.DisplayObjectContainer
     @layer 'scan', new PIXI.Graphics
     @layer 'play', new PIXI.DisplayObjectContainer
     @layer 'pwep', new PIXI.Graphics
@@ -92,12 +93,14 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     hg2 = @hg + @hg
     rdst = @hw + @hh
     dist = (s) -> sqrt(pow(px-s.x,2)+pow(py-s.y,2))
-    TIME = NUU.time()
+    TIME  = NUU.time()
+    ETIME = Math.floor(TIME/1000000)*1000000
     s.update() for s in $obj.list
     for s in $obj.list
+      break unless s # complicated: iterator _len1 is cached
       if s.ttl and s.ttl < TIME
-        console.log 'hiding', s.id
         s.hide() if s.currentSprite
+        s.destructor() if s.ttlFinal
         continue
       s.update()
       if s.inVisibleRange px, py, wd2, hg2
@@ -123,10 +126,9 @@ $obj::inVisibleRangeLocal = ->
 $obj::layer = 'bg'
 Stellar::layer = 'stel'
 
-$obj::loadAssets = ->
-  @img = Asset.imag.loading
-  Asset.load 'stel', @sprite, @sprite, (@img) =>
-    @show()
+$obj::loadAssets = -> Asset.loadSprite.call @, 'stel/' + @sprite + '.png'
+$obj::getSprite = -> PIXI.Sprite.fromImage @img
+$obj::removeSprite = -> @updateSprite 'stel', yes
 
 $obj::updateSprite = ->
   if Sprite.visible[@id]
@@ -158,51 +160,30 @@ $obj::hide = -> if @currentSprite
   delete Sprite.visible[@id]
   @currentSprite = null
 
-$obj::getSprite = -> PIXI.Sprite.fromImage @img.src
-$obj::removeSprite = -> @updateSprite 'stel', yes
 
 ## SHIPS
 Ship::layer = 'ship'
 Ship::loadAssets = ->
-  @img = Asset.imag.loading
-  url = ( name = @sprite ) + '/' + name
-  url = url.replace(/_.*/,'')+'/'+name if name.match /_/
-  async.parallel [
-    (cb) =>
-      Asset.load 'ship', name, url, (@img) =>
-        @size = ( @img.naturalWidth - ( @img.naturalWidth % @cols ) ) / @cols
-        @count = @cols * @rows
-        @updateTile()
-        cb null
-    (cb) =>
-      Asset.load 'ship',name+'_comm',url+'_comm', (img) =>
-        Sprite.lastload = img # for splash progress
-        @img_comm = img
-        cb null
-    (cb) =>
-      Asset.load 'ship',name+'_engine',url+'_engine', (img) =>
-        @img_engine = img
-        cb null
-  ], =>
-    @show()
+  Asset.loadTile.call @, 'ship/' + @sprite + '/' + @sprite + '_engine.png', 'imgEngine'
+  Asset.loadTile.call @, 'ship/' + @sprite + '/' + @sprite + '_comm.png', 'imgCom'
+  Asset.loadTile.call @, 'ship/' + @sprite + '/' + @sprite + '.png', 'img', =>
     Sprite.repositionPlayer() if @id is NUU.vehicle.id
 
 Ship::getSprite = ->
-  t = new PIXI.TilingSprite PIXI.Texture.fromImage @img.src, @size, @size
+  t = new PIXI.TilingSprite PIXI.Texture.fromImage @img, @size, @size
   t.width  = @size
   t.height = @size
   t
 
-## ANIMATIONS
-Animated::layer = 'debr'
-Animated::loadAssets = -> @show()
-
-Animated::getSprite = ->
-  ani = Asset.spfx[@animation].create(@x,@y,@endless)
-  ani.obj = @
-  ani.sprite._animation = ani
-  ani.sprite
-
-Animated::hide = -> if @currentSprite
-  @currentSprite._animation.endless = no
-  super
+## SHIPS
+Missile::ttlFinal = yes
+Missile::rows = 6
+Missile::cols = 6
+Missile::sprite = 'seeker'
+Missile::layer = 'tile'
+Missile::loadAssets = -> Asset.loadTile.call @, path = 'outfit/space/' + @sprite + '.png'
+Missile::getSprite = ->
+  t = new PIXI.TilingSprite PIXI.Texture.fromImage @img, @size, @size
+  t.width  = @size
+  t.height = @size
+  t

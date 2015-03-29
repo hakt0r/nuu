@@ -20,7 +20,7 @@
 
 ###
 
-class Sound
+$public class Sound
   @on: false
   @autoload : ['afb_disengage.wav','afterburner.wav','autocannon.ogg',
     'bansheeexp.ogg','beam0.wav','beam_off0.wav','compression.ogg',
@@ -51,5 +51,3 @@ class Sound
   @defaults : ->
     NUU.on 'ship:hit', -> Sound['explosion1.wav'].play() if Sound.on
     NUU.on 'shot', -> Sound['laser.wav'].play() if Sound.on
-
-$public Sound

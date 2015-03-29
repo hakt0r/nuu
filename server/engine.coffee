@@ -28,12 +28,23 @@ NUU.states = []
 NUU.players = []
 
 NUU.init =->
+  console.log 'init:items'
   Item.init(JSON.parse fs.readFileSync './build/objects.json')
+  console.log 'init:stars'
   for i in rules.stars
-    new Stellar id:i[0], name:i[1], sprite:i[2], state: { S:i[4], relto:i[5], orbit:i[3] }
+    rand  = random() * TAU
+    relto = $obj.byId[i[5]] || x:0,y:0,update:$void
+    relto.update()
+    new Stellar id:i[0], name:i[1], sprite:i[2], state:
+      S:i[4]
+      relto:i[5]
+      x:relto.x+cos(rand)*i[3]
+      y:relto.y+sin(rand)*i[3]
+  console.log 'init:rules'
   rules @
+  now = Date.now
   @thread 'group', 1000, =>
-    TIME = @time()
-    for o in $obj.list
-      o.update()
+    TIME  = now()
+    ETIME = Math.floor(TIME/1000000)*1000000
+    o.update() for o in $obj.list
   @start()

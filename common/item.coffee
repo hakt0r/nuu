@@ -25,23 +25,30 @@
   think of it as a factory
 ###
 
-$public class Weapon extends Outfit
-  @active: []
-  @proj  : []
-  @beam  : {}
-  @count : 0
+$public class Item
+  @tpl: {}
+  @byId: {}
+  @byName: {}
+  @byType: {}
+  @byProp: {}
+  @init: (items) ->
+    id = 0
+    for o in items.ship
+      Item.tpl[id] = o
+      Ship.byTpl[id] = o.className
+      Ship.byName[o.className] = id++
+    for o in items.outf
+      Item.tpl[o.itemId = id++] = Item.byName[o.className] = o
+      size = o.stats.size || 'small'
+      t = if (s = o.stats.slot) then (if s.$t then s.$t else s) else 'cargo'
+      # unless o.extends is 'Launcher'
+      Item.byType[t] = small:{},medium:{},large:{} unless Item.byType[t]
+      Item.byType[t][size][o.className] = o
+      if s and (t = s.prop)
+        Item.byProp[t] = {} unless Item.byProp[t]
+        Item.byProp[t][o.className] = o
 
-  turret : no
-  color  : 'red'
-  sprite : null
-
-  constructor: (name,opts={}) ->
+$public class Outfit
+  constructor: (name) ->
     tpl = Item.byName[name]
-    console.log name, tpl.extends
-    Weapon[tpl.extends].call @
     @[k] = v for k,v of tpl
-    @id = Weapon.count++
-    Weapon[name] = @
-    @[k] = v for k,v of opts
-
-Weapon.Bay =->

@@ -78,12 +78,12 @@ window.showSlots = ->
         tpl = Item.byName[name]
         w.body.append "<div><b>#{name}<b><br/></div>"
         x = w.body.find('div').last()
-        for k,v of tpl.specific
+        for k,v of tpl.stats
           x.append "#{k}: #{v}<br/>"
         # load image
         x.prepend img = new Image
         img.width = 32; img.height = 32
-        if (sp = Sprite.outfit[sprite = tpl.general.gfx_store]) and sp.obj
+        if (sp = Sprite.outfit[sprite = tpl.stats.gfx_store]) and sp.obj
           img.src = sp.obj.src
         else
           img.src = Asset.imag.loading.src
@@ -103,10 +103,10 @@ window.showSlots = ->
     if e
       x.find('.equip').append "
         #{e.name}<br/>
-        size: #{e.general.size}<br/>
-        mass: #{e.general.mass}"
+        size: #{e.stats.size}<br/>
+        mass: #{e.stats.mass}"
       x.prepend img = new Image
-      if (sp = Sprite.outfit[sprite = e.general.gfx_store]) and sp.obj
+      if (sp = Sprite.outfit[sprite = e.stats.gfx_store]) and sp.obj
         img.src = sp.obj.src
       else
         img.src = Asset.imag.loading.src
@@ -115,3 +115,21 @@ window.showSlots = ->
   for type, slots of NUU.vehicle.slots
     for id, slot of slots
       mkslot type, slot
+
+Kbd.macro 'help', 'h', 'Show help', ->
+  h = []
+  for key, macro of Kbd.help
+    h.push '<tr><td>' + key + "</td><td>" + Kbd.d10[macro] + '</td></tr>'
+  about = $ """
+    <div class="about">
+      <h1>Keys:</h1>
+      <table>
+        #{h.join '\n'}
+      </table>
+      <div class="tabs" id="tabs">
+        <a class="close" href="#">Close</a>
+      </div>
+    </div>
+  """
+  about.appendTo $ 'body'
+  about.find('.close').on 'click', -> about.remove()

@@ -1,5 +1,7 @@
 ## nuu - space game :D
-NUU is to be a (massive) multiplayer game heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s "[Escape Velocity](http://www.ambrosiasw.com/games/evn/)" and it's excellent open-source clone "[naev](http://blog.naev.org/)". It's not finished yet and probably will stay that way for a long time ;)
+NUU is to be a (massive) multiplayer game heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s "[Escape Velocity](http://www.ambrosiasw.com/games/evn/)" and it's excellent open-source clone "[naev](http://blog.naev.org/)" which currently lends NUU it's **assets**. It's not finished yet and probably will stay that way for a long time ;)
+
+![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot.png "NUU in action - screenshot")
 
 ### Building
 
@@ -56,3 +58,8 @@ the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 Boston, MA 02111-1307 USA
 
 http://www.gnu.org/licenses/gpl.html
+
+### Clarifications regarding commercial use
+
+Besides the fact that NUU is **not production-quality code** and is not recommended for commercial use at the time being, you are - within the boundaries of the GNU GPLv3 - explicitly allowed to run and modify NUU for commercial purposes.
+Keep in mind to share patches to the source-code, uphold the license, and respect the attribution rights of the original authors of code and assets.

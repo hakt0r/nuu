@@ -11,6 +11,7 @@ module.exports = (__targets) ->
   global.coffee = require 'coffee-script'
   global.request = require 'request'
   global.filesize = require 'file-size'
+  global.fast_image_size = require 'fast-image-size'
 
   process.chdir path.dirname __dirname
 

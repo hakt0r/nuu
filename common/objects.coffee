@@ -25,19 +25,9 @@ lastId = 0
 
 $public class $obj
   @interfaces: [$obj]
-  @byId: {}
-  @list: []
-
-  x: 0
-  y: 0
-  m: $v.zero
-  state: null
-
   tpl: null
   size: 0
-  threads: []
-
-  toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl
+  hit: $void
 
   constructor: (opts={})->
 
@@ -49,7 +39,7 @@ $public class $obj
     delete opts.state if ( state = opts.state )
 
     # apply template
-    if opts.tpl then @[k] = v for k,v of Item.tpl[opts.tpl]
+    @[k] = v for k,v of Item.tpl[opts.tpl] if opts.tpl
 
     # apply other keys
     @[k] = v for k,v of opts
@@ -64,7 +54,7 @@ $public class $obj
       i.list.push i.byId[@id] = @
 
     # apply state
-    @changeState state
+    @setState state
 
     app.emit '$obj:add', @
 
@@ -72,21 +62,31 @@ $public class $obj
     for i in @constructor.interfaces
       delete i.byId[@id]
       Array.remove i.list, @
-    freeId.push @id
     app.emit '$obj:del', @
+    freeId.push @id # TODO/BUX: only after a grace period maybe
 
   dist: (o)-> sqrt(pow(abs(o.x-@x),2)-pow(abs(o.y-@y),2))
 
-  update: $void
+  toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl
 
 Object.defineProperty $obj::, 'p',
   get: -> @update(); return [@x,@y]
   set: (@x,@y)->
 
+$obj.byId = {}
+$obj.list = []
 $obj.byClass = []
+
 $obj.create = (opts)-> new $obj.byClass[opts.key] opts
 
 $obj.register = (blueprint)->
+  if blueprint.implements
+    list = blueprint.implements
+    delete blueprint.implements
+    for implement in list
+      if typeof implement is 'function'
+        implement blueprint
+      else console.log 'ERROR:', blueprint::constructor.name
   blueprint::key = ( $obj.byClass.push blueprint ) - 1
   blueprint.byId = {}
   blueprint.list = []
@@ -99,9 +99,6 @@ $obj.register = (blueprint)->
    some related code.
 ###
 
-$obj.register class Animated extends $obj
-  @interface: true
-
 $obj.register class Collectable extends $obj
   @interface: true
 
@@ -112,18 +109,14 @@ $obj.register class Shootable extends $obj
   Some simple objects
 ###
 
-$obj.register class Debris extends Animated
-  @interfaces: [$obj,Animated,Collectable,Debris]
-  animation: 'debris0'
+$obj.register class Debris extends $obj
+  @interfaces: [$obj,Collectable,Debris]
   toJSON: -> id:@id,key:@key,animation:@animation,state:@state
 
-$obj.register class Cargo extends Animated
-  @interfaces: [$obj,Animated,Collectable,Debris]
+$obj.register class Cargo extends $obj
+  @interfaces: [$obj,Collectable,Debris]
   name: 'Cargo Box'
-  animation: 'cargo'
   item: null
-  endless: yes
-  ttl: null
   constructor: (opts={})->
     super opts
     @ttl  = NUU.time() + 30000 unless @ttl

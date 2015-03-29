@@ -25,8 +25,6 @@ $obj.register class Ship extends $obj
   @byName: {}
   @byTpl: {}
 
-  d: 0
-  m: [0,0]
   iff: ''
   name: ''
   accel: no
@@ -43,8 +41,8 @@ $obj.register class Ship extends $obj
   energy: 100
   energyMax: 100
 
-  armor: 100
-  armorMax: 100
+  armour: 100
+  armourMax: 100
   shield: 100
   shieldMax: 100
   shieldRegen: 0.1
@@ -62,67 +60,18 @@ $obj.register class Ship extends $obj
   inventory: []
   slot: []
 
-  invisible: no
-
   constructor: (opts) ->
     super opts
     @slots = _.clone @slots
     @mockSystems() # fixme
     @updateMods()
-    $worker.push Ship.model @
-
-  mockSystems: -> # equip fake waepons for development
-    Mock = 
-      weapon:
-        large: Object.keys Item.byType.weapon.small
-        medium: Object.keys Item.byType.weapon.medium
-        small: Object.keys Item.byType.weapon.small
-      utility:
-        large: Object.keys Item.byType.utility.large
-        medium: Object.keys Item.byType.utility.medium
-        small: Object.keys Item.byType.utility.small
-      structure:
-        large: Object.keys Item.byType.structure.large
-        medium: Object.keys Item.byType.structure.medium
-        small: Object.keys Item.byType.structure.small
-    for k,slt of @slots.weapon when not slt.equip?
-      slt.equip = new Weapon(Mock.weapon[slt.size].shift())
-    for k,slt of @slots.structure when not slt.equip?
-      if slt.default then slt.equip = new Outfit(slt.default)
-      #else slt.equip = new Outfit(Mock.structure[slt.size].shift())
-    for k,slt of @slots.utility when not slt.equip?
-      if slt.default then slt.equip = new Outfit(slt.default)
-      #else slt.equip = new Outfit(Mock.utility[slt.size].shift())
-
-  updateMods: -> # calculate mods
-    @mods = {}
-    @mass = 0
-    for type of @slots
-      for idx of @slots[type]
-        slot = @slots[type][idx]
-        item = slot.equip
-        if item
-          @mass += item.general.mass
-          unless type is 'weapon'
-            for k,v of item.specific when k isnt 'turret'
-              if @mods[k] then @[k] += v
-              else @[k] = v
-              @mods[k] = true
-
-    # apply mods
-    map =
-      thrust:      @thrust_mod || 100
-      turn:        @turn_mod   || 100
-      shield:      @shield_mod || 100
-      shieldMax:   @shield_mod || 100
-      shieldRegen: @shield_mod || 100
-    @[k] += @[k] * ( v / 100 ) for k,v of map
-
-    # scale model values
-    @fuelMax = @fuel = @fuel * 1000
-    @turn   = @turn    / 10
-    @thrust = @thrust  / 100
     null
+
+  destructor: ->
+    $worker.remove @model
+    for slot in @slots.weapon when slot and slot.equip
+      slot.equip.release()
+    super
 
   nextWeap: (player,trigger='primary') ->
     primary = trigger is 'primary'
@@ -144,83 +93,26 @@ $obj.register class Ship extends $obj
 
   hit: (src,wp) ->
     return if @destructing
-    NUU.emit 'ship:hit', @, src
-    dmg = wp.specific.damage
+    dmg = wp.stats.damage
     if @shield > 0
-      @shield -= dmg.penetrate * 4
+      @shield -= dmg.penetrate
       if @shield < 0
-        @armor += @shield
         @shield = 0
-        @armor -= dmg.physical
+        @armour -= dmg.physical
         NUU.emit 'ship:shieldsDown', @, src
-      else if @armor > 75
-        @armor -= dmg.physical
-      console.log 'hit', @shield, @armor
-    else
-      @armor -= dmg.penetrate
-      @armor -= dmg.physical
-    if @armor < 25 and @disabled > 10
+    else @armour -= dmg.penetrate + dmg.physical
+    if 0 < @armour < 25 and @disabled > 10
       NUU.emit 'ship:disabled', @, src
-    else if @armor < 0
-      @armor = 0
+    else if @armour < 0
+      @armour = 0
       @shield = 0
-      @shieldRegen = 0
       @destructing = true
       NUU.emit 'ship:destroyed', @, src
+    NUU.emit 'ship:hit', @, src, @shield, @armour
 
   reset: ->
     @destructing = false
+    @energy = @energyMax
     @shield = @shieldMax
-    @armor  = @armorMax
+    @armour = @armourMax
     @fuel   = @fuelMax
-
-  dropLoot: ->
-    newRandom = (classObj) =>
-      o = new classObj state:
-        S: $moving
-        x: @x + -@size/2 + Math.random()*@size
-        y: @y + -@size/2 + Math.random()*@size
-        m: [ @m[0] + Math.random()*2 - 1, @m[1] + Math.random()*2 - 1 ]
-      o
-    newRandom Cargo  for i in [0...10]
-    newRandom Debris for i in [0...10]
-    null
-
-  respawn: ->
-    @x = Math.random()*100
-    @y = Math.random()*100
-    @reset()
-    NET.state.write @
-    NET.mods.write  @, 'spawn'
-
-  @model: (s) ->
-    add = null
-    return ->
-      s.energy = min(s.energy + s.reactorOut,s.energyMax)
-      add = min(s.shield+min(s.shieldRegen,s.energy),s.shieldMax) - s.shield
-      s.shield += add; s.energy -= add
-      null
-
-# Special states / mods
-_mods = ['spawn','destroyed']
-
-if isClient
-  NUU.on 'ship:destroyed', (ship) ->
-    ship.reset()
-  NUU.on 'ship:spawn', (ship) ->
-    ship.invisible = no
-
-else
-  NUU.on 'ship:destroyed', (ship) ->
-    NET.mods.write ship, 'destroyed'
-
-NET.define 4,'MODS',
-  read: client: (msg,src) ->
-    return console.log 'MODS:missing:vid' unless (ship = Ship.byId[msg.readUInt16LE 2])
-    mode = _mods[msg[1]]
-    console.log 'ship:' + mode
-    NUU.emit "ship:" + mode, ship
-  write: server: (ship,mod) =>
-    msg = new Buffer [NET.modsCode, _mods.indexOf(mod), 0,0]
-    msg.writeUInt16LE ship.id, 2
-    NUU.bincast msg.toString 'binary'

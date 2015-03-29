@@ -70,6 +70,10 @@ h1, h2 {
 .pre {
   font-family: monospace;
   white-space: pre; }
+.close {
+  position: absolute;
+  right: 10px;
+  top: 10px;}
 
 .window {
   position: fixed;

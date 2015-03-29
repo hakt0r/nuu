@@ -1,15 +1,20 @@
 [
   "defines",
+  "worker",
   "engine",
-  "rtsync",
+  "net",
   "ping",
   "elements",
   "navcom",
   "objects",
   "asteroid",
   "ship",
-  "drone",
+  "ship_model",
   "state",
+  "item",
   "weapon",
+  "projectile",
+  "beam",
+  "missile",
   "deathmatch"
 ]

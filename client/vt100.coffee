@@ -20,8 +20,6 @@
 
 ###
 
-PIXI = require 'pixi.js'
-
 $public class VT100 extends EventEmitter
   line: []
   hist: []
@@ -41,7 +39,7 @@ $public class VT100 extends EventEmitter
       font: "10px monospace"
       fill: 'green'
     @text.position.set 23,23
-    @bg.alpha = 0.5
+    @bg.alpha = 0.9
 
     app.on 'assets:ready', =>
       @frame.addChildAt (@image = PIXI.Sprite.fromImage Asset.imag.nuulogo.src), 1
@@ -75,6 +73,7 @@ $public class VT100 extends EventEmitter
 
   focus: =>
     return if @focused
+    Sprite.stage.addChild @frame
     @focused = yes
     Kbd.unfocus()
     $(window).on 'keydown', @keyDown

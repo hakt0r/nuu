@@ -39,7 +39,6 @@ $static 'EventEmitter', require('events').EventEmitter
 $static 'sha512', (str) -> crypto.createHash('sha512').update(str).digest 'hex'
 
 ## Initialize express
-
 $static 'app', app = express()
 
 ## Load sources
@@ -91,7 +90,7 @@ $static 'Sync', ( ->
   return cue )()
 
 app.on '$obj:add', (o)->
-  console.log 'sync::', o.id, o.constructor.name, o.name
+  #console.log 'sync::', o.id, o.constructor.name, o.name
   Sync o
 
 ## Initialize Engine
@@ -131,21 +130,6 @@ app.get '/', (req,res) ->
       <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
       <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
     </head><body></body></html>"""
-app.get '/build/lib.js', (req,res) ->
-  res.set 'Content-Type', 'text/javascript'
-  res.send jsLIB
 
-app.bundle lib                     for lib in app.deps.client.libs
-app.bundle './build/common/' + lib for lib in app.deps.common
-app.bundle './build/client/' + lib for lib in app.deps.client.sources
-
-console.log "pack".yellow, 'lib.js'
-jsLIB = ''
-p = browserify.bundle(); r = ''
-p.on 'data', (d) -> r += d
-p.on 'end' , (d) ->
-  r += d if d?
-  jsLIB = r
-  # jsLIB = UglifyJS.minify(r, fromString: true).code
-  console.log 'server'.yellow, 'ready'.green
-  app.listen 9999
+console.log 'server'.yellow, 'ready'.green
+app.listen 9999

@@ -20,28 +20,37 @@
 
 ###
 
-$public class AnimatedSprite
+###  
 
-  # AnmiatedSprite, sadly, follows the factory-pattern
-  #  an instance reprensents one sprite-animation
-  constructor: (@name,@img) ->
-    AnimatedSprite.byName[@name] = @
-    @rows = @cols = 6
-    @count = 36
-    @size = @img.naturalWidth / @cols
-    @state = []
-    @state[i] = [] for i in [0...@count-1]
-    @Texture = t = new PIXI.Texture.fromImage @img.src
-    null
+  If you want animations on your $obj you can either implement it like this:
 
-  # You can use the ::create(x,y):: function to
-  #  get an actual instance of an animation.  
-  create: (x,y,endless=no,parent=no) ->
-    t = new PIXI.TilingSprite @Texture
-    t.height = t.width = @size
-    s = new AnimationState t, x, y, endless, parent
-    @state[0].push s
-    return s
+    class <constructor>
+      @implements: [$Animated]
+
+  Or, in order to extend an existing $obj:
+
+    $Animated <constructor>
+
+  See below for Cargo and Debris.
+
+###
+
+$abstract 'Animated', 
+  layer: 'debr'
+  loadAssets: -> Asset.loadAnimation.call @, @animation = 'spfx/' + @animation + '.png'
+  getSprite: ->
+    @update()
+    ani = Asset[@animation].create(@x,@y,@endless,@parent)
+    ani.obj = @
+    ani.sprite._animation = ani
+    ani.sprite
+  hide: -> if @currentSprite
+    @currentSprite._animation.endless = no
+    $obj::hide.call @
+
+###
+  An AnimationState is a representation of an animated event, usually an $obj.
+###
 
 class AnimationState
   x:0
@@ -50,16 +59,52 @@ class AnimationState
   parent: no
   endless: no
   constructor: (@sprite,@x,@y,@endless,@parent) ->
-    if @parent
-      Sprite.stage.addChild @sprite
-    @sprite.position.set @x, @y
+    Sprite.stage.addChild @sprite if @parent # FIXME
 
-# The static part handles shifting the state-groups
-#  and removing ended animations.
-AnimatedSprite.byName = {}
 
-AnimatedSprite.shift = ->
-  for name, ani of @byName
+###
+
+  Animation -sadly- follows the factory-pattern, so:
+    an instance reprensents a factory for animations of it's kind.
+
+  Create a new Animation(Factory) like this:
+
+    explosion = new Animation name, url, meta
+
+  You can use the create function to get an actual instance of an animation:
+
+    explosion.create(x,y)
+
+###
+
+$public class Animation
+  constructor: (@name,@url,meta) ->
+    Animation[@name] = @
+    Animation.list.push @
+    @rows = @cols = 6
+    @count = 36
+    @size = meta.width / @cols
+    @state = []
+    @state[i] = [] for i in [0...@count-1]
+    @Texture = t = new PIXI.Texture.fromImage @url
+    null
+
+  create: (x,y,endless=no,parent=no) ->
+    t = new PIXI.TilingSprite @Texture
+    t.height = t.width = @size
+    s = new AnimationState t, x, y, endless, parent
+    @state[0].push s
+    return s
+
+###
+ The static part handles shifting the state-groups
+  and removing ended animations.
+
+###
+Animation.list = []
+
+Animation.shift = ->
+  for ani in @list
     n = []
     for i in ani.state.pop()
       if i.endless then n.push i
@@ -67,39 +112,21 @@ AnimatedSprite.shift = ->
     ani.state.unshift n
   null
 
-AnimatedSprite.render = (dx,dy) ->
+Animation.render = (dx,dy) ->
   @shift()
-  for name, ani of @byName
+  for ani in @list
     size = ani.size
     cols = ani.cols
     for state, imgNumber in ani.state
       ix = floor(imgNumber % cols) * size
       iy = floor(imgNumber / cols) * size
-      i.sprite.tilePosition.set -ix,-iy for i in state
+      for i in state
+        i.sprite.tilePosition.set -ix,-iy
   null
 
-  # A collage animation to 'splode ships and stuff :>
-  @splode = (v,t) -> setTimeout ( ->
-    qs = v.size/4
-    hs = v.size/2
-    new Explosion state:
-      S: $relative
-      relto: v.id
-      x: -qs+Math.random()*hs
-      y: -qs+Math.random()*hs
-    Sound['explosion0.wav'].play() if Sound.on ), t
+$abstract.Animated Debris
+Debris::animation = 'debris0'
 
-$obj.register class Explosion extends Animated
-  @interfaces: [$obj,Animated]
-  id: 'animation'
-  layer: 'pwep'
-  endless: no
-  animation: 'exps'
-
-NUU.on 'ship:destroyed', (v) ->
-  for i in [0...25]
-    AnimatedSprite.splode v, Math.min(10000,Math.round(Math.random()*10000))
-  $timeout 9000, ->
-    v.invisible = yes
-
-NUU.on 'ship:hit', (v) -> Ship.splode v, 0
+$abstract.Animated Cargo
+Cargo::animation = 'cargo'
+Cargo::endless = yes

@@ -20,3 +20,21 @@
 
 ###
 
+Ship::dropLoot = ->
+  newRandom = (classObj) =>
+    o = new classObj state:
+      S: $moving
+      x: @x + -@size/2 + Math.random()*@size
+      y: @y + -@size/2 + Math.random()*@size
+      m: [ @m[0] + Math.random()*2 - 1, @m[1] + Math.random()*2 - 1 ]
+    o
+  newRandom Cargo  for i in [0...10]
+  newRandom Debris for i in [0...10]
+  null
+
+Ship::respawn = ->
+  @x = Math.random()*100
+  @y = Math.random()*100
+  @reset()
+  NET.state.write @
+  NET.mods.write  @, 'spawn'
