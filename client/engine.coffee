@@ -20,8 +20,6 @@
 
 ###
 
-debug = off
-
 $public class Player
   _vehicle: null
   primary: id: 0
@@ -31,7 +29,7 @@ $public class Player
 Object.defineProperty Player::, 'vehicle',
   set: (v) ->
     # console.log 'enterVehicle', v.id
-    NUU.vehicle = @_vehicle = v
+    window.VEHICLE = @_vehicle = v
     v.hide()
     v.layer = 'play'
     v.show()
@@ -42,21 +40,3 @@ NUU.frame = 0
 NUU.target = null
 NUU.targetId = 0
 NUU.targetClass = 0
-
-NUU.init = (callback)->
-  async.parallel [
-    (c) -> $.ajax('/build/objects.json').success (result) ->
-      Item.init result
-      c null
-  ], =>
-    if debug then $timeout 500, => NET.login 'anx', sha512(''), =>
-      vt.unfocus()
-      callback null if callback
-    else @loginPrompt()
-    rules @
-    callback null if callback
-  null
-
-NUU.on 'start', ->
-  @time = -> Ping.remoteTime()
-  @thread 'ping', 500,  Ping.send

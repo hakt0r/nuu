@@ -28,36 +28,41 @@ NO_OPS = {}
 CREATE = {create:true}
 
 fetch = (path, write) ->
-  $b.add (release) -> 
+  $b.add (release) ->
     x = new XMLHttpRequest
     x.responseType = 'blob'
-    x.open 'GET', '/build/' + path, true
-    x.onload = ->
-      release write x.response
-    x.onerror = (e) ->
-      console.log 'fetch:error', path, e
+    x.open 'GET', path, true
+    x.onload = -> release write x.response
+    x.onerror = (e) -> console.log 'fetch:error', path, e
     x.send()
 
 class Bottle
-  constructor : (@limit) ->
+  constructor: (@limit) ->
     @stack = []; @active = 0
-  next : =>
+  next: =>
     if @stack.length is 0 then @active--
     else @stack.shift() @next
-  add : (fnc) =>
+  add: (fnc) =>
     if @active < @limit then fnc @next, @active++
     else @stack.push fnc
 
 $b = new Bottle(3)
 
-class FSCache
-  constructor : ->
-    requestFSSuccess = (@fs) => app.emit 'cache:ready'
+$static 'Cache', new class FSCache
+
+  constructor: ->
+    requestFSSuccess = (@fs) =>
+      c null for c in @get.list
+      @get = @__actual_get
+      app.emit 'cache:ready'
     requestStorageSuccess = (@grantedBytes) =>
       window.webkitRequestFileSystem(PERSISTENT,@grantedBytes,requestFSSuccess,@errorHandler)
     navigator.webkitPersistentStorage.requestQuota(500*1024*1024,requestStorageSuccess,@errorHandler)
 
-  get : (path,callback) ->
+  get: (path,callback) ->
+    ( @get.list || @get.list = [] ).push => @__actual_get path, callback
+  __actual_get: (path,callback) ->
+    path = path.replace(/^\//,'')
     fail = -> callback false, console.log 'cache:fail', path
     fileOpened = (file) -> callback URL.createObjectURL(file)
     Cache.exists path, (file) ->
@@ -68,27 +73,27 @@ class FSCache
             w.onwriteend = -> Cache.get(path,callback)
             w.write data ), fail )
 
-  exists : (path,callback) ->
+  exists: (path,callback) ->
     Cache.fs.root.getFile path, NO_OPS , callback, (error) ->
       callback false, error unless error.name is "NotFoundError"
       callback false
 
-  ls : (path='/',forEach) =>
+  ls: (path='/',forEach) =>
     unless forEach
       list = (name) -> (data) -> console.log name, data
       forEach = (a) => a.map (i) => i.getMetadata(list(i.name),@errorHandler)
     gotDir = (dir) => dir.createReader().readEntries forEach, @errorHandler
     @fs.root.getDirectory path, NO_OPS, gotDir, @errorHandler
 
-  purge : -> @ls '/', (list) -> list.map (i) -> Cache.rrm(i.name)
+  purge: -> @ls '/', (list) -> list.map (i) -> Cache.rrm(i.name)
 
-  rm : (path='/',ok,fail,action='rm') =>
+  rm: (path='/',ok,fail,action='rm') =>
     ok = @logSuccess(action,path) unless ok
     fail = @errorHandler          unless fail
     gotFile = (file) => file.remove  ok, fail
     @fs.root.getFile(path,NO_OPS,gotFile,fail)
 
-  mkdir : (path,ok,fail,action='mkdir') =>
+  mkdir: (path,ok,fail,action='mkdir') =>
     ok = @logSuccess(action,path) unless ok
     fail = @errorHandler unless fail
     path = path.replace(/\/$/,'').split '\/'
@@ -97,7 +102,7 @@ class FSCache
       @fs.root.getDirectory path, CREATE, ok, fail
     @exists(path,gotResponse,fail)
 
-  rmkdir : (path,ok,fail,action='mkdir') =>
+  rmkdir: (path,ok,fail,action='mkdir') =>
     fail = @errorHandler unless fail
     must = path.replace(/\/$/,'').split '\/'
     dive = (dir) ->
@@ -105,25 +110,25 @@ class FSCache
       dir.getDirectory must.shift(), CREATE, dive, fail
     dive @fs.root
 
-  rrm : (path='/',ok,fail,action='rm -r') =>
+  rrm: (path='/',ok,fail,action='rm -r') =>
     ok = @logSuccess(action,path) unless ok
     fail = @errorHandler          unless fail
     gotDir = (dir) => dir.removeRecursively ok, fail
     @fs.root.getDirectory(path,NO_OPS,gotDir,fail)
 
-  info : (path) =>
+  info: (path) =>
     ok = (m) -> console.log path, m
     gotFile = (fileEntry) => fileEntry.getMetadata(ok,@errorHandler)
     @fs.root.getFile(path,NO_OPS,gotFile, (error) =>
       return @errorHandler error unless error.name is "NotFoundError" )
 
-  file : (path='/',ok,fail,action='file') =>
+  file: (path='/',ok,fail,action='file') =>
     ok = @logSuccess(action,path) unless ok
     fail = @errorHandler          unless fail
     gotFile = (fileEntry) => fileEntry.file(ok,fail)
     @fs.root.getFile(path,NO_OPS,gotFile,fail)
 
-  getReader : (file,ok,fail) ->
+  getReader: (file,ok,fail) ->
     fail = @errorHandler unless fail
     r = new FileReader()
     r.addEventListener 'loadend', -> ok new Blob([r.result],file.type), file
@@ -131,10 +136,8 @@ class FSCache
     debugger
     r.readAsBinaryFile file
 
-  logSuccess : (action,path) =>
+  logSuccess: (action,path) =>
     (result) -> console.log action, path, 'success', result
 
-  errorHandler : (e) =>
+  errorHandler: (e) =>
     console.log "FileSystem Api :Error:", e.name, e.message
-
-$static 'Cache', new FSCache

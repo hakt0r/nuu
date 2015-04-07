@@ -57,6 +57,13 @@ h1, h2 {
   overflow: auto; }
 .about p {
   margin: 5px; }
+.about #list {
+  overflow: scroll;
+  position: absolute;
+  top: 38px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px; }
 .about iframe {
   border: solid 1px;
   border-radius: 5px;

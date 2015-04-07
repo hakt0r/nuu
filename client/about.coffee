@@ -46,7 +46,7 @@ Kbd.macro 'about', 'S/', 'Show about screen / License', ->
 
         <p/>All assets are downloaded from their source repo to the contrib
         folder during the build process and LICENSE information is copied
-        to the build directory as well as bein made available in the
+        to the build directory as well as being made available in the
         client's about screen and the server splash.
       </div>
       <div class="tab" id="node" data-src="/build/node_packages.html"></div>

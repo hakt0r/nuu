@@ -21,7 +21,7 @@
 ###
 
 NUU.sync = (list,callback) ->
-  for obj in list 
+  for obj in list
     unless $obj.byId[obj.id]
       new $obj.byClass[obj.key] obj
     else
@@ -55,9 +55,13 @@ NET.login = (name, pass, callback) ->
     console.log 'NET.connect', addr
     s = if WebSocket? then new WebSocket addr else new MozWebSocket addr
     @sock = s
-    @send = (msg) => s.send msg
+    @send = (msg) =>
+      NET.TX++ # DEBUG
+      s.send msg
     NUU.emit 'connect', s
-    s.onmessage = (msg) => @route(s) msg.data
+    s.onmessage = (msg) =>
+      NET.RX++ # DEBUG
+      @route(s) msg.data
     s.onopen = (e) ->
       log "Connected. Sending credentials."
       NET.json.write login: user:name, pass:pass
@@ -70,6 +74,16 @@ NET.login = (name, pass, callback) ->
     replace(/#.*/,'').
     replace(/\/$/,'') + '/nuu'
   connect addr
+
+# DEBUG
+NET.PPS = in:0,out:0,inAvg:new Mean,outAvg:new Mean
+NET.TX = 0
+NET.RX = 0
+$interval 1000, ->
+  NET.PPS.outAvg.add NET.PPS.out = NET.TX
+  NET.PPS.inAvg.add  NET.PPS.in  = NET.RX
+  NET.TX = NET.RX = 0
+# DEBUG
 
 NET.on 'join', (vc) ->
   return if Ship.byId[vc.id]

@@ -34,7 +34,7 @@ $public class RTSync extends EventEmitter
     a = []
     a.push(if c >> i is 1 then (c -= Math.pow(2,i); true) else false) for i in [7..0]
     a.reverse()
-  
+
   define: (c,name,opts={}) ->
     # console.log 'NET.define', c, name
     lower = name.toLowerCase()
@@ -84,7 +84,7 @@ NET.on 'jump', (target,src) ->
   o = src.handle.vehicle
   if ( target = $obj.byId[parseInt target] )
     o.accel = o.boost = o.retro = o.left = o.right = no
-    TIME = Date.now()
+    $static.list.TIME = Date.now()
     target.update()
     o.setState
       S: $moving
@@ -105,7 +105,7 @@ NET.define 2,'STATE',
       msg[0] = NET.stateCode
       msg.writeUInt16LE o.id,          1
       msg[3] = NET.setFlags [o.accel,o.retro,o.right,o.left,o.boost,s.relto?,no,no]
-      msg.writeUInt16LE ( if s.relto then s.relto.id else 0 ), 4 
+      msg.writeUInt16LE ( if s.relto then s.relto.id else 0 ), 4
       msg.writeUInt16LE s.S,           6
       msg.writeInt32LE  s.x,           8
       msg.writeInt32LE  s.y,           12
@@ -232,8 +232,8 @@ NET.define 4,'ACTION',
 
 ###
   MODS: spawn, destroyed, hit, stats
-  source, mod, target, valA, valB 
-                (UInt16) ^---^ 
+  source, mod, target, valA, valB
+                (UInt16) ^---^
 ###
 
 modsKey = ['spawn','destroyed','hit','stats']

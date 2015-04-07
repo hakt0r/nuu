@@ -20,63 +20,63 @@
 
 ###
 
-$static '$version', '0.4.70'
+$static '$version',      '0.4.71'
 
-# API
-$static '$abstract', (name,opts)->
-  $abstract[name] = (object)->
-    object::[k] = v for k,v of opts
+$static 'TIME',          Date.now()
+$static 'TICK',          33
+$static 'STICK',         1000/33
+$static 'OX',            0 # global delta
+$static 'OY',            0 # global delta
 
 # STATES
-$static '$fixed', 0
-$static '$relative', 1
-$static '$moving', 2
+$static '$fixed',        0
+$static '$relative',     1
+$static '$moving',       2
 $static '$accelerating', 3
-$static '$maneuvering', 4
-$static '$orbit', 5
+$static '$maneuvering',  4
+$static '$orbit',        5
 
 # CONSTANTS
-$static 'PI',  Math.PI
-$static 'TAU', Math.PI * 2
-$static 'RAD', 180 / Math.PI
-$static 'DAR', Math.PI / 180
-$static '$void', ->
-$static '$voidObj', {} # TODO: catcher functions
-$static '$voidArr', [] # TODO: catcher functions
+$static 'PI',            Math.PI
+$static 'TAU',           Math.PI * 2
+$static 'RAD',           180 / Math.PI
+$static 'DAR',           Math.PI / 180
+$static 'PIcent',        PI / 100
+$static 'TAUcent',       TAU / 100
+$static '$void',         ->
+$static '$voidObj',      {} # TODO: catcher functions
+$static '$voidArr',      [] # TODO: catcher functions
 
 # MATH
-$static 'floor', Math.floor
-$static 'atan2', Math.atan2
-$static 'sqrt', Math.sqrt
-$static 'min', Math.min
-$static 'max', Math.max
-$static 'abs', Math.abs
-$static 'pow', Math.pow
-$static 'sin', Math.sin
-$static 'cos', Math.cos
-$static 'random', Math.random
-$static 'round', Math.round
+$static 'floor',         Math.floor
+$static 'atan2',         Math.atan2
+$static 'sqrt',          Math.sqrt
+$static 'min',           Math.min
+$static 'max',           Math.max
+$static 'abs',           Math.abs
+$static 'pow',           Math.pow
+$static 'sin',           Math.sin
+$static 'cos',           Math.cos
+$static 'random',        Math.random
+$static 'round',         Math.round
 
 # VECTORMATH
-$static '$v', require 'vectors'
-$v.sub       = $v.sub 2 
-$v.add       = $v.add 2 
-$v.dot       = $v.dot 2 
-$v.mag       = $v.mag  2 
-$v.dist      = $v.dist 2 
-$v.mult      = $v.mult 2 
-$v.limit     = $v.limit 2 
-$v.heading   = $v.heading 2 
-$v.normalize = $v.normalize 2 
-$v.zero      = [0,0]
-$v.smod      = (a) -> a - floor( a / 360 ) * 360
-$v.reldeg    = (dira,dirb) -> $v.smod( dira - dirb + 180 ) - 180
+$v.sub =                 $v.sub 2
+$v.add =                 $v.add 2
+$v.dot =                 $v.dot 2
+$v.mag =                 $v.mag  2
+$v.dist =                $v.dist 2
+$v.mult =                $v.mult 2
+$v.limit =               $v.limit 2
+$v.heading =             $v.heading 2
+$v.normalize =           $v.normalize 2
+$v.zero =                [0,0]
+$v.smod =                (a) -> a - floor( a / 360 ) * 360
+$v.reldeg =              (dira,dirb) -> $v.smod( dira - dirb + 180 ) - 180
 
-Array.remove = (a,v) -> a.splice a.indexOf(v), 1
-
-$static '$dist', (s,o) -> sqrt(pow(s.x-o.x,2)+pow(s.y-o.y,2))
-$static '$interval', (i,f) -> setInterval f,i
-$static '$timeout', (i,f) -> setTimeout f,i
+$static '$dist',         (s,o) -> sqrt(pow(s.x-o.x,2)+pow(s.y-o.y,2))
+$static '$interval',     (i,f) -> setInterval f,i
+$static '$timeout',      (i,f) -> setTimeout f,i
 
 $static 'hdist', (m) ->
   if m < 1000 then            (m).toFixed(0) + " px"
@@ -99,13 +99,32 @@ $static 'htime', (t) ->
   else if t < 60 * 60 * 24 * 356 then d + "d " + h + ":" + m + ":" + s + "h"
   else t.toFixed 0
 
-$static 'TIME', Date.now()
-$static 'TICK', 33
-$static 'STICK', 1000/33
-
 $static 'Speed',
   ofLight: 299792.458
   max:     299792.457*10 / TICK
   boost:   300
+
+$static '$abstract', (name,opts)->
+  $static "$" + name, f = (object,mods={})->
+    object::[k] = v for k,v of opts
+    object::[k] = v for k,v of mods
+    object
+  f.properties = opts
+  f
+
+$public class Mean
+  constructor : -> @reset()
+  reset : (v) ->
+    @last = 0; @total = 0; @count = 0; @avrg = 0
+  add : (v) ->
+    @count++
+    @last = v
+    @total += v
+    @avrg = @total / @count
+
+Array.remove = (a,v) -> a.splice a.indexOf(v), 1
+Array.random = (a) -> a[round random()*(a.length-1)]
+
+$static 'sha512', (str) -> Crypto.createHash('sha512').update(str).digest 'hex'
 
 $static 'rules', -> if isClient then rules.client() else rules.server()

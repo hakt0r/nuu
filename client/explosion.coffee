@@ -20,30 +20,30 @@
 
 ###
 
-Array.random = (a) -> a[round random()*(a.length-1)]
-
 $obj.register class Explosion extends $obj
   @sizes: ['exps','expm','expl','expl2']
-  @implements: [$abstract.Animated]
+  @implements: [$Animated]
   @interfaces: [$obj]
   id: 'animation'
-  layer: 'pwep'
-  endless: no
+  layer: 'fx'
+  loop: no
   parent: null
   constructor: (@parent)->
     qs = @parent.size/4
     hs = @parent.size/2
-    super animation: Array.random(Explosion.sizes), state:
-      S: $relative
-      relto: @parent.id
-      x: -qs+Math.random()*hs
-      y: -qs+Math.random()*hs
+    super
+      sprite: Array.random(Explosion.sizes)
+      state:
+        S: $relative
+        relto: @parent.id
+        x: -qs+Math.random()*hs
+        y: -qs+Math.random()*hs
     Sound['explosion0.wav'].play() if Sound.on
 
 # A collage animation to 'splode ships and stuff :>
-Animation.destroy = (v,t) -> for i in [0...25]
-  Animation.explode v, Math.min(10000,Math.round(Math.random()*10000))
-Animation.explode = (v,t) -> setTimeout ( -> new Explosion v ), t
+$Animated.destroy = (v,t) -> for i in [0...25]
+  $Animated.explode v, Math.min(10000,Math.round(Math.random()*10000))
+$Animated.explode = (v,t) -> setTimeout ( -> new Explosion v ), t
 
-NUU.on 'ship:hit', (v) -> Animation.explode v, Math.min(10000,Math.round(Math.random()*10000))
-NUU.on 'ship:destroyed', (v) -> Animation.destroy v
+NUU.on 'ship:hit', (v) -> $Animated.explode v, Math.min(10000,Math.round(Math.random()*10000))
+NUU.on 'ship:destroyed', (v) -> $Animated.destroy v

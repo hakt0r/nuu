@@ -28,23 +28,22 @@ $public class VT100 extends EventEmitter
   cursor: x: 0, y: 0
   inputBuffer: ''
   promptActive: no
-  
+
   constructor: (opts={}) ->
     @[k] = v for k,v of opts
 
     @frame = Sprite.layer 'vt', new PIXI.DisplayObjectContainer
     @frame.alpha = 1.0
-    @frame.addChild @bg    = new PIXI.TilingSprite PIXI.Texture.fromImage 'build/imag/starfield.png', 0, 0    
+    @frame.addChild @bg    = new PIXI.TilingSprite PIXI.Texture.fromImage '/build/imag/starfield.png', 0, 0
     @frame.addChild @text  = new PIXI.Text 'nuu console',
       font: "10px monospace"
       fill: 'green'
     @text.position.set 23,23
     @bg.alpha = 0.9
 
-    app.on 'assets:ready', =>
-      @frame.addChildAt (@image = PIXI.Sprite.fromImage Asset.imag.nuulogo.src), 1
-      @image.alpha = 0.2
-      Sprite.resize()
+    @frame.addChildAt (@image = PIXI.Sprite.fromImage '/build/imag/nuulogo.png'), 1
+    @image.alpha = 0.2
+    Sprite.resize()
 
     Sprite.on 'resize', @resize()
     console.user = @write
@@ -142,7 +141,7 @@ $public class VT100 extends EventEmitter
       @hist.cursor = min(@hist.length-1,++@hist.cursor)
       @inputBuffer = @hist[@hist.cursor]
       @cursor.x = @inputBuffer.length
-    else if Kbd.cmap[code] is 'del'      
+    else if Kbd.cmap[code] is 'del'
       @inputBuffer = @inputBuffer.substr(0,c) + @inputBuffer.substr(c+1)
     else if Kbd.cmap[code] is 'bksp'
       @inputBuffer = @inputBuffer.substr(0,c-1) + @inputBuffer.substr(c)
@@ -158,5 +157,3 @@ $public class VT100 extends EventEmitter
 Kbd.macro 'console', 'return', 'Show / hide console', ->
   vt.prompt 'nuu #', (text) ->
     console.user eval(text).toString()
-
-$static 'vt', new VT100

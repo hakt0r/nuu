@@ -20,8 +20,6 @@
 
 ###
 
-util = require 'util'
-
 User = Db 'User',
 
   userState: {}

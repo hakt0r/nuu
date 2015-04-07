@@ -34,11 +34,10 @@ $static 'HUD', new class HUDRenderer
     @startTime = Ping.remoteTime()
     @frame = 0
 
-    @wd = @hg = @hw = @hh = 0
     @label = {}
-    @win = $ window
-    @win.on 'resize', @resize()
-    @resize()()
+    
+    @resize Sprite.on 'resize', @resize.bind @
+    Sprite.renderHUD =          @render.bind @, @gfx
 
     NUU.on 'newTarget', (t) =>
       if @targetSprite
@@ -54,105 +53,81 @@ $static 'HUD', new class HUDRenderer
       null
     null
 
-  resize: -> =>
-    @wd = @win.width();  @hw = @wd / 2
-    @hg = @win.height(); @hh = @hg / 2
-    @debug.position.set 10, @hg - 20
-    @notice.position.set @wd - 20 - @notice.width, 10
+  resize: ->
+    @debug.position.set 10, HEIGHT - 20
+    @notice.position.set WIDTH - 20 - @notice.width, 10
 
-  widget: (name,value)->
-    if value then @widgetList[name] = value
-    else delete @widgetList[name]
-  widgetList: []
-
-  update: ->
+  render: (g) ->
     @frame++
-
-    p = NUU.player
-    pl = NUU.vehicle
-    return unless pl
-    now = Ping.remoteTime()
-    dir = ((pl.d + 180) % 360) / RAD
-    radius  = pl.size / 2 + 10
-    PIcent  = PI / 100
-    TAUcent = TAU / 100
+    dir = ((VEHICLE.d + 180) % 360) / RAD
+    radius  = VEHICLE.size / 2 + 10
 
     # STATS
-    @gfx.clear()
-    @gfx.beginFill(0x00FF00,.5); @gfx.endFill @gfx.drawRect 200, 10, pl.fuel   / pl.fuelMax   * 100, 8, 5
-    @gfx.beginFill(0xFF0000,.5); @gfx.endFill @gfx.drawRect 300, 10, pl.energy / pl.energyMax * 100, 8, 5
-    @gfx.beginFill(0xFFFF00,.5); @gfx.endFill @gfx.drawRect 400, 10, pl.armour  / pl.armourMax  * 100, 8, 5
-    @gfx.beginFill(0x0000FF,.5); @gfx.endFill @gfx.drawRect 500, 10, pl.shield / pl.shieldMax * 100, 8, 5
+    g.clear()
+    g.beginFill(0x00FF00,.5); g.endFill g.drawRect 200, 10, VEHICLE.fuel   / VEHICLE.fuelMax   * 100, 8, 5
+    g.beginFill(0xFF0000,.5); g.endFill g.drawRect 300, 10, VEHICLE.energy / VEHICLE.energyMax * 100, 8, 5
+    g.beginFill(0xFFFF00,.5); g.endFill g.drawRect 400, 10, VEHICLE.armour / VEHICLE.armourMax * 100, 8, 5
+    g.beginFill(0x0000FF,.5); g.endFill g.drawRect 500, 10, VEHICLE.shield / VEHICLE.shieldMax * 100, 8, 5
     # DIR
-    @gfx.beginFill 0, 0
-    @gfx.lineStyle 3, 0xFFFF00, 1 
-    @gfx.moveTo @hw - cos(dir) * radius,       @hh - sin(dir) * radius
-    @gfx.lineTo @hw - cos(dir) * radius * 1.1, @hh - sin(dir) * radius * 1.1
-    @gfx.endFill()
+    g.beginFill 0, 0
+    g.lineStyle 3, 0xFFFF00, 1
+    g.moveTo WDB2 - cos(dir) * radius,       HGB2 - sin(dir) * radius
+    g.lineTo WDB2 - cos(dir) * radius * 1.1, HGB2 - sin(dir) * radius * 1.1
+    g.endFill()
     # SPEED
-    @gfx.beginFill 0, 0
-    @gfx.lineStyle 1.5, 0xFF0000, 1 
-    @gfx.moveTo @hw, @hh
-    @gfx.lineTo @hw + pl.m[0], @hh + pl.m[1]
-    @gfx.endFill()
+    g.beginFill 0, 0
+    g.lineStyle 1.5, 0xFF0000, 1
+    g.moveTo WDB2, HGB2
+    g.lineTo WDB2 + VEHICLE.m[0], HGB2 + VEHICLE.m[1]
+    g.endFill()
 
     # TARGET
     if (s = NUU.target)
-      dir = Sprite.relAngle pl, s
-      size  = parseInt(s.size)
-      hsize = size / 2
-      px = floor pl.x
-      py = floor pl.y
-      dx = floor px * -1 + @hw
-      dy = floor py * -1 + @hh
-      ox = s.x + dx
-      oy = s.y + dy
-      fx = s.x - (size / 2)
-      fy = s.y - (size / 2)
+      dir = NavCom.relAngle VEHICLE, s
       # - POINTER
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 3, 0xFF0000, 1 
-      @gfx.moveTo @hw - cos(dir) * radius,       @hh - sin(dir) * radius
-      @gfx.lineTo @hw - cos(dir) * radius * 1.1, @hh - sin(dir) * radius * 1.1
-      @gfx.endFill()
+      g.beginFill 0, 0
+      g.lineStyle 3, 0xFF0000, 1
+      g.moveTo WDB2 - cos(dir) * radius,       HGB2 - sin(dir) * radius
+      g.lineTo WDB2 - cos(dir) * radius * 1.1, HGB2 - sin(dir) * radius * 1.1
+      g.endFill()
       # - FORCE
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 1.5, 0xFFFF00, 1 
-      @gfx.moveTo @hw - cos(dir) * radius * 1.1,        @hh - sin(dir) * radius * 1.1
-      @gfx.lineTo @hw - cos(dir) * radius * 1.1 + s.m[0], @hh - sin(dir) * radius * 1.1 + s.m[1]
-      @gfx.endFill()
+      g.beginFill 0, 0
+      g.lineStyle 1.5, 0xFFFF00, 1
+      g.moveTo WDB2 - cos(dir) * radius * 1.1,        HGB2 - sin(dir) * radius * 1.1
+      g.lineTo WDB2 - cos(dir) * radius * 1.1 + s.m[0], HGB2 - sin(dir) * radius * 1.1 + s.m[1]
+      g.endFill()
       # - GUIDE
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 1.0, 0x00FF00, 1.0
-      @gfx.moveTo @hw, @hh
-      @gfx.lineTo ox, oy
-      @gfx.endFill()
+      g.beginFill 0, 0
+      g.lineStyle 1.0, 0x00FF00, 1.0
+      g.moveTo WDB2, HGB2
+      g.lineTo OX, OY
+      g.endFill()
       # - GUIDE - seek
-      vec = NavCom.steer s,pl,'seek'
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 2, 0x0000FF, 0.3
-      @gfx.moveTo @hw, @hh
-      @gfx.lineTo @hw + vec.force[0], @hh + vec.force[1]
-      @gfx.endFill()
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 1, 0x0000FF, 1
-      @gfx.moveTo @hw - cos(vec.rad) * radius,       @hh - sin(vec.rad) * radius
-      @gfx.lineTo @hw - cos(vec.rad) * radius * 1.1, @hh - sin(vec.rad) * radius * 1.1
+      vec = NavCom.steer s,VEHICLE,'seek'
+      g.beginFill 0, 0
+      g.lineStyle 2, 0x0000FF, 0.3
+      g.moveTo WDB2, HGB2
+      g.lineTo WDB2 + vec.force[0], HGB2 + vec.force[1]
+      g.endFill()
+      g.beginFill 0, 0
+      g.lineStyle 1, 0x0000FF, 1
+      g.moveTo WDB2 - cos(vec.rad) * radius,       HGB2 - sin(vec.rad) * radius
+      g.lineTo WDB2 - cos(vec.rad) * radius * 1.1, HGB2 - sin(vec.rad) * radius * 1.1
       # - GUIDE - pursuit
-      vec = NavCom.steer s,pl,'pursuit'
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 2, 0xFFFF00, 0.3
-      @gfx.moveTo @hw, @hh
-      @gfx.lineTo @hw + vec.force[0], @hh + vec.force[1]
-      @gfx.endFill()
-      @gfx.beginFill 0, 0
-      @gfx.lineStyle 1, 0xFFFF00, 1
-      @gfx.moveTo @hw - cos(vec.rad) * radius,       @hh - sin(vec.rad) * radius
-      @gfx.lineTo @hw - cos(vec.rad) * radius * 1.1, @hh - sin(vec.rad) * radius * 1.1
+      vec = NavCom.steer s,VEHICLE,'pursuit'
+      g.beginFill 0, 0
+      g.lineStyle 2, 0xFFFF00, 0.3
+      g.moveTo WDB2, HGB2
+      g.lineTo WDB2 + vec.force[0], HGB2 + vec.force[1]
+      g.endFill()
+      g.beginFill 0, 0
+      g.lineStyle 1, 0xFFFF00, 1
+      g.moveTo WDB2 - cos(vec.rad) * radius,       HGB2 - sin(vec.rad) * radius
+      g.lineTo WDB2 - cos(vec.rad) * radius * 1.1, HGB2 - sin(vec.rad) * radius * 1.1
 
       # STATS
-      @gfx.beginFill(0xFFFF00,.5); @gfx.endFill @gfx.drawRect 10, 120, s.armour  / s.armourMax  * 100, 8, 5
-      @gfx.beginFill(0x0000FF,.5); @gfx.endFill @gfx.drawRect 10, 130, s.shield / s.shieldMax * 100, 8, 5
+      g.beginFill(0xFFFF00,.5); g.endFill g.drawRect 10, 120, s.armour  / s.armourMax  * 100, 8, 5
+      g.beginFill(0x0000FF,.5); g.endFill g.drawRect 10, 130, s.shield / s.shieldMax * 100, 8, 5
 
 
     # TEXT
@@ -161,7 +136,7 @@ $static 'HUD', new class HUDRenderer
       cid = NUU.targetClass
       list = ['ship','stel','roid']
       s.ap_dist = s.pdist
-      s.ap_eta = Math.round( s.ap_dist / (Math.sqrt( Math.pow(pl.m[0],2) + Math.pow(pl.m[1],2) ) / 0.04))
+      s.ap_eta = Math.round( s.ap_dist / (Math.sqrt( Math.pow(VEHICLE.m[0],2) + Math.pow(VEHICLE.m[1],2) ) / 0.04))
       t += "#{s.name} [#{list[cid]}:#{NUU.target.id}]\n"
       t += "ds: #{hdist s.ap_dist}\n"
       t += "m: #{round s.m[0]}x #{round s.m[0]}y\n"
@@ -169,32 +144,38 @@ $static 'HUD', new class HUDRenderer
       t += "plan: #{NUU.targetMode}\n\n"
     else t += 'no target\n'
 
-    t += if p.primary.slot?   then "[#{p.primary.id}] #{p.primary.slot.name}\n" else "#1 locked\n"
-    t += if p.secondary.slot? then "[#{p.secondary.id}] #{p.secondary.slot.name}" else "#2 locked\n"
+    if ( p = NUU.player )
+      t += if p.primary.slot?   then "[#{p.primary.id}] #{p.primary.slot.name}\n" else "#1 locked\n"
+      t += if p.secondary.slot? then "[#{p.secondary.id}] #{p.secondary.slot.name}" else "#2 locked\n"
 
     t += '\n\n' + k+': '+v for k,v of @widgetList
 
     @text.setText t
 
     @notice.setText Notice.queue.join '\n'
-    @notice.position.set @wd - 20 - @notice.width, 10
+    @notice.position.set WIDTH - 20 - @notice.width, 10
 
     # STATS
-    fps = round((now - @startTime) / @frame)
-    t = "tps[#{fps}] " +
-      "co[#{pl.d}|x#{pl.x.toFixed 0}|y#{pl.y.toFixed 0}] " + 
-      "m[x#{round pl.m[0]}|y#{round pl.m[1]}:#{round $v.dist $v.zero, pl.m}] " +
-      "s[#{pl.state}] "+
-      "sc[#{Scanner.scale}] "+
-      "ping[#{round Ping.trip.avrg}]"+ 
+    fps = round((TIME - @startTime) / @frame)
+    t = "[tps#{fps}|" +
+      "o#{$obj.list.length}|"+
+      "v#{Sprite.visibleList.length}]"+
+      " co[#{parseInt VEHICLE.d}|#{VEHICLE.x.toFixed 0}|#{VEHICLE.y.toFixed 0}|" +
+      "m[#{round VEHICLE.m[0]}|#{round VEHICLE.m[1]}|#{round $v.dist $v.zero, VEHICLE.m}] " +
+      "s[#{VEHICLE.state.S}]]"+
+      "| sc[#{Scanner.scale}] "+
+      "| rx[#{NET.PPS.in}(#{parseInt NET.PPS.inAvg.avrg})] "+
+      " tx[#{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg})] "+
+      " ping[#{round Ping.trip.avrg}]"+
       "dt[#{round Ping.delta.avrg}]"+
       "er[#{round Ping.error.avrg}]"+
       "skew[#{round Ping.skew.avrg}]"
     @debug.setText t
 
-
-Sprite.relAngle = (me,it) ->
-  ( 360 - (Math.atan2(it.x - me.x, it.y - me.y) * 180 / PI) - 90 ) % 360 / RAD
+  widgetList: []
+  widget: (name,value)->
+    if value then @widgetList[name] = value
+    else delete @widgetList[name]
 
 Kbd.macro 'targetClassNext','Sy','Select next target class', ->
   list = [Ship.byId,Stellar.byId,$obj.byId]
@@ -229,7 +210,7 @@ Kbd.macro 'targetPrev','g','Select next target', ->
   NUU.emit 'newTarget', NUU.target
 
 Kbd.macro 'targetClosest','u','Select closest target', ->
-  v = NUU.vehicle
+  v = VEHICLE
   list = [Ship.byId,Stellar.byId,$obj.byId]
   cl = list[NUU.targetClass]
   closest = null

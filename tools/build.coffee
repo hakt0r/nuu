@@ -98,22 +98,6 @@ require('./csmake.coffee')(
   assets: (c)-> depend(contrib,sources)( -> $s [
     mkdir 'build/imag'
     linkFilesIn 'client/gfx', 'build/imag'
-    (c) ->
-      list = {}
-      read = (dir)->
-        for file in fs.readdirSync dir
-          p = dir + '/' + file
-          stat = fs.statSync p
-          if stat.isDirectory()
-            read p
-          else if file.match /\.(png|jpg|gif)$/
-            r = fast_image_size p
-            delete r.image
-            delete r.type
-            list[p] = r
-      read 'build'
-      fs.writeFileSync 'build/images.json', JSON.stringify list
-      c null
    ],c )
 
   run: (c)-> depend(assets)(->

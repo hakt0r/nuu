@@ -66,12 +66,12 @@ $public class State
     @x = parseInt if x then x else o.x
     @y = parseInt if y then y else o.y
     @d = parseInt if d then d else o.d
-    @m = (if m then m else @o.m).slice() 
+    @m = (if m then m else @o.m).slice()
     @a = if a then a else o.a
     @t = if t then t else TIME
     if relto? and ( @relto = $obj.byId[relto] )
       @relto.update()
-    o.update = => @update()
+    o.update = @update.bind @
     @convert null if @convert
     @update null
 
@@ -82,7 +82,7 @@ Object.defineProperty State::, 'p',
 State.toKey = toKey = []
 State.toConstructor = toConstructor = []
 
-State.register = (name,value) -> 
+State.register = (name,value) ->
   value::S = ( toKey.push name ) - 1
   toConstructor.push @[name] = value
   value
@@ -173,7 +173,7 @@ State.register 'orbit', class orbit extends State
   update: ->
     return null if @lastUpdate is TIME
     @relto.update()
-    deltaT = ( TIME - @lastUpdate ) / TICK 
+    deltaT = ( TIME - @lastUpdate ) / TICK
     ticks  = ( TIME - @t ) / TICK
     @lastUpdate = TIME
     @dir = @offs + ( ticks * @step ) % TAU

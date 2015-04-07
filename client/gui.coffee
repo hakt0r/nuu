@@ -60,7 +60,7 @@ window.showSlots = ->
   w = new Window title : 'Equipment'
 
   #w.body.append i = new Image
-  #i.src = NUU.vehicle.img.src
+  #i.src = VEHICLE.img.src
   mkslotsel = (button,type,slot) ->
     button.on 'click', ->
       w = new Window title:"Select: #{type} (#{slot.size})"
@@ -86,7 +86,7 @@ window.showSlots = ->
         if (sp = Sprite.outfit[sprite = tpl.stats.gfx_store]) and sp.obj
           img.src = sp.obj.src
         else
-          img.src = Asset.imag.loading.src
+          img.src = '/build/imag/loading.png'
           Sprite.outfit sprite, (i) -> img.src = i.src
 
   mkslot = (type,slot) ->
@@ -109,10 +109,10 @@ window.showSlots = ->
       if (sp = Sprite.outfit[sprite = e.stats.gfx_store]) and sp.obj
         img.src = sp.obj.src
       else
-        img.src = Asset.imag.loading.src
+        img.src = '/build/imag/loading.png'
         Sprite.outfit sprite, (i) -> img.src = i.src
     x.appendTo w.body
-  for type, slots of NUU.vehicle.slots
+  for type, slots of VEHICLE.slots
     for id, slot of slots
       mkslot type, slot
 

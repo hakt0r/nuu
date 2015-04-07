@@ -1,4 +1,18 @@
 {
+  "require": [
+    "colors",
+    "crypto",
+    "express",
+    "express-ws",
+    "fs",
+    "path",
+    "util",
+    ["_","underscore"],
+    ["Crypto","crypto"],
+    ["EventEmitter","events","EventEmitter"],
+    ["flatfile","flat-file-db"],
+    ["$v","vectors"]
+  ],
   "sources": [
     "objects",
     "missile",

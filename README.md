@@ -1,7 +1,16 @@
-## nuu - space game :D
-NUU is to be a (massive) multiplayer game heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s "[Escape Velocity](http://www.ambrosiasw.com/games/evn/)" and it's excellent open-source clone "[naev](http://blog.naev.org/)" which currently lends NUU it's **assets**. It's not finished yet and probably will stay that way for a long time ;)
+## nuu
+NUU is to be a (massive) multiplayer game of space trade and combat. 
+
+It's **not finished yet** and probably will stay that way for a long time ;)
 
 ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot.png "NUU in action - screenshot")
+
+### History / Pointers
+NUU is heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money.
+
+It's excellent open-source clone [naev](http://blog.naev.org/) currently lends NUU it's **assets**. It's a very nice singleplayer game packed with weeks of fun and it is still being extended and improved.
+
+A **strong** pointer to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video_game)) should also be extended, explaining the continuous efforts to enable gravity in a playable way :)
 
 ### Building
 

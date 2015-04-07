@@ -1,6 +1,6 @@
 {
   "name": "nuu",
-  "version": "0.4.70",
+  "version": "0.4.71",
   "description": "escape velocity clone space sim browser game",
   "main": "index.js",
   "scripts": {
@@ -30,7 +30,7 @@
     "file-size" : "0.0.5",
     "uglify-js" : "2.4.13",
     "underscore" : "1.6.0",
-    "browserify" : "3.30.2",
+    "browserify" : "9.0.8",
     "voronoi-map" : "0.0.1",
     "body-parser" : "1.0.2",
     "compression" : "1.0.1",

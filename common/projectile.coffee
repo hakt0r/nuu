@@ -47,7 +47,7 @@ Weapon.Projectile = ->
     @release console.log 'emergency-release trigger' if @release isnt $void
     @release = =>
       fire.stop = true
-      @release = $void 
+      @release = $void
     detector = (v) => =>
       if v.tt < TIME
         Array.remove Weapon.proj, v

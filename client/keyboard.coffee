@@ -48,7 +48,7 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     else if navigator.appName.match(/Netscape/g)? and navigator.appVersion.match(/X11/g)?
       @layout = "unix/mozilla"
 
-    sendAction = => NET.state.write(NUU.vehicle,[
+    sendAction = => NET.state.write(VEHICLE,[
       @state[@mmap["accel"]],
       @state[@mmap["retro"]],
       @state[@mmap["steerRight"]],
@@ -133,16 +133,16 @@ Kbd.macro 'orbit', 'm', 'Land / Dock / Enter Orbit', ->
   NET.action.write(NUU.target,NUU.targetMode) if NUU.target
 
 Kbd.macro 'weapNext',    'i', 'Next weapon (primary)', ->
-  NUU.vehicle.nextWeap(NUU.player)
+  VEHICLE.nextWeap(NUU.player)
 
 Kbd.macro 'weapPrev',    'o', 'Previous weapon (primary)', ->
-  NUU.vehicle.prevWeap(NUU.player)
+  VEHICLE.prevWeap(NUU.player)
 
 Kbd.macro 'weapNextSec', 'Si', 'Next weapon (secondary)', ->
-  NUU.vehicle.nextWeap(NUU.player,'secondary')
+  VEHICLE.nextWeap(NUU.player,'secondary')
 
 Kbd.macro 'weapPrevSec', 'So', 'Previous weapon (secondary)', ->
-  NUU.vehicle.prevWeap(NUU.player,'secondary')
+  VEHICLE.prevWeap(NUU.player,'secondary')
 
 Kbd.macro 'primaryTrigger', ' ', 'Primary trigger',
     dn:-> NUU.player.primary.trigger()

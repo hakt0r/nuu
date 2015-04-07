@@ -93,7 +93,7 @@ module.exports = (__targets) ->
     c null
 
   global.depend = (deps...)-> (c)->
-    $s deps, -> c null        
+    $s deps, -> c null
 
   global.target = (obj={}) ->
     for name, fnc of obj

@@ -32,22 +32,22 @@ Ship::updateMods = -> # calculate mods
             if @mods[k] then @[k] += v
             else @[k] = v
             @mods[k] = true
-            # console.log 'mod::', k, v
+  console.log 'mass::', @stats.mass - @mass
 
   # apply mods
   map =
-    thrust:      @thrust_mod || 100
-    turn:        @turn_mod   || 100
-    shield:      @shield_mod || 100
-    shieldMax:   @shield_mod || 100
-    shieldRegen: @shield_mod || 100
+    thrust:      @stats.thrust_mod || 100
+    turn:        @stats.turn_mod   || 100
+    shield:      @stats.shield_mod || 100
+    shieldMax:   @stats.shield_mod || 100
+    shieldRegen: @stats.shield_mod || 100
   @[k] += @[k] * ( v / 100 ) for k,v of map
 
   # scale model values
-  @armourMax = @armour = @armour / 1000
+  @armourMax = @armour = @stats.armour / 1000
   @fuelMax   = @fuel   = @fuel * 1000
-  @turn   = @turn    / 10
-  @thrust = @thrust  / 100
+  @turn      = @turn    / 10
+  @thrust    = @thrust  / 100
 
   # add/exchange model-worker
   add = null
@@ -62,7 +62,7 @@ Ship::updateMods = -> # calculate mods
 
 Ship::mockSystems = -> # equip fake weapons for development
   MockWeap = ["CheatersLaserCannon","CheatersRagnarokBeam","EnygmaSystemsSpearheadLauncher"]
-  Mock = 
+  Mock =
     utility:
       large: Object.keys Item.byType.utility.large
       medium: Object.keys Item.byType.utility.medium

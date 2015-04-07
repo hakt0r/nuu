@@ -36,7 +36,7 @@ class NavCom
     reldir = dir-((s.d+90)%360)
     return [ true, 180 < reldir or reldir < 0, dir, reldir ] if abs(reldir) >= limit
     return [ false, false, dir, reldir ]
- 
+
   @seek: (ship, target, maxSpeed, slowingRadius) ->
     maxSpeed      = @maxSpeed      ship, target unless maxSpeed
     slowingRadius = @slowingRadius ship, target unless slowingRadius

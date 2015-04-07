@@ -26,7 +26,7 @@ Weapon.Launcher =->
     new Missile source:vehicle, target:target
 
 $obj.register class Missile extends $obj
-  @implements: [$abstract.Missile]
+  @implements: [$Missile]
   @interfaces: [$obj]
 
   constructor: (opts={})->
@@ -71,8 +71,8 @@ $obj.register class Missile extends $obj
       else if 4 < abs( dif ) < 11
         @left = @right = no
         @d = dir
-        state = 2
-      else state = 3
+        state = 3
+      else state = 4
       @changeState() if state isnt prevState
       prevState = state
       null

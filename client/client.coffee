@@ -25,28 +25,75 @@ $static.list     = window
 window.$public   = (args...) -> window[a.name] = a for a in args
 window.$cue      = (f) -> setTimeout 0,f
 
+###
+  Client-specific constants / $statics
+###
+
 $static 'isClient', yes
 $static 'isServer', no
+$static 'debug', no
+
+$static 'VEHICLE', d:0, x:0, y:0, m: [0,0], update: (->), updateSprite: (->), state:S:'none'
+
+$static 'WIDTH',  640
+$static 'HEIGHT', 480
+$static 'WDB2',   320
+$static 'HGB2',   240
+$static 'WDT2',   1280
+$static 'HGT2',   960
+
+###
+  Load the more strightforward deps
+###
 
 console.log 'NUU.loading.deps'
-$public require('events').EventEmitter
-$public require('buffer').Buffer
-$static 'app',   new EventEmitter
-$static '$',     require 'jquery'
-$static '_',     require('underscore')
-$static 'vm',    require('voronoi-map')
-$static 'async', require 'async'
-$static 'PIXI',  require 'pixi.js'
 
-SHA = require('jssha')
-$static 'sha512', (data) ->
-  h = new SHA data, 'TEXT'
-  h.getHash 'SHA-512', 'HEX'
+for lib in deps.client.require
+  if Array.isArray lib
+    if lib.length is 3
+         $static lib[0], require(lib[1])[lib[2]]
+    else $static lib[0], require(lib[1])
+  else   $static lib,    require(lib)
+
+$static 'app', new EventEmitter
+
+###
+  WebGL with Canvas fallback powered by PIXI.js
+  # PITFALL: Hack PIXI to use Cache
+###
+
+PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode) ->
+  baseTexture = PIXI.BaseTextureCache[imageUrl]
+  if !baseTexture
+    Cache.get imageUrl, (cachedUrl) ->
+      baseTexture.updateSourceImage cachedUrl
+    image = new Image
+    image.src = imageUrl
+    baseTexture = new (PIXI.BaseTexture)(image, scaleMode)
+    baseTexture.imageUrl = imageUrl
+    PIXI.BaseTextureCache[imageUrl] = baseTexture
+    if imageUrl.indexOf(PIXI.RETINA_PREFIX + '.') != -1
+      baseTexture.resolution = 2
+  baseTexture
 
 console.log 'NUU.libs.loading'
 
-$ ->
-  console.log 'NUU.runtime.ready'
-  app.emit 'runtime:ready'
+$ -> app.emit 'runtime:ready'
 
-app.on 'assets:ready', -> NUU.init()
+app.on 'gfx:ready', ->
+  
+  $static 'vt', new VT100
+
+  async.parallel [
+    (c) -> $.ajax('/build/objects.json').success (result) ->
+      Item.init result
+      c null
+  ], =>
+    unless debug then NUU.loginPrompt()
+    else $timeout 500, => NET.login 'anx', sha512(''), -> vt.unfocus()
+    rules NUU
+  null
+
+  NUU.on 'start', ->
+    @time = -> Ping.remoteTime()
+    @thread 'ping', 500,  Ping.send

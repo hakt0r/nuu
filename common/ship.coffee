@@ -50,11 +50,12 @@ $obj.register class Ship extends $obj
   fuel: 100
   fuelMax: 100
 
-  sprite: 'shuttle'
+  sprite:
+    name: 'shuttle'
+    cols:  18
+    rows:  6
+    count: 108
   size: 32
-  cols: 18
-  rows: 6
-  count: 108
 
   mount: []
   inventory: []
@@ -93,7 +94,7 @@ $obj.register class Ship extends $obj
 
   hit: (src,wp) ->
     return if @destructing
-    dmg = wp.stats.damage
+    dmg = wp.stats
     if @shield > 0
       @shield -= dmg.penetrate
       if @shield < 0

@@ -20,14 +20,6 @@
 
 ###
 
-_ = require 'underscore'
-fs = require 'fs'
-util = require 'util'
-path = require 'path'
-events = require 'events'
-
-flatfile = require 'flat-file-db'
-
 functions =
   create: (name,data) ->
     if @fields then for k,v of @fields when not data[k]

@@ -41,34 +41,73 @@ $public class Drone extends Ship
     @primaryWeap = @slots.weapon[0].equip
     Drone.list.push @
 
+    update    = false
+    state     = 0
+    prevState = 0
+    prototype = Item.tpl[@tpl]
+    vdiff     = [0,0]
+
     $worker.push @autopilot = =>
-      if ( not @target or @target.destructing ) and NUU.players[0]?
-        closest = null
-        closestDist = Infinity
-        for p in NUU.players
-          if closestDist > d = $dist(@,p.vehicle) and not p.vehicle.destructing
-            closestDist = d
-            closest =  p.vehicle
-        @target = closest
+
+      @selectTarget() if ( not @target or @target.destructing )
       return 1000 unless @target
-      vec = NavCom.autopilot @, @target
-      @inRange = vec.dist < 300
-      if not @fire and @inRange
-        # console.log 'engage', @primaryWeap.id
-        NET.weap.write('ai',0,@primarySlot,@,@target)
-        @fire = on
-      else if @fire and not @inRange
-        # console.log 'disengage', @primaryWeap.id
-        NET.weap.write('ai',1,@primarySlot,@,@target)
-        @fire = off
-      unless vec.flags is @flags
-        # console.log 'update', @id, vec.state
-        @left  = vec.left
-        @right = vec.right
-        @accel = vec.accel
-        @changeState()
+
+      @update @target.update()
+      dx = parseInt @target.x - @x
+      dy = parseInt @target.y - @y
+      dst = dx * dx + dy * dy
+
+      # moving target
+      if ( spd = $v.mag @m ) > 0
+        tfuture = $v.add(@target.p,$v.mult(@target.m.slice(), dst / spd ))
+        dx = parseInt tfuture[0] - @x
+        dy = parseInt tfuture[1] - @y
+        dst = dx * dx + dy * dy
+      F  = $v.mult($v.normalize($v.sub(tfuture-@p)),30)
+      dF = $v.sub(@m.slice(),F)
+      DF = $v.mag dF
+
+      dir = parseInt NavCom.fixAngle( atan2( dx, -dy ) * RAD )
+      dif = $v.smod( dir - @d + 180 ) - 180
+
+      state = 1
+      @accel = off
+      if abs( dif ) is 0
+        unless ( @inRange = dst < 300 )
+          if DF > 1
+            state = 1
+            @accel = true
+          if @fire
+            # console.log 'disengage', @primaryWeap.id
+            NET.weap.write('ai',1,@primarySlot,@,@target)
+            @fire = off
+        else unless @fire
+          # console.log 'engage', @primaryWeap.id
+          NET.weap.write('ai',0,@primarySlot,@,@target)
+          @fire = on
+      else if abs( dif ) > 10
+        @left  = -180 < dif < 0
+        @right = not @left
+        state = if @left then 3 else 4
+      else if 4 < abs( dif ) < 11
+        @left = @right = no
+        @d = dir
+        state = 5
+      @changeState() if state isnt prevState
+      prevState = state
       null
     null
+
+  selectTarget: ->
+    @target = null
+    if NUU.players[0]?
+      closest = null
+      closestDist = Infinity
+      for p in NUU.players
+        if closestDist > d = $dist(@,p.vehicle) and not p.vehicle.destructing
+          closestDist = d
+          closest =  p.vehicle
+      @target = closest
 
   destructor: ->
     Array.remove Drone.list, @

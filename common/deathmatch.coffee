@@ -22,7 +22,7 @@
 
 DRONES_ACTIVE = yes
 DRONES_MAX    = 1
-ROIDS_MAX     = 1
+ROIDS_MAX     = 100
 
 rules.server = ->
   rules.stats = stats = {}

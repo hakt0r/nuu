@@ -44,7 +44,7 @@ NUU.init =->
   rules @
   now = Date.now
   @thread 'group', 1000, =>
-    TIME  = now()
-    ETIME = Math.floor(TIME/1000000)*1000000
+    global.TIME  = now()
+    global.ETIME = Math.floor(TIME/1000000)*1000000
     o.update() for o in $obj.list
   @start()

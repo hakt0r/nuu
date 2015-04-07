@@ -28,7 +28,7 @@ $static 'Mouse', new class MouseInput
   update: -> (evt) =>
     evt = evt.originalEvent
     @event = e = [ evt.offsetX, evt.offsetY ]
-    @dest  = c = [ Sprite.main.hw, Sprite.main.hh ]
+    @dest  = c = [ Sprite.hw, Sprite.hh ]
     @destdir   = parseInt $v.heading(e,c) * RAD
     null
 
@@ -41,11 +41,11 @@ $static 'Mouse', new class MouseInput
 
   callback: (v) -> =>
     return unless @destdir
-    @reldir = $v.reldeg(NUU.vehicle.d,@destdir)
+    @reldir = $v.reldeg(VEHICLE.d,@destdir)
     [ accel, boost, left, right, retro ] = NET.getFlags v.flags
     if abs(@reldir) > 10
       right = not ( left = @reldir > 0 )
-      @status = ( if left then 'left' else 'right' ) + ": " + @reldir 
+      @status = ( if left then 'left' else 'right' ) + ": " + @reldir
     else if abs(@reldir) > 0
       left = right = no
       v.d = ( v.d - @reldir ) % 360
@@ -63,12 +63,12 @@ $static 'Mouse', new class MouseInput
 
   macro: -> =>
     @state = not @state
-    @obj = Sprite.main.bg
+    @obj = Sprite.fg
     @obj.interactive = true
     if @state
       @obj.hitArea = new PIXI.Rectangle 0, 0, 2000, 2000
       @obj.click = @update()
-      @timer = setInterval @callback(NUU.vehicle), TICK
+      @timer = setInterval @callback(VEHICLE), TICK
     else @reset()
     null
 

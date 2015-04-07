@@ -20,16 +20,6 @@
 
 ###
 
-class Mean
-  constructor : -> @reset()
-  reset : (v) ->
-    @last = 0; @total = 0; @count = 0; @avrg = 0
-  add : (v) ->
-    @count++
-    @last = v
-    @total += v
-    @avrg = @total / @count
-
 $public class RTPing extends Mean
   INTERVAL : 500
 
@@ -56,7 +46,7 @@ $public class RTPing extends Mean
       NUU.on 'connect', =>
         timer = $interval @INTERVAL, =>
           id = ++@ringId % 32
-          local = @ringBf[id] = Date.now() 
+          local = @ringBf[id] = Date.now()
           msg = new Buffer [NET.pingCode,id,0,0,0,0,0,0,0,0]
           msg.writeDoubleLE local, 2
           NET.send msg.toString('binary')
@@ -100,7 +90,7 @@ $public class RTPing extends Mean
 if isClient
   RTPing::remoteTime = ->
     now = Date.now()
-    skew = (now - @lastLocalTime) / @INTERVAL * @skew.avrg # total skew since last sync 
+    skew = (now - @lastLocalTime) / @INTERVAL * @skew.avrg # total skew since last sync
     return now - @delta.avrg + skew                        # now - delta to server + clock skew
 
 $static 'Ping', new RTPing

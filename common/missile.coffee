@@ -30,7 +30,7 @@ $abstract 'Missile',
   init: $void
   toJSON: -> id:@id,key:@key,state:@state,target:@target.id,ttl:@ttl
 
-# client implements the simple case 
+# client implements the simple case
 return unless isClient
 
 Weapon.Launcher =->
@@ -38,5 +38,5 @@ Weapon.Launcher =->
   @trigger = $void
 
 $obj.register class Missile extends $obj
-  @implements: [$abstract.Missile]
+  @implements: [$Missile]
   @interfaces: [$obj,Debris]

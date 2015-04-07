@@ -21,8 +21,6 @@
 ###
 
 $static 'Scanner', new class ScannerRenderer
-  ox     : 0
-  oy     : 0
   id     : 0
   type   : 0
   width  : 150
@@ -31,64 +29,53 @@ $static 'Scanner', new class ScannerRenderer
   active : true
   label  : {}
 
-  render : ->
-    return unless NUU.vehicle
-    @gfx = Sprite.scan
-    @gfx.clear()
-    $win = $(window)
-    wd = $win.width()
-    hg = $win.height()
-    px = py = 0
-    pl = NUU.player
-    tg = NUU.target
-    px = floor pl.x
-    py = floor pl.y
-    hw = wd / 2
-    hh = hg / 2
-    dist = (s) -> Math.sqrt(Math.pow(px-s.x,2)+Math.pow(py-s.y,2))
-    if (pl = NUU.vehicle) # re-using pl reference
-      px = floor pl.x
-      py = floor pl.y
-      dx = floor px * -1 + @ox
-      dy = floor py * -1 + @oy
-      for i,s of Stellar.byId 
-        x    = max 10, min wd-10, hw + (s.x - px) / @scale
-        y    = max 10, min wd-10, hh + (s.y - py) / @scale
-        size = max 1,  min 5,     floor s.size / @scale
-        s.pdist = dist s
-        @gfx.beginFill 0xFFFF00
-        @gfx.drawRect x,y,size,size
-        @gfx.endFill()
-        unless @label[s.id]
-          @gfx.addChild @label[s.id] = new PIXI.Text ( s.name || 'ukn' ), font: '10px monospace', fill: 'red'
-        else @label[s.id].position.set x, y
-      @gfx.fillAlpha = .5
-      for s in Debris.list.concat(Cargo.list).concat(Asteroid.list)
-        x    = max 10, min wd-10, hw + (s.x - px) / @scale
-        y    = max 10, min hg-10, hh + (s.y - py) / @scale
-        size = max 1.5, min 3,    floor s.size / @scale
-        x = wd if x > wd; x = 0  if x < 0
-        y = hg if y > hg; y = 0  if y < 0
-        s.pdist = dist s
-        @gfx.beginFill 0xCCCCCC
-        @gfx.drawRect x,y,size,size
-        @gfx.endFill()
-      @gfx.fillAlpha = 1
-      for i,s of Ship.byId
-        s.pdist = dist s
-        x    = max 10, min wd-10, hw + (s.x - px) / @scale
-        y    = max 10, min wd-10, hh + (s.y - py) / @scale
-        size = max 1, min 2.5,    floor s.size / @scale
-        @gfx.beginFill 0xFF00FF
-        @gfx.drawRect x,y,size,size
-        @gfx.endFill()
-        unless @label[s.id]
-          @gfx.addChild @label[s.id] = new PIXI.Text ( s.name || 'ukn' ), font: '10px monospace', fill: 'red'
-        else @label[s.id].position.set x, y
-    null
+  constructor: ->
+    @gfx = Sprite.layer 'scan', new PIXI.Graphics
+    #app.on '$obj:add', @addLabel()
+    #app.on '$obj:del', @removeLabel()
+    Sprite.renderScanner = @render.bind @
 
-Kbd.macro 'scanPlus',  '+', 'Zoom scanner in', ->
-  Scanner.scale = Scanner.scale / 2
+  addLabel: -> (s) =>
+    @removeLabel s if @label[s.id]
+    @gfx.addChild @label[s.id] = new PIXI.Text ( s.name || 'ukn' ),
+      font: '10px monospace', fill: 'white'
 
-Kbd.macro 'scanMinus', '-', 'Zoom scanner out', ->
-  Scanner.scale = Scanner.scale * 2
+  removeLabel: -> (s) => if @label[s.id]
+    @gfx.removeChild @label[s.id]
+    delete @label[s.id]
+ 
+  color:
+    Ship:     0xFF00FF
+    Stellar:  0xFFFF00
+    Debris:   0xCCCCCC
+    Cargo:    0xCCCCCC
+    Asteroid: 0xCCCCCC
+
+  render: -> if ( pl = VEHICLE )
+    px = pl.x
+    py = pl.y
+    l = @label
+    ( g = @gfx ).clear()
+    for s in $obj.list
+      x = max 10, min WIDTH  - 10, WDB2 + (s.x - px) / @scale
+      y = max 10, min HEIGHT - 10, HGB2 + (s.y - py) / @scale
+      w = max 2,  min 5,                floor s.size / @scale
+      g.beginFill @color[s.constructor.name] || 0xFFFFFF
+      g.endFill g.drawRect x, y, w, w
+      l[s.id].position.set x, y if l[s.id]
+
+  toggle: ->
+    @active = not @active
+    #console.log Sprite.stage.children.indexOf @gfx
+    if @active then Sprite.stage.addChild @gfx
+    else Sprite.stage.removeChild @gfx
+
+  zoomIn: ->
+    Scanner.scale = max 0.25, Scanner.scale / 2
+
+  zoomOut: ->
+    Scanner.scale = Scanner.scale * 2
+
+Kbd.macro 'scanToggle', 'S+', 'Toggle Scanner',   -> Scanner.toggle()
+Kbd.macro 'scanPlus',   '+',  'Zoom scanner in',  -> Scanner.zoomIn()
+Kbd.macro 'scanMinus',  '-',  'Zoom scanner out', -> Scanner.zoomOut()
