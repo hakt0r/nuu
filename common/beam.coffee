@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -50,9 +50,11 @@ class BeamInstance
 Weapon.Beam =->
   @release = $void
   @trigger = (src,vehicle,slot,target)=>
-    @release console.log 'emergency-release trigger' if @release isnt $void
+    if @release isnt $void
+      # console.log 'emergency-release trigger'
+      do @release
     @duration = @stats.duration.$t * 100
-    @range    = @stats.range || 150
+    @range = @stats.range || 300
     # TODO: implement recharge
     @release = =>
       @release = $void

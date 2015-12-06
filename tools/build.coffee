@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -20,9 +20,11 @@
 
 ###
 
+
 require('./csmake.coffee')(
 
   init: (c) ->
+    global.NUUWD = path.join path.dirname __dirname
     global.targets =
       common : JSON.parse fs.readFileSync './common/build.json'
       server : JSON.parse fs.readFileSync './server/build.json'
@@ -46,26 +48,19 @@ require('./csmake.coffee')(
     'build/common'
    )(c)
 
-  naev: (c) -> depend(dirs)( -> $s [
-    fetch       'contrib/naev.zip', 'https://github.com/bobbens/naev/archive/master.zip'
-    unzip       'contrib/naev.zip', 'contrib/naev-master'
-    link        'contrib/naev-master/dat/gfx/ARTWORK_LICENSE', 'build/ARTWORK_LICENSE.txt'
-    link        'contrib/naev-master/dat/snd/SOUND_LICENSE',   'build/SOUND_LICENSE.txt'
-    link        'contrib/naev-master/dat/gfx/spfx',            'build/spfx'
-    link        'contrib/naev-master/dat/gfx/ship',            'build/ship'
-    link        'contrib/naev-master/dat/gfx/outfit',          'build/outfit'
-    link        'contrib/naev-master/dat/snd/sounds',          'build/sounds'
-    linkFilesIn 'contrib/naev-master/dat/gfx/bkg',             'build/stel'
-    linkFilesIn 'contrib/naev-master/dat/gfx/bkg/star',        'build/stel'
-    linkFilesIn 'contrib/naev-master/dat/gfx/planet/space',    'build/stel'
-    generate    'build/objects.json',                          'import_naev.coffee'
-   ],c )
+  assets: (c)->
+    dirs = fs.readdirSync('mod')
+    series = []
+    series.push require f for d in dirs when fs.existsSync f = path.join NUUWD, 'mod', d, 'build.coffee'
+    $s series, ->
+      console.log 'done'
+      c null
 
   node: (c)-> depend(dirs)( ->
-    generate('build/node_packages.html','import_npm.coffee')(c)
+    generate('build/node_packages.html',path.join NUUWD,'tools','import_npm.coffee')(c)
    )
 
-  contrib: (c)-> depend(node,naev)( -> $p (
+  contrib: (c)-> depend(node)( -> $p (
     fetch 'build/'+lib, data.url for lib, data of targets.client.contrib
    ), c )
 
@@ -95,17 +90,8 @@ require('./csmake.coffee')(
         exec('cat ' + list.join(' ') + ' > build/client.js')(c)
     ], c )
 
-  assets: (c)-> depend(contrib,sources)( -> $s [
-    mkdir 'build/imag'
-    linkFilesIn 'client/gfx', 'build/imag'
-   ],c )
-
-  run: (c)-> depend(assets)(->
-    exec("coffee server/server.coffee")(c))
-
-  debug: (c)-> depend(assets)(->
-    exec("coffee --nodejs debug server/server.coffee")(c))
-
-  all: (c)-> run c
-
+  sysgen: (c)-> depend(assets)(-> exec("coffee mod/nuu/sysgen.coffee")(c))
+  debug:  (c)-> depend(assets)(-> exec("coffee --nodejs debug server/server.coffee")(c))
+  run:    (c)-> depend(assets)(-> exec("coffee server/server.coffee")(c))
+  all:    (c)-> run c
 )

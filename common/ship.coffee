@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -57,15 +57,20 @@ $obj.register class Ship extends $obj
     count: 108
   size: 32
 
-  mount: []
-  inventory: []
-  slot: []
+  mount: null
+  inventory: null
+  slot: null
 
   constructor: (opts) ->
     super opts
     @slots = _.clone @slots
     @mockSystems() # fixme
     @updateMods()
+    @mount     = [null,null]
+    @mountType = ['helm','passenger']
+    for slot in @slots.weapon when slot and slot.equip
+      @mount.push null
+      @mountType = 'weap'
     null
 
   destructor: ->
@@ -80,8 +85,8 @@ $obj.register class Ship extends $obj
     tg = player[trigger]
     tg.id   = min ++tg.id, ws.length-1
     tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.target.id
-    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.target.id
+    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
+    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId
 
   prevWeap: (player,trigger='primary') ->
     primary = trigger is 'primary'
@@ -89,8 +94,8 @@ $obj.register class Ship extends $obj
     tg = player[trigger]
     tg.id = max 0, --tg.id
     tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.target.id
-    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.target.id
+    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
+    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId
 
   hit: (src,wp) ->
     return if @destructing

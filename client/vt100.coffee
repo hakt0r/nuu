@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -32,39 +32,58 @@ $public class VT100 extends EventEmitter
   constructor: (opts={}) ->
     @[k] = v for k,v of opts
 
-    @frame = Sprite.layer 'vt', new PIXI.DisplayObjectContainer
-    @frame.alpha = 1.0
-    @frame.addChild @bg    = new PIXI.TilingSprite PIXI.Texture.fromImage '/build/imag/starfield.png', 0, 0
+    @frame = Sprite.layer 'vt', new PIXI.Container
+    @frame.alpha = 0.9
+
     @frame.addChild @text  = new PIXI.Text 'nuu console',
-      font: "10px monospace"
+      fontFamily: 'monospace'
+      fontSize:'10px'
       fill: 'green'
     @text.position.set 23,23
-    @bg.alpha = 0.9
 
-    @frame.addChildAt (@image = PIXI.Sprite.fromImage '/build/imag/nuulogo.png'), 1
-    @image.alpha = 0.2
-    Sprite.resize()
+    @frame.addChild @copyright  = new PIXI.Text '(c) 2007-2016 Sebastian Glaser <anx@ulzq.de> and contributors\n
+      License: GNU General Public License v3
+      BACKGROUND: ESO / Serge Brunier, Frederic Tapissier\n
+      http://apod.nasa.gov/apod/image/0909/milkywaypan_brunier_2048.jpg',
+      fontFamily: 'monospace'
+      fontSize:'10px'
+      fill: 'green'
+
+    Cache.get '/build/imag/milkyway.jpg', (url)=>
+      @frame.addChildAt ( @bg = new PIXI.Sprite.fromImage '/build/imag/milkyway.jpg',0,0), 0
+      @bg.alpha = 0.7
+      Sprite.resize()
+
+    Cache.get '/build/imag/nuulogo.png', (url)=>
+      @frame.addChildAt ( @image = PIXI.Sprite.fromImage '/build/imag/nuulogo.png', 0, 0 ), 1
+      @image.alpha = 0.2
+      Sprite.resize()
 
     Sprite.on 'resize', @resize()
+    Sprite.resize()
+
     console.user = @write
     null
 
   draw: =>
     c = @cursor.x
-    @text.setText @input +
+    @text.text = @input +
       ( if @promptQuery then "\n" + @promptQuery + ": " else '' ) +
      @inputBuffer.substr(0,c) + '|' + @inputBuffer.substr(c)
 
   resize: -> (wd,hg,hw,hh) =>
     @draw()
-    @bg.width = wd
-    @bg.height = hg
+    @copyright.position.set wd - 10 - @copyright.width, hg - 10 - @copyright.height
     return unless @image
-    $timeout( 33, => @resize() wd,hg,hw,hh ) if @image.width is 1
-    @bgOffsetH = @image.width / 2
-    @bgOffsetV = @image.height / 2
-    @image.position.set hw - @bgOffsetH, hh - @bgOffsetV
+    requestAnimationFrame ( => @resize() wd,hg,hw,hh ) if @image.width is 1 or @bg.width is 1
+    @center @bg   , hw, hh
+    @center @image, hw, hh
     null
+
+  center: (image,hw,hh)->
+    bgOffsetH = image.width / 2
+    bgOffsetV = image.height / 2
+    image.position.set hw - bgOffsetH, hh - bgOffsetV
 
   stopAnimation: =>
     clearInterval @animation if @animation
@@ -77,11 +96,10 @@ $public class VT100 extends EventEmitter
     Kbd.unfocus()
     $(window).on 'keydown', @keyDown
     @draw()
-
-    @stopAnimation()
-    @animation = $interval 33, fade = =>
+    requestAnimationFrame @animation = =>
       @frame.alpha += 0.1
-      @stopAnimation @frame.alpha = 1.0 if @frame.alpha >= 1.0
+      return requestAnimationFrame @animation if @frame.alpha < 1.0
+      @frame.alpha = 1.0; @animation = null
     null
 
   unfocus: =>
@@ -90,15 +108,14 @@ $public class VT100 extends EventEmitter
     $(window).off 'keydown', @keyDown
     Kbd.focus()
     @draw()
-
-    @stopAnimation()
-    @animation = $interval 33, fade = =>
+    requestAnimationFrame @animation = =>
       @frame.alpha -= 0.1
-      @stopAnimation @frame.alpha = 0.0 if @frame.alpha <= 0.0
+      return requestAnimationFrame @animation if @frame.alpha > 0.0
+      @frame.alpha = 0.0; @animation = null
     null
 
   write: (lines) =>
-    @draw @input = lines.trim().split('\n').reverse().concat(@input).join('\n')
+    @draw @input = @input + '\n' + lines.trim()
 
   prompt: (p,callback) =>
     return false if @promptActive

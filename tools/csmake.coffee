@@ -51,9 +51,19 @@ module.exports = (__targets) ->
           ln path.join('..','..',s), d
       ), c
 
+  global.linkDirsIn = (src,dst)-> (c)->
+    fs.readdir src, (err,files)->
+      ln = (s,d)-> (c)->
+        fs.symlink s,d,c
+        console.log 'link'.grey, s, d
+      $p (
+        for f in files when fs.statSync(s = path.join src, f).isDirectory() and not fs.existsSync(d = path.join(dst,f))
+          ln path.join('..','..',s), d
+      ), c
+
   global.generate = (dst,generator)-> (c)->
     unless fs.existsSync dst
-      require('./'+generator)(dst,c)
+      require(generator)(dst,c)
     else
       console.log dst.green
       c null

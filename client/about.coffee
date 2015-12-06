@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -22,7 +22,7 @@
 
 Kbd.macro 'about', 'S/', 'Show about screen / License', ->
   about = $ """
-    <div class="about">
+    <div class="window about">
       <div class="tabs" id="tabs">
         <a class="tabbtn" href="#game">Game</a>
         <a class="tabbtn" href="#node">Libraries</a>
@@ -33,7 +33,7 @@ Kbd.macro 'about', 'S/', 'Show about screen / License', ->
       <div class="tab" id="game">
         <img src="/build/imag/nuulogo.png">
         <p/><ul>
-          <li>c) 2007-2015 Sebastian Glaser <anx@ulzq.de></li>
+          <li>c) 2007-2016 Sebastian Glaser <anx@ulzq.de></li>
           <li>c) 2007-2008 flyc0r</li>
         </ul>
 

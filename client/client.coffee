@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -42,6 +42,29 @@ $static 'HGB2',   240
 $static 'WDT2',   1280
 $static 'HGT2',   960
 
+$static 'app', {}
+
+app.defaults =
+  mouseturn: off
+  gfx: hud: off, scanner: off, speedScale: off
+
+app.saveSettings = ->
+  localStorage.setItem 'config', JSON.stringify app.settings
+  app.emit 'settings'
+  app.settings
+app.loadSettings = ->
+  try data = app.applyDefaults JSON.parse( localStorage.getItem "config" ), app.defaults
+  catch error then data = app.defaults
+  app.settings = data
+
+app.applyDefaults = (o={},d={})->
+  for k,v of d
+    if typeof v is 'object' then o[k] = app.applyDefaults o[k] || {}, v
+    else if not o[k]? then o[k] = v
+  return o
+
+do app.loadSettings
+
 ###
   Load the more strightforward deps
 ###
@@ -55,33 +78,28 @@ for lib in deps.client.require
     else $static lib[0], require(lib[1])
   else   $static lib,    require(lib)
 
-$static 'app', new EventEmitter
+app[k] = v for k,v of EventEmitter::
+EventEmitter.call app
 
 ###
   WebGL with Canvas fallback powered by PIXI.js
   # PITFALL: Hack PIXI to use Cache
 ###
 
-PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode) ->
-  baseTexture = PIXI.BaseTextureCache[imageUrl]
-  if !baseTexture
-    Cache.get imageUrl, (cachedUrl) ->
-      baseTexture.updateSourceImage cachedUrl
-    image = new Image
-    image.src = imageUrl
-    baseTexture = new (PIXI.BaseTexture)(image, scaleMode)
-    baseTexture.imageUrl = imageUrl
-    PIXI.BaseTextureCache[imageUrl] = baseTexture
-    if imageUrl.indexOf(PIXI.RETINA_PREFIX + '.') != -1
-      baseTexture.resolution = 2
-  baseTexture
+# PIXI.BaseTexture._fromImage = PIXI.BaseTexture.fromImage
+# PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode, sourceScale) ->
+#   return baseTexture if baseTexture = PIXI.utils.BaseTextureCache[imageUrl]
+#   Cache.get imageUrl, (cachedUrl) ->
+#     return unless baseTexture = PIXI.utils.BaseTextureCache[imageUrl]
+#     # baseTexture.updateSourceImage cachedUrl
+#   PIXI.BaseTexture._fromImage imageUrl, crossorigin, scaleMode, sourceScale
 
 console.log 'NUU.libs.loading'
 
 $ -> app.emit 'runtime:ready'
 
 app.on 'gfx:ready', ->
-  
+
   $static 'vt', new VT100
 
   async.parallel [
@@ -97,3 +115,4 @@ app.on 'gfx:ready', ->
   NUU.on 'start', ->
     @time = -> Ping.remoteTime()
     @thread 'ping', 500,  Ping.send
+    app.emit 'settings'

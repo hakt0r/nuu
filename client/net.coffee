@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -20,17 +20,26 @@
 
 ###
 
+NET.on 'join', (vc) ->
+  return if Ship.byId[vc.id]
+  new Ship vc
+
+NET.on '$obj:del', (opts) ->
+  # freeId.push opts.id
+  # try $obj.byId[opts.id].destructor()
+
+NET.on 'sync', (opts) -> NUU.sync opts
+
 NUU.sync = (list,callback) ->
-  for obj in list
-    unless $obj.byId[obj.id]
-      new $obj.byClass[obj.key] obj
-    else
-      console.log '$obj:exists', obj.id
+  if list.del
+    do o.destructor for id in list.del when o = $obj.byId[id]
+  if list.add then for obj in list.add
+    o.destructor console.log '$obj:exists:replace', obj.id if o = $obj.byId[obj.id]
+    new $obj.byClass[obj.key] obj
   callback null if callback
 
 NUU.firstSync = (opts,callback)->
-  @sync opts.objects
-  @player = new Player $obj.byId[opts.ship.id]
+  @player = new Player opts
   Sprite.start => @start callback
 
 NUU.loginPrompt = ->
@@ -84,10 +93,3 @@ $interval 1000, ->
   NET.PPS.inAvg.add  NET.PPS.in  = NET.RX
   NET.TX = NET.RX = 0
 # DEBUG
-
-NET.on 'join', (vc) ->
-  return if Ship.byId[vc.id]
-  new Ship vc
-
-NET.on 'sync', (opts) ->
-  NUU.sync opts

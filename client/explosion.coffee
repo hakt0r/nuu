@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -22,13 +22,11 @@
 
 $obj.register class Explosion extends $obj
   @sizes: ['exps','expm','expl','expl2']
-  @implements: [$Animated]
   @interfaces: [$obj]
   id: 'animation'
-  layer: 'fx'
-  loop: no
   parent: null
   constructor: (@parent)->
+    return unless @parent and @parent.id
     qs = @parent.size/4
     hs = @parent.size/2
     super
@@ -40,10 +38,13 @@ $obj.register class Explosion extends $obj
         y: -qs+Math.random()*hs
     Sound['explosion0.wav'].play() if Sound.on
 
+$Animated Explosion, layer: 'fx', loop: no
+
 # A collage animation to 'splode ships and stuff :>
 $Animated.destroy = (v,t) -> for i in [0...25]
   $Animated.explode v, Math.min(10000,Math.round(Math.random()*10000))
+
 $Animated.explode = (v,t) -> setTimeout ( -> new Explosion v ), t
 
-NUU.on 'ship:hit', (v) -> $Animated.explode v, Math.min(10000,Math.round(Math.random()*10000))
+NUU.on 'ship:hit',       (v) -> $Animated.explode v, 0
 NUU.on 'ship:destroyed', (v) -> $Animated.destroy v

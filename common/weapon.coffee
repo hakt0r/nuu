@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -37,7 +37,7 @@ $public class Weapon extends Outfit
 
   constructor: (name,opts={}) ->
     tpl = Item.byName[name]
-    console.log name, tpl.extends
+    # console.log name, tpl.extends
     Weapon[tpl.extends].call @
     @[k] = v for k,v of tpl
     @id = Weapon.count++

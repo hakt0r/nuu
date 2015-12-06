@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -20,12 +20,20 @@
 
 ###
 
+parseNumbers = (o)->
+  for k,v of o when v?
+    if v.match and v.match /^-?[.0-9]+$/
+      o[k] = if -1 is v.indexOf '.' then parseInt(v) else parseFloat v
+    else if typeof v is 'object'
+      parseNumbers v
+  o
+
 module.exports = (destinationFile,callback)->
   fs   = require 'fs'
   xml  = require 'xml2json'
   path = require 'path'
-  np   = path.join path.dirname(__dirname), 'contrib', 'naev-master', 'dat'
-  nu   = path.join path.dirname(__dirname), 'build'
+  np   = path.join NUUWD, 'contrib', 'naev-master', 'dat'
+  nu   = path.join NUUWD, 'build'
 
   ship  = []
   outf  = []
@@ -37,11 +45,10 @@ module.exports = (destinationFile,callback)->
   readDir  = (dir,call) -> call f for f in fs.readdirSync dir
   parseDir = (dir,call) -> for f in fs.readdirSync dir
     txt = fs.readFileSync dir + f, 'utf8'
-    d = JSON.parse(xml.toJson(txt))
+    d = parseNumbers JSON.parse(xml.toJson(txt))
     call f,d
 
   flatten = (d) ->
-
     # join specific and general into stats
     specific = d.specific; delete d.specific
     general  = d.general;  delete d.general
@@ -87,6 +94,11 @@ module.exports = (destinationFile,callback)->
       delete d.fx.gfx
     delete d.fx unless Object.keys(d.fx).length > 0
 
+    if not d.sprite and ( p = d ).type is 'ship'
+      while p = src[p.extends]
+        if p.sprite?
+          d.sprite = p.sprite; break
+        else console.log '\\', p.name, p.sprite?, d.sprite
     return d
 
   ###
@@ -114,6 +126,7 @@ module.exports = (destinationFile,callback)->
       meta[sprite+'_engine'] = meta[sprite]
       delete d.GFX
 
+    d.type = 'ship'
     flatten d
 
     d.sprite = sprite
@@ -139,6 +152,7 @@ module.exports = (destinationFile,callback)->
     else if ['launcher','turret launcher','fighter bay'].indexOf(t) isnt -1 then d.extends = 'Launcher'
     else d.extends = 'Outfit'
 
+    d.type = 'outfit'
     flatten d
     d.name = className
     outf.push d
@@ -154,22 +168,26 @@ module.exports = (destinationFile,callback)->
   ###
 
   list = {}
-  read = (dir)->
-    for file in fs.readdirSync dir
-      p = dir + '/' + file
-      stat = fs.statSync p
-      if stat.isDirectory()
-        read p
-      else if file.match /\.(png|jpg|gif)$/
-        unless ( m = meta[ k = path.basename(p).replace(/\..*?$/,'') ] )
-          m = if p.match '/spfx/' then cols:6,rows:6 else {}
-        r = fast_image_size p
-        delete r.image
-        delete r.type
-        r[k] = v for k,v of m
-        ######### console.log p, r unless r.cols
-        list['/'+p] = r
+  read = (dir)-> for file in fs.readdirSync dir
+    p = dir + '/' + file
+    if fs.statSync(p).isDirectory()
+     read p; continue
+    continue unless file.match /\.(png|jpg|gif)$/
+    f = path.basename(p).replace(/\..*$/,'')
+    n = if p.match('/store/') then f + '_store' else f
+    s = fast_image_size p
+    r = meta[ k = path.basename(p).replace(/\..*?$/,'') ] || {}
+    d = if null is ( p.match('/stel/') || p.match('/imag/') ) then 6 else 1
+    r.cols = r.cols || d
+    r.rows = r.rows || d
+    unless r.width
+      r.width  = s.width
+      r.height = s.height
+    r.size   = Math.floor Math.max r.width / r.cols, r.height / r.rows
+    r.radius = Math.floor r.size / 2
+    # console.log '@', n, r
+    list[n] = r
   read 'build'
-  fs.writeFileSync 'build/images.json', JSON.stringify list
+  fs.writeFileSync path.join( NUUWD,'build','imag','sprites_naev.json' ), JSON.stringify parseNumbers list
 
   callback null

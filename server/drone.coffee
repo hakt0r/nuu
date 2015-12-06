@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -29,89 +29,60 @@ $public class Drone extends Ship
   autopilot: null
 
   constructor: ->
-    super tpl:5,target:false,npc:yes,state:
-      S: $relative
-      x: floor random() * 1000 - 500
-      y: floor random() * 1000 - 500
+    stel = $obj.byId[ Array.random Object.keys Stellar.byId ]
+    stel.update()
+    @flags = -1
+
+    super tpl:5, target:false, npc:yes, state:
+      S: $moving
+      x: floor random() * 1000 - 500 + stel.x
+      y: floor random() * 1000 - 500 + stel.y
       d: floor random() * 359
-      relto: 0
+
+    # console.log 'Drone at', stel.name
 
     @name = "ai[##{@id}]"
     @primarySlot = @slots.weapon[0]
     @primaryWeap = @slots.weapon[0].equip
     Drone.list.push @
 
-    update    = false
-    state     = 0
-    prevState = 0
-    prototype = Item.tpl[@tpl]
-    vdiff     = [0,0]
+    $worker.push @worker = @autopilot.bind @
 
-    $worker.push @autopilot = =>
-
-      @selectTarget() if ( not @target or @target.destructing )
-      return 1000 unless @target
-
-      @update @target.update()
-      dx = parseInt @target.x - @x
-      dy = parseInt @target.y - @y
-      dst = dx * dx + dy * dy
-
-      # moving target
-      if ( spd = $v.mag @m ) > 0
-        tfuture = $v.add(@target.p,$v.mult(@target.m.slice(), dst / spd ))
-        dx = parseInt tfuture[0] - @x
-        dy = parseInt tfuture[1] - @y
-        dst = dx * dx + dy * dy
-      F  = $v.mult($v.normalize($v.sub(tfuture-@p)),30)
-      dF = $v.sub(@m.slice(),F)
-      DF = $v.mag dF
-
-      dir = parseInt NavCom.fixAngle( atan2( dx, -dy ) * RAD )
-      dif = $v.smod( dir - @d + 180 ) - 180
-
-      state = 1
-      @accel = off
-      if abs( dif ) is 0
-        unless ( @inRange = dst < 300 )
-          if DF > 1
-            state = 1
-            @accel = true
-          if @fire
-            # console.log 'disengage', @primaryWeap.id
-            NET.weap.write('ai',1,@primarySlot,@,@target)
-            @fire = off
-        else unless @fire
-          # console.log 'engage', @primaryWeap.id
-          NET.weap.write('ai',0,@primarySlot,@,@target)
-          @fire = on
-      else if abs( dif ) > 10
-        @left  = -180 < dif < 0
-        @right = not @left
-        state = if @left then 3 else 4
-      else if 4 < abs( dif ) < 11
-        @left = @right = no
-        @d = dir
-        state = 5
-      @changeState() if state isnt prevState
-      prevState = state
-      null
-    null
+  autopilot: ->
+    do @update
+    if ( not @target or @target.destructing )
+      @selectTarget()
+    return 1000 unless @target
+    if ( @inRange = abs(distance = $dist(@,@target)) < 150 )
+      v = NavCom.steer @, @target, 'aim'
+      if v.fire and not @fire
+        NET.weap.write('ai',0,@primarySlot,@,@target)
+      else if @fire and not v.fire
+        NET.weap.write('ai',1,@primarySlot,@,@target)
+    else v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
+    { turn, turnLeft, @accel, @boost, @retro, @fire } = v
+    @left = turnLeft
+    @right = turn and not turnLeft
+    do @changeState if ( @flags isnt v.flags ) or v.setDir
+    33
 
   selectTarget: ->
     @target = null
-    if NUU.players[0]?
-      closest = null
-      closestDist = Infinity
-      for p in NUU.players
-        if closestDist > d = $dist(@,p.vehicle) and not p.vehicle.destructing
-          closestDist = d
-          closest =  p.vehicle
-      @target = closest
+    return unless NUU.users.length > 0
+    closest = null
+    closestDist = Infinity
+    for p in NUU.users
+      if ( closestDist > d = $dist(@,p.vehicle) ) and ( not p.vehicle.destructing ) and ( abs(d) < 1000000 )
+        closestDist = d
+        closest =  p.vehicle
+    return @target = null if closestDist > 5000
+    console.log 'Drone SELECTED', closestDist
+    @target = closest
+    null
 
   destructor: ->
     Array.remove Drone.list, @
-    $worker.remove @autopilot
+    $worker.remove @worker
     NET.operation.write @, 'remove'
     super
     off

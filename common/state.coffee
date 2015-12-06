@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -30,18 +30,23 @@ $obj::state = $voidState
 $obj::update = $void
 
 if isServer then $obj::changeState = ->
+  # TODO: orbit modifiction (needs elliptical orbits)
+  # return console.log 'relto' if @state.relto?
+  return console.log 'locked$', @name if @locked
   @state.update true
   @a = (
-    if @boost then @thrust * Speed.boost
+    if @state.S is $orbit then 0
+    else if @boost then @thrust * Speed.boost
     else if @retro then @thrust * -.5
     else @thrust )
-  new (
-    if @right or @left then State.maneuvering
+  state = (
+    if @state.S is $orbit then State.orbit
+    else if @right or @left then State.maneuvering
     else if @accel or @retro or @boost then State.accelerating
-    else if abs(@m[0]) + abs(@m[1]) isnt 0 then State.moving
-    else State.fixed
-  )(@)
-  NET.state.write @
+    else if not ( @m[0] is @m[1] is 0 ) then State.moving
+    else State.fixed )
+  # console.log ' changeState '.white.inverse, @name, @state.name, '>', state.name if @name is 'Kestrel'
+  new state @, @x, @y, @d, @m, @a, @t, @relto
   @
 
 $obj::setState = (s) ->
@@ -62,18 +67,27 @@ $public class State
   lastUpdate: 0
   convert: false
   constructor: (o,x,y,d,m,a,t,relto) ->
-    ( @o = o ).state = @
-    @x = parseInt if x then x else o.x
-    @y = parseInt if y then y else o.y
-    @d = parseInt if d then d else o.d
-    @m = (if m then m else @o.m).slice()
-    @a = if a then a else o.a
-    @t = if t then t else TIME
-    if relto? and ( @relto = $obj.byId[relto] )
-      @relto.update()
+    ostate = o.state; @o = o; @o.state = @
+    @x = parseInt x || o.x
+    @y = parseInt y || o.y
+    @d = parseInt d || o.d
+    @m = ( m || o.m ).slice()
+    @a = a || o.a
+    @t = t || TIME
+    @relto = $obj.byId[0]
+    @relto = relto if relto? and relto.id?
+    @relto = relto if relto = $obj.byId[relto]
+    @relto.update() if @relto
     o.update = @update.bind @
-    @convert null if @convert
+    @convert ostate if @convert
     @update null
+    # console.log 'state$', @S, @o.id
+    return unless isServer
+    NET.state.write @o
+
+colorDump = (opts={})->
+  a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )
+  a.join ''
 
 Object.defineProperty State::, 'p',
   get: -> return [ @x, @y ]
@@ -83,6 +97,7 @@ State.toKey = toKey = []
 State.toConstructor = toConstructor = []
 
 State.register = (name,value) ->
+  value::name = name
   value::S = ( toKey.push name ) - 1
   toConstructor.push @[name] = value
   value
@@ -92,6 +107,7 @@ State.register 'fixed', class fixed extends State
   toJSON: -> S:@S,x:@x,y:@y,d:@d
 
 State.register 'relative', class relative extends State
+  constructor: State
   update: ->
     return null if @lastUpdate is TIME
     @lastUpdate = TIME
@@ -150,35 +166,37 @@ State.register 'maneuvering', class maneuvering extends State
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 State.register 'orbit', class orbit extends State
-  rad:  0.0
   offs: 0.0
   dir:  0.0
   step: 0.0
   lx:   0
   ly:   0
-  tmp: null
-  convert: ->
-    return console.log 'set:no_relto', $obj.byId[relto] unless @relto
-    @tmp = t = [0,0]
+  tmp:  null
+  convert: (o)->
+    return console.log 'set:no_relto' unless @relto
     dx = @x - @relto.x
     dy = @y - @relto.y
-    @offs = -(PI/2) + atan2 dx, -dy
-    @orbit = sqrt dx*dx+dy*dy
-    mx = @m[0] = max 5, @m[0]
-    my = @m[1] = max 5, @m[1]
-    t = sqrt mx*mx+my*my
-    @step  = TAU / ( @orbit / t )
-    @o.x = @x = @relto.x + cos(@offs) * @orbit
-    @o.y = @y = @relto.y + sin(@offs) * @orbit
+    @offs = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
+    @orbit = sqrt dx * dx + dy * dy
+    [ rx, ry ] = @relto.m
+    [ mx, my ] = @m
+    r = sqrt rx * rx + ry * ry
+    t = sqrt mx * mx + my * my
+    t = abs r - t
+    @step  = TAU * ( t / @orbit )
+    @lx = @o.x = @relto.x + cos(@offs) * @orbit
+    @ly = @o.y = @relto.y + sin(@offs) * @orbit
+    # console.log '$orbit', @o.id, @orbit, @offs, @step, @dir if @o.id is 20
   update: ->
+    return console.log 'update:no_relto' unless @relto
     return null if @lastUpdate is TIME
     @relto.update()
     deltaT = ( TIME - @lastUpdate ) / TICK
     ticks  = ( TIME - @t ) / TICK
     @lastUpdate = TIME
-    @dir = @offs + ( ticks * @step ) % TAU
-    @o.x = @x = @relto.x + cos(@dir) * @orbit
-    @o.y = @y = @relto.y + sin(@dir) * @orbit
+    @dir = ( TAU + @offs + ticks * @step ) % TAU
+    @o.x = @relto.x + cos(@dir) * @orbit
+    @o.y = @relto.y + sin(@dir) * @orbit
     @tmp = $v.zero.slice()
     @tmp[0] = ( @o.x - @lx ) / deltaT
     @tmp[1] = ( @o.y - @ly ) / deltaT
@@ -186,4 +204,4 @@ State.register 'orbit', class orbit extends State
     @lx = @o.x
     @ly = @o.y
     null
-  toJSON: -> S:@S,x:@o.x,y:@o.y,d:@d,m:@o.m,t:@t,relto:@relto.id
+  toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,relto:@relto.id

@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -25,11 +25,11 @@ $abstract 'Animated',
   loop: no
 
   loadAssets: ->
-    @sprite = movieFactory @sprite, '/build/spfx/' + sprite + '.png', @loop
+    @sprite = movieFactory @sprite, '/build/spfx/' + @sprite + '.png', (
+      if @loop is on then on else => @destructor() )
     { @radius, @size } = @sprite.meta
     @updateSprite()
     @sprite.play()
-    @sprite.onComplete = @hide.bind @ unless @loop
     @show @loaded = true
 
   updateSprite:->

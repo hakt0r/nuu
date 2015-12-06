@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -68,8 +68,11 @@ $public class RTPing extends Mean
         @delta.add delta
         @add trip / 2
         @lastError = remote - prediction
-        @error.add @lastError if @trip.count > 10
-        @reset() if @trip.count > 2 and Math.abs(@error.avrg) > 100000
+        if @trip.count > 10
+          @error.add @lastError
+          if abs(@error.avrg) / abs(@avrg) > 0.3
+            @reset()
+            @error.reset()
         null
       server: (msg,src) =>
         b = new Buffer [NET.pingCode,msg[1],0,0,0,0,0,0,0,0]

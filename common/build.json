@@ -1,4 +1,5 @@
 [
+  "buffer",
   "defines",
   "worker",
   "engine",

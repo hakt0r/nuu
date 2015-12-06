@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -24,37 +24,35 @@ $abstract 'Tile',
   assetPrefix: '/build/outfit/space/'
   layer: 'tile'
   count: null
-  rows: 6 # null # FIXME: add to $meta
-  cols: 6 # null # FIXME: add to $meta
 
   loadAssets: -> @loadTile( @assetPrefix + @sprite + '.png' )
 
   loadTile: (url,dest='sprite',callback=$void) ->
-    @[dest] = s = movieFactory url, url
-    if dest is 'sprite' or dest is 'spriteNormal'
-      { @radius, @size, @count } = ( @sprite = s ).meta
-      @show @updateSprite @loaded = true
-    callback null
+    callback null, @[dest] = s = movieFactory url, url
 
   updateSprite: ->
-    @update()
-    p = @sprite.position.set @x + OX - @radius, @y + OY - @radius
-    @sprite.gotoAndStop @count - parseInt @d / ( 360 / @count )
+    do @update
+    if @state.S isnt 3 then if @spriteMode is 1
+      @changeSprite @spriteNormal
+      @spriteMode = 0
+    else if @spriteMode is 0
+      @changeSprite @spriteEngine
+      @spriteMode = 1
+    @sprite.anchor.set 0.5
+    p = @sprite.position.set @x + OX, @y + OY
+    if @count is 1 then @sprite.rotation = ( @d + 90 % 360 ) / 360 * TAU
+    else @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
     true
 
 # IMPLEMENTATIONS
 
-$Tile Ship,
-  layer: 'ship'
-  loadAssets: ->
-    p = '/build/ship/' + @sprite + '/' + @sprite
-    Cache.get p + '_comm.png', (cached) => @imgCom = cached
-    @loadTile p + '_engine.png', 'spriteEngine'
-    @loadTile p + '.png', 'spriteNormal', =>
-      Sprite.repositionPlayer() if @id is VEHICLE.id
+$Tile Ship, spriteMode:0, layer: 'ship', loadAssets: ->
+  # console.log 'ship$', 'assets', @id, @name
+  p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
+  Cache.get p + '_comm.png', (cached) => @imgCom = cached
+  @loadTile p + '.png', 'sprite', (e,s) =>
+    { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
+    @show @updateSprite @loaded = true
+  @loadTile p + '_engine.png', 'spriteEngine'
 
-$Tile Missile,
-  ttlFinal: yes
-  rows: 6 # FIXME: add to $meta
-  cols: 6 # FIXME: add to $meta
-  sprite: 'seeker'
+$Tile Missile, sprite: 'banshee', ttlFinal: yes

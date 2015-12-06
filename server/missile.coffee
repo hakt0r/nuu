@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -39,8 +39,8 @@ $obj.register class Missile extends $obj
       y: source.y
 
     super opts
-    @turn = 10.0
-    @thrust = 1.5
+    @turn = 1.0
+    @thrust = 0.5
 
     @ttl = TIME + 3000
     update    = false

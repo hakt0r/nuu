@@ -1,0 +1,47 @@
+{ "ship": [
+
+{ "name":"Human","sprite":"suit",
+  "slots":{
+    "engine":[{"size":"small","default":"HumanHeart"}],
+    "weapon":[{"size":"small","default":"StockMultitool"}]},
+  "stats":{
+    "crew":1,
+    "mass":1,
+    "fuel_consumption":0} },
+
+{ "name":"Exosuit","sprite":"suit",
+  "slots":{
+    "engine":[{"size":"suit","default":"Stock ExoThrusters"}],
+    "weapon":[{"size":"suit","default":"StockMultitool"}]},
+  "stats":{
+    "crew":1,
+    "mass":1,
+    "fuel_consumption":0} }
+
+], "outf": [
+
+{  "name" : "StockExoThrusters",
+   "size" : "suit",
+   "itemId": 500,
+   "stats" : {
+      "turret" : false,
+      "mass" : 15,
+      "price" : 0,
+      "typename" : "Core Systems &#40;Engine&#41;",
+      "thrust" : 100,
+      "turn" : 85,
+      "engine_limit" : 300,
+      "energy_usage" : 5,
+      "fuel" : 200,
+      "speed" : 175
+   },
+   "type" : "modification",
+   "info" : {
+      "description" : "Clogged, corroded and cracked in every way possible while still remaining in functional condition, this engine really belongs on the scrap heap.",
+      "name" : "Stock ExoThrusters",
+      "gfx_store" : "engine04"
+   },
+   "slot" : { "prop" : "engines", "$t" : "structure" },
+   "extends" : "Outfit" }
+
+] }

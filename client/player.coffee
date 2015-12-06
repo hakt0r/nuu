@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -24,17 +24,37 @@ $public class Player
   _vehicle: null
   primary: id: 0
   secondary: id: 0
-  constructor: (@vehicle)->
+  constructor: (opts)->
+    @[k] = k for k,v of opts
+    console.log 'player$', @
 
 Object.defineProperty Player::, 'vehicle',
   set: (v) ->
+    return unless v
     # console.log 'enterVehicle', v.id
     window.VEHICLE = @_vehicle = v
     v.hide()
     v.layer = 'play'
     v.show()
     Sprite.repositionPlayer()
+    @vehicleId = v.id
   get: -> @_vehicle
+
+app.on '$obj:add', (o)->
+  # console.log 'yolo', o.id, NUU.player.vehicleId
+  NUU.player.vehicle = o if o.id is NUU.player.vehicleId
+  null
+
+NET.on 'switchShip', (opts) ->
+  # console.log 'switchShip', opts
+  NUU.player.vehicleId = opts.i
+  NUU.player.mountId = opts.m
+  NUU.player.vehicle = Ship.byId[opts.i]
+
+NET.on 'switchMount', (id) ->
+  NUU.player.vehicle.mount[NUU.player.mountId] = null
+  NUU.player.mountId = id
+  NUU.player.vehicle.mount[id] = NUU.player
 
 NUU.frame = 0
 NUU.target = null

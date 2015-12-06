@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -20,31 +20,30 @@
 
 ###
 
-Kbd.macro 'items', 'Sd', 'Ships and Items', ->
-  items = $ """
-    <div class="about">
-      <div class="tabs" id="tabs">
-        <a class="close"  href="#">Close</a>
-      </div>
-      <div id="select-ship">
+Window.Ships = class ShipsWindow extends ModalListWindow
+  name: 'ship'
+  title: 'Ships'
+  subject: Item.byType.ship
+  closeKey: 'Sd'
+  render: (key,val)->
+    Render.Ship.call @,key, val, @close.bind @
+    null
 
+Kbd.macro 'ships',  'Ss', 'Show ships', -> new Window.Ships
+
+Render =
+  Ship: (name,item,close)->
+    sprite = item.sprite
+    sprite = parent.sprite if item.extends and item.extends.match and ( item.extends isnt item.name ) and parent = Item.byName[item.extends]
+    @body.append entry = $ """
+      <div class="list-item select-ship">
+      <label>#{item.name}</label>
+      <div id="ship_select_#{name}" class="ship-select noselect">
+        <img class="ship_comm" src="build/ship/#{sprite}/#{sprite}_comm.png"></img>
+        <button class="buy">Buy</button>
+        <button class="select">Select</button>
       </div>
-    </div>
-  """
-  items.appendTo $ 'body'
-  items.find('.close').on 'click', -> items.remove()
-  list = items.find '#list'
-  render = 
-    stats: (item) -> for k,v of item
-      table.append """<div><label>#{k}</label><value>#{v}</value></div>"""
-    slots: (item) -> for type, slots of item
-      for v in slots
-        table.append """<div><label>#{type}</label><value>#{v.size}</div>"""
-  for name, item of Item.byType.ship
-    list.append """
-      <div id="ship_select_#{name}" class="ship-select">
-        <h2>#{item.name}</h2>
-        <img class="ship_comm" src="build/ship/#{item.sprite.name}/#{item.sprite.name}_comm.png"></img>
-        <p>#{item.info.description}</p>
       </div>"""
-    table = list.find '#'+name
+    bBuy    = entry.find 'button.buy'
+    bSelect = entry.find 'button.select'
+    bSelect.click -> close NET.json.write switchShip: item.name

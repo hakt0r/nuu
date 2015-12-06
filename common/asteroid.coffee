@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -32,8 +32,9 @@ $obj.register class Asteroid extends $obj
         resource: []
         size: size
         state:
-          S: $orbit
+          S: $moving
           x: sqrt(r) * cos(phi) * 7000000000
+          y: sqrt(r) * sin(phi) * 7000000000
           relto: 0
     img = opts.size - 10
     img = '0' + img if img < 10

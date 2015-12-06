@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -20,11 +20,11 @@
 
 ###
 
-$static '$version',      '0.4.71'
+$static '$version',      '0.4.72'
 
 $static 'TIME',          Date.now()
-$static 'TICK',          33
-$static 'STICK',         1000/33
+$static 'TICK',          16.6
+$static 'STICK',         1000/16.6
 $static 'OX',            0 # global delta
 $static 'OY',            0 # global delta
 
@@ -101,8 +101,12 @@ $static 'htime', (t) ->
 
 $static 'Speed',
   ofLight: 299792.458
-  max:     299792.457*10 / TICK
-  boost:   300
+  max:     299792.458 / TICK
+  boost:   10
+
+if debug
+  Speed.bost *= 10
+  Speed.boost = 30
 
 $static '$abstract', (name,opts)->
   $static "$" + name, f = (object,mods={})->

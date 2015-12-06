@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -46,7 +46,8 @@ $public class Item
         if (s = o.slot) then (if s.$t then s.$t else s)
         else if o.extends is 'Ammo' then 'ammo'
         else 'cargo' )
-      Item.byType[t] = small:{},medium:{},large:{} unless Item.byType[t]
+      Item.byType[t] = {}       unless Item.byType[t]
+      Item.byType[t][size] = {} unless Item.byType[t][size]
       Item.byType[t][size][o.name] = o
       if o.type
         t = o.type.split(' ').pop()

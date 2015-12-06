@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -26,7 +26,7 @@ Ship::updateMods = -> # calculate mods
   for type of @slots
     for idx, slot of @slots[type]
       if ( item = slot.equip )
-        @mass += item.stats.mass
+        @mass += item.stats.mass || 0
         unless type is 'weapon'
           for k,v of item.stats when k isnt 'turret'
             if @mods[k] then @[k] += v

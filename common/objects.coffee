@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -24,6 +24,7 @@ freeId = []
 lastId = 0
 
 $public class $obj
+  @freeId: freeId
   @interfaces: [$obj]
   tpl: null
   size: 0
@@ -43,6 +44,7 @@ $public class $obj
 
     # apply other keys
     @[k] = v for k,v of opts
+    # console.log 'constructor$', @id, @name
 
     # choose id
     unless @id?
@@ -50,8 +52,7 @@ $public class $obj
     else lastId = max(lastId,@id+1)
 
     # register
-    for i in @constructor.interfaces
-      i.list.push i.byId[@id] = @
+    i.list.push i.byId[@id] = @ for i in @constructor.interfaces
 
     # apply state
     @setState state
@@ -59,11 +60,12 @@ $public class $obj
     app.emit '$obj:add', @
 
   destructor: ->
+    console.log 'destructor$', @id, @name
     for i in @constructor.interfaces
+      console.log 'destructor$', 'object', i.name
       delete i.byId[@id]
       Array.remove i.list, @
     app.emit '$obj:del', @
-    freeId.push @id # TODO/BUX: only after a grace period maybe
 
   dist: (o)-> sqrt(pow(abs(o.x-@x),2)-pow(abs(o.y-@y),2))
 
@@ -118,6 +120,7 @@ $obj.register class Cargo extends $obj
   @interfaces: [$obj,Collectable,Debris]
   name: 'Cargo Box'
   item: null
+  ttlFinal: yes
   constructor: (opts={})->
     super opts
     @ttl  = NUU.time() + 30000 unless @ttl

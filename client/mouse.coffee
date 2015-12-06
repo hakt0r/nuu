@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -24,52 +24,75 @@ $static 'Mouse', new class MouseInput
   state: off
   timer: undefined
   event: x:0, y:0
+  accel: no
+  destDir: -1
+  lastDir: -1
+  lastAccel: no
 
   update: -> (evt) =>
-    evt = evt.originalEvent
+    evt = evt.data.originalEvent
     @event = e = [ evt.offsetX, evt.offsetY ]
-    @dest  = c = [ Sprite.hw, Sprite.hh ]
-    @destdir   = parseInt $v.heading(e,c) * RAD
+    @dest  = c = [ WDB2, HGB2 ]
+    @destDir   = ( 360 + parseInt $v.heading(e,c) * RAD ) % 360
     null
 
   reset: ->
     Sprite.hud.widget 'mouse'
     clearInterval @timer
+    @obj.interactive = no
     @obj.mousemove = undefined
+    @obj.mousedown = undefined
     @timer = null
     null
 
-  callback: (v) -> =>
-    return unless @destdir
-    @reldir = $v.reldeg(VEHICLE.d,@destdir)
-    [ accel, boost, left, right, retro ] = NET.getFlags v.flags
-    if abs(@reldir) > 10
-      right = not ( left = @reldir > 0 )
-      @status = ( if left then 'left' else 'right' ) + ": " + @reldir
-    else if abs(@reldir) > 0
-      left = right = no
-      v.d = ( v.d - @reldir ) % 360
-      @status = 'set:' + v.d
+  callback: -> =>
+    v = VEHICLE
+    dirChanged = @destDir isnt @lastDir
+    accelChanged = @lastAccel isnt @accel
+    return unless dirChanged or accelChanged
+    return unless NUU.player.mountId is 0
+    if dirChanged and not accelChanged
+      v.d = @destDir
+      NET.steer.write NET.steer.setDir, v.d
     else
-      left = right = no
-      @status = 'idle'
-      return null
-    newFlags = NET.setFlags flags = [ accel, boost, right, left, retro, no, no, no]
-    if @lastFlags isnt newFlags
-      NET.state.write v, flags
-    @lastFlags = newFlags
-    Sprite.hud.widget 'mouse', if left then 'left' else if right then right else @destdir
+      v.d = @destDir
+      Kbd.setState 'accel', @accel
+    @lastDir = @destDir; @lastAccel = @accel
     null
 
   macro: -> =>
     @state = not @state
     @obj = Sprite.fg
     @obj.interactive = true
+    body = document.querySelector 'body'
     if @state
+      trigger = no
       @obj.hitArea = new PIXI.Rectangle 0, 0, 2000, 2000
-      @obj.click = @update()
-      @timer = setInterval @callback(VEHICLE), TICK
+      @obj.mousemove = @update()
+      body.onwheel = (evt) =>
+        down = evt.wheelDeltaY >= 0
+        return Kbd.macro.targetPrev() if evt.shiftKey and down
+        return Kbd.macro.targetNext() if evt.shiftKey
+        if down then Kbd.macro.scanMinus() else Kbd.macro.scanPlus()
+      @obj.mousedown = (evt) =>
+        if 2 is evt.data.originalEvent.which
+          return Kbd.macro.targetClassNext() if evt.data.originalEvent.shiftKey
+          return Kbd.macro.targetClosest()
+        trigger = evt.data.originalEvent.shiftKey
+        if trigger and Kbd.macro.primaryTrigger? then do Kbd.macro.primaryTrigger.dn
+        else Kbd.setState 'accel', @accel = true
+        do evt.stopPropagation
+      body.oncontextmenu = (evt) =>
+        do Kbd.macro.primaryTrigger.dn
+        do evt.stopPropagation
+        false
+      @obj.mouseup = (evt) =>
+        if trigger and Kbd.macro.primaryTrigger? then do Kbd.macro.primaryTrigger.up
+        Kbd.setState 'accel', @accel = false
+        do evt.stopPropagation
+      @timer = setInterval @callback(), TICK
     else @reset()
     null
 
 Kbd.macro 'mouseturn', 'z', 'Toggle mouseturning', Mouse.macro()
+app.on 'settings', -> do Mouse.macro() if app.settings.mouseturn

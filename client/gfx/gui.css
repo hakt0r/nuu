@@ -15,7 +15,7 @@ h1, h2 {
   background-color: #444;
 }
 
-.about {
+.window {
   font-size: 12px;
   text-align: center;
   position: fixed;
@@ -26,8 +26,8 @@ h1, h2 {
   background: rgba(222,222,222,0.6);
   padding: 5px;
   border-radius: 5px; }
-.about p { font-size: 12px; }
-.about a, .about a:visited, .about a:active, .about a:hover, .version, .description {
+.window p { font-size: 12px; }
+.window a, .window a:visited, .window a:active, .window a:hover, .version, .description {
   font-size: 12px;
   text-decoration: none;
   font-weight: bolder;
@@ -35,18 +35,18 @@ h1, h2 {
   background: rgba(255,255,255,0.6);
   padding: 5px;
   border-radius: 4px; }
-.about .version {
+.window .version {
   background: #545454; color: #969696; }
-.about .description {
+.window .description {
   font-weight: normal;
   display: block;
   margin: 3px;
   padding: 3px; }
-.about img {
+.window img {
   margin: auto;
   width: 500px;
   display: block; }
-.about .tab {
+.window .tab {
   position: absolute;
   top: 20px;
   left: 5px;
@@ -55,24 +55,24 @@ h1, h2 {
   display: none;
   margin-top: 5px;
   overflow: auto; }
-.about p {
+.window p {
   margin: 5px; }
-.about #list {
+.window #list {
   overflow: scroll;
   position: absolute;
   top: 38px;
   left: 10px;
   right: 10px;
   bottom: 10px; }
-.about iframe {
+.window iframe {
   border: solid 1px;
   border-radius: 5px;
   margin: 2%;
   height: 96%;
   width: 96%; }
-.about ul.libs {
+.window ul.libs {
   text-align:left; }
-.about ul.libs li {
+.window ul.libs li {
   margin: 5px;line-height:20px; display: inline-block; }
 .pre {
   font-family: monospace;
@@ -93,17 +93,20 @@ h1, h2 {
   max-height: 80%;
   max-width: 80%;
   background: rgba(255,255,255,0.9);
-  overflow: auto;
   border-radius: 5px; }
+.window.about { overflow: auto; }
 .window header {
   font-weight:bold;font-size:12px;padding:8px; }
 
-.slot { position:relative; display:inline-block;vertical-align:top;width:125px;min-height:100px; }
-.slot > span { position:absolute;top:20px;left:10px;right:10px;
-  background: rgba(255,255,255,0.8);
-  border-radius: 5px;
-  padding: 6px; }
-.slot img    { position:absolute;top:0px;left:0px;bottom:0px;right:0px;width:100%;}
+.slot { position:relative; display:inline-block;vertical-align:top;width:115px;min-height:100px; }
+.slot > span {
+  overflow: hidden;
+  display: inline-block;
+  background: rgba(0,0,0,0.8);
+  border-radius: 2px;
+  margin: 2px;
+  max-width: 106px; }
+.slot img    { position:absolute;top:19px;width:100%;z-index:-1;height: inherit;}
 .slot button { position:absolute;top:2px;right:2px;}
 
 textarea { background:#444;}
@@ -130,3 +133,88 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
 #u_target{position:fixed;bottom:0px;right:0px;left:initial;top:initial;width:150px;height:150px;color:#fff}
 #u_offscreen{position:fixed;width:1px;overflow:hidden;height:1px;top:-1px;left:-1px}
 #u_offscreen *{width:50px;height:50px}
+
+.window.modal_list >div{
+  overflow-y: auto;
+  position: absolute;
+  top: 26px;
+  bottom: 7px;
+  left: 7px;
+  right: 7px;
+}
+
+.window.modal_list {
+  text-align: left;
+  background: rgba(0, 0,   0, 0.9);
+  border:     rgba(0, 255, 0, 0.9) solid 1px;
+  max-width: 250px;
+  left: 7px; }
+
+.window.modal_list * {
+  color: green; }
+
+.window.modal_list > header {
+  margin: 2px;
+  background: green;
+  color: black;
+  padding: 1px 4px;
+  border-radius: 2px; }
+
+.window.modal_list .list-item {
+  padding: 2px; }
+.window.modal_list .list-item > * {
+  padding: 2px; }
+
+.window.modal_list .list-item > span { font-weight: bold; }
+.window.modal_list .list-item.active > label {
+  background: yellow; }
+
+.window.modal_list .list-item > label {
+  background: green;
+  color: black;
+  font-weight: bold;
+  width: 80px;
+  display: inline-block;
+  margin-right: 2px;
+  text-align: right; }
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Chrome/Safari/Opera */
+  -khtml-user-select: none;    /* Konqueror */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;           /* Non-prefixed version, currently
+                                  not supported by any browser */
+  cursor: default; }
+
+.window.modal_list .red { color: red; }
+
+.window.modal_list .big_fat {
+  text-align: center;
+  font-weight: bold;
+  line-height: 24px;
+  font-size: 18px; }
+
+.window.modal_list .list-item.slot > label {
+  width: 115px; }
+
+.window img.ship_comm { width: 32px; float: left; }
+.list-item.select-ship { }
+.ship-select { height: 32px; padding: 5px; margin-top: 1px; }
+.ship-select h2 { margin-left: 37px; text-align: left;}
+.ship-select p { margin-left: 37px; text-align: left; }
+
+.window button { padding: 3px; margin-left: 2px;
+  color: black;
+  font-size: 11px;
+  float: right;
+  border-radius: 5px;
+  border: solid #ccc;
+  line-height: 10px;
+  font-weight: bold; outline: none; }
+.window button:active { border: solid #f00; }
+.window button:hover { border: solid #fcc; }
+.window button.buy { background: #9b6767; }
+.window button.select { background: #9bc69b; }
+.window button.disabled { background: grey; }

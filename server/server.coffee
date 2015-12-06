@@ -30,7 +30,7 @@ console.log """#################################################################
 
 #######################################################################################
 
-    * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+    * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
     * c) 2007-2008 flyc0r
 
     The nuu project intends to use all the asset files according to
@@ -58,6 +58,7 @@ global.$library  = (args...) -> for a in args
 global.$public   = (args...) -> global[a.name] = a for a in args
 global.$cue      = (f) -> setImmediate f
 
+$static 'debug',    no
 $static 'isClient', no
 $static 'isServer', yes
 
@@ -94,35 +95,43 @@ app.ws "/nuu", (c, req) ->
 wss = ws.getWss '/nuu'
 
 NUU.bincast = (data,origin) ->
-  c.send data for c in wss.clients
+  wss.clients.map (c) ->
+    try c.send data catch error
+      Array.remove wss.clients, c
 
 NUU.nearcast  = (data,o) ->
   wss.clients.map (c) -> if Math.abs(c.x) - Math.abs(o.x) < 5000 and Math.abs(c.y) - Math.abs(o.y) < 5000
-    c.send data
+    try c.send data catch error
+      Array.remove wss.clients, c
 
 NUU.jsoncast = (data) ->
   data = NET.JSON + JSON.stringify data
-  c.send data for c in wss.clients
+  wss.clients.map (c) ->
+    try c.send data catch error
+      Array.remove wss.clients, c
 
 ## Sync - queue object-creation notification
-$static 'Sync', ( ->
-  list = []
-  inst = false
-  cue = (obj)->
-    list.push obj
-    inst = setImmediate flush unless inst
-    obj
-  flush =->
-    NUU.jsoncast sync: list
-    list = []
-    inst = false
-  cue.flush = flush
-  return cue )()
+$static 'Sync', class Sync
+  @adds: []
+  @dels: []
+  @inst: false
 
-app.on '$obj:add', (o)->
-  #console.log 'sync::', o.id, o.constructor.name, o.name
-  Sync o
+app.on '$obj:add', Sync.add = (obj)->
+  Sync.inst = setImmediate Sync.flush unless Sync.inst
+  Sync.adds.push obj
+  obj
 
+app.on '$obj:del', Sync.del = (obj)->
+  Sync.inst = setImmediate Sync.flush unless Sync.inst
+  Sync.dels.push obj
+  obj
+
+Sync.flush = ->
+  NUU.jsoncast sync: add:Sync.adds, del:freeIds = Sync.dels.map (i)-> i.id
+  Sync.adds = []; Sync.dels = []; Sync.inst = false
+  return unless 0 < freeIds.length
+  setImmediate -> $obj.freeId = $obj.freeId.concat freeIds
+  null
 
 ## Initialize Engine
 console.log 'NUU'.yellow, 'initializing'.yellow
@@ -155,5 +164,13 @@ app.get '/', (req,res) ->
       <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
     </head><body></body></html>"""
 
-console.log 'server'.yellow, 'ready'.green
-app.listen 9999
+app.chgid  = process.env.CHGID || false
+app.port   = process.env.PORT  || 9999
+app.addr   = process.env.ADDR  || '127.0.0.1'
+
+console.log 'server'.yellow, 'listen'.yellow, app.addr.red + ':' + app.port.toString().blue
+app.listen app.port, app.addr, ->
+  console.log 'server'.yellow, 'ready'.green, app.addr.red + ':' + app.port.toString().blue
+  return unless app.chgid
+  process.setgid app.chgid
+  process.setuid app.chgid

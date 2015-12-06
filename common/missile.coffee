@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -26,7 +26,7 @@ $abstract 'Missile',
   turn: 1
   accel: true
   size: 22
-  tpl: 193 # Spearhead Missile
+  tpl: 197 # Spearhead Missile
   init: $void
   toJSON: -> id:@id,key:@key,state:@state,target:@target.id,ttl:@ttl
 

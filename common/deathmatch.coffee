@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -21,17 +21,17 @@
 ###
 
 DRONES_ACTIVE = yes
-DRONES_MAX    = 1
+DRONES_MAX    = 100
 ROIDS_MAX     = 100
 
 rules.server = ->
   rules.stats = stats = {}
 
-  NUU.on 'playerJoined', (p) ->
-    stats[p.vehicle.id] = name : p.name, k:0, d:0
-    console.log 'new player', p.name, stats
+  NUU.on 'userJoined', (p) ->
+    stats[p.vehicle.id] = stats[p.vehicle.id] || name : p.name, k:0, d:0
+    console.log 'user$joined$'.green, p.name, stats
 
-  NUU.on 'playerLeft', (p) ->
+  NUU.on 'userLeft', (p) ->
     delete stats[p.vehicle.id]
 
   NUU.on 'ship:hit', (ship,src) ->
@@ -48,7 +48,7 @@ rules.server = ->
       $timeout 10000, ->
         victim.dropLoot()
         victim.respawn()
-    unless perp.npc is yes
+    unless perp and perp.npc is yes
       stats[perp.id].k++
       console.log perp.name.green, stats[perp.id].k
     NUU.jsoncast stats: stats
@@ -66,25 +66,25 @@ rules.client = ->
 
 rules.stars = [
   [ 0,   'Sol',                 'yellow02',              0,           $fixed ]
-  [ 20,  'Hades Bootcamp',      'station-battlestation', 1000000,     $orbit, 0 ]
+  [ 20,  'Hades Bootcamp',      'station-battlestation', 1000,        $orbit, 0 ]
 
   [ 1,   'Mercury',             'A01',                   58000000,    $orbit, 0 ]
   [ 2,   'Venus',               'A02',                   108000000,   $orbit, 0 ]
 
   [ 3,   'Earth',               'M00',                   149600000,   $orbit, 0 ]
   [ 30,  'Moon',                'moon-M01',              375000,      $orbit, 3 ]
-  [ 31,  'UEG Agriculture-01',  'station-agriculture',   400,         $orbit, 3 ]
-  [ 32,  'UEG Battlestation-01','station-battlestation', 500,         $orbit, 3 ]
-  [ 33,  'UEG Commerce-01',     'station-commerce',      600,         $orbit, 3 ]
-  [ 34,  'UEG Commerce-02',     'station-commerce2',     700,         $orbit, 3 ]
-  [ 35,  'UEG Commerce-03',     'station-commerce3',     800,         $orbit, 3 ]
-  [ 36,  'UEG Cylinder-01',     'station-cylinder',      900,         $orbit, 3 ]
-  [ 37,  'UEG Fleetbase-01',    'station-fleetbase',     1000,        $orbit, 3 ]
-  [ 38,  'UEG Fleetbase-02',    'station-fleetbase2',    1100,        $orbit, 3 ]
-  [ 39,  'UEG Fleetbase-03',    'station-fleetbase3',    1200,        $orbit, 3 ]
-  [ 40,  'UEG Powerplant-01',   'station-powerplant',    1300,        $orbit, 3 ]
-  [ 41,  'UEG Shipyard-01',     'station-shipyard',      1400,        $orbit, 3 ]
-  [ 42,  'UEG Shipyard-02',     'station-shipyard2',     1500,        $orbit, 3 ]
+  [ 31,  'UEG Agriculture-01',  'station-agriculture',   1000,        $orbit, 3 ]
+  [ 32,  'UEG Battlestation-01','station-battlestation', 2000,        $orbit, 3 ]
+  [ 33,  'UEG Commerce-01',     'station-commerce',      3000,        $orbit, 3 ]
+  [ 34,  'UEG Commerce-02',     'station-commerce2',     4000,        $orbit, 3 ]
+  [ 35,  'UEG Commerce-03',     'station-commerce3',     5000,        $orbit, 3 ]
+  [ 36,  'UEG Cylinder-01',     'station-cylinder',      6000,        $orbit, 3 ]
+  [ 37,  'UEG Fleetbase-01',    'station-fleetbase',     7000,        $orbit, 3 ]
+  [ 38,  'UEG Fleetbase-02',    'station-fleetbase2',    11000,       $orbit, 3 ]
+  [ 39,  'UEG Fleetbase-03',    'station-fleetbase3',    12000,       $orbit, 3 ]
+  [ 40,  'UEG Powerplant-01',   'station-powerplant',    13000,       $orbit, 3 ]
+  [ 41,  'UEG Shipyard-01',     'station-shipyard',      14000,       $orbit, 3 ]
+  [ 42,  'UEG Shipyard-02',     'station-shipyard2',     15000,       $orbit, 3 ]
 
   [ 5,   'Mars',                'K04',                   228000000,   $orbit, 0 ]
 
@@ -108,7 +108,7 @@ rules.stars = [
   [ 76,  "Euporie",             'D04',                   19088434,    $orbit, 6, 458122416 ]
   [ 77,  "S/2003 J3",           'D04',                   19621780,    $orbit, 6, 470922720 ]
   [ 78,  "S/2003 J18",          'D04',                   19812577,    $orbit, 6, 475501848 ]
-  [ 79,  "S/2011 J1",           'D03',                   20155290,    $orbit, 6, 483726960 ]
+  [ 79,  "S/2011 J1",           'D03',                   20165290,    $orbit, 6, 483726960 ]
   [ 80,  "S/2010 J2",           'D03',                   20307150,    $orbit, 6, 487371600 ]
   [ 81,  "Thelxinoe",           'D04',                   20453753,    $orbit, 6, 490890072 ]
   [ 82,  "Euanthe",             'D06',                   20464854,    $orbit, 6, 491156496 ]

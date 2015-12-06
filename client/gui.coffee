@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -44,92 +44,181 @@ window.notice = (timeout,msg) ->
   msg = [msg] if typeof msg is 'string'
   Notice.queue.push new Notice line, timeout for line in msg
 
-class Window
+$public class Window
   constructor : (opts={}) ->
     @[k] = v for k,v of opts
-    $('body').append "<div class='window'><header>#{@title}</header><div></div></div>"
-    @$ = $('body > div').last()
-    @body = @$.find('div')
-    @head = @$.find('header')
-    @head.prepend '<img src="build/imag/screw.png">'
-    @closeBtn = @head.find('img').last()
-    @closeBtn.on 'click', =>
-      @$.remove()
+    window[@name] = @ if @name
+    $('body').append @$ = $ "<div class='window'></div>"
+    @$.append @head = $ "<header>#{@title}</header>"
+    @$.append @body = $ "<div></div>"
+    $cue @show()
+  show:->
+    @$.css "display", "initial"
+    @visible = yes
+  close:->
+    @$.remove()
+    delete window[@name] if @name
+  hide:->
+    @$.css "display", "none"
+    @visible = no
+  toggle:-> do @[if @visible then 'hide' else 'show']
 
-window.showSlots = ->
-  w = new Window title : 'Equipment'
+$public class ModalListWindow extends Window
+  constructor:(opts)->
+    super opts
+    @$.addClass 'modal_list'
+    if @subject
+      do =>
+        @body.append i = $ """<div class="list-item active"><label>..</label><span>[up one level]</span></div>"""
+        i.on 'click', i[0].action = => @close()
+      @render key,val for key, val of @subject
+    @$.find("*").addClass 'noselect'
+    @parent.unfocus() if @parent
+    @focus()
+    null
+  keyHandler: (evt)=>
+    key = Kbd.cmap[evt.keyCode]
+    list = @$.find('.list-item')
+    cur = @$.find('.list-item.active').first()
+    if cur.length is 0
+      cur.addClass 'active'
+      cur = $ list.first()
+    switch key
+      when @closeKey, 'esc'
+        @close(); p = @
+        p.close() while p = p.parent
+      when 'return'
+        do cur[0].action if cur[0].action
+      when 'pgup' then next = list.first(); list.removeClass 'active'; next.addClass 'active'
+      when 'pgdn' then next = list.last();  list.removeClass 'active'; next.addClass 'active'
+      when 'up'
+        next = if cur[0] is list.first()[0] then list.last() else cur.prev()
+        list.removeClass 'active'; next.addClass 'active'; cur = next
+      when 'down'
+        next = if cur[0] is list.last()[0] then list.first() else cur.next()
+        list.removeClass 'active'; next.addClass 'active'; cur = next
+  unfocus: ->
+    $(window).off 'keyup', @keyHandler
+  focus: ->
+    $(window).on 'keyup', @keyHandler
+    Kbd.unfocus()
+    @
+  close:-> @unfocus(); ( if @parent then @parent.focus() else Kbd.focus() ); super
+  hide:->  @unfocus(); ( if @parent then @parent.focus() else Kbd.focus() ); super
 
-  #w.body.append i = new Image
-  #i.src = VEHICLE.img.src
-  mkslotsel = (button,type,slot) ->
-    button.on 'click', ->
-      w = new Window title:"Select: #{type} (#{slot.size})"
-      collect = (list,size) ->
-        r = []
-        switch size
-          when 'large'  then map = [list.large,list.medium,list.small]
-          when 'medium' then map = [list.medium,list.small]
-          when 'small'  then map = [list.small]
-        for l in map
-          r = r.concat Object.keys l
-        return r
-      list = collect(Item.byType[type],slot.size)
-      for name in list
-        tpl = Item.byName[name]
-        w.body.append "<div><b>#{name}<b><br/></div>"
-        x = w.body.find('div').last()
-        for k,v of tpl.stats
-          x.append "#{k}: #{v}<br/>"
-        # load image
-        x.prepend img = new Image
-        img.width = 32; img.height = 32
-        if (sp = Sprite.outfit[sprite = tpl.stats.gfx_store]) and sp.obj
-          img.src = sp.obj.src
-        else
-          img.src = '/build/imag/loading.png'
-          Sprite.outfit sprite, (i) -> img.src = i.src
+Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
+  constructor: (@parent,type,slot) ->
+    @title = "Select: #{type} (#{slot.size})"
+    super name:'slots', title:'Slot selection'
+    collect = (list,size) =>
+      r = []
+      switch size
+        when 'large'  then map = [list.large,list.medium,list.small]
+        when 'medium' then map = [list.medium,list.small]
+        when 'small'  then map = [list.small]
+      for l in map
+        r = r.concat Object.keys l
+      return r
+    list = collect(Item.byType[type],slot.size)
+    @addItem name for name in list
+    @$.find('.list-item').first().addClass 'active'
 
-  mkslot = (type,slot) ->
-    e = slot.equip
-    # console.log e
-    x = $ "<span class='slot'>
-      <span>
-        <b>#{type}</b> <button>change</button><br/>
-        slot: #{slot.size}<br/>
-        <span class='equip'></span>
-      </span>
-    </span>"
-    mkslotsel x.find('button'), type, slot
-    if e
+  addItem:(name)->
+    tpl = Item.byName[name]
+    @body.append x = $ """<div class="list-item slot"><label>#{name}</label><span></span></div>"""
+    l = x.find("span")
+    l.append "#{k}: #{v}<br/>" for k,v of tpl.stats
+    x.prepend img = new Image
+    img.width = 32; img.height = 32
+    img.src = '/build/imag/loading.png'
+    Cache.get '/build/outfit/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)=> img.src = url
+
+Window.Equipment = class EquipmentWindow extends ModalListWindow
+  constructor: ->
+    super name:'equip', title:'Equipment'
+    for type, slots of VEHICLE.slots
+      for id, slot of slots
+        @mkslot type, slot
+    @$.find('.list-item').first().addClass 'active'
+
+  mkslotsel: (type,slot) -> =>
+    new Window.SlotSelection @, type, slot
+
+  mkslot: (type,slot) ->
+    x = $ """
+    <div class="list-item slot">
+      <label>#{type} (#{slot.size})</label>
+      <span class='equip'></span>
+    </div>"""
+    x.on 'click', x[0].action = @mkslotsel type, slot
+    if e = slot.equip
       x.find('.equip').append "
         #{e.name}<br/>
-        size: #{e.stats.size}<br/>
+        size: #{e.size}<br/>
         mass: #{e.stats.mass}"
       x.prepend img = new Image
-      if (sp = Sprite.outfit[sprite = e.stats.gfx_store]) and sp.obj
-        img.src = sp.obj.src
-      else
-        img.src = '/build/imag/loading.png'
-        Sprite.outfit sprite, (i) -> img.src = i.src
-    x.appendTo w.body
-  for type, slots of VEHICLE.slots
-    for id, slot of slots
-      mkslot type, slot
+      img.src = '/build/imag/loading.png'
+      Cache.get '/build/outfit/store/' + ( e.info.gfx_store || e.sprite ) + '.png', (url)=> img.src = url
+    x.appendTo @body
 
-Kbd.macro 'help', 'h', 'Show help', ->
-  h = []
-  for key, macro of Kbd.help
-    h.push '<tr><td>' + key + "</td><td>" + Kbd.d10[macro] + '</td></tr>'
-  about = $ """
-    <div class="about">
-      <h1>Keys:</h1>
-      <table>
-        #{h.join '\n'}
-      </table>
-      <div class="tabs" id="tabs">
-        <a class="close" href="#">Close</a>
-      </div>
-    </div>
-  """
-  about.appendTo $ 'body'
-  about.find('.close').on 'click', -> about.remove()
+class Object.editor extends ModalListWindow
+  render:(key,val) => switch typeof val
+    when 'object'
+      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>[directory]</span></div>"""
+      i.on 'click', i[0].action = => w = new Object.editor name:@name+'.'+key, title:'Settings:'+key, subject: val, parent: @, closeKey: @closeKey
+    when 'string'
+      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
+      i.on 'click', i[0].action = => new String.editor parent:@ title:key, default:val, callback:(error,value)=>
+        i.find('span').html if @subject[key] = val = value
+        app.saveSettings()
+    when 'boolean'
+      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{if val then 'true' else '<span class="red">false</div>'}</span></div>"""
+      i.on 'click', i[0].action = =>
+        i.find('span').html if @subject[key] = val = not val then 'true' else '<span class="red">false</div>'
+        app.saveSettings()
+
+Kbd.macro 'settings', 'l', 'Open Settings dialog', ->
+  return window.settings.close() if window.settings
+  new Object.editor name:'settings', title:'Settings', subject: app.settings, closeKey: 'l'
+
+Window.KeyBinder = class StringEditorWindow extends ModalListWindow
+  constructor: (opts)->
+    @name = 'edit.string'
+    super opts
+    @$.css 'min-height', '20px'
+    @$.css 'bottom',     'initial'
+    @body.addClass 'big_fat'
+    @body.html @default
+  keyHandler: (evt)=>
+    return unless key = Kbd.cmap[evt.keyCode]
+    if key is "return"
+      return unless @value
+      do @close
+      return @callback null, @value
+    else if key is "esc"
+      do @close
+      return @callback null, @default
+    key = 'C' + key if evt.controlKey
+    key = 'A' + key if evt.altKey
+    key = 'S' + key if evt.shiftKey
+    key = 'M' + key if evt.metaKey
+    return do @close if key is 'esc'
+    @body.html @value = key
+
+Window.Help = class HelpWindow extends ModalListWindow
+  name: 'help'
+  title: 'Help'
+  subject: Kbd.help
+  closeKey: 'h'
+  render: (key,val)->
+    renderKey = key.replace('S','shift-').replace('A','alt-').replace('C','ctrl-')
+    @body.append i = $ """<div class="list-item"><label>#{Kbd.d10[val]}</label><span>#{renderKey}</span></div>"""
+    i.on 'click', i[0].action = =>
+      new Window.KeyBinder parent: @, title:"Press Key for "  + Kbd.d10[val], default:key, callback:(error,value)=>
+        i.find('span').html key = value
+        app.settings.bind = app.settings.bind || {}
+        app.settings.bind[key] = val
+        app.saveSettings()
+
+Kbd.macro 'help',  'h', 'Show help', -> new Window.Help
+Kbd.macro 'equip', 'k', 'Show equipment screen', -> new Window.Equipment

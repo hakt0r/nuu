@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2015 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -44,7 +44,9 @@ Weapon.Projectile = ->
   @cooldown = 1000
   @release = $void
   @trigger = (src,vehicle,slot,target)=>
-    @release console.log 'emergency-release trigger' if @release isnt $void
+    if @release isnt $void
+      console.log 'emergency-release trigger'
+      do @release
     @release = =>
       fire.stop = true
       @release = $void
