@@ -34,13 +34,12 @@ $public class Item
   @init: (items) ->
     id = 0
     for o in items.ship
-      Item.tpl[id] = o
+      Item.byType['ship'][o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
       Ship.byTpl[id] = o.name
-      Ship.byName[o.name] = id++
-      Item.byName[o.name] = o
-      Item.byType['ship'][o.name] = o
+      Ship.byName[o.name] = id
+      id++
     for o in items.outf
-      Item.tpl[o.itemId = id++] = Item.byName[o.name] = o
+      Item.tpl[o.itemId = id] = Item.byName[o.name] = o
       size = o.size || 'small'
       t = (
         if (s = o.slot) then (if s.$t then s.$t else s)
@@ -56,10 +55,12 @@ $public class Item
       if s and (t = s.prop)
         Item.byProp[t] = {} unless Item.byProp[t]
         Item.byProp[t][o.name] = o
+      id++
 
     for type, items of Item.byType when items.medium?
       if Object.keys(items.medium).length is 0 and Object.keys(items.large).length is 0
         Item.byType[type] = items.small
+    NUU.emit 'init:items:done'
 
 $public class Outfit
   constructor: (name) ->

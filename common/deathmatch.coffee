@@ -54,7 +54,7 @@ rules.server = ->
     NUU.jsoncast stats: stats
 
   Asteroid.autospawn max: ROIDS_MAX
-  Drone.autospawn max: DRONES_MAX if DRONES_ACTIVE
+  AI.autospawn max: DRONES_MAX if DRONES_ACTIVE
 
 rules.client = ->
 
