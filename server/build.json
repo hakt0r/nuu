@@ -1,26 +1,26 @@
 {
   "require": [
+    "util",
     "colors",
     "crypto",
     "express",
-    "express-ws",
+    "ws",
     "fs",
     "path",
-    "util",
     ["_","underscore"],
     ["Crypto","crypto"],
     ["EventEmitter","events","EventEmitter"],
     ["flatfile","flat-file-db"],
-    ["$v","vectors"]
+    ["$v","vectors"],
+    ["$tag","tagscale"]
   ],
   "sources": [
     "objects",
-    "missile",
-    "drone",
     "db",
     "user",
     "engine",
     "console",
+    "http",
     "server"
   ]
 }

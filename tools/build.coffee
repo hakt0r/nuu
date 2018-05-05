@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -51,13 +51,17 @@ require('./csmake.coffee')(
   assets: (c)->
     dirs = fs.readdirSync('mod')
     series = []
+    # fetch 'contrib/fontawesome.zip', 'https://use.fontawesome.com/releases/v5.0.13/fontawesome-free-5.0.13.zip'
+    # unzip 'contrib/fontawesome.zip', 'contrib/fontawesome'
+    # link  'contrib/fontawesome/web-fonts-with-css',     'build/fontawesome'
     series.push require f for d in dirs when fs.existsSync f = path.join NUUWD, 'mod', d, 'build.coffee'
     $s series, ->
       console.log 'done'
       c null
 
   node: (c)-> depend(dirs)( ->
-    generate('build/node_packages.html',path.join NUUWD,'tools','import_npm.coffee')(c)
+    generate('build/release.json',       path.join NUUWD,'tools','import_git.coffee')(->)
+    generate('build/node_packages.html', path.join NUUWD,'tools','import_npm.coffee')(c)
    )
 
   contrib: (c)-> depend(node)( -> $p (
@@ -66,7 +70,7 @@ require('./csmake.coffee')(
 
   libs: (c)-> depend(dirs)( ->
     if exists 'build/lib.js'
-      console.log 'build/lib.js'.green
+      console.log ':bld', 'build/lib.js'.green
       return c null
     browserify = require('browserify')()
     bundle  = (module) -> browserify.require module, expose : module
@@ -87,11 +91,19 @@ require('./csmake.coffee')(
         targets.common.filter (i) -> list.push 'build/common/' + i + '.js'
         targets.client.sources.filter (i) -> list.push 'build/client/' + i + '.js'
         list.unshift list.pop()
-        exec('cat ' + list.join(' ') + ' > build/client.js')(c)
+        exec("""
+          cat #{list.join(' ')} > build/client.js;
+          sha512sum build/client.js > build/hashsums
+          awk '
+          BEGIN{ print "NUU.hash = {" }
+               { RS=","; print c "\\"" $2 "\\": \\"" $1 "\\"" }
+            END{ print "}" }
+          ' build/hashsums >> build/client.js
+        """)(c)
     ], c )
 
   sysgen: (c)-> depend(assets)(-> exec("coffee mod/nuu/sysgen.coffee")(c))
   debug:  (c)-> depend(assets)(-> exec("coffee --nodejs debug server/server.coffee")(c))
-  run:    (c)-> depend(assets)(-> exec("coffee server/server.coffee")(c))
+  run:    (c)-> depend(assets)(-> exec("coffee server/server.coffee &")(c))
   all:    (c)-> run c
 )

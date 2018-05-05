@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -23,56 +23,124 @@
 $static 'Scanner', new class ScannerRenderer
   id     : 0
   type   : 0
-  width  : 150
-  height : 150
+  width  : 200
+  height : 200
   scale  : 1.0
   active : true
   label  : {}
   orbits : yes
-
-  constructor: ->
-    @gfx = Sprite.layer 'scan', new PIXI.Graphics
-    #app.on '$obj:add', @addLabel()
-    #app.on '$obj:del', @removeLabel()
-    Sprite.renderScanner = @render.bind @
-
-  addLabel: -> (s) =>
-    @removeLabel s if @label[s.id]
-    @gfx.addChild @label[s.id] = new PIXI.Text ( s.name || 'ukn' ),
-      fontFamily: 'monospace', fontSize:'10px', fill: 'white'
-
-  removeLabel: -> (s) => if @label[s.id]
-    @gfx.removeChild @label[s.id]
-    delete @label[s.id]
+  fullscreen : no
 
   color:
-    Orbit:    0x330000
-    Ship:     0xFF00FF
-    Stellar:  0xFFFF00
-    Debris:   0xCCCCCC
-    Cargo:    0xCCCCCC
-    Asteroid: 0xCCCCCC
+    Orbit:    [0x330000]
+    Stellar:  [0xFFFFFF,'◆']
+    Asteroid: [0xFFFFFF,'◆']
+    Debris:   [0xCCCCCC,'◆']
+    Cargo:    [0xCCCC00,'◆']
+    Planet:   [0xCCFFCC,'◎']
+    Moon:     [0x00FFFF,'◌']
+    Station:  [0xFF00FF,'◊']
+    Ship:     [0xCC00FF,'◭']
+    Star:     [0xFFFF00,'◍']
 
-  render: -> if ( pl = VEHICLE )
-    px = pl.x
-    py = pl.y
-    l = @label
-    ( g = @gfx ).clear()
-    for s in $obj.list
-      x = max 10, min WIDTH  - 10, WDB2 + (s.x - px) / @scale
-      y = max 10, min HEIGHT - 10, HGB2 + (s.y - py) / @scale
-      w = max 2,  min 5,                floor s.size / @scale
-      g.beginFill @color[s.constructor.name] || 0xFFFFFF
-      g.endFill g.drawRect x, y, w, w
-      l[s.id].position.set x, y if l[s.id]
-      w = s.state.orbit / @scale
-      x = WDB2 + ( s.state.relto.x - px ) / @scale
-      y = HGB2 + ( s.state.relto.y - py ) / @scale
-      if s.state.S is $orbit and Scanner.orbits
-        if ( -w < x < WIDTH + w ) and ( -w < y < HEIGHT + w ) and ( w < WIDTH or w < HEIGHT )
-          g.lineStyle 2, @color.Orbit
-          g.endFill g.drawCircle x, y, w
+  constructor: ->
+    @gfx = Sprite.layer 'scan', new PIXI.Graphics true
+    # @gfx.cacheAsBitmap = yes
+    @gfx.width = @gfx.height = @width
+    @circleMode = yes
+    @fullscreen = no
+    Sprite.renderScanner = @render.bind @
+    NUU.on '$obj:add', @addLabel()
+    NUU.on '$obj:del', @removeLabel()
+    NUU.on '$obj:inRange', (obj) ->
+      return unless obj and l = Scanner.label[obj.id]
+      [l.text, l.style.fill] = Scanner.labelStyle obj, true
+      PIXI.bringToFront l
+      null
+    NUU.on '$obj:outRange', (obj) ->
+      return unless obj and l = Scanner.label[obj.id]
+      [l.text, l.style.fill] = Scanner.labelStyle obj
+      null
+    NUU.on 'newTarget', (obj,old) ->
+      if obj and l = Scanner.label[obj.id]
+        [l.text, l.style.fill] = Scanner.labelStyle obj, true
+        PIXI.bringToFront l
+      if old and l = Scanner.label[old.id]
+        [l.text, l.style.fill] = Scanner.labelStyle old
+      null
     null
+
+  labelStyle: (s,inRange=false)->
+    return ['◆','white'] unless t = Scanner.color[s.constructor.name]
+    [fill, name] = t
+    if      s.constructor is Star   then name += s.name || 'Star'
+    else if s.constructor is Planet then name += s.name || 'Planet'
+    else if                 inRange then name += s.name || ''
+    fill = 'red'     if s is TARGET
+    return [name,fill]
+
+  addLabel: -> (s) =>
+    return unless s.name
+    @removeLabel s if @label[s.id]
+    [name,fill] = @labelStyle s
+    @gfx.addChild l = @label[s.id] = new PIXI.Text name, fontFamily: 'monospace', fontSize:'10px', fill: fill
+    l.$obj = s
+    null
+
+  removeLabel: -> (s) =>
+    return unless l= @label[s.id]
+    @gfx.removeChild @label[s.id]
+    delete           @label[s.id]
+    # HOTFIX
+    @gfx.children.splice @gfx.children.indexOf l
+    l.visible = no
+    # HOTFIX
+    l.destroy()
+
+  render: ->
+    return unless pl = VEHICLE
+    if @fullscreen
+      W = min WIDTH, HEIGHT; W2 = W/2-150; W2R = WDB2; H2R = HGB2
+      @gfx.position.set 0,0 unless @gfx.position[0] is 0
+    else
+      W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 100
+      @gfx.position.set WDB2 - 100, HEIGHT - 335
+    lb = @label
+    px = pl.x; py = pl.y
+    ( g = @gfx ).clear()
+    g.fillAlpha = 0.2
+    canHazOrbit = Array.uniq [TARGET,VEHICLE].concat Object.values Target.hostile
+    canHazOrbit.map ( s )-> canHazOrbit.push s.state.relto if s.state.relto
+    canHazOrbit = Array.uniq canHazOrbit
+    skipId = canHazOrbit.map (i)-> i.id
+    for s in canHazOrbit
+      w = max 1, min 2, s.size * 100 / @scale
+      l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
+      v = $v.mult $v.normalize(v), l
+      lb[s.id].position.set v[0]+W2R, v[1]+H2R if lb[s.id]
+      if s.state.S is $orbit and Scanner.orbits
+        o = s.state.orb / @scale
+        ol = min W2-5, ( $v.mag ov = [ s.state.relto.x - px, s.state.relto.y - py ] ) / @scale
+        ov = $v.mult $v.normalize(ov), ol
+        if o + ol < W2
+          g.lineStyle 2, @color.Orbit
+          g.endFill g.drawCircle ov[0]+W2R, ov[1]+H2R, o
+    # TODO: more inRange magic
+    # time = NUU.time()
+    # return if @nextUpdate > time; @nextUpdate = time + if @scale < 1024 then TICK else 250
+    for s in $obj.list
+      continue unless -1 is skipId.indexOf s.id
+      w = max 1, min 2, s.size * 100 / @scale
+      l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
+      v = $v.mult $v.normalize(v), l
+      lb[s.id].position.set v[0]+W2R, v[1]+H2R if lb[s.id]
+    null
+
+  toggleFS: ->
+    if not @active then Sprite.stage.addChild @gfx
+    @active = true
+    @fullscreen = not @fullscreen
+
 
   toggle: ->
     @active = not @active
@@ -81,11 +149,12 @@ $static 'Scanner', new class ScannerRenderer
     else Sprite.stage.removeChild @gfx
 
   zoomIn: ->
-    Scanner.scale = max 0.25, Scanner.scale / 2
+    Scanner.scale = max 1, Scanner.scale / 2
 
   zoomOut: ->
     Scanner.scale = Scanner.scale * 2
 
-Kbd.macro 'scanToggle', 'S+', 'Toggle Scanner',   Scanner.toggle.bind Scanner
-Kbd.macro 'scanPlus',   '+',  'Zoom scanner in',  Scanner.zoomIn.bind Scanner
-Kbd.macro 'scanMinus',  '-',  'Zoom scanner out', Scanner.zoomOut.bind Scanner
+Kbd.macro 'scanToggleFS', 'aEnter',  'Toggle Scanner FS',  Scanner.toggleFS.bind Scanner
+Kbd.macro 'scanToggle',   'Enter',   'Toggle Scanner',     Scanner.toggle.bind Scanner
+Kbd.macro 'scanPlus',     'Equal',   'Zoom scanner in',    Scanner.zoomIn.bind Scanner
+Kbd.macro 'scanMinus',    'Minus',   'Zoom scanner out',   Scanner.zoomOut.bind Scanner

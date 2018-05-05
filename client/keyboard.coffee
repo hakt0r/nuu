@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -20,224 +20,197 @@
 
 ###
 
-$static 'Kbd', new class KeyboardInput extends EventEmitter
+$static 'Kbd', new EventEmitter
 
-  kmap:  { "/":191,"capslock":20,"+":109, "-":107, "-":107, ",":188, ".":190, bksp:8, tab:9, return:13, ' ':32, pgup:33, pgdn:34, esc:27, left:37, up:38, right:39, down:40, del:46, 0:48, 1:49, 2:50, 3:51, 4:52, 5:53, 6:54, 7:55, 8:56, 9:57, a:65, b:66, c:67, d:68, e:69, f:70, g:71, h:72, i:73, j:74, k:75, l:76, m:77, n:78, o:79, p:80, q:81, r:82, s:83, t:84, u:85, v:86, w:87, x:88, y:89, z:90 }
-  _up:   {}
-  _dn:   {}
-  mmap:  {}
-  help:  {}
-  state: {}
-  rmap:  {}
+Kbd.init = ->
+  Kbd    = @
+  @help  = {}
+  @state = {}
+  @mmap  = {}
+  @rmap  = {}
+  @up    = {}
+  @dn    = {}
+  window.addEventListener 'keyup',   @onKeyUp.bind @
+  window.addEventListener 'keydown', @onKeyDown.bind @
+  for a in ["accel","retro","steerRight","steerLeft","boost"]
+    @macro a, @defaultMap[a], @d10[a], up: @setState(a,false), dn: @setState(a,true)
+  null
 
-  constructor:->
-    Kbd = @
+# source: mdn these keycodes should be available on all major platforms
+Kbd.workingKeycodes2018 = ["AltLeft","AltRight","ArrowDown","ArrowLeft","ArrowRight","ArrowUp","Backquote","Backslash","Backspace","BracketLeft","BracketRight","CapsLock","Comma","ContextMenu","ControlLeft","ControlRight","Convert","Copy","Cut","Delete","Digit0","Digit1","Digit2","Digit3","Digit4","Digit5","Digit6","Digit7","Digit8","Digit9","End","Enter","Equal","Escape","F1","F10","F11","F12","F13","F14","F15","F16","F17","F18","F19","F2","F20","F3","F4","F5","F6","F7","F8","F9","Find","Help","Home","Insert","IntlBackslash","KeyA","KeyB","KeyC","KeyD","KeyE","KeyF","KeyG","KeyH","KeyI","KeyJ","KeyK","KeyL","KeyM","KeyN","KeyO","KeyP","KeyQ","KeyR","KeyS","KeyT","KeyU","KeyV","KeyW","KeyX","KeyY","KeyZ","Minus","NonConvert","NumLock","Numpad0","Numpad1","Numpad2","Numpad3","Numpad4","Numpad5","Numpad6","Numpad7","Numpad8","Numpad9","NumpadAdd","NumpadDecimal","NumpadDivide","NumpadEnter","NumpadEqual","NumpadMultiply","NumpadSubtract","Open","OSLeft","OSRight","PageDown","PageUp","Paste","Pause","Period","PrintScreen","Props","Quote","ScrollLock","Select","Semicolon","ShiftLeft","ShiftRight","Slash","Space","Tab","Undo"]
 
-    @defaultMap =
-      accel: 'w'
-      boost: 'Sw'
-      retro: 's'
-      steerLeft: 'a'
-      steerRight: 'd'
+Kbd.defaultMap =
+  boost:      'sArrowUp'
+  accel:      'ArrowUp'
+  retro:      'ArrowDown'
+  steerLeft:  'ArrowLeft'
+  steerRight: 'ArrowRight'
 
-    if navigator.appVersion.match(/WebKit/g)?
-      @layout = "mac/webkit"
-      @kmap["+"] = 187; @kmap["-"] = 189
-    else if navigator.appName.match(/Netscape/g)? and navigator.appVersion.match(/Macintosh/g)?
-      @layout = "mac/mozilla"
-    else if navigator.appName.match(/Netscape/g)? and navigator.appVersion.match(/X11/g)?
-      @layout = "unix/mozilla"
+Kbd.d10 =
+  execute:    "Execute something"
+  accel:      "Accelerate"
+  retro:      "Decelerate"
+  steerLeft:  "Turn left"
+  steerRight: "Turn right"
+  autopilot:  "Turn to target"
+  escape:     "Exit something"
+  boost:      "Boost"
 
-    sendAction = =>
-      rid = 0
-      rid = VEHICLE.relto.id if VEHICLE.relto
-      NET.state.write(VEHICLE,[
-        @state[@mmap["accel"]] || Mouse.accel,
-        @state[@mmap["retro"]],
-        @state[@mmap["steerRight"]],
-        @state[@mmap["steerLeft"]],
-        @state[@mmap["boost"]],
-        0,0,rid])
+Kbd.setState = (key,value)-> =>
+  @state[@mmap[key]] = value
+  rid = 0
+  rid = VEHICLE.relto.id if VEHICLE.relto
+  NET.state.write(VEHICLE,[
+    @state[@mmap["accel"]],
+    @state[@mmap["retro"]],
+    @state[@mmap["steerRight"]],
+    @state[@mmap["steerLeft"]],
+    @state[@mmap["boost"]],
+    0,0,rid])
 
-    @setState = (key,value)=> sendAction @state[@mmap[key]] = value
+Kbd.macro = (name,key,d10,func)->
+  NUU.settings.bind = {} unless NUU.settings.bind?
+  key = NUU.settings.bind[name] || key
+  console.log key, name, NUU.settings.bind[name]? if debug
+  @macro[name] = func
+  @bind key, name if key
+  @d10[name] = d10
 
-    @cmap = {}
-    @cmap[v] = k for k,v of @kmap
-    @macro macro, @defaultMap[macro], @d10[macro], up: sendAction, dn: sendAction for macro in ["accel","retro","steerRight","steerLeft","boost"]
+Kbd.bind = (combo,macro,opt) ->
+  opt = @macro[macro] unless opt?
+  delete @rmap[combo]
+  delete @help[combo]
+  return console.log ':kbd', 'bind:opt:undefined', macro, key, combo, opt unless opt?
+  opt = up: opt if typeof opt is 'function'
+  key = combo.replace /^[cas]+/,''
+  return console.log ':kbd', 'bind:key:unknown', macro, key, combo, opt if -1 is @workingKeycodes2018.indexOf key
+  console.log ':kbd', 'bind', combo, opt if debug
+  @up[macro] = opt.up if opt.up?
+  @dn[macro] = opt.dn if opt.dn?
+  @mmap[macro] = combo
+  @rmap[combo] = macro
+  @help[combo] = macro
+  @state[key] = off
 
-  macro:(name,key,d10,func)->
-    @macro[name] = func
-    @bind key, name
-    @d10[name] = d10
+Kbd.onKeyDown = (e) ->
+  # allow some browser-wide shortcuts that would otherwise not work
+  return if e.ctrlKey and e.code is 'KeyC'                if isClient
+  return if e.ctrlKey and e.code is 'KeyV'                if isClient
+  return if e.ctrlKey and e.code is 'KeyR'                if isClient
+  return if e.ctrlKey and e.code is 'KeyL'                if isClient
+  # allow the inspector; but only in debug mode ;)
+  return if e.ctrlKey and e.shiftKey and e.code is 'KeyI' if debug
+  e.preventDefault()
+  code = e.code
+  code = 'c' + code if e.ctrlKey
+  code = 'a' + code if e.altKey
+  code = 's' + code if e.shiftKey
+  return @onkeydown e, code if @onkeydown
+  return true if @onkeyup
+  macro = @rmap[code]
+  notice 500, "d[#{code}]:#{macro} #{e.code}" if debug
+  return if @state[code] is true
+  @state[code] = true
+  @dn[macro](e) if @dn[macro]?
 
-  __dn: (e) =>
-    code = e.keyCode
-    code = 'S'+code if e.shiftKey
-    macro = @rmap[code]
-    return if @state[code] is true
-    notice 100, "d[#{code}]:#{macro}"
-    @state[code] = true
-    @_dn[macro](e) if @_dn[macro]?
-    e.preventDefault()
+Kbd.onKeyUp = (e) ->
+  e.preventDefault()
+  code = e.code
+  code = 'c' + code if e.ctrlKey
+  code = 'a' + code if e.altKey
+  code = 's' + code if e.shiftKey
+  return @onkeyup e, code if @onkeyup
+  macro = @rmap[code]
+  notice 500, "u[#{code}]:#{macro}" if debug
+  return if @state[code] is false
+  @state[code] = false
+  @up[macro](e) if @up[macro]?
 
-  __up: (e) =>
-    code = e.keyCode
-    code = 'S'+code if e.shiftKey
-    macro = @rmap[code]
-    return if @state[code] is false
-    notice 100, "u[#{code}]:#{macro}"
-    @state[code] = false
-    @_up[macro](e) if @_up[macro]?
-    e.preventDefault()
+Kbd.stackOrder = []
+Kbd.stackItem  = []
 
-  bind: (key,macro,opt) =>
-    opt = @macro[macro] unless opt?
-    opt = up: opt if typeof opt is 'function'
-    unless opt?
-      console.log 'misbind', key, macro, opt
-      return
-    @_up[macro] = opt.up if opt.up?
-    @_dn[macro] = opt.dn if opt.dn?
-    if key.match /S/
-      keyCode = 'S' + @kmap[key.replace /^S/, '']
-    else keyCode = @kmap[key]
-    @mmap[macro] = keyCode
-    @state[keyCode] = off
-    @rmap[keyCode] = macro
-    @help[key] = macro
+Kbd.clearHooks = (key)->
+  @focus = null
+  document.removeEventListener 'paste', @onpaste if @onpaste
+  delete @onpaste
+  delete @onkeyup
+  delete @onkeydown
+  true
 
-  focus: =>
-    $(window).on 'keydown', @__dn
-    $(window).on 'keyup', @__up
+Kbd.grab = (focus,opts)->
+  console.log ':kbd', 'grab', focus.name if debug
+  if @focus
+    unless @focus is focus and opts.onkeydown is @onkeydown and opts.onkeyup is @onkeyup and opts.onpaste is @onpaste
+      console.log ':kbd', 'obscure', @focus.name if debug
+      @stackOrder.push @stackItem[@focus.name] =
+        focus:@focus
+        onkeydown:@onkeydown
+        onkeyup:@onkeyup
+        onpaste:@onpaste
+    else
+      console.log ':kbd', 'same', @focus.name if debug
+    do @clearHooks
+  @focus = focus; Object.assign @, opts
+  document.addEventListener 'paste', @onpaste if @onpaste
+  console.log ':kbd', 'grabbed', @focus.name if debug
+  true
 
-  unfocus: =>
-    $(window).off 'keydown', @__dn
-    $(window).off 'keyup', @__up
+Kbd.release = (focus)->
+  if @focus is focus
+    console.log ':kbd', 'release_current', focus.name if debug
+    do @clearHooks
+    if @stackOrder.length is 0
+      console.log ':kbd', 'main-focus' if debug
+      return true
+    item = @stackOrder.pop()
+    @grab item.focus, item
+    console.log ':kbd', 'main' unless @focus if debug
+    true
+  else if item = @stackItem[focus.name]
+    console.log ':kbd', 'release_obscured', focus.name if debug
+    Array.splice idx, 0 if idx = @stackOrder.indexOf item
+    delete @stackItem[focus.name]
+    console.log ':kbd', 'main' unless @focus if debug
+    true
+  else false
 
-  d10:
-    execute:          "Execute something"
-    accel:            "Accelerate"
-    retro:            "Decellerate"
-    steerLeft:        "Turn left"
-    steerRight:       "Turn right"
-    autopilot:        "Turn to target"
-    escape:           "Exit something"
-    boost:            "Boost"
+do Kbd.init
 
-Kbd.macro 'debark',    'q', 'Leave current vehicle', ->
-  NET.json.write switchShip: 'Exosuit'
-
-Kbd.macro 'weapNext',    'i', 'Next weapon (primary)', ->
-  VEHICLE.nextWeap(NUU.player)
-
-Kbd.macro 'weapPrev',    'o', 'Previous weapon (primary)', ->
-  VEHICLE.prevWeap(NUU.player)
-
-Kbd.macro 'weapNextSec', 'Si', 'Next weapon (secondary)', ->
-  VEHICLE.nextWeap(NUU.player,'secondary')
-
-Kbd.macro 'weapPrevSec', 'So', 'Previous weapon (secondary)', ->
-  VEHICLE.prevWeap(NUU.player,'secondary')
-
-Kbd.macro 'primaryTrigger', ' ', 'Primary trigger',
+Kbd.macro 'primaryTrigger', 'Space', 'Primary trigger',
   dn:-> if f = NUU.player.primary.trigger then do f
   up:-> if f = NUU.player.primary.release then do f
 
-Kbd.macro 'secondaryTrigger', 'x', 'Secondary trigger',
+Kbd.macro 'weapNext',         'F1', 'Next primary',       -> VEHICLE.nextWeap NUU.player
+Kbd.macro 'weapPrev',         'F2', 'Previous primary',   -> VEHICLE.prevWeap NUU.player
+Kbd.macro 'weapLock',     'Digit0', 'Primary lock',       -> VEHICLE.setWeap -1
+Kbd.macro 'weapPri1',     'Digit1', 'Primary #1',         -> VEHICLE.setWeap  0
+Kbd.macro 'weapPri2',     'Digit2', 'Primary #2',         -> VEHICLE.setWeap  1
+Kbd.macro 'weapPri3',     'Digit3', 'Primary #3',         -> VEHICLE.setWeap  2
+Kbd.macro 'weapPri4',     'Digit4', 'Primary #4',         -> VEHICLE.setWeap  3
+Kbd.macro 'weapPri5',     'Digit5', 'Primary #5',         -> VEHICLE.setWeap  4
+Kbd.macro 'weapPri6',     'Digit6', 'Primary #6',         -> VEHICLE.setWeap  5
+Kbd.macro 'weapPri7',     'Digit7', 'Primary #7',         -> VEHICLE.setWeap  6
+Kbd.macro 'weapPri8',     'Digit8', 'Primary #8',         -> VEHICLE.setWeap  7
+
+Kbd.macro 'secondaryTrigger', 'KeyX', 'Secondary trigger',
   dn:-> if f = NUU.player.secondary.trigger then do f
   up:-> if f = NUU.player.secondary.release then do f
 
-$public class Target
-  @typeNames : ['ship','stellar','all']
-  @types : [Ship.byId,Stellar.byId,$obj.byId]
+Kbd.macro 'weapNextSec',      'F3', 'Next secondary',     -> VEHICLE.nextWeap NUU.player, 'secondary'
+Kbd.macro 'weapPrevSec',      'F4', 'Previous secondary', -> VEHICLE.prevWeap NUU.player, 'secondary'
+Kbd.macro 'weapLockSec', 'sDigit0', 'Secondary lock',     -> VEHICLE.setWeap -1,          'secondary'
+Kbd.macro 'weapSec1',    'sDigit1', 'Secondary #1',       -> VEHICLE.setWeap  0,          'secondary'
+Kbd.macro 'weapSec2',    'sDigit2', 'Secondary #2',       -> VEHICLE.setWeap  1,          'secondary'
+Kbd.macro 'weapSec3',    'sDigit3', 'Secondary #3',       -> VEHICLE.setWeap  2,          'secondary'
+Kbd.macro 'weapSec4',    'sDigit4', 'Secondary #4',       -> VEHICLE.setWeap  3,          'secondary'
+Kbd.macro 'weapSec5',    'sDigit5', 'Secondary #5',       -> VEHICLE.setWeap  4,          'secondary'
+Kbd.macro 'weapSec6',    'sDigit6', 'Secondary #6',       -> VEHICLE.setWeap  5,          'secondary'
+Kbd.macro 'weapSec7',    'sDigit7', 'Secondary #7',       -> VEHICLE.setWeap  6,          'secondary'
+Kbd.macro 'weapSec8',    'sDigit8', 'Secondary #8',       -> VEHICLE.setWeap  7,          'secondary'
 
-NUU.targetMode = 'land'
+Kbd.macro 'mountNext',   'KeyM', 'Next mount', ->
+  m = ++NUU.player.mountId % VEHICLE.mount.length
+  NET.json.write switchMount: m
 
-Kbd.macro 'targetClassNext','Sy','Select next target class', ->
-  list = Target.types
-  NUU.targetId = 0
-  NUU.targetClass = Math.min(++NUU.targetClass,list.length-1)
-  Kbd.macro.targetPrev()
-  if NUU.targetClass < 2 then NUU.targetMode = 'land'
-  null
-
-Kbd.macro 'targetClassPrev','Sg','Select previous target class', ->
-  list = Target.types
-  NUU.targetId = 0
-  NUU.targetClass = Math.max(--NUU.targetClass,0)
-  Kbd.macro.targetPrev()
-  if NUU.targetClass < 2 then NUU.targetMode = 'land'
-  null
-
-Kbd.macro 'targetNext','y','Select next target', ->
-  list = Target.types
-  cl = list[NUU.targetClass]
-  list = Object.keys(cl)
-  NUU.targetId = id = Math.min(++NUU.targetId,list.length-1)
-  NUU.emit 'newTarget', NUU.target = cl[list[id]]
-  null
-
-Kbd.macro 'targetPrev','g','Select next target', ->
-  list = Target.types
-  cl = list[NUU.targetClass]
-  NUU.targetId = id = Math.max(--NUU.targetId,0)
-  list = Object.keys(cl)
-  NUU.emit 'newTarget', NUU.target = cl[list[id]]
-  null
-
-Kbd.macro 'targetNothing','Se','Disable targeting scanners', targetNothing = ->
-  NUU.targetId = NUU.targetClass = NUU.target = null
-  NUU.emit 'newTarget', null
-  null
-
-Kbd.macro 'targetClosest','u','Select closest target', targetClosest = (callback)->
-  v = VEHICLE
-  list = Target.types
-  cl = list[NUU.targetClass]
-  closest = null
-  closestDist = Infinity
-  for k,t of cl when t and t.id isnt v.id and (d = $dist v, t) < closestDist
-    closest = t
-    closestDist = d
-  return do targetNothing unless closest?
-  NUU.targetId = id = closest.id
-  NUU.once 'newTarget', callback if callback? and typeof callback is 'function'
-  NUU.emit 'newTarget', NUU.target = closest
-  null
-
-Kbd.macro 'targetEnemy','e','Target closest enemy', ->
-  NUU.targetId = 0
-  NUU.targetClass = 3 # hostile
-  do targetClosest
-  null
-
-Kbd.macro 'capture', 'c', 'Capture an object', capture = ->
-  NET.action.write(NUU.target,'capture')
-  null
-
-Kbd.macro 'launch', 'Sm', 'Launch / Undock', ->
-  NET.action.write(NUU.target||id:0,'launch')
-  null
-
-Kbd.macro 'targetMode', 'Sn', 'Toggle Land / Orbit', ->
-  return NUU.targetMode = 'orbit' if NUU.targetMode is 'dock'
-  return NUU.targetMode = 'land'  if NUU.targetMode is 'orbit'
-  return NUU.targetMode = 'dock'  if NUU.targetMode is 'land'
-  NUU.targetMode = 'land'
-  null
-
-Kbd.macro 'orbit', 'm', 'Land / Dock / Enter Orbit', ->
-  NET.action.write NUU.target, NUU.targetMode if NUU.target
-  null
-
-Kbd.macro 'captureClosest','Sc','Capture closest target', ->
-  NUU.targetId = 0
-  NUU.targetClass = 2 # all
-  targetClosest (t)->
-    capture t if t?
-  null
-
-Kbd.macro 'jump','j','Jump to target', ->
-  return unless ( t = NUU.target )
-  NET.json.write jump: t.id
-  null
+Kbd.macro 'debug', 'sBackquote', 'Debug', ->
+  window.debug = not debug

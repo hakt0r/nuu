@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -22,77 +22,131 @@
 
 $static 'Mouse', new class MouseInput
   state: off
+  trigger: no
+  triggerSec: no
   timer: undefined
   event: x:0, y:0
   accel: no
-  destDir: -1
-  lastDir: -1
+  destDir: 0
+  lastDir: 0
   lastAccel: no
 
-  update: -> (evt) =>
-    evt = evt.data.originalEvent
+  constructor:->
+    @[k] = @[k].bind @ for k in ['update','reset','callback','oncontextmenu','onwheel','onmouseup','onmousedown']
+    null
+
+  update: (evt) ->
+    evt = evt
     @event = e = [ evt.offsetX, evt.offsetY ]
     @dest  = c = [ WDB2, HGB2 ]
     @destDir   = ( 360 + parseInt $v.heading(e,c) * RAD ) % 360
     null
 
   reset: ->
-    Sprite.hud.widget 'mouse'
+    do @trigger.dn if @trigger
+    @trigger = no
+    do @triggerSec.dn if @triggerSec
+    @triggerSec = no
+    @state = off
+    HUD.widget 'mouse', null
     clearInterval @timer
-    @obj.interactive = no
-    @obj.mousemove = undefined
-    @obj.mousedown = undefined
     @timer = null
+    document.onmousemove = document.onwheel = document.onmouseup = document.onmousedown = document.oncontextmenu = null
     null
 
-  callback: -> =>
+  callback: ->
     v = VEHICLE
     dirChanged = @destDir isnt @lastDir
     accelChanged = @lastAccel isnt @accel
+    return if VEHICLE.locked and 0 is NUU.player.mountId
+    return if VEHICLE.locked and 0 is NUU.player.mountId
     return unless dirChanged or accelChanged
-    return unless NUU.player.mountId is 0
-    if dirChanged and not accelChanged
-      v.d = @destDir
-      NET.steer.write NET.steer.setDir, v.d
-    else
-      v.d = @destDir
-      Kbd.setState 'accel', @accel
+    return if -1 is ['helm','weap'].indexOf
+    switch VEHICLE.mountType[NUU.player.mountId]
+      when 'helm'
+        # v.d = @destDir if NUU.settings.trueInstantWorld
+        if dirChanged and not accelChanged
+          NET.steer.write @destDir
+        else do Kbd.setState 'accel', @accel
+      when 'weap'
+        NET.steer.write @destDir
     @lastDir = @destDir; @lastAccel = @accel
     null
 
+  oncontextmenu: (evt)-> false
+
+  onmouseup: (evt)->
+    switch evt.which
+      when 1
+        do Kbd.setState 'accel', @accel = false if @accel
+        do Kbd.setState 'boost', @boost = false if @boost
+        do Kbd.setState 'retro', @retro = false if @retro
+      when 3
+        if @trigger
+          do @trigger.up
+          @trigger = no
+        if @triggerSec
+          do @triggerSec.up
+          @triggerSec = no
+    do evt.stopPropagation
+    false
+
+  onmousedown: (evt)->
+    switch evt.which
+      when 1
+        s = if evt.shiftKey then 'boost' else if evt.ctrlKey then 'retro' else 'accel'
+        do Kbd.setState s, @[s] = true
+      when 2
+        if evt.altKey
+             Scanner.toggle()
+        else if evt.shiftKey
+             Target.nextClass()
+        else Target.closest()
+      when 3
+        if evt.shiftKey
+          do Kbd.macro.weapNext
+        if evt.altKey
+          do Kbd.macro.weapNextSec
+        if evt.ctrlKey
+          @triggerSec = Kbd.macro.secondaryTrigger
+          do Kbd.macro.secondaryTrigger.dn
+        if Kbd.macro.primaryTrigger? and not ( evt.altKey or evt.shiftKey or evt.ctrlKey )
+          @trigger = Kbd.macro.primaryTrigger
+          do Kbd.macro.primaryTrigger.dn
+    do evt.stopPropagation
+    false
+
+  onwheel: (evt) ->
+    down = evt.wheelDeltaY >= 0
+    if evt.ctrlKey
+      if down
+           Sprite.scale = max 0.1, Sprite.scale - 0.05
+      else Sprite.scale = min   1, Sprite.scale + 0.05
+    if evt.shiftKey
+      if down
+           Target.prev()
+      else Target.next()
+    if down
+         Scanner.zoomOut()
+    else Scanner.zoomIn()
+    do evt.stopPropagation
+    false
+
+  enable: ->  @state = off; do @macro()
+  disable: -> @state = on;  do @macro()
   macro: -> =>
     @state = not @state
-    @obj = Sprite.fg
-    @obj.interactive = true
     body = document.querySelector 'body'
     if @state
-      trigger = no
-      @obj.hitArea = new PIXI.Rectangle 0, 0, 2000, 2000
-      @obj.mousemove = @update()
-      body.onwheel = (evt) =>
-        down = evt.wheelDeltaY >= 0
-        return Kbd.macro.targetPrev() if evt.shiftKey and down
-        return Kbd.macro.targetNext() if evt.shiftKey
-        if down then Kbd.macro.scanMinus() else Kbd.macro.scanPlus()
-      @obj.mousedown = (evt) =>
-        if 2 is evt.data.originalEvent.which
-          return Kbd.macro.targetClassNext() if evt.data.originalEvent.shiftKey
-          return Kbd.macro.targetClosest()
-        trigger = evt.data.originalEvent.shiftKey
-        if trigger and Kbd.macro.primaryTrigger? then do Kbd.macro.primaryTrigger.dn
-        else Kbd.setState 'accel', @accel = true
-        do evt.stopPropagation
-      body.oncontextmenu = (evt) =>
-        do Kbd.macro.primaryTrigger.dn
-        do evt.stopPropagation
-        false
-      @obj.mouseup = (evt) =>
-        if trigger and Kbd.macro.primaryTrigger? then do Kbd.macro.primaryTrigger.up
-        Kbd.setState 'accel', @accel = false
-        do evt.stopPropagation
-      @timer = setInterval @callback(), TICK
+      HUD.widget 'mouse', 'mouse', true
+      document.onmousemove = @update
+      document.onwheel = @onwheel
+      document.onmouseup = @onmouseup
+      document.onmousedown = @onmousedown
+      document.oncontextmenu = @oncontextmenu
+      @timer = setInterval @callback, TICK
     else @reset()
     null
 
-Kbd.macro 'mouseturn', 'z', 'Toggle mouseturning', Mouse.macro()
-app.on 'settings', -> do Mouse.macro() if app.settings.mouseturn
+NUU.on 'settings', -> do Mouse.macro() unless NUU.settings.mouseturnoff
+Kbd.macro 'mouseturn', 'KeyZ', 'Toggle mouseturning', Mouse.macro()

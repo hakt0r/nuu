@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -25,34 +25,52 @@ $abstract 'Tile',
   layer: 'tile'
   count: null
 
-  loadAssets: -> @loadTile( @assetPrefix + @sprite + '.png' )
+  loadAssets: ->
+    @loadTile ( @assetPrefix + @sprite + '.png' ), 'sprite', (e,s)=>
+      @count = @sprite.meta.count
+      @loaded = true
+      # @show @updateSprite()
+      @sprite.anchor.set 0.5
 
   loadTile: (url,dest='sprite',callback=$void) ->
-    callback null, @[dest] = s = movieFactory url, url
+    callback null, @[dest] = movieFactory url, url
 
-  updateSprite: ->
-    do @update
-    if @state.S isnt 3 then if @spriteMode is 1
-      @changeSprite @spriteNormal
-      @spriteMode = 0
-    else if @spriteMode is 0
+  updateSprite: (time)->
+    @update time
+    p = @sprite.position.set @x + OX, @y + OY unless @ is VEHICLE
+    @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
+    true
+
+# IMPLEMENTATIONS
+
+$Tile Ship,
+  spriteMode:0
+  layer: 'ship'
+
+  loadAssets: ->
+    console.log ':gfx', 'ship$', 'assets', @id, @name if debug
+    p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
+    @imgCom = p + '_comm.png'
+    # Cache.get p + '_comm.png', (cached) => @imgCom = cached
+    @loadTile p + '.png', 'sprite', (e,s) =>
+      { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
+      @loaded = true
+      # @show @updateSprite()
+    @loadTile p + '_engine.png', 'spriteEngine'
+
+  updateSprite: (time)->
+    @update time
+    if @state.acceleration then if @spriteMode is 0
       @changeSprite @spriteEngine
       @spriteMode = 1
+    else if @spriteMode is 1
+      @changeSprite @spriteNormal
+      @spriteMode = 0
     @sprite.anchor.set 0.5
     p = @sprite.position.set @x + OX, @y + OY
     if @count is 1 then @sprite.rotation = ( @d + 90 % 360 ) / 360 * TAU
     else @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
     true
 
-# IMPLEMENTATIONS
-
-$Tile Ship, spriteMode:0, layer: 'ship', loadAssets: ->
-  # console.log 'ship$', 'assets', @id, @name
-  p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
-  Cache.get p + '_comm.png', (cached) => @imgCom = cached
-  @loadTile p + '.png', 'sprite', (e,s) =>
-    { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
-    @show @updateSprite @loaded = true
-  @loadTile p + '_engine.png', 'spriteEngine'
 
 $Tile Missile, sprite: 'banshee', ttlFinal: yes

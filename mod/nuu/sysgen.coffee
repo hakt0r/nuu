@@ -29,7 +29,7 @@ for lib in deps.server.require
 
 ## Initialize express
 $static 'app', app = express()
-$static 'coffee', coffee = require 'coffee-script'
+$static 'coffee', coffee = require 'coffeescript'
 
 ## Setup Webserver
 app.use require('morgan')('combined',{})

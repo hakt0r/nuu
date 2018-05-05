@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -47,7 +47,7 @@ addFile = (f,dir) ->
 
 changeFile = (path,name) -> ->
   if rebuildLock is on
-    console.log '[locked]', path
+    console.log ':dev', '[locked]', path
     return
   clearTimeout timeout
   rebuildFiles.push path
@@ -78,4 +78,4 @@ rebuild = ->
 
 readDir root + '/common/', addFile
 readDir root + '/client/', addFile
-console.log 'watching', Object.keys(watch).length
+console.log ':dev', 'watching', Object.keys(watch).length

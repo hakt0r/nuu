@@ -8,9 +8,7 @@
     ["Buffer","buffer","Buffer"],
     ["$","jquery"],
     ["_","underscore"],
-    ["async","async"],
     ["PIXI","pixi.js"],
-    ["vm","voronoi-map"],
     ["$v","vectors"]
   ],
   "libs": [
@@ -18,7 +16,6 @@
     "crypto",
     "events",
     "jquery",
-    "async",
     "pixi.js",
     "buffer",
     "vectors",
@@ -30,25 +27,21 @@
     "sm2.js": {
       "name": "SoundManager 2",
       "homepage": "http://www.schillmania.com/projects/soundmanager2/",
-      "url":  "https://raw.github.com/scottschiller/SoundManager2/master/script/soundmanager2-nodebug-jsmin.js"},
-    "imag/milkyway.jpg": {
-      "name": "Milkyway panorama by ESO / Serge Brunier, Frederic Tapissier",
-      "homepage": "http://apod.nasa.gov/",
-      "url": "http://apod.nasa.gov/apod/image/0909/milkywaypan_brunier_2048.jpg"
+      "url":  "https://raw.github.com/scottschiller/SoundManager2/master/script/soundmanager2-nodebug-jsmin.js"
     }
   },
   "sources": [
     "keyboard",
+    "target",
     "cache",
     "gfx",
+    "gui",
     "vt100",
-    "player",
-    "about",
+    "user",
     "mouse",
     "autopilot",
     "net",
     "sound",
-    "gui",
     "sprite",
     "tile",
     "animation",

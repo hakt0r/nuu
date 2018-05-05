@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -31,7 +31,18 @@
 
 ###
 
-String.filename = (p)-> p.replace(/.*\//, '').replace(/\..*/,'')
+PIXI.bringToFront = (sprite, parent) ->
+  sprite = if typeof sprite != 'undefined' then sprite.target or sprite else this
+  parent = parent or sprite.parent or 'children': false
+  return unless chd = parent.children
+  return unless -1 isnt idx = chd.indexOf sprite
+  chd.push sprite
+  return
+
+# Moved in v5 we use both atm
+PIXI.Ticker = PIXI.ticker.Ticker                 unless PIXI.Ticker
+PIXI.AnimatedSprite = PIXI.extras.AnimatedSprite unless PIXI.AnimatedSprite
+PIXI.TilingSprite   = PIXI.extras.TilingSprite   unless PIXI.TilingSprite
 
 movieCache = {}
 $static 'movieFactory', (sprite, url, _loop) ->
@@ -49,7 +60,7 @@ $static 'movieFactory', (sprite, url, _loop) ->
       y = floor(n / l) * s
       a.push new PIXI.Texture base, new PIXI.Rectangle(x,y,s,s)
     movieCache[sprite] = c = (_loop)->
-      c = new PIXI.extras.AnimatedSprite a, true
+      c = new PIXI.AnimatedSprite a, true
       c.meta = meta
       c.onComplete = _loop unless ( c.loop = _loop is true )
       c
@@ -66,7 +77,7 @@ makeStarfield = (mod...)->
   c = $ '<canvas class="offscreen" width=1024 height=1024>'
   g = c[0].getContext '2d'
   field.apply null, x for i in [0..x[2]] while x = mod.shift()
-  return new PIXI.extras.TilingSprite PIXI.Texture.fromCanvas c[0]
+  return new PIXI.TilingSprite PIXI.Texture.fromCanvas c[0]
 
 $static 'Sprite', new class SpriteSurface extends EventEmitter
   visible: {}
@@ -74,29 +85,33 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
   nextSelect: 0
 
   constructor: (callback)->
+    @scale = 1
+    @tick = 0
     @stage    = stage    = new PIXI.Container # 0x000000
-    @renderer = renderer = PIXI.autoDetectRenderer 640,480, antialias: yes
+    @pixi = new PIXI.Application 640, 480, antialias: no, forceFXAA:yes, autoResize:no
+    @renderer = renderer = @pixi.renderer
 
     @layer 'bg',   new PIXI.Container
     @layer 'stel', new PIXI.Container
     @layer 'debr', new PIXI.Container
     @layer 'ship', new PIXI.Container
-    @layer 'weap', new PIXI.Graphics
+    @layer 'weap', new PIXI.Container
     @layer 'tile', new PIXI.Container
     @layer 'play', new PIXI.Container
-    @layer 'fx',   new PIXI.Graphics
+    @layer 'fx',   new PIXI.Container
     @layer 'fg',   new PIXI.Container
 
-    @fg.addChild @parallax  = makeStarfield [1,0.3,2000]
-    @fg.addChild @parallax2 = makeStarfield [1,0.3,2000]
     @bg.addChild @starfield = makeStarfield [1,0.3,2000],[1.5,0.7,20]
+    @bg.addChild @parallax  = makeStarfield [1,0.3,4000]
+    @bg.addChild @parallax2 = makeStarfield [1,0.3,2000]
 
-    app.on 'runtime:ready', =>
+    NUU.on 'runtime:ready', =>
       document.body.appendChild renderer.view
-      w = $ document
+      d = $ document
+      w = $ window
       do @resize = =>
-        window.WIDTH  = w.width()
-        window.HEIGHT = w.height()
+        window.WIDTH  = d.width()
+        window.HEIGHT = d.height()
         window.WDB2 = WIDTH  / 2
         window.HGB2 = HEIGHT / 2
         window.WDT2 = WIDTH  + WIDTH
@@ -104,16 +119,16 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
         @renderer.resize WIDTH, HEIGHT
         @emit 'resize', WIDTH, HEIGHT, WDB2, HGB2
       w.on 'resize', @resize
-      @ticker = new PIXI.ticker.Ticker
+      @ticker = new PIXI.Ticker
       @ticker.add => do @animate
       @ticker.start()
       $interval 500, @select.bind @
-      $.ajax('/build/images.json').success (result) =>
+      $.ajax '/build/images.json', success: (result) =>
         $static '$meta', result
         # preload animations
         for k in ['exps','expm','expl','expl2','cargo','debris0','debris1','debris2','debris3','debris4','debris5']
           movieFactory k, '/build/spfx/' + k + '.png'
-        app.emit 'gfx:ready'
+        NUU.emit 'gfx:ready'
 
     @on 'resize', @repositionPlayer.bind @
     @on 'resize', (wd,hg,hw,hh) =>
@@ -126,41 +141,56 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     r = v.radius
     v.sprite.position.set hw - r, hh - r
 
-  select: (timestamp) ->
-    W = WIDTH  * 4 # TODO: EventHorizon
-    H = HEIGHT * 4 # TODO: EventHorizon
-    VEHICLE.update()
+  select: ->
+    Horizon = 10 * max WIDTH, HEIGHT
+    VEHICLE.update time = NUU.time()
     { x,y } = VEHICLE
-    # destructor-aware loop
-    i = -1; s = null; list = $obj.list; length = list.length
+    i = -1
+    s = null
+    list   = $obj.list.slice()
+    length = list.length
     while ++i < length
       s = list[i]
-      if s.ttl and s.ttl < TIME
+      s.update time
+      if s.ttl and s.ttl < time
         s.hide()
-        if s.ttlFinal
-          s.destructor(); length--; i--
+        s.destructor() if s.ttlFinal
         continue
-      s.update()
-      if -W<(s.x-x)<W and -H<(s.y-y)<H
-        s.show()
-      else s.hide()
+      if Horizon > sqrt (s.x-x)**2 + (s.y-y)**2
+        continue if SHORTRANGE[s.id]
+        SHORTRANGE[s.id] = s
+        NUU.emit '$obj:inRange', s
+        console.log 'inRange', s.name, s.id
+      else
+        debugger if VEHICLE is s # INVESTIGATE
+        continue unless SHORTRANGE[s.id]
+        delete SHORTRANGE[s.id]
+        NUU.emit '$obj:outRange', s
+        console.log 'outRange', s.name, s.id
+
+    null
 
   animate: (timestamp) ->
-    window.TIME  = NUU.time()
-    window.ETIME = Math.floor(TIME/1000000)*1000000
-    VEHICLE.updateSprite()
+    return unless VEHICLE
+    time = NUU.time()
+    VEHICLE.update time
     window.OX = -VEHICLE.x + WDB2
     window.OY = -VEHICLE.y + HGB2
 
-    # SPEEDSCALE (REVIVAL)
-    if app.settings.gfx.speedScale
-      sc = 1 / ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
-      @bg.scale.x = @bg.scale.y = @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
-      @bg.position.x = @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
-      @bg.position.y = @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
+    # if NUU.settings.gfx.speedScale
+    sc = min 1, Sprite.scale
+    # ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
+    @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
+    @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
+    @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
+    # @bg.scale.x = @bg.scale.y =
+    # @bg.position.x =
+    # @bg.position.y =
 
     # STARS
     [ mx, my ] = vectors.normalize Array::slice.call VEHICLE.m;
+    mx =  1 if mx is 0
+    my = -1 if my is 0
     @starfield.tilePosition.x -= mx
     @starfield.tilePosition.y -= my
     @parallax. tilePosition.x -= mx * 1.25
@@ -168,35 +198,34 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @parallax2.tilePosition.x -= mx * 1.5
     @parallax2.tilePosition.y -= my * 1.5
 
-    # clear weapons gfx area
-    @weap.clear()
-
-    # fastest case
     length = ( list = @visibleList ).length; i = -1
+    # time = NUU.time()
     while ++i < length
-      # loop reached
-      ( s = list[i] ).updateSprite()
-      # draw beam weapon
-      if ( beam = Weapon.beam[s.id] ) and 0 < ( x = s.x + OX ) < WIDTH and 0 < ( y = s.y + OY ) < HEIGHT
-        d = s.d / RAD
-        @weap.beginFill 0xFF0000, 0.7
-        @weap.lineStyle 1+random(), 0xFF0000, 0.7
-        @weap.moveTo x, y
-        @weap.lineTo x + cos(d) * beam.range, y + sin(d) * beam.range
-        @weap.endFill()
+      ( s = list[i] ).updateSprite time
+      continue unless beam = Weapon.beam[s.id]
+      sp = beam.sprite
+      sp.tilePosition.x += 0.5
+      sp.position.set s.x + OX, s.y + OY
+      sp.rotation = ( s.d + beam.dir ) / RAD
 
-    # draw projectiles
-    for s in Weapon.proj
-      ticks = (TIME - s.ms) / TICK
-      x = OX + s.sx + s.m[0] * ticks
-      y = OY + s.sy + s.m[1] * ticks
-      if 0 < x < WIDTH and 0 < y < HEIGHT
-        @weap.beginFill 0xFF0000, 0.7
-        @weap.drawCircle x-1, y-1, 3
-        @weap.endFill()
+    length = ( list = Weapon.proj ).length; i = -1
+    # time = NUU.time()
+    while ++i < length
+      s = list[i]
+      ticks = ( time - s.ms ) * TICKi
+      x = floor s.sx + s.mx * ticks
+      y = floor s.sy + s.my * ticks
+      s.sprite.position.set x + OX, y + OY
+      if s.tt < time
+        Sprite.weap.removeChild s.sprite
+        list[i] = null
+    Weapon.proj = Weapon.proj.filter (i)-> i isnt null
 
     @renderHUD()     # if @renderHUD
-    @renderScanner() # if @renderScanner
+    @renderScanner() # if ++@tick % 10 is 0
+    # if VEHICLE.sprite
+    #   # VEHICLE.sprite.anchor = [0,0]
+    #   VEHICLE.sprite.position.set WDB2, HGB2
     @renderer.render @stage
     null
 
@@ -207,7 +236,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     container
 
   start: (callback) =>
-    @startTime = Ping.remoteTime()
+    @startTime = NUU.time()
     callback null if callback
     null
 

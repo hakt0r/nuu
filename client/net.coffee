@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -20,71 +20,143 @@
 
 ###
 
-NET.on 'join', (vc) ->
-  return if Ship.byId[vc.id]
-  new Ship vc
+NET.login = (name, pass, callback, register=no) ->
+  console.log ':net', 'login', name if debug
+  new NET.Connection name, pass, callback, register
+NET.register = (name, pass, callback) -> NET.login name, pass, callback, yes
 
-NET.on '$obj:del', (opts) ->
-  # freeId.push opts.id
-  # try $obj.byId[opts.id].destructor()
-
+NET.on 'e', (message) -> notice 1000, Error.byId[message]
 NET.on 'sync', (opts) -> NUU.sync opts
+NET.on 'launch',      -> VEHICLE.landedAt = VEHICLE.orbit = null
+NET.on 'landed',  (id)-> new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
 
 NUU.sync = (list,callback) ->
   if list.del
     do o.destructor for id in list.del when o = $obj.byId[id]
   if list.add then for obj in list.add
-    o.destructor console.log '$obj:exists:replace', obj.id if o = $obj.byId[obj.id]
+    if o = $obj.byId[obj.id]
+      console.log '$obj', 'exists:replace', obj.id if debug
+      o.destructor()
     new $obj.byClass[obj.key] obj
   callback null if callback
 
 NUU.firstSync = (opts,callback)->
-  @player = new Player opts
+  @player = new User opts
   Sprite.start => @start callback
 
-NUU.loginPrompt = ->
-  vt.prompt 'Login', (user) =>
-    return @loginPrompt() if user is null
-    vt.prompt 'Password', (pass) =>
-      return @loginPrompt() if pass is null
-      NET.login user, sha512(pass), (success) =>
-        return @loginPrompt() unless success
+NET.queryJSON = (opts,callback)->
+  p = new Promise (resolve,reject)->
+    key = Object.keys(opts)[0]
+    clear = =>
+      NET.removeListener 'e', onerror
+      NET.removeListener key, ondone
+    NET.json.write opts
+    NET.on key, ondone  = (data)-> do clear; resolve data
+    NET.on 'e', onerror =    (e)-> do clear; if reject then reject e else resolve null
+  p.then callback
+  return p
 
-NET.login = (name, pass, callback) ->
-  console.log 'NET.login'
-  NET.once 'user.login.success', (opts) ->
-    log "Login successful."
-    $worker.setTimer -> Ping.remoteTime()
-    NUU.firstSync opts, -> callback true
+class NET.Connection
+  constructor: (@name,@pass,callback,@register)->
+    NET.Connection._.close() if NET.Connection._
+    NET.Connection._ = @
+    @addr = window.location
+      .toString()
+      .replace('http','ws')
+      .replace(/start/,'')
+      .replace(/#.*/,'')
+      .replace(/\/$/,'') + '/nuu'
+    @lsalt = String.random 255 + Math.random @pass.length
+    NET.removeAllListeners e for e in [
+      'user.login.success','user.login.challenge','user.login.register','user.login.failed','user.login.nx' ]
+    NET.on 'user.login.success', (opts) =>
+      vt.status 'Login', '<i style="color:green">Success</i> [<i style="color:yellow">' + @name + '</i>]'
+      NUU.firstSync opts, => callback true
+      NUU.emit 'connect', @
+    NET.once 'user.login.failed', (opts) =>
+      vt.status 'Login', '<b style="color:red">Failed</b> [<i style="color:yellow">' + @name + '</i>]'
+      callback false
+    NET.on 'user.login.nx', (opts) =>
+      if @register
+        vt.status 'Register', '<i style="color:green">Name is free</i> [<i style="color:yellow">' + @name + '</i>] :)'
+        @rsalt = String.random 255 + Math.random @pass.length
+        pass = sha512 [ @rsalt, @pass ].join ':'
+        NET.json.write login: user:@name, pass: pass:pass,salt:@rsalt
+      else
+        vt.status 'Login failed', '<b style="color:red">Wrong name / password.</b>'
+        callback false
+    NET.on 'user.login.challenge', (opts) =>
+      vt.status 'Login', 'Got challenge, sending response.'
+      pass = sha512 [ @lsalt, sha512 [ opts.salt, @pass ].join ':' ].join ':'
+      NET.json.write login: user:@name, pass: pass:pass,salt:@lsalt
+    NET.on 'user.login.register', (opts) =>
+      vt.status 'Register', 'Success.'
+      @lsalt = String.random 255 + Math.random @pass.length
+      pass = sha512 [ @lsalt, sha512 [ @rsalt, @pass ].join ':' ].join ':'
+      NET.json.write login: user:@name, pass: pass:pass,salt:@lsalt
+    @connect @addr
 
-  NET.once 'user.login.failed', (opts) ->
-    log "Login failed."
-    callback false
-  connect = (addr) =>
-    console.log 'NET.connect', addr
-    s = if WebSocket? then new WebSocket addr else new MozWebSocket addr
-    @sock = s
-    @send = (msg) =>
-      NET.TX++ # DEBUG
-      s.send msg
-    NUU.emit 'connect', s
-    s.onmessage = (msg) =>
-      NET.RX++ # DEBUG
-      @route(s) msg.data
-    s.onopen = (e) ->
-      log "Connected. Sending credentials."
-      NET.json.write login: user:name, pass:pass
-    s.onerror = (e) ->
-      console.log "NET.sock:error", e
-      NUU.emit 'disconnect'
-  loc = window.location.toString()
-  addr = loc.
-    replace('http','ws').
-    replace(/#.*/,'').
-    replace(/\/$/,'') + '/nuu'
-  connect addr
+  close: =>
+    try @sock.close()
+    NUU.emit 'disconnect', @
 
-# DEBUG
+  connect: (@addr) =>
+    try @close()
+    vt.status 'Connecting', '[<i style="color:yellow">'+ @addr + '</i>]'
+    console.log ':net', 'connect', @addr
+    try s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
+    catch e then @onerror e
+    @connectTimeout = setTimeout ( =>
+      s.close() unless s.readyState is 1
+    ), 5000
+    NET[k] = @[k] for k in [ 'send' ]
+    s[k]   = @[k] for k in [ 'onmessage', 'onopen', 'onerror', 'onclose' ]
+    NUU.emit 'connecting', @sock = s
+
+  send: (msg) =>
+    NET.TX++
+    return do @reconnect if @sock.readyState > 1
+    return unless @sock.readyState is 1
+    @sock.send msg
+
+  onopen: (e) => $.ajax url: 'build/hashsums', success: (d) =>
+    h = {}; d.trim().split('\n').map (i)-> i = i.split /[ \t]+/; h[i[1]] = i[0]
+    return window.location.reload() unless h['build/client.js'] is NUU.hash['build/client.js']
+    vt.status "Connected", '[<i style="color:yellow">' + @addr + '</i>]'
+    vt.status "Login", "Getting challenge for " + '[<i style="color:yellow">' + @name + '</i>]'
+    NET.json.write login: @name
+    do @onReconnectSuccessful
+
+  onmessage: (msg) =>
+    NET.route @sock, msg.data
+
+  onclose: (e) =>
+    log ':net', 'sock:close', e.code, e.message
+    NUU.emit 'disconnect', @
+    @reconnect @reconnect.underway = no
+
+  onerror: (e) =>
+    @sock.close()
+    log ':net', 'sock:error', e
+
+  onReconnectSuccessful: (e) =>
+    @reconnect.underway = no
+    HUD.widget 'reconnect'
+
+  reconnect: (e) =>
+    return console.log 'blocked' if @reconnect.underway
+    @reconnect.underway = yes
+    HUD.widget 'reconnect', 'wait -----'
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚----' ), 1000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚---' ), 2000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚--' ), 3000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚❚-' ), 4000
+    setTimeout ( =>
+      HUD.widget 'reconnect', '[***]'
+      @connect @addr
+    ), 5000
+
+# Stats
 NET.PPS = in:0,out:0,inAvg:new Mean,outAvg:new Mean
 NET.TX = 0
 NET.RX = 0
@@ -92,4 +164,3 @@ $interval 1000, ->
   NET.PPS.outAvg.add NET.PPS.out = NET.TX
   NET.PPS.inAvg.add  NET.PPS.in  = NET.RX
   NET.TX = NET.RX = 0
-# DEBUG

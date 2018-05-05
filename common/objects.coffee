@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -25,54 +25,49 @@ lastId = 0
 
 $public class $obj
   @freeId: freeId
-  @interfaces: [$obj]
+  @interfaces: []
   tpl: null
   size: 0
   hit: $void
 
   constructor: (opts={})->
-
-    # read or setup momentum vector
-    @m = opts.m || [0,0]
-    delete opts.m
-
     # read state if specified
     delete opts.state if ( state = opts.state )
-
     # apply template
     @[k] = v for k,v of Item.tpl[opts.tpl] if opts.tpl
-
     # apply other keys
     @[k] = v for k,v of opts
-    # console.log 'constructor$', @id, @name
-
     # choose id
     unless @id?
       @id = if freeId.length is 0 then lastId++ else freeId.shift()
     else lastId = max(lastId,@id+1)
-
     # register
     i.list.push i.byId[@id] = @ for i in @constructor.interfaces
-
-    # apply state
+    # read or setup momentum vector
+    @m = state.m || [0,0]
+    @x = state.x || 0
+    @y = state.x || 0
+    @d = state.d || 0
     @setState state
-
-    app.emit '$obj:add', @
+    do @loadAssets if @loadAssets
+    NUU.emit '$obj:add', @
+    # console.log '$obj', 'constructor$', @id, @name
 
   destructor: ->
-    console.log 'destructor$', @id, @name
+    @destructing = true # might be set already
+    console.log '$obj', 'destructor$', @id, @name if debug
     for i in @constructor.interfaces
-      console.log 'destructor$', 'object', i.name
+      console.log '$obj', 'destructor$', 'object', i.name if debug
       delete i.byId[@id]
       Array.remove i.list, @
-    app.emit '$obj:del', @
+    NUU.emit '$obj:del', @
 
   dist: (o)-> sqrt(pow(abs(o.x-@x),2)-pow(abs(o.y-@y),2))
 
   toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl
 
 Object.defineProperty $obj::, 'p',
-  get: -> @update(); return [@x,@y]
+  get: -> do @update; return [@x,@y]
   set: (@x,@y)->
 
 $obj.byId = {}
@@ -89,6 +84,10 @@ $obj.register = (blueprint)->
       if typeof implement is 'function'
         implement blueprint
       else console.log 'ERROR:', blueprint::constructor.name
+  if blueprint.interfaces then for Interface in blueprint.interfaces
+    # console.log blueprint.name, 'is', Interface.name
+    blueprint.is = {} unless blueprint.is
+    blueprint.is[Interface.name] = true
   blueprint::key = ( $obj.byClass.push blueprint ) - 1
   blueprint.byId = {}
   blueprint.list = []
@@ -112,21 +111,42 @@ $obj.register class Shootable extends $obj
 ###
 
 $obj.register class Debris extends $obj
-  @interfaces: [$obj,Collectable,Debris]
+  @interfaces: [$obj,Shootable,Collectable,Debris]
   name: 'Debris'
+  sprite: 'debris2'
   toJSON: -> id:@id,key:@key,state:@state
 
 $obj.register class Cargo extends $obj
-  @interfaces: [$obj,Collectable,Debris]
+  @interfaces: [$obj,Shootable,Collectable,Debris]
+  sprite: 'cargo'
   name: 'Cargo Box'
   item: null
   ttlFinal: yes
   constructor: (opts={})->
     super opts
     @ttl  = NUU.time() + 30000 unless @ttl
-    @item = Element.random()   unless @item
+    @item = Item.random() unless @item
+    @name = "[#{@item.name}]"
   toJSON: -> id:@id,key:@key,state:@state,item:@item
 
-$obj.register class Stellar extends $obj
-  @interfaces: [$obj,Stellar]
-  toJSON: -> id:@id,key:@key,sprite:@sprite,state:@state,name:@name
+$obj.register class Asteroid extends $obj
+  @interfaces: [$obj,Shootable,Debris,Asteroid]
+  constructor: (opts) ->
+    unless opts
+      r    = 0.8 + random() / 5
+      phi  = random() * TAU
+      size = max 10, floor random() * 73
+      opts =
+        resource: ( Element.random() for i in [0...5] )
+        size: size
+        state:
+          S: $orbit
+          x: sqrt(r) * cos(phi) * 7000000000
+          y: sqrt(r) * sin(phi) * 7000000000
+          relto: Stellar.byId[0]
+    img = opts.size - 10
+    img = '0' + img if img < 10
+    opts.sprite = 'asteroid-D' + img
+    super opts
+    @name = 'roid-' + @id
+    @hp = 100

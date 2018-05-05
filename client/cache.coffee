@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -40,12 +40,12 @@ $static 'Cache', new class BlobCacheIndexedDB
     dbVersion = 1.0
     createObjectStore = (dataBase) => dataBase.createObjectStore 'nuu'
     req = indexedDB.open 'nuucache', dbVersion
-    req.onerror = (event) => console.log 'Error creating/accessing IndexedDB database'
+    req.onerror = (event) => console.log 'data', 'Error creating/accessing IndexedDB database'
     req.onupgradeneeded = (event) => createObjectStore event.target.result
     req.onsuccess = (event) =>
-      console.log 'Success creating/accessing IndexedDB database'
+      console.log 'data', 'Success creating/accessing IndexedDB database' if debug
       @db = req.result
-      @db.onerror = (event) => console.log 'Error creating/accessing IndexedDB database'
+      @db.onerror = (event) => console.log 'data','Error creating/accessing IndexedDB database'
       if @db.setVersion # Interim solution for Google Chrome to create an objectStore. Will be deprecated
         if @db.version isnt dbVersion
           setVersion = @db.setVersion dbVersion
@@ -60,7 +60,7 @@ $static 'Cache', new class BlobCacheIndexedDB
     ready = =>
       @get = @get_
       @get k, c for c in v for k, v of queue
-      app.emit 'cache:ready'
+      NUU.emit 'cache:ready'
     null
 
   get: (path,callback) ->
@@ -86,7 +86,7 @@ $static 'Cache', new class BlobCacheIndexedDB
       x = new XMLHttpRequest
       x.responseType = 'blob'
       x.open 'GET', path, true
-      x.addEventListener 'error', (e) => console.log 'fetch:error', path, e
+      x.addEventListener 'error', (e) => console.log 'data', 'fetch-error', path, e
       x.addEventListener 'load', => if x.status == 200
         tx = @db.transaction [ 'nuu' ], "readwrite"
         put = tx.objectStore('nuu').put x.response, path
@@ -96,3 +96,7 @@ $static 'Cache', new class BlobCacheIndexedDB
       x.send()
       null
     null
+
+  drop:->
+    indexedDB.deleteDatabase 'nuucache'
+    window.location.reload()

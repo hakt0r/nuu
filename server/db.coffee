@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -20,30 +20,48 @@
 
 ###
 
+# setInterval ( ->
+#   do $tag.flushAll if $tag.dirty
+#   $tag.dirty = no
+# ), 250
+#
+# process.on 'exit',    $tag.closeAll
+# process.on 'SIGINT',  $tag.closeAll
+# process.on 'SIGUSR1', $tag.closeAll
+# process.on 'SIGUSR2', $tag.closeAll
+
+$tag.db = (name,obj={}) ->
+  obj.ready = ( -> ) unless obj.ready
+  db = new $tag.XScale obj.path = path.join 'db', ( obj.name = name ) + '.db'
+  meta = db.get '$meta'
+  console.log '::db$meta', name, meta if debug
+  Object.assign db, functions, obj, meta
+  if db.id?
+    console.log name, ':open'.green, db.id?
+    throw new Error 'db.id is Nan', db if isNaN db.id
+  else
+    console.log name, ':bootstrap'.red, db.id? if debug
+    db.id = 1
+    db.create k,v for k,v of db.bootstrap
+  global[name] = db
+  do obj.ready
+  console.log '::db', 'register', name, util.inspect db if debug
+  db
+
 functions =
+  saveMeta:->
+    @set '$meta', id: @id
+    console.log '_save:$meta', id: @id
   create: (name,data) ->
     if @fields then for k,v of @fields when not data[k]
       data[k] = (
         if typeof v is 'function' then v.apply @
         else v )
-    @put name, data
+    data.id = @id++
+    @set name, data
+    do @saveMeta
+    console.log '_create:', id: @id
 
-Db = (name,obj={}) ->
-  console.log 'db', 'register', name # util.inspect obj
-  ( obj.ready = -> ) unless obj.ready
-  dbPath = path.join 'db',name + '.db'
-  initialize = fs.existsSync dbPath
-  Db[obj.name] = db = flatfile dbPath
-  _.defaults db, functions
-  _.defaults db, obj
-  db.on 'open', ->
-    if initialize
-      if db.bootstrap? then for k,v of db.bootstrap
-        db.put k,v
-      db.put 'db.init', true, -> obj.ready null
-    else obj.ready null
-    null
-    $static name, db
-  db
-
-$static 'Db', Db
+setInterval ( ->
+  $tag.flushAll()
+), 1000

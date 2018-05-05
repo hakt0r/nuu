@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -29,18 +29,22 @@ $public class Item
   @tpl: {}
   @byId: {}
   @byName: {}
-  @byType: ship:{}
+  @byType: ship:{}, station:{}
   @byProp: {}
   @init: (items) ->
     id = 0
+    for k,o of Station when o? and o::? and o::consumes?
+      o.name = o.constructor.name
+      Item.byType.station[o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
+      console.log 'item', 'Station', id, o.name, o::sprite if debug
+      id++
     for o in items.ship
-      Item.tpl[id] = o
+      Item.byType['ship'][o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
       Ship.byTpl[id] = o.name
-      Ship.byName[o.name] = id++
-      Item.byName[o.name] = o
-      Item.byType['ship'][o.name] = o
+      Ship.byName[o.name] = id
+      id++
     for o in items.outf
-      Item.tpl[o.itemId = id++] = Item.byName[o.name] = o
+      Item.tpl[o.itemId = id] = Item.byName[o.name] = o
       size = o.size || 'small'
       t = (
         if (s = o.slot) then (if s.$t then s.$t else s)
@@ -56,10 +60,18 @@ $public class Item
       if s and (t = s.prop)
         Item.byProp[t] = {} unless Item.byProp[t]
         Item.byProp[t][o.name] = o
+      id++
 
     for type, items of Item.byType when items.medium?
       if Object.keys(items.medium).length is 0 and Object.keys(items.large).length is 0
         Item.byType[type] = items.small
+
+    Item.byName.CheatersRagnarokBeam.turret = yes
+    Item.byName.CheatersRagnarokBeam.stats.track = 1.6
+    NUU.emit 'init:items:done'
+
+Item.random = ->
+  Array.random Object.values Item.tpl
 
 $public class Outfit
   constructor: (name) ->

@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -32,21 +32,21 @@ $public class Sound
     'missile.wav','nav.wav','neutron.wav','plasma.wav','ripper.ogg','seeker.wav',
     'target.wav']
 
-  @load : (path,callback) ->
-    name = path.replace(/^.*\//,'')
+  @load : (path) -> return new Promise (resolve)->
+    name   = path.replace(/^.*\//,'')
     folder = path.replace(/\/[^\/]+$/,'').replace(/^.*\//,'')
     Cache.get path, (objURL) =>
-      Sound[name] = soundManager.createSound id:name,url:objURL,autoLoad:true,autoPlay:false,volume:100
-      callback null
+      resolve = Sound[name] = soundManager.createSound
+        id:name,url:objURL,autoLoad:true,autoPlay:false,volume:100
+      null
 
   @init : (callback) ->
     soundManager.setup preferFlash: false, onready: ->
-      list = []
-      load = (path) -> list.push (cb) -> Sound.load(path,cb)
       Sound.defaults()
-      for name in Sound.autoload
-        load('sounds/' + name)
-      async.parallel list, callback
+      list = ( Sound.load 'sounds/' + name for name in Sound.autoload )
+      Promise.all(list).then(callback)
+      null
+    null
 
   @defaults : ->
     NUU.on 'ship:hit', -> Sound['explosion1.wav'].play() if Sound.on

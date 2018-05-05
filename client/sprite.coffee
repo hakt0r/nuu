@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -28,54 +28,54 @@ $obj::loadAssets = ->
   @img = url = @assetPrefix + @sprite + '.png'
   { @size, @radius } = @meta = $meta[ @sprite ]
   @sprite = new PIXI.Sprite new PIXI.Texture.fromImage url
-  @show @loaded = true
+  @loaded = true
+  # @show()
 
 $obj::show = ->
-  return if Sprite.visible[@id]
-  return unless @loaded
-  # console.log 'show$', @id, @name, @sprite
+  if Sprite.visible[@id]
+    console.log @name, @id, 'already visible' if debug
+    return
+  unless @loaded
+    console.log @name, @id, 'not loaded' if debug
+    return
+  console.log ':gfx', 'show$', @id, @name, @sprite if debug
   @updateSprite() # PROVEME
   Sprite.visible[@id] = @sprite
   Sprite.visibleList.push @
   Sprite[@layer].addChild @sprite
-  @sprite.interactive = yes
-  @sprite.click = => NUU.emit 'newTarget', NUU.target = @
   null
 
 $obj::hide = ->
-  return unless old = Sprite.visible[@id]
-  # console.log 'hide$', @id, @name
+  unless old = Sprite.visible[@id]
+    console.log @name, @id, 'already hidden' if debug
+    return
+  console.log ':gfx', 'hide$', @id, @name if debug
   delete Sprite.visible[@id]
   Array.remove Sprite.visibleList, @
   Sprite[@layer].removeChild old
   null
 
 $obj::changeSprite = (newSprite) ->
-  return if newSprite is old = Sprite.visible[@id]
+  if newSprite is old = Sprite.visible[@id]
+    console.log @name, @id, 'already selected' if debug
+    return
   Sprite.visible[@id] = @sprite = newSprite
+  Sprite.visibleList.push @ unless Sprite.visibleList.includes @
   Sprite[@layer].addChild @sprite
   Sprite[@layer].removeChild old
   null
 
-$obj::updateSprite = ->
-  @update()
+$obj::updateSprite = (time)->
+  @update time
   @sprite.position.set @x + OX - @radius, @y + OY - @radius
   true
 
 Stellar::layer = 'stel'
 
-app.on '$obj:inRange', (obj) -> obj.show()
-app.on '$obj:outRange', (obj) -> obj.hide()
-
-Target.types.push $obj.hostile = []
-Target.typeNames.push 'hostile'
-
-app.on '$obj:del', (obj) ->
-  obj.hide()
-  Array.remove $obj.hostile, obj unless -1 is $obj.hostile.indexOf obj
-  null
-
-app.on '$obj:add', (obj) ->
-  do obj.loadAssets
-  $obj.hostile.push obj if obj.npc
+NUU.on '$obj:inRange', (obj) -> obj.show()
+NUU.on '$obj:outRange', (obj) -> obj.hide()
+NUU.on '$obj:del', (obj) ->
+  delete SHORTRANGE[obj.id]
+  NUU.emit '$obj:outRange', obj
+  Array.remove VEHICLE.hostile, obj if -1 is VEHICLE.hostile.indexOf obj
   null

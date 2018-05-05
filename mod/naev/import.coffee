@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -27,6 +27,8 @@ parseNumbers = (o)->
     else if typeof v is 'object'
       parseNumbers v
   o
+
+String::clearItemName = -> @replace /[^a-zA-Z]/g , ''
 
 module.exports = (destinationFile,callback)->
   fs   = require 'fs'
@@ -59,12 +61,12 @@ module.exports = (destinationFile,callback)->
     d.stats[k] = v for k,v of general
 
     # from root to info
-    for k in ['license','fabricator','name','price','description'] when d[k]
+    for k in ['license','fabricator','name','price','description'] when d[k]?
       d.info[k] = d[k]
       delete d[k]
 
     # from stats to info
-    for k in ['description','gfx_store','price','name','license'] when d.stats[k]
+    for k in ['description','gfx_store','price','name','license'] when d.stats[k]?
       d.info[k] = d.stats[k]
       delete d.stats[k]
 
@@ -79,13 +81,13 @@ module.exports = (destinationFile,callback)->
       delete d.stats.range
 
     # from stats to root
-    for k in ['size','turret','slot','type'] when d.stats[k]
+    for k in ['size','turret','slot','type'] when d.stats[k]?
       d[k] = d.stats[k]
       delete d.stats[k]
 
     # from stats to sprite
     d.fx = {}
-    for k in ['gfx','gfx_end','spfx_armour','spfx_shield','sound','sound_hit','sound_off'] when d.stats[k]
+    for k in ['gfx','gfx_end','spfx_armour','spfx_shield','sound','sound_hit','sound_off'] when d.stats[k]?
       d.fx[k] = d.stats[k]
       delete d.stats[k]
     d.fx.sound = d.sound; delete d.sound
@@ -107,7 +109,7 @@ module.exports = (destinationFile,callback)->
 
   readShip = (f,d) ->
     d = d.ship
-    className = d.name.replace(/[^a-zA-Z]/g,'')
+    className = d.name.clearItemName()
     d.extends = if d.base_type isnt d.name then d.base_type else 'Ship'; delete d.base_type
     src[className] = d
 
@@ -115,8 +117,9 @@ module.exports = (destinationFile,callback)->
     delete d.mission if d.mission
 
     for t,slots of d.slots
+      d.slots[t] = [slots] unless Array.isArray slots
       for k,v of slots when v.$t
-        v.default = v.$t.replace(/[^a-zA-Z]/g,'')
+        v.default = v.$t.clearItemName()
         delete v.$t
 
     if d.GFX?
@@ -128,7 +131,6 @@ module.exports = (destinationFile,callback)->
 
     d.type = 'ship'
     flatten d
-
     d.sprite = sprite
     d.stats[k] = v for k,v of d.characteristics; delete d.characteristics
     d.stats[k] = v for k,v of d.health;          delete d.health
@@ -142,7 +144,7 @@ module.exports = (destinationFile,callback)->
 
   readOutfit = (f,d) ->
     d = d.outfit
-    src[className = d.name.replace(/[^a-zA-Z]/g,'')] = d
+    src[className = d.name.clearItemName()] = d
     t = d.specific.type
     d.specific.turret = t.match('turret') isnt null
     if      ['license','map','localmap','gui'].indexOf(t)           isnt -1 then return
@@ -151,9 +153,10 @@ module.exports = (destinationFile,callback)->
     else if ['missile','fighter','ammo'].indexOf(t)                 isnt -1 then d.extends = 'Ammo'
     else if ['launcher','turret launcher','fighter bay'].indexOf(t) isnt -1 then d.extends = 'Launcher'
     else d.extends = 'Outfit'
-
     d.type = 'outfit'
     flatten d
+    d.stats.ship = d.stats.ship.clearItemName() if d.stats and d.stats.ship
+    d.stats.ammo = d.stats.ammo.clearItemName() if d.stats and d.stats.ammo
     d.name = className
     outf.push d
 

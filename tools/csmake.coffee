@@ -1,3 +1,25 @@
+###
+
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
+
+  This file is part of NUU.
+
+  NUU is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  NUU is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with NUU.  If not, see <http://www.gnu.org/licenses/>.
+
+###
+
 module.exports = (__targets) ->
 
   require 'colors'
@@ -8,10 +30,12 @@ module.exports = (__targets) ->
   global.path = require 'path'
   global.async = require 'async'
   global.touch = require 'touch'
-  global.coffee = require 'coffee-script'
+  global.coffee = require 'coffeescript'
   global.request = require 'request'
   global.filesize = require 'file-size'
   global.fast_image_size = require 'fast-image-size'
+
+  util.print = (s)-> process.stdout.write(s,'utf8')
 
   process.chdir path.dirname __dirname
 
@@ -73,19 +97,25 @@ module.exports = (__targets) ->
     $p ( rm a for a in args ), -> c null
 
   global.unzip = (src,dst)-> (c)->
-    unless dirExists dst
-      exec("""sh -c 'sync; cd #{path.dirname src}; unzip #{path.basename src}'""")(c)
+    unless dirExists dst then exec( """sh -c '
+      sync;
+      rm -rf   _nuu_extract_;
+      mkdir -p _nuu_extract_;
+      unzip -d _nuu_extract_   #{src};
+      mv       _nuu_extract_/* #{dst};
+      rm -rf   _nuu_extract_;
+    '""" )(c)
     else dst.green; c null
 
   global.fetch = (dst,src)-> (c)->
     if not fs.existsSync dst
-      util.print [ 'fetch'.yellow, dst, dst, src, 'connecting...'.blue ].join ' '
+      util.print [ 'fetch'.yellow, dst, src.replace(/\/.*\//,'/.../'), 'connecting...'.blue ].join ' '
       r = request.get src
       r.on 'headers', ->
       r.on 'end', ->
-        console.log '\x1b[2K\x1b[0G' + 'fetch'.green, dst, src, filesize(fs.statSync(dst).size).human(si:yes, fixed:2), 'done'.green
+        console.log '\x1b[2K\x1b[0G' + 'fetch'.green, dst, filesize(fs.statSync(dst).size).human(si:yes, fixed:2), 'done'.green
         c null
-      r.on 'data', -> util.print '\x1b[2K\x1b[0G' + [ 'fetch'.yellow, dst, src, filesize(fs.statSync(dst).size).human(si:yes, fixed:2) ].join ' '
+      r.on 'data', -> util.print '\x1b[2K\x1b[0G' + [ 'fetch'.yellow, dst, filesize(fs.statSync(dst).size).human(si:yes, fixed:2) ].join ' '
       r.pipe(fs.createWriteStream dst)
     else c null
 
@@ -104,6 +134,7 @@ module.exports = (__targets) ->
 
   global.depend = (deps...)-> (c)->
     $s deps, -> c null
+    null
 
   global.target = (obj={}) ->
     for name, fnc of obj
@@ -112,6 +143,7 @@ module.exports = (__targets) ->
       else
         console.log name.yellow, 'is already defined'.red
         process.exit 1
+    null
 
   target.exec = (name,c) -> global[name](c||->)
 

@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -20,25 +20,83 @@
 
 ###
 
-NET.on 'login', (msg,src) ->
-  new User src, msg.user, msg.pass
+NET.on 'login', NET.loginFunction = (msg,src) ->
+  if msg.match
+    unless user = UserDB.get msg
+      console.log ':dbg', 'nx:user', msg if debug
+      return src.json 'user.login.nx': true
+    src.json 'user.login.challenge': salt:user.salt
+  else if msg.user? then new User src, msg.user, msg.pass
+  null
+
+NET.on 'switchMount', (msg,src) ->
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  o.setMount u, parseInt msg
+  null
+
+# TODO: mark old ship for autodestruction or sth
+# anyways it's cool if it floats around for a bit
+# but if it isn't used it will have to go eventually right?
+# maybe when the user spawns his next ship up to the (imaginary) ship limit?
+# o.destructor() if o.mount[0] is u.db.id
 
 NET.on 'switchShip', (msg,src) ->
-  u = src.handle
-  o = u.vehicle
-  vehicle = u.createVehicle src,msg
-  # o.destructor() if o.mount[0] is u.db.id
-  u.enterVehicle src, vehicle, 0, no
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_not_landed'    unless o.landedAt
+  vehicle = u.createVehicle msg
+  vehicle.landedAt = o.landedAt
+  u.enterVehicle vehicle, 0, no
+  o.destructor()
+  null
+
+NET.on 'modSlot', (msg,src) ->
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_not_the_owner' unless o.user = u
+  return src.error '_not_landed'    unless o.landedAt
+  return src.error '_no_slot_type'  unless t = o.slots[msg.type]
+  return src.error '_no_slot'       unless s = t[msg.slot]
+  o.modSlot msg.type, s, msg.item
+  NUU.jsoncastTo o, modSlot: type:msg.type, slot:msg.slot, item:msg.item, level:1
+  null
+
+NET.on 'build', (msg,src) ->
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_not_in_orbit'  unless s = o.state.S is $orbit
+  return src.error '_invalid_item'  unless b = Item.byType.station[msg]
+  return src.error '_not_here'      unless p = o.state.relto.buildRoot
+  # Create Item and inherit the creator's state
+  $ = new b state:o.state.toJSON()
+  console.log ':bld', b.name, p     if debug
+
+NET.on 'jump', (target,src) ->
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_nx_target'     unless target = $obj.byId[parseInt target]
+  return src.error '_no_fuel'       unless o.fuel > 500
+  o.fuel -= 500; NET.health.write o
+  o.accel = o.boost = o.retro = o.left = o.right = no
+  target.update()
+  o.setState
+    S: $moving
+    x: parseInt target.x - 1000 + random()*500
+    y: parseInt target.y - 1000 + random()*500
+    m: target.m.slice()
+    relto: target.id
+  null
 
 NUU.users = []
 
-UserDB = Db 'UserDb',
+$tag.db 'UserDB',
   fields:
     online: no
     nick: ''
     mail: ''
     pass: ''
-    regtime: -> Date.now()/1000
+    regtime: -> NUU.time() / 1000
     credits: 100
   exports: ->
     nick: nick
@@ -46,106 +104,209 @@ UserDB = Db 'UserDb',
     regtime: regtime
     credits: credits
   bootstrap:
-   anx:    nick: 'anx',    id:0, mail: 'anx@ulzq.de',      pass: 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e', regtime:'2009-11-07', state:3, credits: 47553836
-   flyc0r: nick: 'flyc0r', id:1, mail: 'flyc0r@localhost', pass: 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e', regtime:'2009-11-07', state:1, credits: 15091366
+   anx:    nick: 'anx',    id:0, mail: 'anx@ulzq.de',      pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07'
+   flyc0r: nick: 'flyc0r', id:1, mail: 'flyc0r@localhost', pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07'
 
 $public class User
   @byId: {}
   constructor: (src, user, pass) ->
-    return @register       src, user, pass unless @db = UserDB.get user
-    return @deny           src, pass       unless @db? and pass is @db.pass
-    src.json 'user.login.success': {user:@db}, sync:add:$obj.list
-    return handle.rejoin   src                 if handle = User.byId[@db.id]
-    @name = @db.nick; @user = @db.user; @ping = {}; @db = @db
+    console.log 'user', user, pass # if debug
+    unless user? and pass?
+      console.log 'user:nopw', user, UserDB.get user
+      return @deny src, pass
+    unless @db = UserDB.get user
+      return @register src, user, pass
+    unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
+      return @deny src, pass
+    # Login successful #
+    @sock = src
+    src.authenticated = yes
+    src.json 'user.login.success': {user:@db}, sync:add:$obj.list # TODO: inRange & Stellar only
+    src.removeListener "message", src.router
+    src.on  "message", src.router = NET.route src
+    NUU.emit 'user:joined', @
+    return handle.rejoin src if handle = User.byId[@db.id]
     User.byId[@db.id] = src.handle = @
     id = NUU.users.push @; @id = --id
+    @name = @db.nick
+    @user = @db.user
+    @ping = {}
+    do @upgradeDb
+    # Load and enter vehicle #
     vehicleType = 'Kestrel'
     vehicleType = @db.vehicle if @db.vehicle?
-    @enterVehicle src, (
-      @createVehicle src, vehicleType, S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
-    ), 0, yes
-    console.log @db.nick, 'joined'.green, @db.id, vehicleType
+    opts = {}
+    if @db.landed and relto = $obj.byName[@db.landed]
+      opts.state = S:$fixedTo, x:0, y:0, relto: relto
+      opts.landedAt = relto
+    else if @db.orbit and relto = $obj.byName[@db.orbit[0]]
+      opts.state = @db.orbit[1]
+      opts.state.relto = relto
+    else opts.state = S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
+    v = @createVehicle vehicleType, opts
+    @enterVehicle v, 0, yes
+    @sock.json landed: opts.landedAt.id if opts.landedAt
+    console.log 'user', @db.nick.green, 'joined'.green, @db.id, vehicleType
     true
 
+User::save = ->
+  UserDB.set @db.nick, @db
+  # console.log 'save', @db.nick, @db
+
+User::upgradeDb = (src)->
+  @db.inventory = {} unless @db.inventory
+  @db.unlocks = {} unless @db.unlocks
+  @db.loadout = {} unless @db.loadout
+
 User::rejoin = (src)->
+  @sock = src
   src.handle = @
-  @enterVehicle src, @vehicle, @mountId, no
-  console.log @db.nick, 'rejoined', @vehicle?
+  @enterVehicle @vehicle, @mountId, no
+  @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
+  console.log 'user', @db.nick.green, 'rejoined'.yellow, @vehicle?
   true
 
 User::deny = (src, pass)->
   src.json 'user.login.failed':'wrong_credentials'
-  console.log 'ws'.yellow, 'login'.red, util.inspect(@db).red, pass.red
+  console.log 'user', ' login failed '.red.inverse.bold, @db.nick.yellow
+  console.log util.inspect(@db).red, pass.red if debug
   false
 
 User::register = (src, user, pass)->
-  @db = UserDb::create user, nick: user, pass: pass
-  console.log 'User'.yellow, 'create'.red, util.inspect @db
+  @db = UserDB.create user, nick: user, pass: pass.pass, salt:pass.salt
+  rec = UserDB.get user
+  src.json 'user.login.register': user
+  console.log 'user', 'register'.red, util.inspect rec if debug
   true
 
-User::part = (user) ->
-  console.log 'PART'.red, user
+User::part = (spawn) ->
+  console.log 'PART'.red, @db.nick
+  NUU.emit 'user:left', @ unless spawn
 
-User::createVehicle = (src,id,state)->
-  tpl = Ship.byName[id] || Ship.byId[id]
-  return console.error 'noship$', id unless tpl?
-  state = @vehicle.state if @vehicle
-  vehicle = new Ship tpl:tpl, state:state, iff:['@'+@nick]
-  NUU.jsoncast 'join': vehicle
-  console.log 'user$ship', @db.nick, vehicle.id
+User::createVehicle = (id,opts={})->
+  return console.error 'noship$', id          unless tpl = Ship.byName[id]
+  opts.user    = @
+  opts.tpl     = tpl
+  opts.state   = @vehicle.state.toJSON()      unless opts.state or not @vehicle
+  opts.loadout = @db.loadout[Ship.byTpl[tpl]] unless opts.loadout
+  opts.iff     = [Math.random()]              unless opts.iff
+  vehicle      = new Ship opts
+  @sock.json sync:add:[vehicle.toJSON()]
+  console.log 'user', 'ship', @db.nick.green, vehicle.id
   vehicle
 
-User::enterVehicle = (src,vehicle,mountId,spawn)->
-  @vehicle = vehicle; @mountId = mountId
-  while vehicle.mount[mountId]? and vehicle.mount[mountId] isnt @
-    console.log 'already mounted', vehicle.name, mountId
-    mountId++
-  vehicle.mount[mountId] = @
-  vehicle.flags = String.fromCharCode 0 if 0 is mountId
-  NUU.emit 'userLeft', src.handle unless spawn
-  NUU.emit 'userJoined', src.handle
-  src.json 'switchShip': i:vehicle.id, m:mountId
-  console.log 'user$enter', @db.nick, vehicle.id, mountId
+User::enterVehicle = (vehicle,mountId,spawn)->
+  @leaveVehicle @vehicle if @vehicle
+  @mountId = ( @vehicle = vehicle ).setMount @, mountId, true
+  if not @vehicle.user or @vehicle.user.db.id is @db.id
+    @vehicle.user = @
+    @vehicle.save() # save loadout and ship
+  else console.log 'owned-by', @vehicle.user.db.nick
+  @sock.json
+    switchShip: i:vehicle.id, m:@vehicle.mount.map (i)-> if i then i.db.nick else false
+    hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
+  NUU.jsoncastTo vehicle, setMount: @vehicle.mount.map (i)-> if i then i.db.nick else false
+  console.log 'user', 'enter', @db.nick.green, vehicle.id, @mountId if debug
   null
 
-User::action = (src,t,mode) ->
+User::leaveVehicle = ->
+  if -1 is idx = @vehicle.mount.indexOf @
+    console.log 'user', 'leaveVehicle'.red, @vehicle.name, @db.nick
+    return false
+  @vehicle.mount[idx] = false; @equip = @mount = undefined
+  NUU.jsoncastTo @vehicle, leaveVehicle: @db.nick
+  if 0 is @vehicle.mount.filter((i)-> i ).length
+    @vehicle.inhabited = no
+  console.log 'user', 'leaveVehicle'.green, @vehicle.name, @vehicle.mount
+  @vehicle = null
+  true
+
+User::action = (t,mode) ->
   o = @vehicle
-  unless mode is 'launch' or mode is 'capture'
-    return if o.locked
-  # console.log 'action$', o.name, mode, t.name
-  TIME = Date.now(); o.update(); t.update()
-  dist = $dist(o,t)
-  dists = $dist(o,t.state)
-  zone = o.size + t.size / 2
-  switch mode
-    when 'launch'
-      if o.state.S is $orbit
-        o.setState S:$moving, x:o.x, y:o.y, m:o.m.slice()
-      else o.setState S:$moving, x:o.x, y:o.y, m:t.m.slice()
-      NUU.emit 'ship:launch', o.vehicle, o
-      o.locked = no
-    when 'capture'
-      if dist < zone
-        NUU.emit 'ship:collect', o.vehicle, t, o
-        console.log o.id, 'collected', t.id, dist, t.size
-        t.destructor()
-      else console.log 'capture', 'too far out', dist, o.size, t.size
-    when 'dock' then if dist < zone
-      return unless t.mount
-      console.log 'dock', t.id
-      o.destructor() if o.size < t.size / 2
-      @enterVehicle src, t, 0, no
-    when 'land'
-      return if t.mount # cant attach to vehicles
-      if dist < zone
-        console.log 'land', t.id
-        o.setState S:$relative,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
-        o.locked = yes
-        NUU.emit 'ship:land', o.vehicle, t, o
-      else console.log 'land$', 'too far', dist, dists, zone, t.state.toJSON()
-    when 'orbit' then if dist < t.size
-      console.log 'orbit', t.id
-      o.locked = yes
-      o.setState S:$orbit,orbit:dist,relto:t.id
-    else console.log 'orbit/dock/land/enter', 'failed', mode, o.name, t.name
+  if o.locked and not ( mode is 'launch' or mode is 'capture' )
+    console.log ':act', 'cannot', mode.red
+    return
+  console.log 'user', 'action', o.name, mode, t.name if debug
+  o.update time = NUU.time()
+  t.update time
+  dist  = $dist o, t
+  zone  = ( o.size + t.size ) * .5
+  @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit'].includes mode
   null
+
+User::eva = (t,o,zone,dist)->
+  @enterVehicle @createVehicle('Exosuit'), 0, no if o.name isnt 'Exosuit'
+  null
+
+User::launch = (t,o,zone,dist)->
+  if o.state.S is $orbit and @mountId is 0
+    @save @db.orbit = o.locked = no
+    o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
+    NUU.jsoncastTo o, launch:yes
+  else if o.landedAt and @mountId is 0
+    NUU.emit 'ship:launch', o, o.landedAt
+    @save @db.landed = o.landedAt = o.locked = no
+    o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
+    NUU.jsoncastTo o, launch:yes
+  else if @equip? and @equip.type is 'fighter bay'
+    @save @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
+  else if o.name isnt 'Exosuit'
+    @save @enterVehicle @createVehicle('Exosuit'), 0, no
+  null
+
+User::capture = (t,o,zone,dist)->
+  unless t.constructor.is.Collectable
+    console.log t.constructor.name, 'isnt Collectable'
+    return
+  if dist < max 200, zone
+    NUU.emit 'ship:collect', o, t
+    console.log 'user', o.id, 'collected', t.id, dist, t.size if debug
+    t.destructor()
+  else console.log 'user', 'capture', 'too far out', dist, o.size, t.size
+
+User::dock = (t,o,zone,dist)->
+  return false unless t.mount # needs to be mountable
+  return false unless dist < zone # too far
+  console.log 'user', 'dock', t.id if debug
+  # TODO:hook: re-add ammo if fighter
+  # else add to inventory
+  o.destructor()
+  @enterVehicle t, 0, no
+
+User::land = (t,o,zone,dist)->
+  return false if t.mount # cant attach to vehicles
+  return false unless dist < zone # too far
+  console.log 'user', 'land'.green, t.name if debug
+  o.setState S:$fixedTo,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
+  o.fuel = o.fuelMax
+  @db.landed = o.landedAt = t.name
+  @save()
+  @sock.json landed: t.id
+  NUU.emit 'ship:land', @db.nick, o.name, t.name
+  true
+
+User::orbit = (t,o,zone,dist)->
+  return unless dist < t.size
+  console.log 'user', 'orbit', t.id if debug
+  o.setState S:$orbit,orb:dist,relto:t
+  @db.orbit = [t.name,o.state.toJSON()]
+  @save()
+
+Ship::setMount = (user,mountId,only=false)->
+  @mount[user.mountId] = false if @mount[user.mountId] is user
+  mountId = max 0, min @mount.length, mountId
+  console.log 'user' ,'setMount', @name.yellow, mountId, @mount.length if debug
+  if ( want = @mount[mountId] ) isnt user and want isnt false
+    for i in [0...@mount.length-1] when @mount[(mountId+i)%@mount.length] is false
+      mountId = ( mountId + i ) % @mount.length
+      break
+  console.log 'user' ,'setMount', @name.green, mountId, user.db.nick if debug
+  @mount[user.mountId = mountId] = user
+  user.mount = @mountSlot[mountId]
+  user.equip = if user.mount then user.mount.equip else undefined
+  @flags = String.fromCharCode 0 if 0 is mountId
+  @inhabited = yes
+  return mountId if only
+  NUU.jsoncastTo @, setMount: @mount.map (i)->
+    if i then i.db.nick else false
+  mountId

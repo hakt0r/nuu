@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -21,7 +21,7 @@
 ###
 
 $obj.register class Ship extends $obj
-  @interfaces: [$obj,Ship]
+  @interfaces: [$obj,Ship,Shootable]
   @byName: {}
   @byTpl: {}
 
@@ -59,66 +59,184 @@ $obj.register class Ship extends $obj
 
   mount: null
   inventory: null
-  slot: null
+  slots: null
 
   constructor: (opts) ->
+    @hostile = []
     super opts
-    @slots = _.clone @slots
-    @mockSystems() # fixme
+    @tplName = @name
+    @slots = JSON.parse JSON.stringify @slots # FIXME :>
+    idx = 0; ( slot.idx = idx++ for slot in @slots.structure )
+    idx = 0; ( slot.idx = idx++ for slot in @slots.utility   )
+    idx = 0
+    @loadSytems opts.loadout
     @updateMods()
-    @mount     = [null,null]
+    @mount     = [false,false]
+    @mountSlot = [false,false]
+    @mountWeap = [false,false]
     @mountType = ['helm','passenger']
-    for slot in @slots.weapon when slot and slot.equip
-      @mount.push null
-      @mountType = 'weap'
+    @mountName = ['Helm','PassengerSeat']
+    for slot in @slots.weapon
+      slot.idx = idx++
+      continue unless slot and slot.equip
+      @mount.push false
+      @mountName.push slot.equip.name
+      @mountSlot.push slot
+      if slot.equip.type is 'fighter bay'
+        @mountType.push 'fighter'
+      else if slot.equip.turret
+        @mountType.push 'weap'
+        null
+      else @mountType.push 'weaX'
+    @fuel = @fuelMax = 200000
     null
-
   destructor: ->
     $worker.remove @model
     for slot in @slots.weapon when slot and slot.equip
       slot.equip.release()
     super
 
-  nextWeap: (player,trigger='primary') ->
-    primary = trigger is 'primary'
-    ws = player.vehicle.slots.weapon
-    tg = player[trigger]
-    tg.id   = min ++tg.id, ws.length-1
-    tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
-    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId
-
-  prevWeap: (player,trigger='primary') ->
-    primary = trigger is 'primary'
-    ws = player.vehicle.slots.weapon
-    tg = player[trigger]
-    tg.id = max 0, --tg.id
-    tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
-    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId
-
-  hit: (src,wp) ->
-    return if @destructing
-    dmg = wp.stats
-    if @shield > 0
-      @shield -= dmg.penetrate
-      if @shield < 0
-        @shield = 0
-        @armour -= dmg.physical
-        NUU.emit 'ship:shieldsDown', @, src
-    else @armour -= dmg.penetrate + dmg.physical
-    if 0 < @armour < 25 and @disabled > 10
-      NUU.emit 'ship:disabled', @, src
-    else if @armour < 0
-      @armour = 0
-      @shield = 0
-      @destructing = true
-      NUU.emit 'ship:destroyed', @, src
-    NUU.emit 'ship:hit', @, src, @shield, @armour
-
   reset: ->
+    @hostile = []
     @destructing = false
     @energy = @energyMax
     @shield = @shieldMax
     @armour = @armourMax
     @fuel   = @fuelMax
+
+  toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl,name:@name,loadout:@loadout
+
+###
+Object.defineProperty Ship::, 'd',
+  get:-> @_d || 0
+  set:(v)->
+    debugger if v is -1
+    @_d = v
+###
+
+Ship::thrustToAccel = (value)->
+  # TODO: boost / frameshift / warp / slipstream
+  value = max 0, min 255, value
+  value = (
+    if      value < 100 then .3 * -@thrust * .01 * ( 100 - value )
+    else if value < 200 then       @thrust * .01 * ( value - 99  )
+    else                           @thrust * .03 * ( value - 199 ) )
+  NET.floatLE value
+
+Ship::updateMods = ->
+
+  # gather / calculate mods
+  @mods = {}
+  @mass = 0
+  for type of @slots
+    for idx, slot of @slots[type]
+      if ( item = slot.equip )
+        @mass += item.stats.mass || 0
+        unless type is 'weapon'
+          for k,v of item.stats when k isnt 'turret'
+            if @mods[k] then @[k] += v
+            else @[k] = v
+            @mods[k] = true
+  console.log 'smod', 'mass', @stats.mass - @mass if debug
+
+  # apply mods
+  map =
+    thrust:      @stats.thrust_mod || 100
+    turn:        @stats.turn_mod   || 100
+    shield:      @stats.shield_mod || 100
+    shieldMax:   @stats.shield_mod || 100
+    shieldRegen: @stats.shield_mod || 100
+  @[k] += @[k] * ( v / 100 ) for k,v of map
+
+  # scale model values
+  @armourMax = @armour = @stats.armour / 1000
+  @fuelMax   = @fuel   = @fuel * 10
+  @turn      = @turn    / 10
+  @thrust    = @thrust  / 100
+
+  # add/exchange model-worker
+  @lastUpdate = 0
+  ShipModel.remove @
+  ShipModel.add @
+  null
+
+ShipModel = $worker.ReduceList (time)->
+  return if @destructing
+  # return 1000 if @fuel <= 0
+  add = null
+  @fuel += @fuelRegen || 0.5
+  @fuel -= max 0, @state.a if @state.acceleration
+  unless @shield is @shieldMax and @energy is @energyMax
+    @energy = min @energyMax, @energy + @reactorOut
+    @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
+    @energy -= add
+  @fuel = @fuelMax if @fuel > @fuelMax
+  @fuel = 0        if @fuel <= 0
+  return unless isServer
+  @setState S:$moving if @fuel is 0 and @state.acceleration
+  return unless @mount[0] and @lastUpdate + 3000 < time
+  NET.health.write @
+  @lastUpdate = time
+  true
+
+Ship::save = ->
+  loadout = weapon:[], structure:[], utility:[]
+  loadout.weapon[k]    = ( slt.equip || name:false ).name for k,slt of @slots.weapon
+  loadout.structure[k] = ( slt.equip || name:false ).name for k,slt of @slots.structure
+  loadout.utility[k]   = ( slt.equip || name:false ).name for k,slt of @slots.utility
+  @user.db.loadout[@tplName] = loadout
+  @user.db.vehicle = @tplName
+  @user.save()
+  console.log 'ship', 'saveFor', @user.db.nick, @tplName, util.inspect loadout
+  null
+
+Ship::modSlot = (type,slot,item)->
+  console.log 'modSlot', type, slot, item
+  old = slot.equip # old.destroy() TODO
+  if type is 'weapon'
+    i = new Weapon @, Item.tpl[item].name
+  else i = new Outfit Item.tpl[item].name
+  slot.equip = i
+  @updateMods()
+  @save() if isServer
+
+Ship::loadSytems = (loadout)->
+  # console.log 'loadSytems', util.inspect loadout
+  return do @mockSystems unless loadout
+  for k,slt of @slots.weapon
+    equip = loadout.weapon[k]
+    continue unless slt.default or equip
+    try slt.equip = new Weapon @, if equip then equip else slt.default
+    catch e then console.error 'weap', e, equip
+  for k,slt of @slots.structure
+    equip = loadout.structure[k]
+    continue unless slt.default or equip
+    slt.equip = new Outfit if equip then equip else slt.default
+  for k,slt of @slots.utility
+    equip = loadout.utility[k]
+    continue unless slt.default or equip
+    slt.equip = new Outfit if equip then equip else slt.default
+  null
+
+Ship::mockSystems = -> # equip fake weapons for development
+  MockWeap = ["CheatersLaserCannon","CheatersRagnarokBeam","EnygmaSystemsSpearheadLauncher","HeavyRipperTurret","CheatersDroneFighterBay"]
+  Mock =
+    utility:
+      large: Object.keys Item.byType.utility.large
+      medium: Object.keys Item.byType.utility.medium
+      small: Object.keys Item.byType.utility.small
+    structure:
+      large: Object.keys Item.byType.structure.large
+      medium: Object.keys Item.byType.structure.medium
+      small: Object.keys Item.byType.structure.small
+  for k,slt of @slots.weapon when not slt.equip?
+    continue if MockWeap.length is 0
+    # slt.equip = new Outfit slt.default if slt.default
+    slt.equip = new Weapon @, MockWeap.shift()
+  for k,slt of @slots.structure when not slt.equip?
+    slt.equip = new Outfit slt.default if slt.default
+    #else slt.equip = new Outfit(Mock.structure[slt.size].shift())
+  for k,slt of @slots.utility when not slt.equip?
+    slt.equip = new Outfit slt.default if slt.default
+    #else slt.equip = new Outfit(Mock.utility[slt.size].shift())
+  null
