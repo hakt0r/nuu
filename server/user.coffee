@@ -52,6 +52,7 @@ UserDB = Db 'UserDb',
 $public class User
   @byId: {}
   constructor: (src, user, pass) ->
+    return @deny           src, pass       unless user? and pass?
     return @register       src, user, pass unless @db = UserDB.get user
     return @deny           src, pass       unless @db? and pass is @db.pass
     src.json 'user.login.success': {user:@db}, sync:add:$obj.list
@@ -79,8 +80,10 @@ User::deny = (src, pass)->
   false
 
 User::register = (src, user, pass)->
-  @db = UserDb::create user, nick: user, pass: pass
-  console.log 'User'.yellow, 'create'.red, util.inspect @db
+  @db = UserDb.create user, nick: user, pass: pass
+  rec = UserDB.get user
+  src.json 'user.login.register': user
+  console.log 'User'.yellow, 'register'.red, util.inspect rec if debug
   true
 
 User::part = (user) ->

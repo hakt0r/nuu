@@ -48,15 +48,18 @@ NUU.loginPrompt = ->
     vt.prompt 'Password', (pass) =>
       return @loginPrompt() if pass is null
       NET.login user, sha512(pass), (success) =>
+        return @login user, pass  if typeof success is 'object'
         return @loginPrompt() unless success
 
 NET.login = (name, pass, callback) ->
-  console.log 'NET.login'
+  console.log 'NET.login', name
   NET.once 'user.login.success', (opts) ->
     log "Login successful."
     $worker.setTimer -> Ping.remoteTime()
     NUU.firstSync opts, -> callback true
-
+  NET.once 'user.login.register', (opts) ->
+    log "Registered. Re-sending credentials.", name
+    NET.json.write login: user:name, pass:pass
   NET.once 'user.login.failed', (opts) ->
     log "Login failed."
     callback false

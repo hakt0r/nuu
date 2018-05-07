@@ -26,24 +26,23 @@ functions =
       data[k] = (
         if typeof v is 'function' then v.apply @
         else v )
+    data.id = @keys().length
     @put name, data
 
 Db = (name,obj={}) ->
-  console.log 'db', 'register', name # util.inspect obj
-  ( obj.ready = -> ) unless obj.ready
-  dbPath = path.join 'db',name + '.db'
-  initialize = fs.existsSync dbPath
-  Db[obj.name] = db = flatfile dbPath
+  obj.ready = ( -> ) unless obj.ready
+  obj.path = path.join 'db', ( obj.name = name ) + '.db'
+  obj.init = fs.existsSync obj.path
+  $static name, Db[name] = db = flatfile obj.path
   _.defaults db, functions
   _.defaults db, obj
   db.on 'open', ->
-    if initialize
-      if db.bootstrap? then for k,v of db.bootstrap
-        db.put k,v
+    if obj.init
+      db.put k,v for k,v of db.bootstrap if db.bootstrap?
       db.put 'db.init', true, -> obj.ready null
-    else obj.ready null
+    else do obj.ready
     null
-    $static name, db
+  console.log 'db', 'register', name, util.inspect db
   db
 
 $static 'Db', Db
