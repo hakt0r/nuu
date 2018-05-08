@@ -211,10 +211,6 @@ Kbd.macro 'targetEnemy','e','Target closest enemy', ->
   do targetClosest
   null
 
-Kbd.macro 'capture', 'c', 'Capture an object', capture = ->
-  NET.action.write(NUU.target,'capture')
-  null
-
 Kbd.macro 'launch', 'Sm', 'Launch / Undock', ->
   NET.action.write(NUU.target||id:0,'launch')
   null
@@ -230,14 +226,17 @@ Kbd.macro 'orbit', 'm', 'Land / Dock / Enter Orbit', ->
   NET.action.write NUU.target, NUU.targetMode if NUU.target
   null
 
-Kbd.macro 'captureClosest','Sc','Capture closest target', ->
-  NUU.targetId = 0
-  NUU.targetClass = 2 # all
-  targetClosest (t)->
-    capture t if t?
-  null
-
 Kbd.macro 'jump','j','Jump to target', ->
   return unless ( t = NUU.target )
   NET.json.write jump: t.id
+  null
+
+Kbd.macro 'capture', 'Sc', 'Capture target', capture = ->
+  NET.action.write(NUU.target,'capture')
+  null
+
+Kbd.macro 'captureClosest','c','Capture closest', ->
+  NUU.targetId = 0
+  NUU.targetClass = 2 # all
+  targetClosest (t)-> capture t if t?
   null
