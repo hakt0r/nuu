@@ -54,7 +54,7 @@ $public class Autopilot
       NET.state.write @ship, [ v.accel, v.retro, v.turn and not v.turnLeft, v.turnLeft, v.boost, no, no, no ]
 
   widget: (v) ->
-    s = '\n'
+    s = ''
     s += @target.name + '\n'
     s += v.message + '\n'
     s += 'm: ' + parseInt(@target.m[0]) + ':' + parseInt(@target.m[1]) + '\n'
@@ -65,7 +65,7 @@ $public class Autopilot
     s += 'l' if v.left
     s += 'r' if v.right
     s += 's' if v.setdir
-    s += '\nFm:' + hdist v.maxSpeed
+    s += ']\nFm:' + hdist v.maxSpeed
     Sprite.hud.widget 'autopilot',  s
     v
 

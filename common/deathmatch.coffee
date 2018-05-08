@@ -45,7 +45,7 @@ rules.server = ->
     else
       stats[victim.id].d++
       console.log victim.name.red, stats[victim.id].d
-      $timeout 10000, ->
+      $timeout 4500, ->
         victim.dropLoot()
         victim.respawn()
     unless perp and perp.npc is yes

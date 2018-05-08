@@ -93,7 +93,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
 
     app.on 'runtime:ready', =>
       document.body.appendChild renderer.view
-      w = $ document
+      w = $ window
       do @resize = =>
         window.WIDTH  = w.width()
         window.HEIGHT = w.height()
@@ -135,15 +135,13 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     i = -1; s = null; list = $obj.list; length = list.length
     while ++i < length
       s = list[i]
+      s.update()
       if s.ttl and s.ttl < TIME
         s.hide()
         if s.ttlFinal
           s.destructor(); length--; i--
         continue
-      s.update()
-      if -W<(s.x-x)<W and -H<(s.y-y)<H
-        s.show()
-      else s.hide()
+      if -W<(s.x-x)<W and -H<(s.y-y)<H then s.show() else s.hide()
 
   animate: (timestamp) ->
     window.TIME  = NUU.time()

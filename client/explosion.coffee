@@ -42,9 +42,9 @@ $Animated Explosion, layer: 'fx', loop: no
 
 # A collage animation to 'splode ships and stuff :>
 $Animated.destroy = (v,t) -> for i in [0...25]
-  $Animated.explode v, Math.min(10000,Math.round(Math.random()*10000))
+  $Animated.explode v, Math.min(4000,Math.round(Math.random()*4000))
 
 $Animated.explode = (v,t) -> setTimeout ( -> new Explosion v ), t
 
 NUU.on 'ship:hit',       (v) -> $Animated.explode v, 0
-NUU.on 'ship:destroyed', (v) -> $Animated.destroy v
+NUU.on 'ship:destroyed', (v) -> $Animated.destroy v;    v.destructing = on

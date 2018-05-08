@@ -115,6 +115,7 @@ $obj.register class Ship extends $obj
       @destructing = true
       NUU.emit 'ship:destroyed', @, src
     NUU.emit 'ship:hit', @, src, @shield, @armour
+    NET.health.write @
 
   reset: ->
     @destructing = false

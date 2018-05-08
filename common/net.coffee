@@ -265,3 +265,28 @@ NET.define 6,'OPERATION',
     switch mode
       when 'remove' then t.destructor()
       when 'reset'  then t.reset()
+
+###
+  Object Health and Flags
+  target, health, armour, fuel
+###
+
+NET.define 8,'HEALTH',
+  write:server: (t) =>
+    msg = new Buffer [
+      NET.healthCode
+      0
+      0
+      t.shield * ( 255 / t.shieldMax )
+      t.energy * ( 255 / t.energyMax )
+      t.armour * ( 255 / t.armourMax )
+      t.fuel   * ( 255 / t.fuelMax   ) ]
+    msg.writeUInt16LE t.id, 1
+    NUU.bincast msg.toString 'binary'
+  read:client: (msg) =>
+    return unless ( t = $obj.byId[id = msg.readUInt16LE 1] )
+    t.shield = msg[3] * ( t.shieldMax / 255 )
+    t.energy = msg[4] * ( t.energyMax / 255 )
+    t.armour = msg[5] * ( t.armourMax / 255 )
+    t.fuel   = msg[6] * ( t.fuelMax   / 255 )
+    console.log 'health', t.id, t.shield, t.armour

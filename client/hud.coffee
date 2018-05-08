@@ -26,10 +26,12 @@ $static 'HUD', new class HUDRenderer
     Sprite.hud = @
     Sprite.stage.addChild @gfx = new PIXI.Graphics
 
-    @gfx.addChild @text   = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'green'
-    @gfx.addChild @notice = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'green'
-    @gfx.addChild @debug  = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'green'
-    @text.position.set(10,35)
+    @gfx.addChild @system = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
+    @gfx.addChild @text   = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
+    @gfx.addChild @notice = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
+    @gfx.addChild @debug  = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
+    @text.position.set   WDB2 - 50, HEIGHT  - 120
+    @system.position.set 10, HEIGHT - 10 - @system.height
 
     @startTime = Ping.remoteTime()
     @frame = 0
@@ -50,13 +52,16 @@ $static 'HUD', new class HUDRenderer
       s.width  = 100
       s.height = 100
       s.alpha  = 0.3
-      s.position.set 10, 55
+      Sprite.resize()
       null
     null
 
   resize: ->
-    @debug.position.set 10, HEIGHT - 20
+    @debug.position.set 10, 10
     @notice.position.set WIDTH - 20 - @notice.width, 10
+    @text.position.set WDB2 - 50, HEIGHT  - 20 - @text.height
+    @system.position.set 10, HEIGHT - 10 - @system.height
+    @targetSprite.position.set WDB2 - 50, HEIGHT - 120 if @targetSprite
 
   render: (g) ->
     @frame++
@@ -65,10 +70,14 @@ $static 'HUD', new class HUDRenderer
 
     # STATS
     g.clear()
-    g.beginFill(0x00FF00,.5); g.endFill g.drawRect 10, 10, VEHICLE.fuel   / VEHICLE.fuelMax   * 100, 5
-    g.beginFill(0xFF0000,.5); g.endFill g.drawRect 10, 15, VEHICLE.energy / VEHICLE.energyMax * 100, 5
-    g.beginFill(0xFFFF00,.5); g.endFill g.drawRect 10, 20, VEHICLE.armour / VEHICLE.armourMax * 100, 5
-    g.beginFill(0x0000FF,.5); g.endFill g.drawRect 10, 25, VEHICLE.shield / VEHICLE.shieldMax * 100, 5
+    g.beginFill(0x00FF00,0.3); g.endFill g.drawRect WDB2 - 200, HEIGHT - 20, 100, 10
+    g.beginFill(0x00FF00,1.0); g.endFill g.drawRect WDB2 - 200, HEIGHT - 20, VEHICLE.fuel   / VEHICLE.fuelMax   * 100, 10
+    g.beginFill(0xFF0000,0.3); g.endFill g.drawRect WDB2 - 200, HEIGHT - 10, 100, 10
+    g.beginFill(0xFF0000,1.0); g.endFill g.drawRect WDB2 - 200, HEIGHT - 10, VEHICLE.energy / VEHICLE.energyMax * 100, 10
+    g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 + 100, HEIGHT - 20, 100, 10
+    g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 + 100, HEIGHT - 20, VEHICLE.shield / VEHICLE.shieldMax * 100, 10
+    g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 + 100, HEIGHT - 10, 100, 10
+    g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 + 100, HEIGHT - 10, VEHICLE.armour / VEHICLE.armourMax * 100, 10
     # DIR
     g.beginFill 0, 0
     g.lineStyle 3, 0xFFFF00, 1
@@ -112,23 +121,26 @@ $static 'HUD', new class HUDRenderer
         g.endFill()
 
       g.beginFill 0, 0
-      g.lineStyle 1, 0x0000FF, 1
       g.moveTo WDB2 - cos(vec.rad) * radius,       HGB2 - sin(vec.rad) * radius
+      g.lineStyle 1, 0x0000FF, 1
       g.lineTo WDB2 - cos(vec.rad) * radius * 1.1, HGB2 - sin(vec.rad) * radius * 1.1
 
       # STATS
-      g.beginFill(0xFFFF00,1); g.endFill g.drawRect 10, 130, s.armour / s.armourMax * 100, 5
-      g.beginFill(0x0000FF,1); g.endFill g.drawRect 10, 135, s.shield / s.shieldMax * 100, 5
+      g.lineStyle 0, 0x0000FF, 0
+      g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 - 50, HEIGHT - 20, 100, 10
+      g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 - 50, HEIGHT - 20, s.shield / s.shieldMax * 100, 10
+      g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 - 50, HEIGHT - 10, 100, 10
+      g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 - 50, HEIGHT - 10, s.armour / s.armourMax * 100, 10
 
     # TEXT
-    t = ''
-
     if ( p = NUU.player )
+      t = ''
+      t += k+': '+v + '\n\n' for k,v of @widgetList
       t += if p.primary.slot?   then "[#{p.primary.id}] #{p.primary.slot.name}\n" else "#1 locked\n"
       t += if p.secondary.slot? then "[#{p.secondary.id}] #{p.secondary.slot.name}" else "#2 locked\n"
+      @system.text = t
 
-    t += '\n\n'
-
+    t = ''
     if ( s = NUU.target )
       cid = NUU.targetClass
       list = ['ship','stel','roid','hostile']
@@ -138,11 +150,9 @@ $static 'HUD', new class HUDRenderer
       t += "ds: #{hdist s.ap_dist}\n"
       t += "m: #{round s.m[0]}x #{round s.m[0]}y\n"
       t += "eta: #{htime(s.ap_eta)}\n\n\n\n\n"
-      t += "plan: #{NUU.targetMode}\n\n"
+      t += "plan: #{NUU.targetMode}"
+      # @startTime = TIME; @frame = 0
     else t += 'no target\n'
-
-    t += '\n\n' + k+': '+v for k,v of @widgetList
-
     @text.text = t
 
     @notice.text = Notice.queue.join '\n'
@@ -164,8 +174,9 @@ $static 'HUD', new class HUDRenderer
       "er[#{round Ping.error.avrg}]"+
       "skew[#{round Ping.skew.avrg}]"
     @debug.text = t
-
+    @resize()
   widgetList: []
   widget: (name,value)->
     if value then @widgetList[name] = value
     else delete @widgetList[name]
+    HUD.resize()

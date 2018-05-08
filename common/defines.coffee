@@ -35,6 +35,7 @@ $static '$moving',       2
 $static '$accelerating', 3
 $static '$maneuvering',  4
 $static '$orbit',        5
+$static '$travel',       6
 
 # CONSTANTS
 $static 'PI',            Math.PI

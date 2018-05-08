@@ -132,7 +132,7 @@ class NavCom
       # else TODO:
       #   v.retro = yes
       #   message += ':decl('+(round v.error)+')'
-    else message += ':wait(dF:'+(round v.error)
+    else message += ':wait(dF:'+(round v.error)+')'
     v.message = message
     s.d = v.dir if v.setdir
     v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.turn and not v.turnLeft, v.turnLeft, v.boost, no, no, no ]

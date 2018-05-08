@@ -32,7 +32,7 @@ Ship::updateMods = -> # calculate mods
             if @mods[k] then @[k] += v
             else @[k] = v
             @mods[k] = true
-  console.log 'mass::', @stats.mass - @mass
+  console.log 'mass::', @stats.mass - @mass if debug
 
   # apply mods
   map =
@@ -52,12 +52,19 @@ Ship::updateMods = -> # calculate mods
   # add/exchange model-worker
   add = null
   $worker.remove @model if @model
+  lastUpdate = 0
   $worker.push @model = =>
-    @fuel -= @state.a if 2 < @state.S < 5
-    @energy = min @energy + @reactorOut, @energyMax
-    @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
-    @energy -= add
-    null
+    return 1000 if @destructing
+    # return 1000 if @fuel <= 0
+    @fuel -= max 0, @state.a if @state.a
+    unless @shield is @shieldMax and @energy is @energyMax
+      @energy = min @energyMax, @energy + @reactorOut
+      @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
+      @energy -= add
+    return unless isServer and @mount[0] and lastUpdate + 3000 < TIME
+    NET.health.write @
+    lastUpdate = TIME
+    return
   null
 
 Ship::mockSystems = -> # equip fake weapons for development

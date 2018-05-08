@@ -60,9 +60,9 @@ $public class $obj
     app.emit '$obj:add', @
 
   destructor: ->
-    console.log 'destructor$', @id, @name
+    console.log 'destructor$', @id, @name if debug
     for i in @constructor.interfaces
-      console.log 'destructor$', 'object', i.name
+      console.log 'destructor$', 'object', i.name if debug
       delete i.byId[@id]
       Array.remove i.list, @
     app.emit '$obj:del', @

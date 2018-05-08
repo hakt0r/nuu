@@ -138,7 +138,7 @@ console.log 'NUU'.yellow, 'initializing'.yellow
 NUU.init()
 
 ## Setup Webserver
-app.use require('morgan')()
+app.use require('morgan')() if debug
 app.use require('body-parser') keepExtensions: true, uploadDir: '/tmp/'
 app.use require('compression')()
 app.use require('cookie-parser')()
