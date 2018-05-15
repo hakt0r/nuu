@@ -47,47 +47,68 @@ NUU.loginPrompt = ->
     return @loginPrompt() if user is null
     vt.prompt 'Password', (pass) =>
       return @loginPrompt() if pass is null
-      NET.login user, sha512(pass), (success) =>
+      NET.login user, pass, (success) =>
         return @login user, pass  if typeof success is 'object'
         return @loginPrompt() unless success
 
-NET.login = (name, pass, callback) ->
-  console.log 'NET.login', name
-  NET.once 'user.login.success', (opts) ->
-    log "Login successful."
-    $worker.setTimer -> Ping.remoteTime()
-    NUU.firstSync opts, -> callback true
-  NET.once 'user.login.register', (opts) ->
-    log "Registered. Re-sending credentials.", name
-    NET.json.write login: user:name, pass:pass
-  NET.once 'user.login.failed', (opts) ->
-    log "Login failed."
-    callback false
-  connect = (addr) =>
-    console.log 'NET.connect', addr
-    s = if WebSocket? then new WebSocket addr else new MozWebSocket addr
-    @sock = s
-    @send = (msg) =>
-      NET.TX++ # DEBUG
-      s.send msg
-    NUU.emit 'connect', s
-    s.onmessage = (msg) =>
-      NET.RX++ # DEBUG
-      @route(s) msg.data
-    s.onopen = (e) ->
-      log "Connected. Sending credentials."
-      NET.json.write login: user:name, pass:pass
-    s.onerror = (e) ->
-      console.log "NET.sock:error", e
-      NUU.emit 'disconnect'
-  loc = window.location.toString()
-  addr = loc.
-    replace('http','ws').
-    replace(/#.*/,'').
-    replace(/\/$/,'') + '/nuu'
-  connect addr
+String.random = (length) ->
+  text = ''; i = 0
+  text += String.fromCharCode floor 80 + 36 * random() while i++ < length
+  text
 
-# DEBUG
+class NET.Connection
+  constructor: (@name,@pass,callback)->
+    @addr = window.location.toString().replace('http','ws').
+      replace(/#.*/,'').replace(/\/$/,'') + '/nuu'
+    @lsalt = String.random 255 + Math.random @pass.length
+    NET.once 'user.login.challenge', (opts) =>
+      @pass = sha512 [ @lsalt, sha512 [ opts.salt, @pass ].join ':' ].join ':'
+      NET.json.write login: user:@name, pass: pass:@pass,salt:@lsalt
+    NET.once 'user.login.success', (opts) =>
+      log "Login successful."
+      $worker.setTimer => Ping.remoteTime()
+      NUU.firstSync opts, => callback true
+      NUU.emit 'connect', @
+    NET.once 'user.login.nx', (opts) =>
+      @rsalt = String.random 255 + Math.random @pass.length
+      pass = sha512 [ @rsalt, @pass ].join ':'
+      log "User unexistant. Registering credentials for", @name
+      NET.json.write login: user:@name, pass: pass:pass,salt:@rsalt
+    NET.once 'user.login.register', (opts) =>
+      log "Registered. Re-sending credentials for", @name
+      @lsalt = String.random 255 + Math.random @pass.length
+      @pass = sha512 [ @lsalt, sha512 [ @rsalt, @pass ].join ':' ].join ':'
+      NET.json.write login: user:@name, pass: pass:@pass,salt:@lsalt
+    NET.once 'user.login.failed', (opts) =>
+      log "Login failed."
+      callback false
+    @connect @addr
+  connect: (@addr) =>
+    console.log 'NET.connect', @addr
+    s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
+    NET[k] = @[k] for k in [ 'send' ]
+    s[k]   = @[k] for k in [ 'onmessage', 'onopen', 'onerror' ]
+    NUU.emit 'connecting', @sock = s
+  send: (msg) =>
+    return @reconnect() if @sock.state > @sock.CLOSING
+    NET.TX++
+    @sock.send msg
+  onopen: (e) =>
+    log "Connected. Sending getting challenge for #{@name}"
+    NET.json.write login: @name
+  onmessage: (msg) =>
+    NET.RX++
+    NET.route(@sock) msg.data
+  onerror: (e) =>
+    console.log "NET.sock:error", e
+    NUU.emit 'disconnect'
+
+NET.login = (name, pass, callback) ->
+  return console.log 'NOT IMPLEMENTED' if NET.Connection._?
+  console.log 'NET.login', name
+  NET.Connection._ = new NET.Connection name, pass, callback
+
+# Stats
 NET.PPS = in:0,out:0,inAvg:new Mean,outAvg:new Mean
 NET.TX = 0
 NET.RX = 0
@@ -95,4 +116,3 @@ $interval 1000, ->
   NET.PPS.outAvg.add NET.PPS.out = NET.TX
   NET.PPS.inAvg.add  NET.PPS.in  = NET.RX
   NET.TX = NET.RX = 0
-# DEBUG

@@ -21,7 +21,11 @@
 ###
 
 NET.on 'login', (msg,src) ->
-  new User src, msg.user, msg.pass
+  if msg.match
+    return src.json 'user.login.nx': true unless user = UserDB.get msg
+    src.json 'user.login.challenge': salt:user.salt
+  else if msg.user? then new User src, msg.user, msg.pass
+  null
 
 NET.on 'switchShip', (msg,src) ->
   u = src.handle
@@ -46,15 +50,18 @@ UserDB = Db 'UserDb',
     regtime: regtime
     credits: credits
   bootstrap:
-   anx:    nick: 'anx',    id:0, mail: 'anx@ulzq.de',      pass: 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e', regtime:'2009-11-07', state:3, credits: 47553836
-   flyc0r: nick: 'flyc0r', id:1, mail: 'flyc0r@localhost', pass: 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e', regtime:'2009-11-07', state:1, credits: 15091366
+   anx:    nick: 'anx',    id:0, mail: 'anx@ulzq.de',      pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07', state:3, credits: 47553836
+   flyc0r: nick: 'flyc0r', id:1, mail: 'flyc0r@localhost', pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07', state:1, credits: 15091366
 
 $public class User
   @byId: {}
   constructor: (src, user, pass) ->
-    return @deny           src, pass       unless user? and pass?
-    return @register       src, user, pass unless @db = UserDB.get user
-    return @deny           src, pass       unless @db? and pass is @db.pass
+    unless user? and pass?
+      return @deny src, pass
+    unless @db = UserDB.get user
+      return @register src, user, pass
+    unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
+      return @deny src, pass
     src.json 'user.login.success': {user:@db}, sync:add:$obj.list
     return handle.rejoin   src                 if handle = User.byId[@db.id]
     @name = @db.nick; @user = @db.user; @ping = {}; @db = @db
@@ -80,7 +87,7 @@ User::deny = (src, pass)->
   false
 
 User::register = (src, user, pass)->
-  @db = UserDb.create user, nick: user, pass: pass
+  @db = UserDb.create user, nick: user, pass: pass.pass, salt:pass.salt
   rec = UserDB.get user
   src.json 'user.login.register': user
   console.log 'User'.yellow, 'register'.red, util.inspect rec if debug
