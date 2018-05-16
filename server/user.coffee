@@ -20,7 +20,7 @@
 
 ###
 
-NET.on 'login', (msg,src) ->
+NET.on 'login', NET.loginFunction = (msg,src) ->
   if msg.match
     return src.json 'user.login.nx': true unless user = UserDB.get msg
     src.json 'user.login.challenge': salt:user.salt
@@ -56,6 +56,7 @@ UserDB = Db 'UserDb',
 $public class User
   @byId: {}
   constructor: (src, user, pass) ->
+    console.log 'USER', user, pass
     unless user? and pass?
       return @deny src, pass
     unless @db = UserDB.get user
@@ -72,6 +73,7 @@ $public class User
     @enterVehicle src, (
       @createVehicle src, vehicleType, S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
     ), 0, yes
+    src.authenticated = yes
     console.log @db.nick, 'joined'.green, @db.id, vehicleType
     true
 

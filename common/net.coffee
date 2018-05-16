@@ -25,6 +25,8 @@ $public class RTSync extends EventEmitter
   VERSION:    $version
   COMPATIBLE: "0.4.70"
 
+  constructor: -> @define.index = 1
+
   setFlags: (a) ->
     c = 0
     c += Math.pow(2,k) for k,v of a when v
@@ -50,20 +52,23 @@ $public class RTSync extends EventEmitter
         else v )
     @resolve[@[lower+'Code']] = @[lower].read if @[lower].read?
 
-  route: (ctx,src) =>
-    res = @resolve
-    (msg) =>
-      msg = new Buffer msg, 'binary'
-      fnc = res[msg[0]]
-      fnc.call @, msg, ctx if fnc?
-
   bind: (name,fnc) -> @resolve[@[name]] = fnc
 
-  constructor: ->
-    $static 'NET', @
-    @define.index = 1
-
 $static 'NET', new RTSync
+
+if isClient then RTSync::route = (src,msg)->
+  NET.RX++
+  msg = new Buffer msg, 'binary'
+  fnc = NET.resolve[msg[0]]
+  fnc.call NET, msg, src if fnc?
+
+else if isServer then RTSync::route = (src) ->
+  res = NET.resolve
+  (msg)->
+    msg = Buffer.from msg, 'binary'
+    fnc = res[msg[0]]
+    fnc.call NET, msg, src if fnc?
+
 
 ###
   JSON messages
@@ -105,7 +110,7 @@ NET.define 2,'STATE',
   write:
     server: (o) =>
       s = o.state
-      msg = new Buffer 90
+      msg = Buffer.alloc 90
       msg[0] = NET.stateCode
       msg.writeUInt16LE o.id,          1
       msg[3] = o.flags = NET.setFlags [o.accel,o.retro,o.right,o.left,o.boost,s.relto?,0,1]
@@ -120,7 +125,7 @@ NET.define 2,'STATE',
       msg.writeUInt32LE s.t % 1000000, 82
       NUU.bincast msg.toString 'binary'
     client:(o,flags) =>
-      msg = new Buffer [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0]
+      msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0]
       msg.writeUInt16LE parseInt(o.d), 2
       NET.send msg.toString 'binary'
   read:
@@ -148,7 +153,7 @@ NET.define 2,'STATE',
 
 NET.define 7,'STEER',
   write:client:(action,value)->
-    msg = new Buffer [NET.steerCode,0,0]
+    msg = Buffer.from [NET.steerCode,0,0]
     msg.writeUInt16LE value, 1
     NET.send msg.toString 'binary'
   read:
@@ -161,7 +166,7 @@ NET.define 7,'STEER',
       return unless o = src.handle.vehicle
       return unless o.mount[0] is src.handle
       o.d = value = msg.readUInt16LE 1
-      cast = new Buffer [NET.steerCode,0,0,0,0]
+      cast = Buffer.from [NET.steerCode,0,0,0,0]
       cast.writeUInt16LE o.id,  1
       cast.writeUInt16LE value, 3
       NUU.bincast cast.toString 'binary'
@@ -198,14 +203,14 @@ NET.define 3,'WEAP',
       NET.weap.write src, mode, slot, vehicle, target
   write:
     client: (action,primary,slotid,tid)=>
-      msg = new Buffer [NET.weapCode,weaponActionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
+      msg = Buffer.from [NET.weapCode,weaponActionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
       msg.writeUInt16LE(tid,4) if tid
       NET.send msg.toString 'binary'
     server: (src,mode,slot,vehicle,target)=>
       return console.log 'no weapon equipped' unless ( equipped = slot.equip )
       return console.log 'no trigger/release' unless ( modeCall = equipped[if mode is 0 then 'trigger' else 'release'] )
       modeCall src, vehicle, slot, target
-      msg = new Buffer [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
+      msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
       msg.writeUInt16LE target.id,  5
       NUU.bincast msg.toString 'binary'
@@ -223,7 +228,7 @@ NET.define 4,'ACTION',
     src.handle.action src, t, action_key[msg[1]]
   write:client:(t,mode) =>
     console.log mode+'$', t.name, t.id
-    msg = new Buffer [NET.actionCode,action_key.indexOf(mode),0,0]
+    msg = Buffer.from [NET.actionCode,action_key.indexOf(mode),0,0]
     msg.writeUInt16LE t.id, 2
     NET.send msg.toString 'binary'
 
@@ -241,7 +246,7 @@ NET.define 5,'MODS',
     return console.log 'MODS:missing:vid', mode unless (ship = Ship.byId[vid])
     NUU.emit "ship:" + mode, ship, msg.readUInt16LE(4), msg.readUInt16LE(6)
   write: server: (ship,mod,a=0,b=0) =>
-    msg = new Buffer [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0, 0,0]
+    msg = Buffer.from [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0, 0,0]
     msg.writeUInt16LE ship.id, 2
     msg.writeUInt16LE parseInt(a), 4
     msg.writeUInt16LE parseInt(b), 6
@@ -255,7 +260,7 @@ NET.define 5,'MODS',
 operationKey = ['remove','reset']
 NET.define 6,'OPERATION',
   write:server: (t,mode) =>
-    msg = new Buffer [NET.operationCode,operationKey.indexOf(mode),0,0]
+    msg = Buffer.from [NET.operationCode,operationKey.indexOf(mode),0,0]
     msg.writeUInt16LE t.id, 2
     NUU.bincast msg.toString 'binary'
   read:client: (msg) =>
@@ -273,7 +278,7 @@ NET.define 6,'OPERATION',
 
 NET.define 8,'HEALTH',
   write:server: (t) =>
-    msg = new Buffer [
+    msg = Buffer.from [
       NET.healthCode
       0
       0

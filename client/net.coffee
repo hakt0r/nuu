@@ -61,27 +61,27 @@ class NET.Connection
     @addr = window.location.toString().replace('http','ws').
       replace(/#.*/,'').replace(/\/$/,'') + '/nuu'
     @lsalt = String.random 255 + Math.random @pass.length
-    NET.once 'user.login.challenge', (opts) =>
-      @pass = sha512 [ @lsalt, sha512 [ opts.salt, @pass ].join ':' ].join ':'
-      NET.json.write login: user:@name, pass: pass:@pass,salt:@lsalt
-    NET.once 'user.login.success', (opts) =>
+    NET.on 'user.login.success', (opts) =>
       log "Login successful."
       $worker.setTimer => Ping.remoteTime()
       NUU.firstSync opts, => callback true
       NUU.emit 'connect', @
-    NET.once 'user.login.nx', (opts) =>
+    NET.once 'user.login.failed', (opts) =>
+      log "Login failed."
+      callback false
+    NET.on 'user.login.nx', (opts) =>
       @rsalt = String.random 255 + Math.random @pass.length
       pass = sha512 [ @rsalt, @pass ].join ':'
       log "User unexistant. Registering credentials for", @name
       NET.json.write login: user:@name, pass: pass:pass,salt:@rsalt
-    NET.once 'user.login.register', (opts) =>
+    NET.on 'user.login.challenge', (opts) =>
+      pass = sha512 [ @lsalt, sha512 [ opts.salt, @pass ].join ':' ].join ':'
+      NET.json.write login: user:@name, pass: pass:pass,salt:@lsalt
+    NET.on 'user.login.register', (opts) =>
       log "Registered. Re-sending credentials for", @name
       @lsalt = String.random 255 + Math.random @pass.length
-      @pass = sha512 [ @lsalt, sha512 [ @rsalt, @pass ].join ':' ].join ':'
-      NET.json.write login: user:@name, pass: pass:@pass,salt:@lsalt
-    NET.once 'user.login.failed', (opts) =>
-      log "Login failed."
-      callback false
+      pass = sha512 [ @lsalt, sha512 [ @rsalt, @pass ].join ':' ].join ':'
+      NET.json.write login: user:@name, pass: pass:pass,salt:@lsalt
     @connect @addr
   connect: (@addr) =>
     console.log 'NET.connect', @addr
@@ -90,18 +90,18 @@ class NET.Connection
     s[k]   = @[k] for k in [ 'onmessage', 'onopen', 'onerror' ]
     NUU.emit 'connecting', @sock = s
   send: (msg) =>
-    return @reconnect() if @sock.state > @sock.CLOSING
     NET.TX++
+    return @connect @addr if @sock.readyState > @sock.CLOSING
     @sock.send msg
   onopen: (e) =>
-    log "Connected. Sending getting challenge for #{@name}"
+    log "Connected. Getting challenge for #{@name}"
     NET.json.write login: @name
-  onmessage: (msg) =>
-    NET.RX++
-    NET.route(@sock) msg.data
+  onmessage: (msg) =>   
+    NET.route @sock, msg.data
   onerror: (e) =>
     console.log "NET.sock:error", e
     NUU.emit 'disconnect'
+    setTimeout ( => @connect @addr ), 1000
 
 NET.login = (name, pass, callback) ->
   return console.log 'NOT IMPLEMENTED' if NET.Connection._?

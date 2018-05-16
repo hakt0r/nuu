@@ -89,7 +89,7 @@ ws = require('express-ws') app
 app.ws "/nuu", (c, req) ->
   console.log 'ws'.yellow, 'connection'.grey
   c.json = (msg) -> c.send NET.JSON + JSON.stringify msg
-  c.on "message", NET.route(c)
+  c.on "message", NET.route c
   c.on "error", (e) -> console.log 'ws'.yellow, 'error'.red, e
   # lag and jitter emulation # c.on "message", (msg) -> setTimeout (-> NET.route(c)(msg)), 100 # + Math.floor Math.random() * 40
 wss = ws.getWss '/nuu'
