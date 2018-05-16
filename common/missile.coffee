@@ -26,7 +26,7 @@ $abstract 'Missile',
   turn: 1
   accel: true
   size: 22
-  tpl: 197 # Spearhead Missile
+  tpl: 175 # Spearhead Missile
   init: $void
   toJSON: -> id:@id,key:@key,state:@state,target:@target.id,ttl:@ttl
 

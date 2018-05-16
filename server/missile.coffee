@@ -31,8 +31,11 @@ $obj.register class Missile extends $obj
 
   constructor: (opts={})->
     source = opts.source
+    source.update()
     opts.d = source.d
-    opts.m = source.m.slice()
+    sm = source.m.slice()
+    em = $v.multn $v.normalize(sm.slice()), 2
+    opts.m = [ sm[0] + em[0], sm[1] + em[1] ]
     opts.state =
       S: $moving
       x: source.x
@@ -42,7 +45,7 @@ $obj.register class Missile extends $obj
     @turn = 1.0
     @thrust = 0.5
 
-    @ttl = TIME + 3000
+    @ttl = TIME + 10000
     update    = false
     state     = 0
     prevState = 0

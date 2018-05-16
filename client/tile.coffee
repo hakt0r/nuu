@@ -25,10 +25,35 @@ $abstract 'Tile',
   layer: 'tile'
   count: null
 
-  loadAssets: -> @loadTile( @assetPrefix + @sprite + '.png' )
+  loadAssets: ->
+    @loadTile ( @assetPrefix + @sprite + '.png' ), 'sprite', (e,s)=>
+      @count = @sprite.meta.count
+      @show @updateSprite @loaded = true
+      @sprite.anchor.set 0.5
 
   loadTile: (url,dest='sprite',callback=$void) ->
-    callback null, @[dest] = s = movieFactory url, url
+    callback null, @[dest] = movieFactory url, url
+
+  updateSprite: ->
+    do @update
+    p = @sprite.position.set @x + OX, @y + OY
+    @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
+    true
+
+# IMPLEMENTATIONS
+
+$Tile Ship,
+  spriteMode:0
+  layer: 'ship'
+
+  loadAssets: ->
+    # console.log 'ship$', 'assets', @id, @name
+    p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
+    Cache.get p + '_comm.png', (cached) => @imgCom = cached
+    @loadTile p + '.png', 'sprite', (e,s) =>
+      { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
+      @show @updateSprite @loaded = true
+    @loadTile p + '_engine.png', 'spriteEngine'
 
   updateSprite: ->
     do @update
@@ -44,15 +69,5 @@ $abstract 'Tile',
     else @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
     true
 
-# IMPLEMENTATIONS
-
-$Tile Ship, spriteMode:0, layer: 'ship', loadAssets: ->
-  # console.log 'ship$', 'assets', @id, @name
-  p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
-  Cache.get p + '_comm.png', (cached) => @imgCom = cached
-  @loadTile p + '.png', 'sprite', (e,s) =>
-    { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
-    @show @updateSprite @loaded = true
-  @loadTile p + '_engine.png', 'spriteEngine'
 
 $Tile Missile, sprite: 'banshee', ttlFinal: yes
