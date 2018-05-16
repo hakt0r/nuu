@@ -175,11 +175,12 @@ if fs.existsSync app.lockPath
   pid = parseInt fs.readFileSync app.lockPath, 'utf8'
   cp = require 'child_process'
   try
-    cp.execSync "kill #{pid}"
+    cp.execSync "while fuser -k #{app.lockPath}; do :; done"
     console.log 'killed', pid
   catch
     console.log 'stale lockfile', pid
 fs.writeFileSync app.lockPath, process.pid
+fs.open app.lockPath, 0, ->
 
 console.log 'server'.yellow, 'listen'.yellow, app.addr.red + ':' + app.port.toString().blue
 app.listen app.port, app.addr, ->
