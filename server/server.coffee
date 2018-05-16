@@ -63,6 +63,7 @@ $static 'isClient', no
 $static 'isServer', yes
 
 ## Load sources
+cp = require 'child_process'
 fs = require 'fs'; deps =
   common : JSON.parse fs.readFileSync './common/build.json'
   client : JSON.parse fs.readFileSync './client/build.json'
@@ -150,7 +151,7 @@ app.use '/build', require('serve-index' )('build',etag:no)
 # Skeleton Page
 app.get '/', (req,res) ->
   h = []; for n in deps.client.scripts
-    h.push """<script src='build/#{n}'></script>"""
+    h.push """<script src='build/#{n}'></sc<ript>"""
   res.send """
     <html><head>
       <title>nuu (v#{$version} - Gordon Cooper)</title>
@@ -168,6 +169,14 @@ app.get '/', (req,res) ->
 app.chgid  = process.env.CHGID || false
 app.port   = process.env.PORT  || 9999
 app.addr   = process.env.ADDR  || '127.0.0.1'
+
+app.lockPath = '/tmp/nuu.lock.' + ( app.chgid || process.getuid() )
+
+if fs.existsSync app.lockPath
+  pid = parseInt fs.readFileSync app.lockPath, 'utf8'
+  console.log 'killing', pid
+  cp.execSync "kill #{pid}"
+fs.writeFileSync app.lockPath, process.pid
 
 console.log 'server'.yellow, 'listen'.yellow, app.addr.red + ':' + app.port.toString().blue
 app.listen app.port, app.addr, ->
