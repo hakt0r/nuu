@@ -92,6 +92,6 @@ require('./csmake.coffee')(
 
   sysgen: (c)-> depend(assets)(-> exec("coffee mod/nuu/sysgen.coffee")(c))
   debug:  (c)-> depend(assets)(-> exec("coffee --nodejs debug server/server.coffee")(c))
-  run:    (c)-> depend(assets)(-> exec("coffee server/server.coffee")(c))
+  run:    (c)-> depend(assets)(-> exec("coffee server/server.coffee &")(c))
   all:    (c)-> run c
 )
