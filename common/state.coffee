@@ -29,9 +29,10 @@ $obj::m = $v.zero
 $obj::state = $voidState
 $obj::update = $void
 
-if isServer then $obj::changeState = ->
+if isServer then $obj::changeState = (state)->
   # TODO: orbit modifiction (needs elliptical orbits)
   # return console.log 'relto' if @state.relto?
+  # return @setState state if state
   return console.log 'locked$', @name if @locked
   @state.update true
   @a = (
@@ -50,7 +51,8 @@ if isServer then $obj::changeState = ->
   @
 
 $obj::setState = (s) ->
-  new toConstructor[s.S] @,s.x,s.y,s.d,s.m,s.a,s.t,s.relto
+  @locked = false if @locked
+  new toConstructor[s.S] @, s.x, s.y, s.d, s.m, s.a, s.t, s.relto
   @
 
 $public class State
@@ -205,3 +207,23 @@ State.register 'orbit', class orbit extends State
     @ly = @o.y
     null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,relto:@relto.id
+
+State.register 'travel', class travel extends State
+  convert:(old)->
+    return old unless @to
+    old.update()
+    unless @from
+      @from = {}
+      @from.x = o.x; @from.y = o.y; @from.m = o.m.slice()
+      @pta = 60 # secs
+  update:->
+    time_passed  = TIME - @from.t
+    deltaT = ( TIME - @lastUpdate ) / TICK
+    @lastUpdate = TIME
+    @to.state.update()
+    @o.x = @from.x + time_passed * ( @from.x - @to.x )
+    @o.y = @from.y + time_passed * ( @from.y - @to.y )
+    @o.m = m = $v.zero.slice()
+    m[0] = ( @o.x - @lx ) / deltaT; @lx = @o.x
+    m[1] = ( @o.y - @ly ) / deltaT; @ly = @o.y
+  toJSON:-> S:@S, from:from.toJSON(), to:@to.id

@@ -159,8 +159,7 @@ NET.define 7,'STEER',
   read:
     client:(msg,src)->
       return unless v = $obj.byId[id = msg.readUInt16LE 1]
-      value = msg.readUInt16LE 3
-      v.d = value
+      v.d = value = msg.readUInt16LE 3
       v.updateSprite()
     server:(msg,src)->
       return unless o = src.handle.vehicle
@@ -169,7 +168,7 @@ NET.define 7,'STEER',
       cast = Buffer.from [NET.steerCode,0,0,0,0]
       cast.writeUInt16LE o.id,  1
       cast.writeUInt16LE value, 3
-      NUU.bincast ( cast.toString 'binary' ), src
+      NUU.bincast ( cast.toString 'binary' ), o
 
 NET.steer.setDir = 0
 
@@ -213,7 +212,7 @@ NET.define 3,'WEAP',
       msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
       msg.writeUInt16LE target.id,  5
-      NUU.bincast ( msg.toString 'binary' ), src
+      NUU.bincast ( msg.toString 'binary' ), vehicle
 
 ###
   ACTION: launch, land, orbit, capture

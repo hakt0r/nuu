@@ -52,8 +52,8 @@ $static 'Mouse', new class MouseInput
     return unless dirChanged or accelChanged
     return unless NUU.player.mountId is 0
     if dirChanged and not accelChanged
-      v.d = @destDir
-      NET.steer.write NET.steer.setDir, v.d
+      # v.d = @destDir
+      NET.steer.write NET.steer.setDir, @destDir #v.d
     else
       v.d = @destDir
       Kbd.setState 'accel', @accel

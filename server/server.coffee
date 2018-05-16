@@ -100,7 +100,7 @@ NUU.bincast = (data,origin) ->
       Array.remove wss.clients, c
 
 NUU.nearcast = NUU.bincast = (data,o) -> wss.clients.map (c) ->
-  if o? and c.handle? and c.handle.vehicle?
+  if o? and c.handle? and c.handle.vehicle? and o isnt c.handle.vehicle
     v = c.handle.vehicle
     return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
   try c.send data catch error then Array.remove wss.clients, c

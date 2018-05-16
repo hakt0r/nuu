@@ -35,7 +35,7 @@ $public class AI extends Ship
       d: floor random() * 359 }
     super opts
     @name = @aiType + "[##{@id}]"
-    console.log "#{@name} at", opts.stel.name
+    console.log "#{@name} at", opts.stel.name if debug
     @primarySlot = @slots.weapon[0]
     @primaryWeap = @slots.weapon[0].equip
     AI.list.push @
@@ -47,8 +47,8 @@ AI::changeStrategy = (strategy)->
   $worker.push   @worker = @[@strategy].bind @
 
 AI::destructor = ->
+  $worker.remove @worker if @worker
   Array.remove AI.list, @
-  $worker.remove @worker
   NET.operation.write @, 'remove'
   super
   off
@@ -88,7 +88,7 @@ AI::attackPlayersTarget = ->
       closestDist = d
       closest =  p.vehicle
   return @target = null if closestDist > 5000
-  console.log 'Drone SELECTED', closestDist
+  console.log 'Drone SELECTED', closestDist if debug
   @target = closest
   null
 
@@ -97,26 +97,30 @@ AI::approach = ->
   do @approachTarget unless @target
   return 1000        unless @target
   if @inRange = abs(distance = $dist(@,@target)) < 150
-    console.log "#{@name} at", @target.name
+    console.log "#{@name} at", @target.name if debug
     @target = null
-    return 1000
-  else v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
+    return 10000
+  # else if @state.S isnt $travel
+  #   @setState S:$travel, from:@state, to:@target
+  v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
   @left = turnLeft
   @right = turn and not turnLeft
-  do @changeState if ( @flags isnt v.flags ) or v.setDir
-  33
+  if ( @flags isnt v.flags ) or v.setDir
+    do @changeState
+    return 0
+  return 1000
 
 AI::approachTarget = ->
   @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
-  console.log "#{@name} to", @target.name if @target
+  console.log "#{@name} to", @target.name if @target if debug
 
 AI::escort = ->
   do @update
   @escortTarget() if not @target or @target.destructing
   return 1000     unless @target
   if @inRange = abs(distance = $dist(@,@target)) < 150
-    # console.log "#{@name} reached", @target.name
+    # console.log "#{@name} reached", @target.name if debug
     return 1000
   else v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
@@ -127,10 +131,10 @@ AI::escort = ->
 
 AI::escortTarget = ->
   if @target = $obj.byId[@escortFor]
-    console.log "#{@name} Escorting", @target.name
+    console.log "#{@name} Escorting", @target.name if debug
     return @target
   @changeStrategy 'attackPlayers'
-  console.log "#{@name} going berserk"
+  console.log "#{@name} going berserk" if debug
   false
 
 AI.list = []
@@ -138,8 +142,8 @@ AI.autospawn = (opts={})-> $worker.push =>
   drones = @list.length
   if drones < opts.max
     dt = opts.max - drones
-    new AI     for i in [0...dt]
-    new Trader for i in [0...dt]
+    new Trader for i in [0...dt/2]
+    new AI     for i in [0...dt/2]
   1000
 
 AI.randomStellar = ->
@@ -153,7 +157,8 @@ $public class Trader extends AI
     opts.strategy = opts.strategy || 'approach'
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
-    new Escort escortFor:@id, state:@state.toJSON() for i in [0..floor random()*3]
+    @escort = ( for i in [0..floor random()*3]
+      new Escort escortFor:@id, state:@state.toJSON() )
     return
 
 $public class Escort extends AI

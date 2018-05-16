@@ -38,7 +38,9 @@ console.log = (args...) ->
   notice 200, args.join ' '
   console.real.apply console, args
 
-window.log = (args...) -> console.user args.join(' ')
+window.log = (args...) ->
+  console.log.apply console, ['$'].concat args.slice()
+  console.user args.join(' ')
 
 window.notice = (timeout,msg) ->
   msg = [msg] if typeof msg is 'string'
