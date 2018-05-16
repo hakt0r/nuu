@@ -3,7 +3,9 @@ update-demo:
 	ssh root@rop.hktr.de '\
 		cd /var/www/nuu;    \
 		killall node;       \
-		git pull; coffee tools/build.coffee run >/dev/null 2>&1 </dev/null &!'
+		git pull;           \
+		coffee tools/build.coffee run >/dev/null 2>&1 </dev/null &! \
+		exit 0'
 
 push:
 	git push
