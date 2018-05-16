@@ -1,4 +1,14 @@
 
+update-demo:
+	ssh root@rop.hktr.de '\
+		cd /var/www/nuu;    \
+		killall node;       \
+		git pull; coffee tools/build.coffee run >/dev/null 2>&1 </dev/null &!'
+
+push:
+	git push
+	make update-demo
+
 all:
 	coffee tools/build.coffee run
 
