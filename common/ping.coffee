@@ -47,7 +47,7 @@ $public class RTPing extends Mean
         timer = $interval @INTERVAL, =>
           id = ++@ringId % 32
           local = @ringBf[id] = Date.now()
-          msg = new Buffer [NET.pingCode,id,0,0,0,0,0,0,0,0]
+          msg = Buffer.from [NET.pingCode,id,0,0,0,0,0,0,0,0]
           msg.writeDoubleLE local, 2
           NET.send msg.toString('binary')
       NUU.on 'disconnect', =>
@@ -75,7 +75,7 @@ $public class RTPing extends Mean
             @error.reset()
         null
       server: (msg,src) =>
-        b = new Buffer [NET.pingCode,msg[1],0,0,0,0,0,0,0,0]
+        b = Buffer.from [NET.pingCode,msg[1],0,0,0,0,0,0,0,0]
         b.writeDoubleLE(Date.now(),2)
         src.send b.toString('binary')
         null
