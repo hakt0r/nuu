@@ -91,12 +91,13 @@ class NET.Connection
     NUU.emit 'connecting', @sock = s
   send: (msg) =>
     NET.TX++
-    return @connect @addr if @sock.readyState > @sock.CLOSING
+    return @connect @addr if @sock.readyState >= @sock.CLOSING
+    return if @sock.readyState isnt @sock.OPEN
     @sock.send msg
   onopen: (e) =>
     log "Connected. Getting challenge for #{@name}"
     NET.json.write login: @name
-  onmessage: (msg) =>   
+  onmessage: (msg) =>
     NET.route @sock, msg.data
   onerror: (e) =>
     console.log "NET.sock:error", e
