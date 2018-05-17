@@ -21,6 +21,15 @@
 ###
 
 console.user = console.log
+console.real = console.log
+
+console.log = (args...) ->
+  notice 200, args.join ' '
+  console.real.apply console, args
+
+window.log = (args...) ->
+  console.log.apply console, ['$'].concat args.slice()
+  console.user args.join(' ')
 
 window.Notice = class Notice
   @queue : []
@@ -32,15 +41,6 @@ setInterval ( =>
   n = Date.now()
   Notice.queue = Notice.queue.filter (e) -> e.timeout > n
 ), 100
-
-console.real = console.log
-console.log = (args...) ->
-  notice 200, args.join ' '
-  console.real.apply console, args
-
-window.log = (args...) ->
-  console.log.apply console, ['$'].concat args.slice()
-  console.user args.join(' ')
 
 window.notice = (timeout,msg) ->
   msg = [msg] if typeof msg is 'string'
@@ -179,10 +179,6 @@ class Object.editor extends ModalListWindow
         i.find('span').html if @subject[key] = val = not val then 'true' else '<span class="red">false</div>'
         app.saveSettings()
 
-Kbd.macro 'settings', 'l', 'Open Settings dialog', ->
-  return window.settings.close() if window.settings
-  new Object.editor name:'settings', title:'Settings', subject: app.settings, closeKey: 'l'
-
 Window.KeyBinder = class StringEditorWindow extends ModalListWindow
   constructor: (opts)->
     @name = 'edit.string'
@@ -222,5 +218,8 @@ Window.Help = class HelpWindow extends ModalListWindow
         app.settings.bind[key] = val
         app.saveSettings()
 
-Kbd.macro 'help',  'h', 'Show help', -> new Window.Help
-Kbd.macro 'equip', 'k', 'Show equipment screen', -> new Window.Equipment
+Kbd.macro 'help',     'h', 'Show help',             -> new Window.Help
+Kbd.macro 'equip',    'k', 'Show equipment screen', -> new Window.Equipment
+Kbd.macro 'settings', 'l', 'Open Settings dialog',  ->
+  return window.settings.close() if window.settings
+  new Object.editor name:'settings', title:'Settings', subject: app.settings, closeKey: 'l'

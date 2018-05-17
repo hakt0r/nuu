@@ -20,6 +20,10 @@
 
 ###
 
+Array.empty = (a)->
+  a.pop() while a.length > 0
+  a
+
 class Engine extends EventEmitter
   time: Date.now
   threadList: {}

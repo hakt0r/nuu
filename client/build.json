@@ -38,8 +38,8 @@
     }
   },
   "sources": [
-    "target",
     "keyboard",
+    "target",
     "cache",
     "gfx",
     "vt100",

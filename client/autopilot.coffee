@@ -49,7 +49,7 @@ $public class Autopilot
     @last = v = NavCom.steer @ship, @target, 'pursue'
     v = NavCom.approach @ship, v
     @widget v
-    return @stop(Kbd.macro.orbit()) if v.distance < @target.size / 1.8
+    return @stop(Target.orbit()) if v.distance < @target.size / 1.8
     if v.setdir or @ship.flags isnt v.flags
       NET.state.write @ship, [ v.accel, v.retro, v.turn and not v.turnLeft, v.turnLeft, v.boost, no, no, no ]
 
@@ -79,7 +79,7 @@ $public class Autopilot
     else
       Sprite.hud.widget 'autopilot'
       console.log 'ap:start'
-      ap.commit(VEHICLE, NUU.target, NUU.targetMode)
+      ap.commit(VEHICLE, NUU.target, Target.mode)
       ap.start()
 
 Kbd.macro 'autopilot', 'Sz', 'Autopilot', Autopilot.macro

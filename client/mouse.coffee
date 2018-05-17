@@ -20,7 +20,7 @@
 
 ###
 
-class MouseInput
+$static 'Mouse', new class MouseInput
   state: off
   trigger: no
   triggerSec: no
@@ -91,8 +91,8 @@ class MouseInput
         Kbd.setState 'accel', @accel = true
       when 2
         if evt.shiftKey
-             Kbd.macro.targetClassNext()
-        else Kbd.macro.targetClosest()
+             Target.nextClass()
+        else Target.closest()
       when 3
         if evt.shiftKey
           do Kbd.macro.weapNext
@@ -109,9 +109,9 @@ class MouseInput
 
   onwheel: (evt) ->
     down = evt.wheelDeltaY >= 0
-    return Kbd.macro.targetPrev() if evt.shiftKey and down
-    return Kbd.macro.targetNext() if evt.shiftKey
-    if down then Kbd.macro.scanMinus() else Kbd.macro.scanPlus()
+    return Target.prev() if evt.shiftKey and down
+    return Target.next() if evt.shiftKey
+    if down then Scanner.zoomOut() else Scanner.zoomIn()
     do evt.stopPropagation
     false
 
@@ -128,6 +128,5 @@ class MouseInput
     else @reset()
     null
 
-$static 'Mouse', new MouseInput
+app.on 'settings', -> do Mouse.macro() unless app.settings.mouseturnoff
 Kbd.macro 'mouseturn', 'z', 'Toggle mouseturning', Mouse.macro()
-app.on 'settings', -> do Mouse.macro() if app.settings.mouseturn

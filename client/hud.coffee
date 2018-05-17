@@ -150,7 +150,7 @@ $static 'HUD', new class HUDRenderer
       t += "ds: #{hdist s.ap_dist}\n"
       t += "m: #{round s.m[0]}x #{round s.m[0]}y\n"
       t += "eta: #{htime(s.ap_eta)}\n\n\n\n\n"
-      t += "plan: #{NUU.targetMode}"
+      t += "plan: #{Target.mode}"
       # @startTime = TIME; @frame = 0
     else t += "no target [#{list[cid]}]\n"
     @text.text = t
@@ -173,7 +173,7 @@ $static 'HUD', new class HUDRenderer
       "dt[#{round Ping.delta.avrg}]"+
       "er[#{round Ping.error.avrg}]"+
       "skew[#{round Ping.skew.avrg}]"+
-      "     hostiles:#{if NUU.hostile then NUU.hostile.length else 0}"
+      "     hostiles:#{if Target.hostile then Target.hostile.length else 0}"
     @debug.text = t
     @resize()
   widgetList: []

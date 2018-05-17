@@ -141,11 +141,11 @@ $public class VT100 extends EventEmitter
         @cursor.x = 0
         @promptActive = no
         @inputBuffer  = ''
-        @unfocus()
-        fnc i
+        res = fnc i unless e.shiftKey
+        @unfocus()  unless res is true
     else if Kbd.cmap[code] is 'esc'
-      fnc null if (fnc = @onReturn)?
-      @unfocus()
+      res = fnc null if not e.shiftKey and ( fnc = @onReturn )?
+      @unfocus() unless res is true
     else if Kbd.cmap[code] is 'left'
       @cursor.x = max(0,--@cursor.x)
     else if Kbd.cmap[code] is 'right'
@@ -171,6 +171,10 @@ $public class VT100 extends EventEmitter
     @draw()
     false
 
-Kbd.macro 'console', 'return', 'Show / hide console', ->
-  vt.prompt 'nuu #', (text) ->
-    console.user eval(text).toString()
+VT100.toggle = -> vt.prompt 'nuu #', p = (text) ->
+  try console.user eval(text).toString()
+  catch e then console.user ( if e and e.message then e.message else e )
+  setTimeout ( new Function 'VT100.toggle()' ), 0
+  true
+
+Kbd.macro 'console', 'return', 'Show / hide console', VT100.toggle
