@@ -48,6 +48,7 @@ Weapon.Projectile = ->
       console.log 'emergency-release trigger'
       do @release
     @release = =>
+      console.log 'do-release' if debug
       fire.stop = true
       @release = $void
     detector = (v) => =>
@@ -63,7 +64,9 @@ Weapon.Projectile = ->
         Array.remove Weapon.proj, v
         return off
       null
-    fire = =>
+    @release.fire = fire = =>
+      return off if fire.stop
+      vehicle.update()
       Weapon.proj.push v = new Projectile
       d = vehicle.d / RAD
       cs = cos(d)

@@ -20,8 +20,10 @@
 
 ###
 
-$static 'Mouse', new class MouseInput
+class MouseInput
   state: off
+  trigger: no
+  triggerSec: no
   timer: undefined
   event: x:0, y:0
   accel: no
@@ -29,23 +31,30 @@ $static 'Mouse', new class MouseInput
   lastDir: -1
   lastAccel: no
 
-  update: -> (evt) =>
-    evt = evt.data.originalEvent
+  constructor:->
+    @[k] = @[k].bind @ for k in ['update','reset','callback','oncontextmenu','onwheel','onmouseup','onmousedown']
+    null
+
+  update: (evt) ->
+    evt = evt
     @event = e = [ evt.offsetX, evt.offsetY ]
     @dest  = c = [ WDB2, HGB2 ]
     @destDir   = ( 360 + parseInt $v.heading(e,c) * RAD ) % 360
     null
 
   reset: ->
+    do @trigger.dn if @trigger
+    @trigger = no
+    do @triggerSec.dn if @triggerSec
+    @triggerSec = no
+    @state = off
     Sprite.hud.widget 'mouse'
     clearInterval @timer
-    @obj.interactive = no
-    @obj.mousemove = undefined
-    @obj.mousedown = undefined
     @timer = null
+    document.onmousemove = document.onwheel = document.onmouseup = document.onmousedown = document.oncontextmenu = null
     null
 
-  callback: -> =>
+  callback: ->
     v = VEHICLE
     dirChanged = @destDir isnt @lastDir
     accelChanged = @lastAccel isnt @accel
@@ -60,39 +69,65 @@ $static 'Mouse', new class MouseInput
     @lastDir = @destDir; @lastAccel = @accel
     null
 
+  oncontextmenu: (evt)->
+    # do Kbd.macro.primaryTrigger.dn
+    # @trigger = Kbd.macro.primaryTrigger
+    false
+
+  onmouseup: (evt)->
+    if @trigger
+      do @trigger.up
+      @trigger = no
+    if @triggerSec
+      do @triggerSec.up
+      @triggerSec = no
+    Kbd.setState 'accel', @accel = false
+    do evt.stopPropagation
+    false
+
+  onmousedown: (evt)->
+    switch evt.which
+      when 1
+        Kbd.setState 'accel', @accel = true
+      when 2
+        if evt.shiftKey
+             Kbd.macro.targetClassNext()
+        else Kbd.macro.targetClosest()
+      when 3
+        if evt.shiftKey
+          do Kbd.macro.weapNext
+        if evt.altKey
+          do Kbd.macro.weapNextSec
+        if evt.ctrlKey
+          @triggerSec = Kbd.macro.secondaryTrigger
+          do Kbd.macro.secondaryTrigger.dn
+        if Kbd.macro.primaryTrigger? and not ( evt.altKey or evt.shiftKey or evt.ctrlKey )
+          @trigger = Kbd.macro.primaryTrigger
+          do Kbd.macro.primaryTrigger.dn
+    do evt.stopPropagation
+    false
+
+  onwheel: (evt) ->
+    down = evt.wheelDeltaY >= 0
+    return Kbd.macro.targetPrev() if evt.shiftKey and down
+    return Kbd.macro.targetNext() if evt.shiftKey
+    if down then Kbd.macro.scanMinus() else Kbd.macro.scanPlus()
+    do evt.stopPropagation
+    false
+
   macro: -> =>
     @state = not @state
-    @obj = Sprite.fg
-    @obj.interactive = true
     body = document.querySelector 'body'
     if @state
-      trigger = no
-      @obj.hitArea = new PIXI.Rectangle 0, 0, 2000, 2000
-      @obj.mousemove = @update()
-      body.onwheel = (evt) =>
-        down = evt.wheelDeltaY >= 0
-        return Kbd.macro.targetPrev() if evt.shiftKey and down
-        return Kbd.macro.targetNext() if evt.shiftKey
-        if down then Kbd.macro.scanMinus() else Kbd.macro.scanPlus()
-      @obj.mousedown = (evt) =>
-        if 2 is evt.data.originalEvent.which
-          return Kbd.macro.targetClassNext() if evt.data.originalEvent.shiftKey
-          return Kbd.macro.targetClosest()
-        trigger = evt.data.originalEvent.shiftKey
-        if trigger and Kbd.macro.primaryTrigger? then do Kbd.macro.primaryTrigger.dn
-        else Kbd.setState 'accel', @accel = true
-        do evt.stopPropagation
-      body.oncontextmenu = (evt) =>
-        do Kbd.macro.primaryTrigger.dn
-        do evt.stopPropagation
-        false
-      @obj.mouseup = (evt) =>
-        if trigger and Kbd.macro.primaryTrigger? then do Kbd.macro.primaryTrigger.up
-        Kbd.setState 'accel', @accel = false
-        do evt.stopPropagation
-      @timer = setInterval @callback(), TICK
+      document.onmousemove = @update
+      document.onwheel = @onwheel
+      document.onmouseup = @onmouseup
+      document.onmousedown = @onmousedown
+      document.oncontextmenu = @oncontextmenu
+      @timer = setInterval @callback, TICK
     else @reset()
     null
 
+$static 'Mouse', new MouseInput
 Kbd.macro 'mouseturn', 'z', 'Toggle mouseturning', Mouse.macro()
 app.on 'settings', -> do Mouse.macro() if app.settings.mouseturn

@@ -83,7 +83,8 @@ $obj.register class Ship extends $obj
     primary = trigger is 'primary'
     ws = player.vehicle.slots.weapon
     tg = player[trigger]
-    tg.id   = min ++tg.id, ws.length-1
+    ct = ws.length - 1
+    tg.id   = ++tg.id % ct
     tg.slot = ws[tg.id].equip
     tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
     tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId
@@ -92,7 +93,7 @@ $obj.register class Ship extends $obj
     primary = trigger is 'primary'
     ws = player.vehicle.slots.weapon
     tg = player[trigger]
-    tg.id = max 0, --tg.id
+    tg.id = ( --tg.id + ct ) % ct
     tg.slot = ws[tg.id].equip
     tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
     tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId

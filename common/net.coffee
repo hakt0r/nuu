@@ -187,11 +187,11 @@ NET.define 3,'WEAP',
       return console.log 'WEAP:missing:sid' unless (slot    = vehicle.slots.weapon[msg[2]])
       target = slot.target = $obj.byId[msg.readUInt16LE 5]
       if mode is 0
-        # console.log 'trigger', vehicle.id
         if ( vehicle.id isnt VEHICLE.id ) and ( -1 is $obj.hostile.indexOf vehicle )
           $obj.hostile.push vehicle
         action = 'trigger'
       else action = 'release'
+      console.log action.red.inverse, vehicle.id if debug
       slot.equip[action](null,vehicle,slot,target)
     server: (msg,src)=>
       mode = msg[1]
@@ -202,6 +202,7 @@ NET.define 3,'WEAP',
       NET.weap.write src, mode, slot, vehicle, target
   write:
     client: (action,primary,slotid,tid)=>
+      console.log 'weap', action,primary,slotid,tid
       msg = Buffer.from [NET.weapCode,weaponActionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
       msg.writeUInt16LE(tid,4) if tid
       NET.send msg.toString 'binary'
@@ -293,4 +294,4 @@ NET.define 8,'HEALTH',
     t.energy = msg[4] * ( t.energyMax / 255 )
     t.armour = msg[5] * ( t.armourMax / 255 )
     t.fuel   = msg[6] * ( t.fuelMax   / 255 )
-    console.log 'health', t.id, t.shield, t.armour
+    console.log 'health', t.id, t.shield, t.armour if debug
