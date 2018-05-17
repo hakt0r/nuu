@@ -38,6 +38,7 @@
     }
   },
   "sources": [
+    "target",
     "keyboard",
     "cache",
     "gfx",

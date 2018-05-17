@@ -81,7 +81,7 @@ $static 'Scanner', new class ScannerRenderer
     else Sprite.stage.removeChild @gfx
 
   zoomIn: ->
-    Scanner.scale = max 0.25, Scanner.scale / 2
+    Scanner.scale = max 1, Scanner.scale / 2
 
   zoomOut: ->
     Scanner.scale = Scanner.scale * 2

@@ -182,16 +182,10 @@ weaponActionKey = ['trigger','release','reload']
 NET.define 3,'WEAP',
   read:
     client: (msg,src) ->
-      mode = msg[1]
-      return console.log 'WEAP:missing:vid' unless (vehicle = Ship.byId[msg.readUInt16LE 3])
-      return console.log 'WEAP:missing:sid' unless (slot    = vehicle.slots.weapon[msg[2]])
-      target = slot.target = $obj.byId[msg.readUInt16LE 5]
-      if mode is 0
-        if ( vehicle.id isnt VEHICLE.id )
-          target.hostile.push vehicle if -1 is target.hostile.indexOf vehicle
-          vehicle.hostile.push target if -1 is vehicle.hostile.indexOf target
-        action = 'trigger'
-      else action = 'release'
+      return console.log 'WEAP:missing:vid' unless vehicle = Ship.byId[msg.readUInt16LE 3]
+      return console.log 'WEAP:missing:sid' unless slot    = vehicle.slots.weapon[msg[2]]
+      return console.log 'WEAP:missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
+      action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
       console.log action.red.inverse, vehicle.id if debug
       slot.equip[action](null,vehicle,slot,target)
     server: (msg,src)=>
@@ -201,6 +195,7 @@ NET.define 3,'WEAP',
       return unless (target = slot.target = $obj.byId[msg.readUInt16LE 4])
       slot.id = sid # FIXME
       NET.weap.write src, mode, slot, vehicle, target
+
   write:
     client: (action,primary,slotid,tid)=>
       console.log 'weap', action,primary,slotid,tid if debug

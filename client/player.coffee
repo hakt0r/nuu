@@ -31,15 +31,13 @@ $public class Player
 Object.defineProperty Player::, 'vehicle',
   set: (v) ->
     return unless v
-    # console.log 'enterVehicle', v.id
     window.VEHICLE = @_vehicle = v
     v.hide()
     v.layer = 'play'
     v.show()
     Sprite.repositionPlayer()
     @vehicleId = v.id
-    debugger unless v.hostile
-    Target.types[0] = v.hostile
+    console.log 'enterVehicle', v.id
   get: -> @_vehicle
 
 app.on '$obj:add', (o)->

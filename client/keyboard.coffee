@@ -20,6 +20,36 @@
 
 ###
 
+Array.empty = (a)->
+  a.pop() while a.length > 0
+  a
+
+$public class Target
+  @typeNames : ['hostile','ship','stellar','all','off']
+  @types : [NUU.hostile,Ship.byId,Stellar.byId,$obj.byId,[]]
+
+NUU.on 'ship:destroyed', (opts) ->
+  opts.destructing = yes
+  NUU.hostile.map (i)->
+    Array.remove NUU.hostile, i if i.id is opts.id
+  do Kbd.macro.targetEnemy if opts.id is NUU.target.id if NUU.target
+  null
+
+NET.on 'hostile', addHostile = (id)->
+  if Array.isArray id
+    Array.empty NUU.hostile
+    id.map (i)->
+      return console.log 'hostile:unknown', i unless v = $obj.byId[i]
+      NUU.hostile.push v
+  else
+    return console.log 'hostile:unknown', id unless v = $obj.byId[id]
+    NUU.hostile.push v if -1 is NUU.hostile.indexOf v
+  Target.types[0] = NUU.hostile
+  do Kbd.macro.targetEnemy
+
+NUU.targetMode = 'land'
+NUU.hostile = []
+
 $static 'Kbd', new class KeyboardInput extends EventEmitter
 
   kmap:  { "/":191,"capslock":20,"+":109, "-":107, "-":107, ",":188, ".":190, bksp:8, tab:9, return:13, ' ':32, pgup:33, pgdn:34, esc:27, left:37, up:38, right:39, down:40, del:46, 0:48, 1:49, 2:50, 3:51, 4:52, 5:53, 6:54, 7:55, 8:56, 9:57, a:65, b:66, c:67, d:68, e:69, f:70, g:71, h:72, i:73, j:74, k:75, l:76, m:77, n:78, o:79, p:80, q:81, r:82, s:83, t:84, u:85, v:86, w:87, x:88, y:89, z:90 }
@@ -146,17 +176,6 @@ Kbd.macro 'primaryTrigger', ' ', 'Primary trigger',
 Kbd.macro 'secondaryTrigger', 'x', 'Secondary trigger',
   dn:-> if f = NUU.player.secondary.trigger then do f
   up:-> if f = NUU.player.secondary.release then do f
-
-$public class Target
-  @typeNames : ['hostile','ship','stellar','all','off']
-  @types : [[],Ship.byId,Stellar.byId,$obj.byId,[]]
-
-NUU.on 'ship:destroyed', (opts) -> if NUU.target
-  opts.destructing = yes
-  do Kbd.macro.targetEnemy if opts.id is NUU.target.id
-  null
-
-NUU.targetMode = 'land'
 
 Kbd.macro 'targetClassNext','Sy','Select next target class', ->
   list = Target.types

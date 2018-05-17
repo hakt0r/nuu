@@ -142,7 +142,7 @@ $static 'HUD', new class HUDRenderer
 
     t = ''
     cid = NUU.targetClass
-    list = ['hostile','ship','stel','roid','off']
+    list = ['hostile','ship','stel','all','off']
     if ( s = NUU.target )
       s.ap_dist = $dist(VEHICLE,s)
       s.ap_eta = Math.round( s.ap_dist / (Math.sqrt( Math.pow(VEHICLE.m[0],2) + Math.pow(VEHICLE.m[1],2) ) / 0.04))
@@ -172,7 +172,8 @@ $static 'HUD', new class HUDRenderer
       " ping[#{round Ping.trip.avrg}]"+
       "dt[#{round Ping.delta.avrg}]"+
       "er[#{round Ping.error.avrg}]"+
-      "skew[#{round Ping.skew.avrg}]"
+      "skew[#{round Ping.skew.avrg}]"+
+      "     hostiles:#{if NUU.hostile then NUU.hostile.length else 0}"
     @debug.text = t
     @resize()
   widgetList: []

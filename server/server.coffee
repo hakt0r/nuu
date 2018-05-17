@@ -108,8 +108,17 @@ NUU.nearcast = NUU.bincast = (data,o) -> wss.clients.map (c) ->
 NUU.jsoncast = (data) ->
   data = NET.JSON + JSON.stringify data
   wss.clients.map (c) ->
-    try c.send data catch error
-      Array.remove wss.clients, c
+    try c.send data catch error then Array.remove wss.clients, c
+    null
+  null
+
+NUU.jsoncastTo = (v,data) ->
+  return unless v.inhabited
+  data = NET.JSON + JSON.stringify data
+  v.mount.map (i)-> if i and i.sock
+    console.log 'jsoncastTo', v.id, data
+    try i.sock.send data catch error then Array.remove wss.clients, i.sock
+  null
 
 ## Sync - queue object-creation notification
 $static 'Sync', class Sync

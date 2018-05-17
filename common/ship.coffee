@@ -120,6 +120,7 @@ $obj.register class Ship extends $obj
     NET.health.write @
 
   reset: ->
+    @hostile = []
     @destructing = false
     @energy = @energyMax
     @shield = @shieldMax

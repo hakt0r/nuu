@@ -44,4 +44,12 @@ $public class Weapon extends Outfit
     Weapon[name] = @
     @[k] = v for k,v of opts
 
+Weapon.hostility = (vehicle,target)->
+  if  target.hostile and -1 is  target.hostile.indexOf vehicle
+    target.hostile.push vehicle
+    NUU.jsoncastTo target, hostile: vehicle.id if target.inhabited
+  if vehicle.hostile and -1 is vehicle.hostile.indexOf target
+    vehicle.hostile.push target
+    NUU.jsoncastTo vehicle, hostile: target.id if vehicle.inhabited
+
 Weapon.Bay =->

@@ -82,6 +82,7 @@ Weapon.Projectile = ->
       v.y = v.sy = floor vehicle.y # + slot.y * sn + slot.y * cs;
       $worker.push detector v
       NUU.emit 'shot', v
+      Weapon.hostility vehicle, target
       @cooldown
     ttl = @stats.range / @stats.speed * 1000
     spt = @stats.speed / TICK

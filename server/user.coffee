@@ -63,6 +63,7 @@ $public class User
       return @register src, user, pass
     unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
       return @deny src, pass
+    @sock = src
     src.json 'user.login.success': {user:@db}, sync:add:$obj.list
     return handle.rejoin   src                 if handle = User.byId[@db.id]
     @name = @db.nick; @user = @db.user; @ping = {}; @db = @db
@@ -78,6 +79,7 @@ $public class User
     true
 
 User::rejoin = (src)->
+  @sock = src
   src.handle = @
   @enterVehicle src, @vehicle, @mountId, no
   console.log @db.nick, 'rejoined', @vehicle?
@@ -114,9 +116,11 @@ User::enterVehicle = (src,vehicle,mountId,spawn)->
     mountId++
   vehicle.mount[mountId] = @
   vehicle.flags = String.fromCharCode 0 if 0 is mountId
+  vehicle.inhabited = yes
   NUU.emit 'userLeft', src.handle unless spawn
   NUU.emit 'userJoined', src.handle
   src.json 'switchShip': i:vehicle.id, m:mountId
+  src.json 'hostile': vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
   console.log 'user$enter', @db.nick, vehicle.id, mountId
   null
 
