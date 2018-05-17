@@ -38,6 +38,8 @@ Object.defineProperty Player::, 'vehicle',
     v.show()
     Sprite.repositionPlayer()
     @vehicleId = v.id
+    debugger unless v.hostile
+    Target.types[0] = v.hostile
   get: -> @_vehicle
 
 app.on '$obj:add', (o)->

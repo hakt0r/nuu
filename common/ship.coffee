@@ -62,6 +62,7 @@ $obj.register class Ship extends $obj
   slot: null
 
   constructor: (opts) ->
+    @hostile = []
     super opts
     @slots = _.clone @slots
     @mockSystems() # fixme

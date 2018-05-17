@@ -187,8 +187,9 @@ NET.define 3,'WEAP',
       return console.log 'WEAP:missing:sid' unless (slot    = vehicle.slots.weapon[msg[2]])
       target = slot.target = $obj.byId[msg.readUInt16LE 5]
       if mode is 0
-        if ( vehicle.id isnt VEHICLE.id ) and ( -1 is $obj.hostile.indexOf vehicle )
-          $obj.hostile.push vehicle
+        if ( vehicle.id isnt VEHICLE.id )
+          target.hostile.push vehicle if -1 is target.hostile.indexOf vehicle
+          vehicle.hostile.push target if -1 is vehicle.hostile.indexOf target
         action = 'trigger'
       else action = 'release'
       console.log action.red.inverse, vehicle.id if debug
@@ -202,7 +203,7 @@ NET.define 3,'WEAP',
       NET.weap.write src, mode, slot, vehicle, target
   write:
     client: (action,primary,slotid,tid)=>
-      console.log 'weap', action,primary,slotid,tid
+      console.log 'weap', action,primary,slotid,tid if debug
       msg = Buffer.from [NET.weapCode,weaponActionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
       msg.writeUInt16LE(tid,4) if tid
       NET.send msg.toString 'binary'

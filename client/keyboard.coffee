@@ -148,45 +148,57 @@ Kbd.macro 'secondaryTrigger', 'x', 'Secondary trigger',
   up:-> if f = NUU.player.secondary.release then do f
 
 $public class Target
-  @typeNames : ['ship','stellar','all']
-  @types : [Ship.byId,Stellar.byId,$obj.byId]
+  @typeNames : ['hostile','ship','stellar','all','off']
+  @types : [[],Ship.byId,Stellar.byId,$obj.byId,[]]
+
+NUU.on 'ship:destroyed', (opts) -> if NUU.target
+  opts.destructing = yes
+  do Kbd.macro.targetEnemy if opts.id is NUU.target.id
+  null
 
 NUU.targetMode = 'land'
 
 Kbd.macro 'targetClassNext','Sy','Select next target class', ->
   list = Target.types
+  ct = list.length
   NUU.targetId = 0
-  NUU.targetClass = Math.min(++NUU.targetClass,list.length-1)
+  NUU.targetClass = ++NUU.targetClass % ct
   Kbd.macro.targetPrev()
-  if NUU.targetClass < 2 then NUU.targetMode = 'land'
+  if NUU.targetClass is 3 then NUU.targetMode = 'land'
+  if NUU.targetClass is 2 then NUU.targetMode = 'dock'
   null
 
 Kbd.macro 'targetClassPrev','Sg','Select previous target class', ->
   list = Target.types
+  ct = list.length
   NUU.targetId = 0
-  NUU.targetClass = Math.max(--NUU.targetClass,0)
+  NUU.targetClass = ( ct + --NUU.targetClass ) % ct
   Kbd.macro.targetPrev()
-  if NUU.targetClass < 2 then NUU.targetMode = 'land'
+  if NUU.targetClass is 3 then NUU.targetMode = 'land'
+  if NUU.targetClass is 2 then NUU.targetMode = 'dock'
   null
 
 Kbd.macro 'targetNext','y','Select next target', ->
-  list = Target.types
-  cl = list[NUU.targetClass]
-  list = Object.keys(cl)
-  NUU.targetId = id = Math.min(++NUU.targetId,list.length-1)
-  NUU.emit 'newTarget', NUU.target = cl[list[id]]
+  return unless ty = Target.types
+  return unless cl = ty[NUU.targetClass]
+  return unless ks = Object.keys cl
+  ct = ks.length
+  NUU.targetId = id = ++NUU.targetId % ct
+  NUU.emit 'newTarget', NUU.target = cl[ks[id]]
   null
 
 Kbd.macro 'targetPrev','g','Select next target', ->
-  list = Target.types
-  cl = list[NUU.targetClass]
-  NUU.targetId = id = Math.max(--NUU.targetId,0)
-  list = Object.keys(cl)
-  NUU.emit 'newTarget', NUU.target = cl[list[id]]
+  return unless ty = Target.types
+  return unless cl = ty[NUU.targetClass]
+  return unless ks = Object.keys cl
+  ct = ks.length
+  NUU.targetId = id = ( ct + --NUU.targetId ) % ct
+  NUU.emit 'newTarget', NUU.target = cl[ks[id]]
   null
 
 Kbd.macro 'targetNothing','Se','Disable targeting scanners', targetNothing = ->
-  NUU.targetId = NUU.targetClass = NUU.target = null
+  NUU.targetId = NUU.target = null
+  NUU.targetClass = 4
   NUU.emit 'newTarget', null
   null
 
@@ -197,6 +209,7 @@ Kbd.macro 'targetClosest','u','Select closest target', targetClosest = (callback
   closest = null
   closestDist = Infinity
   for k,t of cl when t and t.id isnt v.id and (d = $dist v, t) < closestDist
+    continue if t.destructing
     closest = t
     closestDist = d
   return do targetNothing unless closest?
@@ -207,7 +220,7 @@ Kbd.macro 'targetClosest','u','Select closest target', targetClosest = (callback
 
 Kbd.macro 'targetEnemy','e','Target closest enemy', ->
   NUU.targetId = 0
-  NUU.targetClass = 3 # hostile
+  NUU.targetClass = 0 # hostile
   do targetClosest
   null
 
@@ -237,6 +250,6 @@ Kbd.macro 'capture', 'Sc', 'Capture target', capture = ->
 
 Kbd.macro 'captureClosest','c','Capture closest', ->
   NUU.targetId = 0
-  NUU.targetClass = 2 # all
+  NUU.targetClass = 3 # all
   targetClosest (t)-> capture t if t?
   null

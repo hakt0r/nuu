@@ -46,7 +46,7 @@ $static 'HUD', new class HUDRenderer
         @gfx.removeChild @targetSprite
         delete @targetSprite
       return unless t?
-      console.log 'tgt', t
+      console.log 'tgt', t if debug
       img = t.imgCom || t.img || '/build/imag/noscanimg.png'
       @gfx.addChild @targetSprite = s = PIXI.Sprite.fromImage img
       s.width  = 100
@@ -141,9 +141,9 @@ $static 'HUD', new class HUDRenderer
       @system.text = t
 
     t = ''
+    cid = NUU.targetClass
+    list = ['hostile','ship','stel','roid','off']
     if ( s = NUU.target )
-      cid = NUU.targetClass
-      list = ['ship','stel','roid','hostile']
       s.ap_dist = $dist(VEHICLE,s)
       s.ap_eta = Math.round( s.ap_dist / (Math.sqrt( Math.pow(VEHICLE.m[0],2) + Math.pow(VEHICLE.m[1],2) ) / 0.04))
       t += "#{s.name} [#{list[cid]}:#{NUU.targetId}]\n"
@@ -152,7 +152,7 @@ $static 'HUD', new class HUDRenderer
       t += "eta: #{htime(s.ap_eta)}\n\n\n\n\n"
       t += "plan: #{NUU.targetMode}"
       # @startTime = TIME; @frame = 0
-    else t += 'no target\n'
+    else t += "no target [#{list[cid]}]\n"
     @text.text = t
 
     @notice.text = Notice.queue.join '\n'

@@ -67,15 +67,12 @@ Stellar::layer = 'stel'
 app.on '$obj:inRange', (obj) -> obj.show()
 app.on '$obj:outRange', (obj) -> obj.hide()
 
-Target.types.push $obj.hostile = []
-Target.typeNames.push 'hostile'
-
 app.on '$obj:del', (obj) ->
   obj.hide()
-  Array.remove $obj.hostile, obj unless -1 is $obj.hostile.indexOf obj
+  Array.remove VEHICLE.hostile, obj if -1 is VEHICLE.hostile.indexOf obj
   null
 
 app.on '$obj:add', (obj) ->
   do obj.loadAssets
-  $obj.hostile.push obj if obj.npc
+  VEHICLE.hostile.push obj unless -1 is VEHICLE.hostile.indexOf obj if obj.npc
   null
