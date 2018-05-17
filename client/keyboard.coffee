@@ -34,11 +34,11 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     Kbd = @
 
     @defaultMap =
-      accel: 'w'
-      boost: 'Sw'
-      retro: 's'
-      steerLeft: 'a'
-      steerRight: 'd'
+      accel: 'up'
+      boost: 'Sup'
+      retro: 'down'
+      steerLeft: 'left'
+      steerRight: 'right'
 
     if navigator.appVersion.match(/WebKit/g)?
       @layout = "mac/webkit"
@@ -63,9 +63,12 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
 
     @cmap = {}
     @cmap[v] = k for k,v of @kmap
-    @macro macro, @defaultMap[macro], @d10[macro], up: sendAction, dn: sendAction for macro in ["accel","retro","steerRight","steerLeft","boost"]
+    for macro in ["accel","retro","steerRight","steerLeft","boost"]
+      @macro macro, @defaultMap[macro], @d10[macro], up: sendAction, dn: sendAction
+    null
 
   macro:(name,key,d10,func)->
+    console.log key, name
     @macro[name] = func
     @bind key, name
     @d10[name] = d10
@@ -124,8 +127,8 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     escape:           "Exit something"
     boost:            "Boost"
 
-Kbd.macro 'debark',    'q', 'Leave current vehicle', ->
-  NET.json.write switchShip: 'Exosuit'
+Kbd.macro 'debark',    'Sq', 'Leave current vehicle', ->
+  NET.json.write switchShip: 'Exosuit' unless VEHICLE and VEHICLE.class is 'Exosuit'
 
 Kbd.macro 'weapNext',    'i', 'Next weapon (primary)', ->
   VEHICLE.nextWeap(NUU.player)
