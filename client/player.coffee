@@ -57,6 +57,3 @@ NET.on 'switchMount', (id) ->
   NUU.player.vehicle.mount[id] = NUU.player
 
 NUU.frame = 0
-NUU.target = null
-NUU.targetId = 0
-NUU.targetClass = 0

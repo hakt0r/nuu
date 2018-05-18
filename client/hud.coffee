@@ -92,7 +92,7 @@ $static 'HUD', new class HUDRenderer
     g.endFill()
 
     # TARGET
-    if (s = NUU.target)
+    if (s = TARGET)
       dir = NavCom.relAngle VEHICLE, s
       # - POINTER
       g.beginFill 0, 0
@@ -136,23 +136,25 @@ $static 'HUD', new class HUDRenderer
     if ( p = NUU.player )
       t = ''
       t += k+': '+v + '\n\n' for k,v of @widgetList
-      t += if p.primary.slot?   then "[#{p.primary.id}] #{p.primary.slot.name}\n" else "#1 locked\n"
-      t += if p.secondary.slot? then "[#{p.secondary.id}] #{p.secondary.slot.name}" else "#2 locked\n"
+      t += if p.primary.slot?   then "#1:[#{p.primary.id}] #{p.primary.slot.name}\n"       else "#1 locked\n"
+      t += if p.secondary.slot? then "#2:[#{p.secondary.id}] #{p.secondary.slot.name}\n\n" else "#2 locked\n\n"
+      t += "##{Target.mode}"
+      t += ":#{TARGET.name}" if TARGET?
       @system.text = t
 
     t = ''
-    cid = NUU.targetClass
-    list = ['hostile','ship','stel','all','off']
-    if ( s = NUU.target )
+    cid = Target.class
+    list = Target.typeNames
+    if ( s = TARGET )
       s.ap_dist = $dist(VEHICLE,s)
       s.ap_eta = Math.round( s.ap_dist / (Math.sqrt( Math.pow(VEHICLE.m[0],2) + Math.pow(VEHICLE.m[1],2) ) / 0.04))
-      t += "#{s.name} [#{list[cid]}:#{NUU.targetId}]\n"
+      t += "[#{list[cid]}:#{cid}:#{Target.id}]\n"
+      t += "#{s.name}\n"
       t += "ds: #{hdist s.ap_dist}\n"
       t += "m: #{round s.m[0]}x #{round s.m[0]}y\n"
       t += "eta: #{htime(s.ap_eta)}\n\n\n\n\n"
-      t += "plan: #{Target.mode}"
       # @startTime = TIME; @frame = 0
-    else t += "no target [#{list[cid]}]\n"
+    else t += "[#{list[cid]}] no target\n"
     @text.text = t
 
     @notice.text = Notice.queue.join '\n'
@@ -173,7 +175,7 @@ $static 'HUD', new class HUDRenderer
       "dt[#{round Ping.delta.avrg}]"+
       "er[#{round Ping.error.avrg}]"+
       "skew[#{round Ping.skew.avrg}]"+
-      "     hostiles:#{if Target.hostile then Target.hostile.length else 0}"
+      "     hostiles:#{if Target.hostile then Object.keys(Target.hostile).length else 0}"
     @debug.text = t
     @resize()
   widgetList: []

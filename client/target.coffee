@@ -22,92 +22,92 @@
 
 NUU.on 'ship:destroyed', (opts) ->
   opts.destructing = yes
-  Target.hostile.map (i)->
-    Array.remove Target.hostile, i if i.id is opts.id
-  do Target.enemy if opts.id is NUU.target.id if NUU.target
+  delete Target.hostile[i] for k,i of Target.hostile when i.id is opts.id
+  do Target.enemy          if TARGET? and opts.id is TARGET.id
   null
 
 NET.on 'hostile', addHostile = (id)->
   if Array.isArray id
-    Array.empty Target.hostile
+    Object.empty Target.hostile
     id.map (i)->
       return console.log 'hostile:unknown', i unless v = $obj.byId[i]
-      Target.hostile.push v
+      Target.hostile[v.id] = v
   else
     return console.log 'hostile:unknown', id unless v = $obj.byId[id]
-    Target.hostile.push v if -1 is Target.hostile.indexOf v
+    Target.hostile[v.id] = v
   Target.types[0] = Target.hostile
   do Target.enemy
 
+window.TARGET = null
+
 $public class Target
+  @id: 0
+  @class: 0
   @mode: 'land'
-  @hostile: h = []
+  @hostile: h = {}
   @typeNames : ['hostile','ship','stellar','all','off']
   @types : [h,Ship.byId,Stellar.byId,$obj.byId,[]]
+
+Target.set = (target,callback)->
+  window.TARGET = target
+  return Target.id = 0 unless target
+  if Target.class is 1 then Target.mode = 'dock'
+  if Target.class is 2
+    if TARGET and TARGET.constructor.name is 'Stellar'
+      Target.mode = 'orbit'
+    else Target.mode = 'land'
+  return console.log '$target:nx:ty' unless ty = Target.types
+  return console.log '$target:nx:cl' unless cl = ty[Target.class]
+  return console.log '$target:nx:ks' unless ks = Object.keys cl
+  Target.id = if -1 is id = ks.indexOf '' + target.id then 0 else id
+  NUU.emit 'newTarget', target
+  callback TARGET if callback? and typeof callback is 'function'
+  return TARGET
+
+Target.mutate = (fnc)-> again = (callback,skipSelf=false)->
+  return console.log '$target:nx:ty' unless ty = Target.types
+  return console.log '$target:nx:cl' unless cl = ty[Target.class]
+  return console.log '$target:nx:ks' unless ks = Object.keys cl
+  return console.log '$target:nx:cu' unless cu = TARGET || cl[ks[0]] || null
+  ct = ks.length
+  ix = ks.indexOf '' + cu.id
+  id = ks[fnc ix, ct, cl, ks, skipSelf]
+  ta = cl[id]
+  if ( skipSelf is false ) and ( ta? and VEHICLE? ) and ( ta.id is VEHICLE.id )
+    ta = again callback, VEHICLE.id, window.TARGET = ta
+  Target.set ta, callback
+
+Target.prev = Target.mutate (ix,ct)-> ( ct + --ix ) % ct
+Target.next = Target.mutate (ix,ct)-> ++ix % ct
+
+Target.closest = Target.mutate (ix,ct,cl,ks,skipSelf) ->
+  return console.log '$target:nx:v' unless v = VEHICLE
+  dist = Infinity; closest = null
+  for k,t of cl when t and t.id isnt v.id and (d = $dist v, t) < dist
+    continue if t.destructing
+    continue if t.id is skipSelf
+    dist = d; closest = t
+  return if closest? then ks.indexOf '' + closest.id else 0
+
+Target.nothing = ->
+  Target.class = 4
+  Target.set null
+
+Target.enemy = ->
+  Target.class = 0 # hostile
+  do Target.closest
 
 Target.nextClass = ->
   list = Target.types
   ct = list.length
-  NUU.targetId = 0
-  NUU.targetClass = ++NUU.targetClass % ct
-  Target.prev()
-  if NUU.targetClass is 3 then Target.mode = 'land'
-  if NUU.targetClass is 2 then Target.mode = 'dock'
+  Target.class = ++Target.class % ct
+  do Target.closest
   null
 
 Target.prevClass = ->
   list = Target.types
   ct = list.length
-  NUU.targetId = 0
-  NUU.targetClass = ( ct + --NUU.targetClass ) % ct
-  Target.prev()
-  if NUU.targetClass is 3 then Target.mode = 'land'
-  if NUU.targetClass is 2 then Target.mode = 'dock'
-  null
-
-Target.next = ->
-  return unless ty = Target.types
-  return unless cl = ty[NUU.targetClass]
-  return unless ks = Object.keys cl
-  ct = ks.length
-  NUU.targetId = id = ++NUU.targetId % ct
-  NUU.emit 'newTarget', NUU.target = cl[ks[id]]
-  null
-
-Target.prev = ->
-  return unless ty = Target.types
-  return unless cl = ty[NUU.targetClass]
-  return unless ks = Object.keys cl
-  ct = ks.length
-  NUU.targetId = id = ( ct + --NUU.targetId ) % ct
-  NUU.emit 'newTarget', NUU.target = cl[ks[id]]
-  null
-
-Target.nothing = ->
-  NUU.targetId = NUU.target = null
-  NUU.targetClass = 4
-  NUU.emit 'newTarget', null
-  null
-
-Target.closest = (callback) ->
-  v = VEHICLE
-  list = Target.types
-  cl = list[NUU.targetClass]
-  closest = null
-  closestDist = Infinity
-  for k,t of cl when t and t.id isnt v.id and (d = $dist v, t) < closestDist
-    continue if t.destructing
-    closest = t
-    closestDist = d
-  return do Target.nothing unless closest?
-  NUU.targetId = id = closest.id
-  NUU.once 'newTarget', callback if callback? and typeof callback is 'function'
-  NUU.emit 'newTarget', NUU.target = closest
-  null
-
-Target.enemy = ->
-  NUU.targetId = 0
-  NUU.targetClass = 0 # hostile
+  Target.class = ( ct + --Target.class ) % ct
   do Target.closest
   null
 
@@ -119,32 +119,31 @@ Target.toggleMode = ->
   null
 
 Target.launch = ->
-  NET.action.write(NUU.target||id:0,'launch')
+  NET.action.write(TARGET||id:0,'launch')
   null
 
 Target.orbit = ->
-  Target.mode if NUU.target
+  Target.mode if TARGET
   null
 
 Target.jump = ->
-  return unless ( t = NUU.target )
+  return unless ( t = TARGET )
   NET.json.write jump: t.id
   null
 
 Target.capture = capture = ->
-  NET.action.write(NUU.target,'capture')
+  NET.action.write(TARGET,'capture')
   null
 
 Target.captureClosest = ->
-  NUU.targetId = 0
-  NUU.targetClass = 3 # all
+  Target.class = 3 # all
   Target.closest (t)-> capture t if t?
   null
 
 Kbd.macro 'targetNothing',   'Sw',   'Disable targeting scanners', Target.nothing
-Kbd.macro 'targetNext',      'a',    'Next target',                Target.next
-Kbd.macro 'targetPrev',      'd',    'Prev target',                Target.prev
+Kbd.macro 'targetNext',      'd',    'Next target',                Target.next
 Kbd.macro 'targetClassNext', 'w',    'Next target class',          Target.nextClass
+Kbd.macro 'targetPrev',      'a',    'Prev target',                Target.prev
 Kbd.macro 'targetClassPrev', 's',    'Previous target class',      Target.prevClass
 Kbd.macro 'targetClosest',   'u',    'Closest target',             Target.closest
 Kbd.macro 'targetEnemy',     'e',    'Closest enemy',              Target.enemy

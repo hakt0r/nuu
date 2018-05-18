@@ -87,8 +87,8 @@ $obj.register class Ship extends $obj
     ct = ws.length - 1
     tg.id   = ++tg.id % ct
     tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
-    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId
+    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, TARGET.id
+    tg.release = -> NET.weap.write 'release', primary, tg.id, TARGET.id
 
   prevWeap: (player,trigger='primary') ->
     primary = trigger is 'primary'
@@ -96,8 +96,8 @@ $obj.register class Ship extends $obj
     tg = player[trigger]
     tg.id = ( --tg.id + ct ) % ct
     tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, NUU.targetId
-    tg.release = -> NET.weap.write 'release', primary, tg.id, NUU.targetId
+    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, TARGET.id
+    tg.release = -> NET.weap.write 'release', primary, tg.id, TARGET.id
 
   hit: (src,wp) ->
     return if @destructing

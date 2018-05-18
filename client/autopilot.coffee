@@ -72,14 +72,14 @@ $public class Autopilot
   @instance: null
   @macro: =>
     unless ( ap = Autopilot.instance )?
-      ap = Autopilot.instance = new Autopilot VEHICLE, NUU.target
+      ap = Autopilot.instance = new Autopilot VEHICLE, TARGET
     else if ap.active
       console.log 'ap:stop'
       ap.stop()
     else
       Sprite.hud.widget 'autopilot'
       console.log 'ap:start'
-      ap.commit(VEHICLE, NUU.target, Target.mode)
+      ap.commit(VEHICLE, TARGET, Target.mode)
       ap.start()
 
 Kbd.macro 'autopilot', 'Sz', 'Autopilot', Autopilot.macro

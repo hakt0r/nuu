@@ -130,16 +130,16 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
 Kbd.macro 'debark',    'Sq', 'Leave current vehicle', ->
   NET.json.write switchShip: 'Exosuit' unless VEHICLE and VEHICLE.class is 'Exosuit'
 
-Kbd.macro 'weapNext',    'i', 'Next weapon (primary)', ->
+Kbd.macro 'weapNext',    '1', 'Next weapon (primary)', ->
   VEHICLE.nextWeap(NUU.player)
 
-Kbd.macro 'weapPrev',    'o', 'Previous weapon (primary)', ->
+Kbd.macro 'weapPrev',    'S1', 'Previous weapon (primary)', ->
   VEHICLE.prevWeap(NUU.player)
 
-Kbd.macro 'weapNextSec', 'Si', 'Next weapon (secondary)', ->
+Kbd.macro 'weapNextSec', '2', 'Next weapon (secondary)', ->
   VEHICLE.nextWeap(NUU.player,'secondary')
 
-Kbd.macro 'weapPrevSec', 'So', 'Previous weapon (secondary)', ->
+Kbd.macro 'weapPrevSec', 'S2', 'Previous weapon (secondary)', ->
   VEHICLE.prevWeap(NUU.player,'secondary')
 
 Kbd.macro 'primaryTrigger', ' ', 'Primary trigger',

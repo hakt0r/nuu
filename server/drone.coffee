@@ -120,9 +120,9 @@ AI::escort = ->
   do @update
   @escortTarget() if not @target or @target.destructing or ( @target.hostile and @target.hostile.length > 0 )
   return 1000     unless @target
-  # if @inRange = abs(distance = $dist(@,@target)) < 150
-  #   console.log "#{@name} reached", @target.name if debug
-  #   return 1000
+  if @inRange = abs(distance = $dist(@,@target)) < 150
+    console.log "#{@name} reached", @target.name if debug
+    return 250
   v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
   @left = turnLeft
@@ -132,11 +132,11 @@ AI::escort = ->
 
 AI::escortTarget = ->
   if target = $obj.byId[@escortFor]
-    console.log "#{@name} Escorting", target.name # if debug
+    console.log "#{@name} Escorting", target.name if debug
     return @target = target unless target.hostile.length > 0 or target.destructing
     return @target if @target and not @target.destructing
     @target = target.hostile[0]
-    console.log "#{@name} Escort:Attack", @target.name # if debug
+    console.log "#{@name} Escort:Attack", @target.name if debug
     return @target
   @changeStrategy 'attackPlayers'
   console.log "#{@name} going berserk" if debug

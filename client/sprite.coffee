@@ -38,8 +38,8 @@ $obj::show = ->
   Sprite.visible[@id] = @sprite
   Sprite.visibleList.push @
   Sprite[@layer].addChild @sprite
-  @sprite.interactive = yes
-  @sprite.click = => NUU.emit 'newTarget', NUU.target = @
+  # @sprite.interactive = yes
+  # @sprite.click = => NUU.emit 'newTarget', TARGET = @
   null
 
 $obj::hide = ->
@@ -74,5 +74,4 @@ app.on '$obj:del', (obj) ->
 
 app.on '$obj:add', (obj) ->
   do obj.loadAssets
-  VEHICLE.hostile.push obj unless -1 is VEHICLE.hostile.indexOf obj if obj.npc
   null
