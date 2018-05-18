@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -87,8 +87,8 @@ $obj.register class Ship extends $obj
     ct = ws.length - 1
     tg.id   = ++tg.id % ct
     tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, TARGET.id
-    tg.release = -> NET.weap.write 'release', primary, tg.id, TARGET.id
+    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
+    tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
 
   prevWeap: (player,trigger='primary') ->
     primary = trigger is 'primary'
@@ -96,8 +96,8 @@ $obj.register class Ship extends $obj
     tg = player[trigger]
     tg.id = ( --tg.id + ct ) % ct
     tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, TARGET.id
-    tg.release = -> NET.weap.write 'release', primary, tg.id, TARGET.id
+    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
+    tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
 
   hit: (src,wp) ->
     return if @destructing

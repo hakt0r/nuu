@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -56,7 +56,7 @@ $public class $obj
 
     # apply state
     @setState state
-
+    do @loadAssets if @loadAssets
     app.emit '$obj:add', @
 
   destructor: ->

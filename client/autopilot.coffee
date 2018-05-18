@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -37,6 +37,7 @@ $public class Autopilot
 
   start: ->
     @stop() if @active
+    Mouse.disable()
     @active = yes
     @interval = setInterval @tick(), 20
 
@@ -44,6 +45,8 @@ $public class Autopilot
     @active = no
     clearInterval @interval
     @interval = null
+    Mouse.enable()
+    Sprite.hud.widget 'autopilot', null
 
   tick: -> =>
     @last = v = NavCom.steer @ship, @target, 'pursue'
@@ -66,20 +69,19 @@ $public class Autopilot
     s += 'r' if v.right
     s += 's' if v.setdir
     s += ']\nFm:' + hdist v.maxSpeed
-    Sprite.hud.widget 'autopilot',  s
+    Sprite.hud.widget 'autopilot', s, yes
     v
 
   @instance: null
   @macro: =>
-    unless ( ap = Autopilot.instance )?
-      ap = Autopilot.instance = new Autopilot VEHICLE, TARGET
-    else if ap.active
-      console.log 'ap:stop'
-      ap.stop()
-    else
-      Sprite.hud.widget 'autopilot'
+    unless ap = Autopilot.instance
+      Autopilot.instance = new Autopilot VEHICLE, TARGET
+    else if not ap.active
       console.log 'ap:start'
       ap.commit(VEHICLE, TARGET, Target.mode)
       ap.start()
+    else
+      console.log 'ap:stop'
+      ap.stop()
 
 Kbd.macro 'autopilot', 'Sz', 'Autopilot', Autopilot.macro

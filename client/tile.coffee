@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -49,7 +49,8 @@ $Tile Ship,
   loadAssets: ->
     # console.log 'ship$', 'assets', @id, @name
     p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
-    Cache.get p + '_comm.png', (cached) => @imgCom = cached
+    @imgCom = p + '_comm.png'
+    # Cache.get p + '_comm.png', (cached) => @imgCom = cached
     @loadTile p + '.png', 'sprite', (e,s) =>
       { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
       @show @updateSprite @loaded = true

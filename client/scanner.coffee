@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -31,7 +31,7 @@ $static 'Scanner', new class ScannerRenderer
   orbits : yes
 
   constructor: ->
-    @gfx = Sprite.layer 'scan', new PIXI.Graphics
+    @gfx = Sprite.layer 'scan', new PIXI.Graphics true
     #app.on '$obj:add', @addLabel()
     #app.on '$obj:del', @removeLabel()
     Sprite.renderScanner = @render.bind @
@@ -59,12 +59,6 @@ $static 'Scanner', new class ScannerRenderer
     l = @label
     ( g = @gfx ).clear()
     for s in $obj.list
-      x = max 10, min WIDTH  - 10, WDB2 + (s.x - px) / @scale
-      y = max 10, min HEIGHT - 10, HGB2 + (s.y - py) / @scale
-      w = max 2,  min 5,                floor s.size / @scale
-      g.beginFill @color[s.constructor.name] || 0xFFFFFF
-      g.endFill g.drawRect x, y, w, w
-      l[s.id].position.set x, y if l[s.id]
       w = s.state.orbit / @scale
       x = WDB2 + ( s.state.relto.x - px ) / @scale
       y = HGB2 + ( s.state.relto.y - py ) / @scale
@@ -72,6 +66,13 @@ $static 'Scanner', new class ScannerRenderer
         if ( -w < x < WIDTH + w ) and ( -w < y < HEIGHT + w ) and ( w < WIDTH or w < HEIGHT )
           g.lineStyle 2, @color.Orbit
           g.endFill g.drawCircle x, y, w
+    for s in $obj.list
+      w = max 2,  min 5,                       floor s.size / @scale
+      x = max 10, min WIDTH  - 10, WDB2 - w/2 + (s.x - px ) / @scale
+      y = max 10, min HEIGHT - 10, HGB2 - w/2 + (s.y - py ) / @scale
+      g.beginFill @color[s.constructor.name] || 0xFFFFFF
+      g.endFill g.drawRect x, y, w, w
+      l[s.id].position.set x, y if l[s.id]
     null
 
   toggle: ->

@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -20,10 +20,12 @@
 
 ###
 
-NUU.on 'ship:destroyed', (opts) ->
-  opts.destructing = yes
-  delete Target.hostile[i] for k,i of Target.hostile when i.id is opts.id
-  do Target.enemy          if TARGET? and opts.id is TARGET.id
+NUU.on 'newTarget', (opts) -> Target.widget()
+
+NUU.on 'ship:destroyed', (v) ->
+  v.destructing = yes
+  delete Target.hostile[k] for k,i of Target.hostile when i.id is v.id
+  do Target.enemy          if TARGET? and v.id is TARGET.id
   null
 
 NET.on 'hostile', addHostile = (id)->
@@ -31,9 +33,11 @@ NET.on 'hostile', addHostile = (id)->
     Object.empty Target.hostile
     id.map (i)->
       return console.log 'hostile:unknown', i unless v = $obj.byId[i]
+      return if v.destructing
       Target.hostile[v.id] = v
   else
     return console.log 'hostile:unknown', id unless v = $obj.byId[id]
+    return if v.destructing
     Target.hostile[v.id] = v
   Target.types[0] = Target.hostile
   do Target.enemy
@@ -48,9 +52,11 @@ $public class Target
   @typeNames : ['hostile','ship','stellar','all','off']
   @types : [h,Ship.byId,Stellar.byId,$obj.byId,[]]
 
+Target.widget = ->
+  HUD.widget 'target', "#{Target.mode}", yes
+
 Target.set = (target,callback)->
-  window.TARGET = target
-  return Target.id = 0 unless target
+  return NUU.emit 'newTarget' unless window.TARGET = target
   if Target.class is 1 then Target.mode = 'dock'
   if Target.class is 2
     if TARGET and TARGET.constructor.name is 'Stellar'
@@ -60,17 +66,16 @@ Target.set = (target,callback)->
   return console.log '$target:nx:cl' unless cl = ty[Target.class]
   return console.log '$target:nx:ks' unless ks = Object.keys cl
   Target.id = if -1 is id = ks.indexOf '' + target.id then 0 else id
-  NUU.emit 'newTarget', target
   callback TARGET if callback? and typeof callback is 'function'
+  NUU.emit 'newTarget', target
   return TARGET
 
 Target.mutate = (fnc)-> again = (callback,skipSelf=false)->
   return console.log '$target:nx:ty' unless ty = Target.types
   return console.log '$target:nx:cl' unless cl = ty[Target.class]
   return console.log '$target:nx:ks' unless ks = Object.keys cl
-  return console.log '$target:nx:cu' unless cu = TARGET || cl[ks[0]] || null
   ct = ks.length
-  ix = ks.indexOf '' + cu.id
+  ix = if ( cu = TARGET || cl[ks[0]] || null ) then ks.indexOf '' + cu.id else 0
   id = ks[fnc ix, ct, cl, ks, skipSelf]
   ta = cl[id]
   if ( skipSelf is false ) and ( ta? and VEHICLE? ) and ( ta.id is VEHICLE.id )
@@ -112,10 +117,12 @@ Target.prevClass = ->
   null
 
 Target.toggleMode = ->
-  return Target.mode = 'orbit' if Target.mode is 'dock'
-  return Target.mode = 'land'  if Target.mode is 'orbit'
-  return Target.mode = 'dock'  if Target.mode is 'land'
-  Target.mode = 'land'
+  Target.mode = switch Target.mode
+    when 'orbit' then 'dock'
+    when 'land'  then 'orbit'
+    when 'dock'  then 'land'
+    else              'land'
+  Target.widget()
   null
 
 Target.launch = ->
@@ -123,7 +130,8 @@ Target.launch = ->
   null
 
 Target.orbit = ->
-  Target.mode if TARGET
+  return unless ( t = TARGET )
+  NET.action.write t, Target.mode
   null
 
 Target.jump = ->
@@ -132,7 +140,7 @@ Target.jump = ->
   null
 
 Target.capture = capture = ->
-  NET.action.write(TARGET,'capture')
+  NET.action.write TARGET,'capture'
   null
 
 Target.captureClosest = ->

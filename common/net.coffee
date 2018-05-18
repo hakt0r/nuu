@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -198,9 +198,10 @@ NET.define 3,'WEAP',
 
   write:
     client: (action,primary,slotid,tid)=>
+      return unless tid
       console.log 'weap', action,primary,slotid,tid if debug
       msg = Buffer.from [NET.weapCode,weaponActionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
-      msg.writeUInt16LE(tid,4) if tid
+      msg.writeUInt16LE tid, 4
       NET.send msg.toString 'binary'
     server: (src,mode,slot,vehicle,target)=>
       return console.log 'no weapon equipped' unless ( equipped = slot.equip )

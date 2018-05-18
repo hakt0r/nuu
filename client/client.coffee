@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -33,7 +33,7 @@ $static 'isClient', yes
 $static 'isServer', no
 $static 'debug', no
 
-$static 'VEHICLE', d:0, x:0, y:0, m: [0,0], update: (->), updateSprite: (->), state:S:'none'
+$static 'VEHICLE', dummy:yes, d:0, x:0, y:0, m: [0,0], update: (->), updateSprite: (->), state:S:'none'
 
 $static 'WIDTH',  640
 $static 'HEIGHT', 480

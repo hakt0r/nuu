@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -80,10 +80,10 @@ $static '$interval',     (i,f) -> setInterval f,i
 $static '$timeout',      (i,f) -> setTimeout f,i
 
 $static 'hdist', (m) ->
-  if m < 1000 then            (m).toFixed(0) + " px"
-  else if m < 1000000 then    (m / 1000).toFixed(2) + " Kpx"
-  else if m < 1000000000 then (m / 1000000).toFixed(2) + " Mpx"
-  else                        (m / 1000000000).toFixed(2) + " Gpx"
+  if m < 1000 then            (m).toFixed(0) + "px"
+  else if m < 1000000 then    (m / 1000).toFixed(2) + "Kpx"
+  else if m < 1000000000 then (m / 1000000).toFixed(2) + "Mpx"
+  else                        (m / 1000000000).toFixed(2) + "Gpx"
 
 $static 'htime', (t) ->
   s  = Math.floor(t % 60)

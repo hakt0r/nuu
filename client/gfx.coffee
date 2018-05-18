@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -87,9 +87,9 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @layer 'fx',   new PIXI.Graphics
     @layer 'fg',   new PIXI.Container
 
-    @fg.addChild @parallax  = makeStarfield [1,0.3,2000]
-    @fg.addChild @parallax2 = makeStarfield [1,0.3,2000]
     @bg.addChild @starfield = makeStarfield [1,0.3,2000],[1.5,0.7,20]
+    @bg.addChild @parallax  = makeStarfield [1,0.3,2000]
+    @bg.addChild @parallax2 = makeStarfield [1,0.3,2000]
 
     app.on 'runtime:ready', =>
       document.body.appendChild renderer.view
@@ -159,6 +159,8 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
 
     # STARS
     [ mx, my ] = vectors.normalize Array::slice.call VEHICLE.m;
+    mx =  1 if mx is 0
+    my = -1 if my is 0
     @starfield.tilePosition.x -= mx
     @starfield.tilePosition.y -= my
     @parallax. tilePosition.x -= mx * 1.25
@@ -169,7 +171,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     # clear weapons gfx area
     @weap.clear()
 
-    # fastest case
+    # fastest case TODO: still?
     length = ( list = @visibleList ).length; i = -1
     while ++i < length
       # loop reached

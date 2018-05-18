@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -21,18 +21,17 @@
 ###
 
 $static 'HUD', new class HUDRenderer
-
+  fontSize:12
   constructor: ->
     Sprite.hud = @
-    Sprite.stage.addChild @gfx = new PIXI.Graphics
+    Sprite.stage.addChild @gfx = new PIXI.Graphics true
 
-    @gfx.addChild @system = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
-    @gfx.addChild @text   = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
-    @gfx.addChild @notice = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
-    @gfx.addChild @debug  = new PIXI.Text 'offline', fontFamily: 'monospace', fontSize:'10px', fill: 'red'
-    @text.position.set   WDB2 - 50, HEIGHT  - 120
-    @system.position.set 10, HEIGHT - 10 - @system.height
-
+    @gfx.addChild @system = new PIXI.Text '', fontFamily: 'monospace', fontSize:@fontSize+'px', fill: 'red', align:'right'
+    @gfx.addChild @text   = new PIXI.Text '', fontFamily: 'monospace', fontSize:@fontSize+'px', fill: 'red'
+    @gfx.addChild @notice = new PIXI.Text '', fontFamily: 'monospace', fontSize:@fontSize+'px', fill: 'red'
+    @gfx.addChild @debug  = new PIXI.Text '', fontFamily: 'monospace', fontSize:@fontSize+'px', fill: 'red'
+    @text.position.set   WDB2 - 50, HEIGHT - 120
+    @system.position.set        10, HEIGHT - 10 - @system.height
     @startTime = Ping.remoteTime()
     @frame = 0
 
@@ -41,7 +40,27 @@ $static 'HUD', new class HUDRenderer
     @resize Sprite.on 'resize', @resize.bind @
     Sprite.renderHUD =          @render.bind @, @gfx
 
-    NUU.on 'newTarget', (t) =>
+    NUU.on 'enterVehicle', shpHandler = (t) =>
+      console.log 'shp', t if debug
+      if @playerSprite
+        @gfx.removeChild @playerSprite
+        delete @playerSprite
+      return unless t?
+      img = t.imgCom || t.img || '/build/imag/noscanimg.png'
+      debugger if img is '/build/imag/noscanimg.png'
+      console.log img
+      @gfx.addChild @playerSprite = s = PIXI.Sprite.fromImage img
+      r = s.width / s.height
+      s.width  = 100
+      s.height = r * 100
+      s.alpha  = 0.8
+      Sprite.resize()
+      clearTimeout shpHandler.timer
+      shpHandler.timer = setTimeout ( -> s.tint = 0xFFFFFF ), 100
+      null
+    null
+
+    NUU.on 'newTarget', tgtHandler = (t) =>
       if @targetSprite
         @gfx.removeChild @targetSprite
         delete @targetSprite
@@ -49,19 +68,32 @@ $static 'HUD', new class HUDRenderer
       console.log 'tgt', t if debug
       img = t.imgCom || t.img || '/build/imag/noscanimg.png'
       @gfx.addChild @targetSprite = s = PIXI.Sprite.fromImage img
+      r = s.width / s.height
+      s.tint = 0x0000FF
       s.width  = 100
-      s.height = 100
-      s.alpha  = 0.3
+      s.height = r * 100
+      s.alpha  = 0.8
       Sprite.resize()
+      clearTimeout tgtHandler.timer
+      tgtHandler.timer = setTimeout ( ->
+        if Target.hostile[TARGET.id] then s.tint = 0xFF0000
+        else if t.npc  then s.tint = 0xFFFF00
+        else if t.ally then s.tint = 0x00FF00
+        else s.tint = 0xFFFFFF
+      ), 100
       null
     null
 
   resize: ->
     @debug.position.set 10, 10
     @notice.position.set WIDTH - 20 - @notice.width, 10
-    @text.position.set WDB2 - 50, HEIGHT  - 20 - @text.height
-    @system.position.set 10, HEIGHT - 10 - @system.height
-    @targetSprite.position.set WDB2 - 50, HEIGHT - 120 if @targetSprite
+    @text.position.set WDB2 + 115, HEIGHT - 10 - @text.height
+    @system.position.set(
+      ( WIDTH / 2 ) - 115 - @system.width,
+      HEIGHT - 10 - @system.height )
+    @targetSprite.position.set WDB2 + 5,   HEIGHT - @targetSprite.height - 35 if @targetSprite
+    @playerSprite.position.set WDB2 - 105, HEIGHT - @playerSprite.height - 35 if @playerSprite
+    @system.fontSize = @text.fontSize = @notice.fontSize = @debug.fontSize = @fontSize + 'px'
 
   render: (g) ->
     @frame++
@@ -70,14 +102,15 @@ $static 'HUD', new class HUDRenderer
 
     # STATS
     g.clear()
-    g.beginFill(0x00FF00,0.3); g.endFill g.drawRect WDB2 - 200, HEIGHT - 20, 100, 10
-    g.beginFill(0x00FF00,1.0); g.endFill g.drawRect WDB2 - 200, HEIGHT - 20, VEHICLE.fuel   / VEHICLE.fuelMax   * 100, 10
-    g.beginFill(0xFF0000,0.3); g.endFill g.drawRect WDB2 - 200, HEIGHT - 10, 100, 10
-    g.beginFill(0xFF0000,1.0); g.endFill g.drawRect WDB2 - 200, HEIGHT - 10, VEHICLE.energy / VEHICLE.energyMax * 100, 10
-    g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 + 100, HEIGHT - 20, 100, 10
-    g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 + 100, HEIGHT - 20, VEHICLE.shield / VEHICLE.shieldMax * 100, 10
-    g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 + 100, HEIGHT - 10, 100, 10
-    g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 + 100, HEIGHT - 10, VEHICLE.armour / VEHICLE.armourMax * 100, 10
+    unless VEHICLE.dummy
+      g.beginFill(0x00FF00,0.3); g.endFill g.drawRect WDB2 - 105, HEIGHT - 40, 100, 10
+      g.beginFill(0x00FF00,1.0); g.endFill g.drawRect WDB2 - 105, HEIGHT - 40, VEHICLE.fuel   / VEHICLE.fuelMax   * 100, 10
+      g.beginFill(0xFF0000,0.3); g.endFill g.drawRect WDB2 - 105, HEIGHT - 30, 100, 10
+      g.beginFill(0xFF0000,1.0); g.endFill g.drawRect WDB2 - 105, HEIGHT - 30, VEHICLE.energy / VEHICLE.energyMax * 100, 10
+      g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 - 105, HEIGHT - 20, 100, 10
+      g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 - 105, HEIGHT - 20, VEHICLE.shield / VEHICLE.shieldMax * 100, 10
+      g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 - 105, HEIGHT - 10, 100, 10
+      g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 - 105, HEIGHT - 10, VEHICLE.armour / VEHICLE.armourMax * 100, 10
     # DIR
     g.beginFill 0, 0
     g.lineStyle 3, 0xFFFF00, 1
@@ -92,7 +125,7 @@ $static 'HUD', new class HUDRenderer
     g.endFill()
 
     # TARGET
-    if (s = TARGET)
+    if s = TARGET
       dir = NavCom.relAngle VEHICLE, s
       # - POINTER
       g.beginFill 0, 0
@@ -127,34 +160,31 @@ $static 'HUD', new class HUDRenderer
 
       # STATS
       g.lineStyle 0, 0x0000FF, 0
-      g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 - 50, HEIGHT - 20, 100, 10
-      g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 - 50, HEIGHT - 20, s.shield / s.shieldMax * 100, 10
-      g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 - 50, HEIGHT - 10, 100, 10
-      g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 - 50, HEIGHT - 10, s.armour / s.armourMax * 100, 10
+      g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 + 5, HEIGHT - 20, 100, 10
+      g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 + 5, HEIGHT - 20, s.shield / s.shieldMax * 100, 10
+      g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 + 5, HEIGHT - 10, 100, 10
+      g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 + 5, HEIGHT - 10, s.armour / s.armourMax * 100, 10
 
     # TEXT
     if ( p = NUU.player )
       t = ''
-      t += k+': '+v + '\n\n' for k,v of @widgetList
-      t += if p.primary.slot?   then "#1:[#{p.primary.id}] #{p.primary.slot.name}\n"       else "#1 locked\n"
-      t += if p.secondary.slot? then "#2:[#{p.secondary.id}] #{p.secondary.slot.name}\n\n" else "#2 locked\n\n"
-      t += "##{Target.mode}"
-      t += ":#{TARGET.name}" if TARGET?
+      t += v + '\n\n' for k,v of @widgetList
+      t += if p.primary.slot?   then "#{p.primary.slot.name}\n" else "locked [0]\n"
+      t += if p.secondary.slot? then "#{p.secondary.slot.name}" else "locked [1]"
       @system.text = t
 
     t = ''
     cid = Target.class
     list = Target.typeNames
-    if ( s = TARGET )
+    if s = TARGET
       s.ap_dist = $dist(VEHICLE,s)
       s.ap_eta = Math.round( s.ap_dist / (Math.sqrt( Math.pow(VEHICLE.m[0],2) + Math.pow(VEHICLE.m[1],2) ) / 0.04))
-      t += "[#{list[cid]}:#{cid}:#{Target.id}]\n"
-      t += "#{s.name}\n"
-      t += "ds: #{hdist s.ap_dist}\n"
-      t += "m: #{round s.m[0]}x #{round s.m[0]}y\n"
-      t += "eta: #{htime(s.ap_eta)}\n\n\n\n\n"
+      t += "#{s.name} [#{s.id}]\n"
+      t += "d[#{htime(s.ap_eta)}/#{hdist s.ap_dist}]\n"
+      t += "m[#{round s.m[0]}x#{round s.m[0]}y]\n\n"
+      t += "[#{list[cid]}:#{cid}:#{Target.id}]"
       # @startTime = TIME; @frame = 0
-    else t += "[#{list[cid]}] no target\n"
+    else if NUU.player then t += "[#{list[cid]}] no target"
     @text.text = t
 
     @notice.text = Notice.queue.join '\n'
@@ -162,24 +192,25 @@ $static 'HUD', new class HUDRenderer
 
     # STATS
     fps = round((TIME - @startTime) / @frame)
-    t = "[tps#{fps}|" +
+    t = if debug then "[tps#{fps}|" +
       "o#{$obj.list.length}|"+
-      "v#{Sprite.visibleList.length}]"+
-      " co[#{parseInt VEHICLE.d}|#{VEHICLE.x.toFixed 0}|#{VEHICLE.y.toFixed 0}|" +
-      "m[#{round VEHICLE.m[0]}|#{round VEHICLE.m[1]}|#{round $v.dist $v.zero, VEHICLE.m}] " +
-      "s[#{VEHICLE.state.S}]]"+
-      "| sc[#{Scanner.scale}] "+
-      "| rx[#{NET.PPS.in}(#{parseInt NET.PPS.inAvg.avrg})] "+
-      " tx[#{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg})] "+
-      " ping[#{round Ping.trip.avrg}]"+
+      "v#{Sprite.visibleList.length}]\n"+
+      "co[#{parseInt VEHICLE.d}|#{VEHICLE.x.toFixed 0}|#{VEHICLE.y.toFixed 0}|" +
+      "m[#{round VEHICLE.m[0]}|#{round VEHICLE.m[1]}|#{round $v.dist $v.zero, VEHICLE.m}]\n" +
+      "s[#{VEHICLE.state.S}]]\n"+
+      "sc[#{Scanner.scale}] "+
+      "rx[#{NET.PPS.in}(#{parseInt NET.PPS.inAvg.avrg})]"+
+      "tx[#{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg})]"+
+      "ping[#{round Ping.trip.avrg}] "+
       "dt[#{round Ping.delta.avrg}]"+
       "er[#{round Ping.error.avrg}]"+
-      "skew[#{round Ping.skew.avrg}]"+
-      "     hostiles:#{if Target.hostile then Object.keys(Target.hostile).length else 0}"
+      "skew[#{round Ping.skew.avrg}]\n"+
+      "hostiles:#{if Target.hostile then Object.keys(Target.hostile).length else 0}" else ''
     @debug.text = t
     @resize()
   widgetList: []
-  widget: (name,value)->
-    if value then @widgetList[name] = value
+  widget: (name,v,nokey=false)->
+    value = name + ': ' + v
+    value = v if nokey
+    if v then @widgetList[name] = value
     else delete @widgetList[name]
-    HUD.resize()

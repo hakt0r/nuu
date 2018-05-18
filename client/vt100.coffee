@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -33,30 +33,27 @@ $public class VT100 extends EventEmitter
     @[k] = v for k,v of opts
 
     @frame = Sprite.layer 'vt', new PIXI.Container
-    @frame.alpha = 0.9
 
-    @frame.addChild @text  = new PIXI.Text 'nuu console',
+    @frame.addChild @bg = new PIXI.Graphics
+    @bg.alpha = 0
+
+    @frame.addChild @text = new PIXI.Text 'nuu console',
       fontFamily: 'monospace'
-      fontSize:'10px'
+      fontSize:'12px'
       fill: 'green'
-    @text.position.set 23,23
+      breakWords: yes
+      wordWrap: yes
+      wordWrapWidth: 500
 
-    @frame.addChild @copyright  = new PIXI.Text '(c) 2007-2016 Sebastian Glaser <anx@ulzq.de> and contributors\n
-      License: GNU General Public License v3
-      BACKGROUND: ESO / Serge Brunier, Frederic Tapissier\n
-      http://apod.nasa.gov/apod/image/0909/milkywaypan_brunier_2048.jpg',
-      fontFamily: 'monospace'
-      fontSize:'10px'
-      fill: 'green'
-
-    Cache.get '/build/imag/milkyway.jpg', (url)=>
-      @frame.addChildAt ( @bg = new PIXI.Sprite.fromImage '/build/imag/milkyway.jpg',0,0), 0
-      @bg.alpha = 0.7
-      Sprite.resize()
+    @frame.addChild @copyright  = new PIXI.Text """
+      (c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+      Code: GNU General Public License v3
+      Contrib: (press ? for details)
+    """, fontFamily: 'monospace', fontSize:'12px', fill: 'green'
 
     Cache.get '/build/imag/nuulogo.png', (url)=>
       @frame.addChildAt ( @image = PIXI.Sprite.fromImage '/build/imag/nuulogo.png', 0, 0 ), 1
-      @image.alpha = 0.2
+      # @image.alpha = 0.2
       Sprite.resize()
 
     Sprite.on 'resize', @resize()
@@ -73,17 +70,28 @@ $public class VT100 extends EventEmitter
 
   resize: -> (wd,hg,hw,hh) =>
     @draw()
-    @copyright.position.set wd - 10 - @copyright.width, hg - 10 - @copyright.height
+    @copyright.position.set 10, 10
     return unless @image
-    requestAnimationFrame ( => @resize() wd,hg,hw,hh ) if @image.width is 1 or @bg.width is 1
-    @center @bg   , hw, hh
+    requestAnimationFrame ( => @resize() wd,hg,hw,hh ) if @image.width is 1 # or @bg.width is 1
     @center @image, hw, hh
+    @text.position.set 40, hh/2 + @image.height + 40
+    @text.style.wordWrapWidth = wd - 40
+    @bg.position.set 20, hh/2+@image.height+20
+    @bg.width = w = wd - 40
+    @bg.height = h = hg - (hh/2+@image.height) - 40
+    @bg.clear()
+    @bg.beginFill 0x000000
+    @bg.drawRoundedRect 0,0,w,h,5
+    @bg.endFill()
+    # @center @bg   , hw, hh
     null
 
   center: (image,hw,hh)->
+    # image.anchor.set [0.5,0.5]
+    # image.position.set hw, hh
     bgOffsetH = image.width / 2
     bgOffsetV = image.height / 2
-    image.position.set hw - bgOffsetH, hh - bgOffsetV
+    image.position.set hw - bgOffsetH, hh/2 - bgOffsetV
 
   stopAnimation: =>
     clearInterval @animation if @animation
@@ -171,10 +179,12 @@ $public class VT100 extends EventEmitter
     @draw()
     false
 
-VT100.toggle = -> vt.prompt 'nuu #', p = (text) ->
-  try console.user eval(text).toString()
-  catch e then console.user ( if e and e.message then e.message else e )
-  setTimeout ( new Function 'VT100.toggle()' ), 0
-  true
+VT100.toggle = ->
+  vt.bg.alpha = 0.95
+  vt.prompt 'nuu #', p = (text) ->
+    try console.user eval(text).toString()
+    catch e then console.user ( if e and e.message then e.message else e )
+    setTimeout ( new Function 'VT100.toggle()' ), 0
+    true
 
-Kbd.macro 'console', 'return', 'Show / hide console', VT100.toggle
+Kbd.macro 'console', 'Sreturn', 'Show / hide console', VT100.toggle

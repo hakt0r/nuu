@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -48,7 +48,7 @@ $static 'Mouse', new class MouseInput
     do @triggerSec.dn if @triggerSec
     @triggerSec = no
     @state = off
-    Sprite.hud.widget 'mouse'
+    HUD.widget 'mouse', null
     clearInterval @timer
     @timer = null
     document.onmousemove = document.onwheel = document.onmouseup = document.onmousedown = document.oncontextmenu = null
@@ -75,20 +75,26 @@ $static 'Mouse', new class MouseInput
     false
 
   onmouseup: (evt)->
-    if @trigger
-      do @trigger.up
-      @trigger = no
-    if @triggerSec
-      do @triggerSec.up
-      @triggerSec = no
-    Kbd.setState 'accel', @accel = false
+    switch evt.which
+      when 1
+        Kbd.setState 'accel', @accel = false if @accel
+        Kbd.setState 'boost', @boost = false if @boost
+        Kbd.setState 'retro', @retro = false if @retro
+      when 3
+        if @trigger
+          do @trigger.up
+          @trigger = no
+        if @triggerSec
+          do @triggerSec.up
+          @triggerSec = no
     do evt.stopPropagation
     false
 
   onmousedown: (evt)->
     switch evt.which
       when 1
-        Kbd.setState 'accel', @accel = true
+        s = if evt.shiftKey then 'boost' else if evt.ctrlKey then 'retro' else 'accel'
+        Kbd.setState s, @[s] = true
       when 2
         if evt.shiftKey
              Target.nextClass()
@@ -115,10 +121,13 @@ $static 'Mouse', new class MouseInput
     do evt.stopPropagation
     false
 
+  enable: ->  @state = off; do @macro()
+  disable: -> @state = on;  do @macro()
   macro: -> =>
     @state = not @state
     body = document.querySelector 'body'
     if @state
+      HUD.widget 'mouse', 'mouse', true
       document.onmousemove = @update
       document.onwheel = @onwheel
       document.onmouseup = @onmouseup

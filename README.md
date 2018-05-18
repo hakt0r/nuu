@@ -34,7 +34,7 @@ To debug the server (with the nodejs debugger) just replace **run** with **debug
 
 ### Copyrights
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   The nuu project intends to use all the asset files according to

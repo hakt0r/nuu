@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -37,7 +37,8 @@ Object.defineProperty Player::, 'vehicle',
     v.show()
     Sprite.repositionPlayer()
     @vehicleId = v.id
-    console.log 'enterVehicle', v.id
+    NUU.emit 'enterVehicle', v
+    console.log 'enterVehicle', v.id if debug
   get: -> @_vehicle
 
 app.on '$obj:add', (o)->
@@ -47,7 +48,6 @@ app.on '$obj:add', (o)->
 
 NET.on 'switchShip', (opts) ->
   # console.log 'switchShip', opts
-  NUU.player.vehicleId = opts.i
   NUU.player.mountId = opts.m
   NUU.player.vehicle = Ship.byId[opts.i]
 

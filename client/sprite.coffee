@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -70,8 +70,4 @@ app.on '$obj:outRange', (obj) -> obj.hide()
 app.on '$obj:del', (obj) ->
   obj.hide()
   Array.remove VEHICLE.hostile, obj if -1 is VEHICLE.hostile.indexOf obj
-  null
-
-app.on '$obj:add', (obj) ->
-  do obj.loadAssets
   null

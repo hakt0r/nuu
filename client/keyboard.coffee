@@ -1,6 +1,6 @@
 ###
 
-  * c) 2007-2016 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 
   This file is part of NUU.
@@ -22,7 +22,7 @@
 
 $static 'Kbd', new class KeyboardInput extends EventEmitter
 
-  kmap:  { "(":557, ")":558, "/":191,"capslock":20,"+":109, "-":107, "-":107, ",":188, ".":190, bksp:8, tab:9, return:13, ' ':32, pgup:33, pgdn:34, esc:27, left:37, up:38, right:39, down:40, del:46, 0:48, 1:49, 2:50, 3:51, 4:52, 5:53, 6:54, 7:55, 8:56, 9:57, a:65, b:66, c:67, d:68, e:69, f:70, g:71, h:72, i:73, j:74, k:75, l:76, m:77, n:78, o:79, p:80, q:81, r:82, s:83, t:84, u:85, v:86, w:87, x:88, y:89, z:90 }
+  kmap:  { "(":57, ")":48, '~':192 ,"/":191,"capslock":20,"+":109, "-":107, "-":107, ",":188, ".":190, bksp:8, tab:9, return:13, ' ':32, pgup:33, pgdn:34, esc:27, left:37, up:38, right:39, down:40, del:46, 0:48, 1:49, 2:50, 3:51, 4:52, 5:53, 6:54, 7:55, 8:56, 9:57, a:65, b:66, c:67, d:68, e:69, f:70, g:71, h:72, i:73, j:74, k:75, l:76, m:77, n:78, o:79, p:80, q:81, r:82, s:83, t:84, u:85, v:86, w:87, x:88, y:89, z:90 }
   _up:   {}
   _dn:   {}
   mmap:  {}
@@ -68,7 +68,7 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     null
 
   macro:(name,key,d10,func)->
-    console.log key, name
+    console.log key, name if debug
     @macro[name] = func
     @bind key, name
     @d10[name] = d10
@@ -97,11 +97,11 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     opt = @macro[macro] unless opt?
     opt = up: opt if typeof opt is 'function'
     unless opt?
-      console.log 'misbind', key, macro, opt
+      console.log 'misbind', key, macro, opt if debug
       return
     @_up[macro] = opt.up if opt.up?
     @_dn[macro] = opt.dn if opt.dn?
-    if key.match /S/
+    if key.match /S[^0-9]/
       keyCode = 'S' + @kmap[key.replace /^S/, '']
     else keyCode = @kmap[key]
     @mmap[macro] = keyCode
@@ -127,7 +127,10 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     escape:           "Exit something"
     boost:            "Boost"
 
-Kbd.macro 'debark',    'Sq', 'Leave current vehicle', ->
+Kbd.macro 'debug', 'S~', 'Debug', ->
+  window.debug = not debug
+
+Kbd.macro 'debark', 'Sq', 'Leave current vehicle', ->
   NET.json.write switchShip: 'Exosuit' unless VEHICLE and VEHICLE.class is 'Exosuit'
 
 Kbd.macro 'weapNext',    '1', 'Next weapon (primary)', ->
