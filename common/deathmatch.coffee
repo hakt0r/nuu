@@ -39,7 +39,7 @@ rules.server = ->
 
   NUU.on 'ship:destroyed', (victim,perp) ->
     NET.mods.write victim, 'destroyed', victim.id
-    if victim.npc is yes then $timeout 10000, ->
+    if victim.npc is yes then $timeout 4500, ->
       victim.dropLoot()
       victim.destructor()
     else

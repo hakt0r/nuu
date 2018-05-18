@@ -21,6 +21,7 @@
 ###
 
 Ship::dropLoot = ->
+  do @update
   newRandom = (classObj) =>
     o = new classObj state:
       S: $moving
@@ -33,8 +34,9 @@ Ship::dropLoot = ->
   null
 
 Ship::respawn = ->
+  do @reset
   @x = Math.random()*100
   @y = Math.random()*100
-  @reset()
-  NET.state.write @
+  @setState S:$moving, x:@x, y:@y, m:[0,0]
+  do @update
   NET.mods.write  @, 'spawn'
