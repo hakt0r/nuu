@@ -59,7 +59,7 @@ $obj.register class Ship extends $obj
 
   mount: null
   inventory: null
-  slot: null
+  slots: null
 
   constructor: (opts) ->
     @hostile = []

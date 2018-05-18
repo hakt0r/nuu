@@ -21,9 +21,16 @@
 ###
 
 Weapon.Launcher =->
+  ammo = Item.byName[@stats.ammo.replace(/ /g,'')]
+  @trigger = switch ammo.type
+    when 'fighter' then (src,vehicle,slot,target)=>
+      ship = Item.byName[ammo.stats.ship.replace(/ /g,'')]
+      new Escort escortFor:vehicle.id, tpl:ship.itemId, state:vehicle.state.toJSON()
+      Weapon.hostility vehicle, target
+    else (src,vehicle,slot,target)=>
+      new Missile source:vehicle, target:target
+      Weapon.hostility vehicle, target
   @release = $void
-  @trigger = (src,vehicle,slot,target)=>
-    new Missile source:vehicle, target:target
 
 $obj.register class Missile extends $obj
   @implements: [$Missile]

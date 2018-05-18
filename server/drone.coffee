@@ -53,13 +53,14 @@ AI::destructor = ->
   super
   off
 
-AI::aiType      = 'ai'
-AI::npc         = true
-AI::fire        = no
-AI::inRange     = no
-AI::primarySlot = null
-AI::primaryWeap = null
-AI::autopilot   = null
+AI::aiType       = 'ai'
+AI::npc          = true
+AI::fire         = no
+AI::inRange      = no
+AI::primarySlot  = null
+AI::primaryWeap  = null
+AI::autopilot    = null
+AI::escortTarget = null
 
 AI::attackPlayers = ->
   do @update
@@ -117,21 +118,25 @@ AI::approachTarget = ->
 
 AI::escort = ->
   do @update
-  @escortTarget() if not @target or @target.destructing
+  @escortTarget() if not @target or @target.destructing or ( @target.hostile and @target.hostile.length > 0 )
   return 1000     unless @target
-  if @inRange = abs(distance = $dist(@,@target)) < 150
-    # console.log "#{@name} reached", @target.name if debug
-    return 1000
-  else v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
+  # if @inRange = abs(distance = $dist(@,@target)) < 150
+  #   console.log "#{@name} reached", @target.name if debug
+  #   return 1000
+  v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
   @left = turnLeft
   @right = turn and not turnLeft
   do @changeState if ( @flags isnt v.flags ) or v.setDir
-  33
+  null
 
 AI::escortTarget = ->
-  if @target = $obj.byId[@escortFor]
-    console.log "#{@name} Escorting", @target.name if debug
+  if target = $obj.byId[@escortFor]
+    console.log "#{@name} Escorting", target.name # if debug
+    return @target = target unless target.hostile.length > 0 or target.destructing
+    return @target if @target and not @target.destructing
+    @target = target.hostile[0]
+    console.log "#{@name} Escort:Attack", @target.name # if debug
     return @target
   @changeStrategy 'attackPlayers'
   console.log "#{@name} going berserk" if debug

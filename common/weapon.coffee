@@ -38,11 +38,11 @@ $public class Weapon extends Outfit
   constructor: (name,opts={}) ->
     tpl = Item.byName[name]
     # console.log name, tpl.extends
-    Weapon[tpl.extends].call @
     @[k] = v for k,v of tpl
     @id = Weapon.count++
     Weapon[name] = @
     @[k] = v for k,v of opts
+    Weapon[tpl.extends].call @
 
 Weapon.hostility = (vehicle,target)->
   if  target.hostile and -1 is  target.hostile.indexOf vehicle

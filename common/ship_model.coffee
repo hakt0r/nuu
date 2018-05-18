@@ -68,7 +68,7 @@ Ship::updateMods = -> # calculate mods
   null
 
 Ship::mockSystems = -> # equip fake weapons for development
-  MockWeap = ["CheatersLaserCannon","CheatersRagnarokBeam","EnygmaSystemsSpearheadLauncher"]
+  MockWeap = ["CheatersLaserCannon","CheatersRagnarokBeam","EnygmaSystemsSpearheadLauncher","HeavyRipperTurret","CheatersDroneFighterBay"]
   Mock =
     utility:
       large: Object.keys Item.byType.utility.large
@@ -80,10 +80,11 @@ Ship::mockSystems = -> # equip fake weapons for development
       small: Object.keys Item.byType.structure.small
   for k,slt of @slots.weapon when not slt.equip?
     continue if MockWeap.length is 0
-    slt.equip = new Weapon(MockWeap.shift())
+    # slt.equip = new Outfit slt.default if slt.default
+    slt.equip = new Weapon MockWeap.shift()
   for k,slt of @slots.structure when not slt.equip?
-    if slt.default then slt.equip = new Outfit(slt.default)
+    slt.equip = new Outfit slt.default if slt.default
     #else slt.equip = new Outfit(Mock.structure[slt.size].shift())
   for k,slt of @slots.utility when not slt.equip?
-    if slt.default then slt.equip = new Outfit(slt.default)
+    slt.equip = new Outfit slt.default if slt.default
     #else slt.equip = new Outfit(Mock.utility[slt.size].shift())

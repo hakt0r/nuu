@@ -75,4 +75,5 @@ Weapon.Beam =->
     NUU.emit 'shot', Weapon.beam[vehicle.id] = v =
       new BeamInstance vehicle, slot.equip, @range, target, TIME, TIME + @duration
     $worker.push slot.worker = detector
+    Weapon.hostility vehicle, target
     null
