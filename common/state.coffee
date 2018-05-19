@@ -33,7 +33,7 @@ if isServer then $obj::changeState = (state)->
   # TODO: orbit modifiction (needs elliptical orbits)
   # return console.log 'relto' if @state.relto?
   # return @setState state if state
-  return console.log 'locked$', @name if @locked
+  return console.log 'locked$', @name if @locked or @state.S is $orbit
   @state.update true
   @a = (
     if @state.S is $orbit then 0

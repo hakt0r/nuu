@@ -126,21 +126,21 @@ Target.toggleMode = ->
   null
 
 Target.launch = ->
-  NET.action.write(TARGET||id:0,'launch')
+  NET.action.write TARGET || id:0, 'launch'
   null
 
 Target.orbit = ->
-  return unless ( t = TARGET )
+  return unless t = TARGET
   NET.action.write t, Target.mode
   null
 
 Target.jump = ->
-  return unless ( t = TARGET )
+  return unless t = TARGET
   NET.json.write jump: t.id
   null
 
 Target.capture = capture = ->
-  NET.action.write TARGET,'capture'
+  NET.action.write TARGET, 'capture'
   null
 
 Target.captureClosest = ->
