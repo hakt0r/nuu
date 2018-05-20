@@ -20,7 +20,7 @@
 
 ###
 
-Kbd.macro 'about', 'S/', 'Show about screen / License', ->
+Kbd.macro 'about', 'sSlash', 'Show about screen / License', ->
   about = $ """
     <div class="window about">
       <div class="tabs" id="tabs">

@@ -79,32 +79,28 @@ $public class ModalListWindow extends Window
     @focus()
     null
   keyHandler: (evt)=>
-    key = Kbd.cmap[evt.keyCode]
+    key = evt.code
     list = @$.find('.list-item')
     cur = @$.find('.list-item.active').first()
     if cur.length is 0
       cur.addClass 'active'
       cur = $ list.first()
     switch key
-      when @closeKey, 'esc'
+      when @closeKey, 'Escape'
         @close(); p = @
         p.close() while p = p.parent
-      when 'return'
+      when 'Enter'
         do cur[0].action if cur[0].action
-      when 'pgup' then next = list.first(); list.removeClass 'active'; next.addClass 'active'
-      when 'pgdn' then next = list.last();  list.removeClass 'active'; next.addClass 'active'
-      when 'up'
+      when 'PageUp' then next = list.first(); list.removeClass 'active'; next.addClass 'active'
+      when 'PageDown' then next = list.last();  list.removeClass 'active'; next.addClass 'active'
+      when 'ArrowUp'
         next = if cur[0] is list.first()[0] then list.last() else cur.prev()
         list.removeClass 'active'; next.addClass 'active'; cur = next
-      when 'down'
+      when 'ArrowDown'
         next = if cur[0] is list.last()[0] then list.first() else cur.next()
         list.removeClass 'active'; next.addClass 'active'; cur = next
-  unfocus: ->
-    $(window).off 'keyup', @keyHandler
-  focus: ->
-    $(window).on 'keyup', @keyHandler
-    Kbd.unfocus()
-    @
+  unfocus: -> window.removeEventListener 'keyup', @keyHandler; @
+  focus: -> Kbd.unfocus window.addEventListener 'keyup', @keyHandler; @
   close:-> @unfocus(); ( if @parent then @parent.focus() else Kbd.focus() ); super
   hide:->  @unfocus(); ( if @parent then @parent.focus() else Kbd.focus() ); super
 
@@ -179,47 +175,53 @@ class Object.editor extends ModalListWindow
         i.find('span').html if @subject[key] = val = not val then 'true' else '<span class="red">false</div>'
         app.saveSettings()
 
-Window.KeyBinder = class StringEditorWindow extends ModalListWindow
+Window.KeyBinder = class KeyBinder extends ModalListWindow
   constructor: (opts)->
     @name = 'edit.string'
+    @keyHandler = @capture
     super opts
-    @$.css 'min-height', '20px'
-    @$.css 'bottom',     'initial'
+    @$.css 'bottom', 'initial'
     @body.addClass 'big_fat'
     @body.html @default
-  keyHandler: (evt)=>
-    return unless key = Kbd.cmap[evt.keyCode]
-    if key is "return"
+  confirm: (evt)->
+    key = evt.code
+    if key is "Enter"
       return unless @value
       do @close
       return @callback null, @value
-    else if key is "esc"
+    else if key is "Escape"
       do @close
       return @callback null, @default
-    key = 'C' + key if evt.controlKey
-    key = 'A' + key if evt.altKey
-    key = 'S' + key if evt.shiftKey
-    key = 'M' + key if evt.metaKey
-    return do @close if key is 'esc'
-    @body.html @value = key
+  capture: (evt)->
+    key = evt.code
+    key = 'c' + key if evt.controlKey
+    key = 'a' + key if evt.altKey
+    key = 's' + key if evt.shiftKey
+    key = 'm' + key if evt.metaKey
+    return do @close if key is 'Escape'
+    @body.html @value = key + '<br/>Escape | Enter'
+    @unfocus(); @keyHandler = @confirm.bind @; @focus()
 
 Window.Help = class HelpWindow extends ModalListWindow
   name: 'help'
   title: 'Help'
   subject: Kbd.help
-  closeKey: 'h'
+  closeKey: 'KeyH'
   render: (key,val)->
-    renderKey = key.replace('S','shift-').replace('A','alt-').replace('C','ctrl-')
+    renderKey = key.replace(/^s/,'shift-').replace(/^a/,'alt-').replace(/^c/,'ctrl-')
     @body.append i = $ """<div class="list-item"><label>#{Kbd.d10[val]}</label><span>#{renderKey}</span></div>"""
     i.on 'click', i[0].action = =>
+      @unfocus()
       new Window.KeyBinder parent: @, title:"Press Key for "  + Kbd.d10[val], default:key, callback:(error,value)=>
         i.find('span').html key = value
         app.settings.bind = app.settings.bind || {}
-        app.settings.bind[key] = val
+        app.settings.bind[val] = key
         app.saveSettings()
+        Kbd.bind key, val
+        @focus()
 
-Kbd.macro 'help',     'h', 'Show help',             -> new Window.Help
-Kbd.macro 'equip',    'k', 'Show equipment screen', -> new Window.Equipment
-Kbd.macro 'settings', 'l', 'Open Settings dialog',  ->
+Kbd.macro 'help',     'KeyH', 'Show help',             -> new Window.Help
+Kbd.macro 'equip',    'KeyK', 'Show equipment screen', -> new Window.Equipment
+Kbd.macro 'settings', 'KeyL', 'Open Settings dialog',  ->
   return window.settings.close() if window.settings
-  new Object.editor name:'settings', title:'Settings', subject: app.settings, closeKey: 'l'
+  new Object.editor name:'settings', title:'Settings', subject: app.settings, closeKey: 'KeyL'

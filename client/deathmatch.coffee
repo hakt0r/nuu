@@ -29,7 +29,7 @@ Window.Ships = class ShipsWindow extends ModalListWindow
     Render.Ship.call @,key, val, @close.bind @
     null
 
-Kbd.macro 'ships',  'Ss', 'Show ships', -> new Window.Ships
+Kbd.macro 'ships',  'sKeyS', 'Show ships', -> new Window.Ships
 
 Render =
   Ship: (name,item,close)->

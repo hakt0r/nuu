@@ -84,4 +84,4 @@ $public class Autopilot
       console.log 'ap:stop'
       ap.stop()
 
-Kbd.macro 'autopilot', 'Sz', 'Autopilot', Autopilot.macro
+Kbd.macro 'autopilot', 'sKeyZ', 'Autopilot', Autopilot.macro

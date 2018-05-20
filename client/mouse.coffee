@@ -65,21 +65,18 @@ $static 'Mouse', new class MouseInput
       NET.steer.write NET.steer.setDir, v.d
     else
       v.d = @destDir
-      Kbd.setState 'accel', @accel
+      do Kbd.setState 'accel', @accel
     @lastDir = @destDir; @lastAccel = @accel
     null
 
-  oncontextmenu: (evt)->
-    # do Kbd.macro.primaryTrigger.dn
-    # @trigger = Kbd.macro.primaryTrigger
-    false
-
+  oncontextmenu: (evt)-> false
+  
   onmouseup: (evt)->
     switch evt.which
       when 1
-        Kbd.setState 'accel', @accel = false if @accel
-        Kbd.setState 'boost', @boost = false if @boost
-        Kbd.setState 'retro', @retro = false if @retro
+        do Kbd.setState 'accel', @accel = false if @accel
+        do Kbd.setState 'boost', @boost = false if @boost
+        do Kbd.setState 'retro', @retro = false if @retro
       when 3
         if @trigger
           do @trigger.up
@@ -94,7 +91,7 @@ $static 'Mouse', new class MouseInput
     switch evt.which
       when 1
         s = if evt.shiftKey then 'boost' else if evt.ctrlKey then 'retro' else 'accel'
-        Kbd.setState s, @[s] = true
+        do Kbd.setState s, @[s] = true
       when 2
         if evt.shiftKey
              Target.nextClass()
@@ -138,4 +135,4 @@ $static 'Mouse', new class MouseInput
     null
 
 app.on 'settings', -> do Mouse.macro() unless app.settings.mouseturnoff
-Kbd.macro 'mouseturn', 'z', 'Toggle mouseturning', Mouse.macro()
+Kbd.macro 'mouseturn', 'KeyZ', 'Toggle mouseturning', Mouse.macro()

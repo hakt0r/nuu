@@ -191,6 +191,7 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
 .window.modal_list .red { color: red; }
 
 .window.modal_list .big_fat {
+  display: block;
   text-align: center;
   font-weight: bold;
   line-height: 24px;

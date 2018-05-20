@@ -187,4 +187,4 @@ VT100.toggle = ->
     setTimeout ( new Function 'VT100.toggle()' ), 0
     true
 
-Kbd.macro 'console', 'Sreturn', 'Show / hide console', VT100.toggle
+Kbd.macro 'console', 'sEnter', 'Show / hide console', VT100.toggle

@@ -148,16 +148,16 @@ Target.captureClosest = ->
   Target.closest (t)-> capture t if t?
   null
 
-Kbd.macro 'targetNothing',   'Sw',   'Disable targeting scanners', Target.nothing
-Kbd.macro 'targetNext',      'd',    'Next target',                Target.next
-Kbd.macro 'targetClassNext', 'w',    'Next target class',          Target.nextClass
-Kbd.macro 'targetPrev',      'a',    'Prev target',                Target.prev
-Kbd.macro 'targetClassPrev', 's',    'Previous target class',      Target.prevClass
-Kbd.macro 'targetClosest',   'u',    'Closest target',             Target.closest
-Kbd.macro 'targetEnemy',     'e',    'Closest enemy',              Target.enemy
-Kbd.macro 'targetMode',      'tab',  'Toggle Land / Dock / Orbit', Target.toggleMode
-Kbd.macro 'launch',          'Stab', 'Launch / Undock',            Target.launch
-Kbd.macro 'orbit',           'q',    'Land / Dock / Enter Orbit',  Target.orbit
-Kbd.macro 'jump',            'j',    'Jump to target',             Target.jump
-Kbd.macro 'capture',         'Sc',   'Capture target',             Target.capture
-Kbd.macro 'captureClosest',  'c',    'Capture closest',            Target.captureClosest
+Kbd.macro 'targetNothing',   'sKeyW', 'Disable targeting scanners', Target.nothing
+Kbd.macro 'targetNext',      'KeyD',  'Next target',                Target.next
+Kbd.macro 'targetClassNext', 'KeyW',  'Next target class',          Target.nextClass
+Kbd.macro 'targetPrev',      'KeyA',  'Prev target',                Target.prev
+Kbd.macro 'targetClassPrev', 'KeyS',  'Previous target class',      Target.prevClass
+Kbd.macro 'targetClosest',   'KeyU',  'Closest target',             Target.closest
+Kbd.macro 'targetEnemy',     'KeyE',  'Closest enemy',              Target.enemy
+Kbd.macro 'targetMode',      'Tab',   'Toggle Land / Dock / Orbit', Target.toggleMode
+Kbd.macro 'launch',          'sTab',  'Launch / Undock',            Target.launch
+Kbd.macro 'orbit',           'KeyQ',  'Land / Dock / Enter Orbit',  Target.orbit
+Kbd.macro 'jump',            'KeyJ',  'Jump to target',             Target.jump
+Kbd.macro 'capture',         'sKeyC', 'Capture target',             Target.capture
+Kbd.macro 'captureClosest',  'KeyC',  'Capture closest',            Target.captureClosest

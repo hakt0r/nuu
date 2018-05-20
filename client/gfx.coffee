@@ -74,6 +74,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
   nextSelect: 0
 
   constructor: (callback)->
+    @tick = 0
     @stage    = stage    = new PIXI.Container # 0x000000
     @renderer = renderer = PIXI.autoDetectRenderer 640,480, antialias: yes
 
@@ -196,7 +197,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
         @weap.endFill()
 
     @renderHUD()     # if @renderHUD
-    @renderScanner() # if @renderScanner
+    @renderScanner() # if ++@tick % 10 is 0
     @renderer.render @stage
     null
 

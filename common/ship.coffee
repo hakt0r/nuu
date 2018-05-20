@@ -83,8 +83,8 @@ $obj.register class Ship extends $obj
   nextWeap: (player,trigger='primary') ->
     primary = trigger is 'primary'
     ws = player.vehicle.slots.weapon
-    tg = player[trigger]
     ct = ws.length - 1
+    tg = player[trigger]
     tg.id   = ++tg.id % ct
     tg.slot = ws[tg.id].equip
     tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
@@ -93,6 +93,7 @@ $obj.register class Ship extends $obj
   prevWeap: (player,trigger='primary') ->
     primary = trigger is 'primary'
     ws = player.vehicle.slots.weapon
+    ct = ws.length - 1
     tg = player[trigger]
     tg.id = ( --tg.id + ct ) % ct
     tg.slot = ws[tg.id].equip
