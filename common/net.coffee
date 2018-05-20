@@ -77,14 +77,14 @@ else if isServer then RTSync::route = (src) ->
 
 NET.define 0,'JSON',
   read:
-    client:(msg,src) =>
+    client:(msg,src) ->
       msg = new Buffer ( new Uint8Array msg ).slice(1)
       msg = JSON.parse msg.toString('utf8')
       NET.emit k, v, src for k, v of msg
-    server:(msg,src) =>
+    server:(msg,src) ->
       msg = JSON.parse ( msg.slice 1 ).toString('utf8')
       NET.emit k, v, src for k, v of msg
-  write: client: (msg) =>
+  write: client: (msg) ->
     # console.log 'NET.json>', msg
     NET.send NET.JSON + JSON.stringify msg
 
@@ -108,48 +108,20 @@ NET.on 'jump', (target,src) ->
 
 NET.define 2,'STATE',
   write:
-    server: (o) =>
-      s = o.state
-      msg = Buffer.alloc 90
-      msg[0] = NET.stateCode
-      msg.writeUInt16LE o.id,          1
-      msg[3] = o.flags = NET.setFlags [o.accel,o.retro,o.right,o.left,o.boost,s.relto?,0,1]
-      msg.writeUInt16LE ( if s.relto then s.relto.id else 0 ), 4
-      msg.writeUInt16LE s.S,           6
-      msg.writeUInt16LE s.d,           8
-      msg.writeDoubleLE s.x,           10
-      msg.writeDoubleLE s.y,           26
-      msg.writeDoubleLE s.m[0],        42
-      msg.writeDoubleLE s.m[1],        58
-      msg.writeFloatLE  s.a || 0.0,    74
-      msg.writeUInt32LE s.t % 1000000, 82
-      NUU.bincast ( msg.toString 'binary' ), o
-    client:(o,flags) =>
+    server: (o) -> NUU.bincast ( o.state.toBuffer().toString 'binary' ), o
+    client:(o,flags) ->
       msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0]
       msg.writeUInt16LE parseInt(o.d), 2
       NET.send msg.toString 'binary'
   read:
-    server: (msg,src) =>
+    client: State.fromBuffer
+    server: (msg,src) ->
       o = src.handle.vehicle
       return unless o.mount[0] is src.handle
       [ o.accel, o.retro, o.right, o.left, o.boost ] = NET.getFlags msg[1]
       o.d = msg.readUInt16LE 2
       o.changeState()
       src
-    client: (msg) =>
-      id = msg.readUInt16LE 1
-      return unless ( o = $obj.byId[id] )
-      [ o.accel, o.retro, o.right, o.left, o.boost ] = flags = NET.getFlags msg[3]
-      relto = msg.readUInt16LE 4 if flags[5]
-      state = State.toConstructor[msg[6]]
-      d = msg.readUInt16LE 8
-      x = msg.readDoubleLE 10
-      y = msg.readDoubleLE 26
-      m = [ msg.readDoubleLE(42), msg.readDoubleLE(58) ]
-      a = msg.readFloatLE 74
-      t = ETIME + msg.readUInt32LE 82
-      new state o,x,y,d,m,a,t,relto
-      o
 
 NET.define 7,'STEER',
   write:client:(action,value)->
@@ -188,7 +160,7 @@ NET.define 3,'WEAP',
       action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
       console.log action.red.inverse, vehicle.id if debug
       slot.equip[action](null,vehicle,slot,target)
-    server: (msg,src)=>
+    server: (msg,src)->
       mode = msg[1]
       return unless (vehicle = src.handle.vehicle)
       return unless (slot = vehicle.slots.weapon[sid = msg[3]])
@@ -197,13 +169,13 @@ NET.define 3,'WEAP',
       NET.weap.write src, mode, slot, vehicle, target
 
   write:
-    client: (action,primary,slotid,tid)=>
+    client: (action,primary,slotid,tid)->
       return unless tid
       console.log 'weap', action,primary,slotid,tid if debug
       msg = Buffer.from [NET.weapCode,weaponActionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
       msg.writeUInt16LE tid, 4
       NET.send msg.toString 'binary'
-    server: (src,mode,slot,vehicle,target)=>
+    server: (src,mode,slot,vehicle,target)->
       return console.log 'no weapon equipped' unless ( equipped = slot.equip )
       return console.log 'no trigger/release' unless ( modeCall = equipped[if mode is 0 then 'trigger' else 'release'] )
       modeCall src, vehicle, slot, target
@@ -220,10 +192,10 @@ NET.define 3,'WEAP',
 
 action_key = ['launch','land','orbit','dock','capture']
 NET.define 4,'ACTION',
-  read:server:(msg,src) =>
+  read:server:(msg,src) ->
     return console.log 'nx$obj', t unless t = $obj.byId[msg.readUInt16LE 2]
     src.handle.action src, t, action_key[msg[1]]
-  write:client:(t,mode) =>
+  write:client:(t,mode) ->
     console.log mode+'$', t.name, t.id
     msg = Buffer.from [NET.actionCode,action_key.indexOf(mode),0,0]
     msg.writeUInt16LE t.id, 2
@@ -242,7 +214,7 @@ NET.define 5,'MODS',
     vid  = msg.readUInt16LE 2
     return console.log 'MODS:missing:vid', mode unless (ship = Ship.byId[vid])
     NUU.emit "ship:" + mode, ship, msg.readUInt16LE(4), msg.readUInt16LE(6)
-  write: server: (ship,mod,a=0,b=0) =>
+  write: server: (ship,mod,a=0,b=0) ->
     msg = Buffer.from [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0, 0,0]
     msg.writeUInt16LE ship.id, 2
     msg.writeUInt16LE parseInt(a), 4
@@ -256,11 +228,11 @@ NET.define 5,'MODS',
 
 operationKey = ['remove','reset']
 NET.define 6,'OPERATION',
-  write:server: (t,mode) =>
+  write:server: (t,mode) ->
     msg = Buffer.from [NET.operationCode,operationKey.indexOf(mode),0,0]
     msg.writeUInt16LE t.id, 2
     NUU.bincast ( msg.toString 'binary' ), t
-  read:client: (msg) =>
+  read:client: (msg) ->
     return unless ( t = $obj.byId[id = msg.readUInt16LE 2] )
     mode = operationKey[msg[1]]
     console.log mode, t.id
@@ -274,7 +246,7 @@ NET.define 6,'OPERATION',
 ###
 
 NET.define 8,'HEALTH',
-  write:server: (t) =>
+  write:server: (t) ->
     msg = Buffer.from [
       NET.healthCode
       0
@@ -285,7 +257,7 @@ NET.define 8,'HEALTH',
       t.fuel   * ( 255 / t.fuelMax   ) ]
     msg.writeUInt16LE t.id, 1
     NUU.bincast ( msg.toString 'binary' ), t
-  read:client: (msg) =>
+  read:client: (msg) ->
     return unless ( t = $obj.byId[id = msg.readUInt16LE 1] )
     t.shield = msg[3] * ( t.shieldMax / 255 )
     t.energy = msg[4] * ( t.energyMax / 255 )

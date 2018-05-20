@@ -70,7 +70,7 @@ $static 'Mouse', new class MouseInput
     null
 
   oncontextmenu: (evt)-> false
-  
+
   onmouseup: (evt)->
     switch evt.which
       when 1
@@ -93,7 +93,9 @@ $static 'Mouse', new class MouseInput
         s = if evt.shiftKey then 'boost' else if evt.ctrlKey then 'retro' else 'accel'
         do Kbd.setState s, @[s] = true
       when 2
-        if evt.shiftKey
+        if evt.altKey
+             Scanner.toggle()
+        else if evt.shiftKey
              Target.nextClass()
         else Target.closest()
       when 3

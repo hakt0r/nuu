@@ -28,6 +28,14 @@ Object.empty = (o)->
   delete o[k] for k of o
   o
 
+console.colorDump = (opts={})->
+  a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )
+  a.join ''
+
+Math.scale = (val,minp=0,maxp=Speed.max,minv=0,maxv=50)->
+  minv = Math.log minv; maxv = Math.log maxv
+  return Math.exp minv + ((maxv-minv)/(maxp-minp)) * ( abs(val) - minp )
+
 class Engine extends EventEmitter
   time: Date.now
   threadList: {}

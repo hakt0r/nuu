@@ -25,6 +25,7 @@ $static '$voidState', S:0,update:$void,x:0,y:0,m:$v.zero,a:0
 $obj::x = 0
 $obj::y = 0
 $obj::d = 0
+$obj::a = 0
 $obj::m = $v.zero
 $obj::state = $voidState
 $obj::update = $void
@@ -70,6 +71,7 @@ $public class State
   convert: false
   constructor: (o,x,y,d,m,a,t,relto) ->
     ostate = o.state; @o = o; @o.state = @
+    o.update = @update.bind @
     @x = parseInt x || o.x
     @y = parseInt y || o.y
     @d = parseInt d || o.d
@@ -77,23 +79,51 @@ $public class State
     @a = a || o.a
     @t = t || TIME
     @relto = $obj.byId[0]
-    @relto = relto if relto? and relto.id?
-    @relto = relto if relto = $obj.byId[relto]
+    @relto = relto  if relto? and ( relto.id? or relto = $obj.byId[relto] )
     @relto.update() if @relto
-    o.update = @update.bind @
+    @toBuffer()     if isServer
     @convert ostate if @convert
     @update null
     # console.log 'state$', @S, @o.id
-    return unless isServer
+    return if isClient
     NET.state.write @o
-
-colorDump = (opts={})->
-  a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )
-  a.join ''
 
 Object.defineProperty State::, 'p',
   get: -> return [ @x, @y ]
   set: (p) -> [ @x, @y ] = p
+
+State::toBuffer = ->
+  return @_buffer if @_buffer
+  msg =  @_buffer = Buffer.alloc 90
+  msg[0] = NET.stateCode
+  msg.writeUInt16LE @o.id,          1
+  msg[3] = @o.flags = NET.setFlags [@o.accel,@o.retro,@o.right,@o.left,@o.boost,@relto?,0,1]
+  msg.writeUInt16LE ( if @relto then @relto.id else 0 ), 4
+  msg.writeUInt16LE @S,           6
+  # return console.log @ if @d < 0 or @d > 359 #if debug
+  msg.writeUInt16LE @d,           8
+  msg.writeDoubleLE @x,           10
+  msg.writeDoubleLE @y,           26
+  msg.writeDoubleLE @m[0],        42
+  msg.writeDoubleLE @m[1],        58
+  msg.writeFloatLE  @a || @a=0.0, 74; @a = msg.readFloatLE 74
+  msg.writeUInt32LE @t % 1000000, 82
+  return msg
+
+State.fromBuffer = (msg)->
+  id = msg.readUInt16LE 1
+  return unless o = $obj.byId[id]
+  [ o.accel, o.retro, o.right, o.left, o.boost ] = flags = NET.getFlags msg[3]
+  relto = msg.readUInt16LE 4 if flags[5]
+  state = State.toConstructor[msg[6]]
+  d = msg.readUInt16LE 8
+  x = msg.readDoubleLE 10
+  y = msg.readDoubleLE 26
+  m = [ msg.readDoubleLE(42), msg.readDoubleLE(58) ]
+  a = msg.readFloatLE 74
+  t = ETIME + msg.readUInt32LE 82
+  new state o,x,y,d,m,a,t,relto
+  o
 
 State.toKey = toKey = []
 State.toConstructor = toConstructor = []
@@ -110,44 +140,42 @@ State.register 'fixed', class fixed extends State
 
 State.register 'relative', class relative extends State
   constructor: State
-  update: ->
-    return null if @lastUpdate is TIME
-    @lastUpdate = TIME
+  update: (time)->
+    if not time and @lastUpdate is TIME then return null else time = TIME
     @relto.update()
     @o.x = @relto.x + @x
     @o.y = @relto.y + @y
     @o.m = @relto.m.slice()
-    null
+    @lastUpdate = TIME; null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,relto:@relto.id
 
 State.register 'moving', class moving extends State
   convert: -> @o.m = @m.slice()
-  update: ->
-    return null if @lastUpdate is TIME
-    deltaT = ((@lastUpdate=TIME)-@t)/TICK
+  update: (time)->
+    if not time and @lastUpdate is TIME then return null else time = TIME
+    deltaT = ( time - @t ) / TICK
     @o.x = @x + @m[0] * deltaT
     @o.y = @y + @m[1] * deltaT
-    null
+    @lastUpdate = TIME; null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m
 
 State.register 'accelerating', class accelerating extends State
   curm: null
   convert: ->
-    @o.m = @curm = @m.slice()
+    @o.m = @curm = @m.slice() || []
+    @dir = @d / RAD
     # tmaxX = ( Speed.max - @m[0] ) / @a * cos(@d/RAD)
     # tmaxY = ( Speed.max - @m[1] ) / @a * sin(@d/RAD)
     # console.log tmaxX, tmaxY
-  update: (final) ->
-    return null if @lastUpdate is TIME
-    deltaT = ((@lastUpdate=TIME)-@t)/TICK
-    dir = @d / RAD
+  update: (time) ->
+    if not time and @lastUpdate is TIME then return null else time = TIME
+    deltaTb2 = .5 * ( deltaT = ( time - @t ) / TICK )
     aDeltaT = @a * deltaT
-    oFiveDeltaT = .5 * deltaT
-    @curm[0] = @m[0] + cosAdeltaT = aDeltaT * cos(dir)
-    @curm[1] = @m[1] + sinAdeltaT = aDeltaT * sin(dir)
-    @o.x = @x + @m[0] * deltaT + oFiveDeltaT * cosAdeltaT
-    @o.y = @y + @m[1] * deltaT + oFiveDeltaT * sinAdeltaT
-    null
+    @curm[0] = @m[0] + cosaDeltaT = aDeltaT * cos @dir
+    @curm[1] = @m[1] + sinaDeltaT = aDeltaT * sin @dir
+    @o.x = @x + @m[0] * deltaT + deltaTb2 * cosaDeltaT
+    @o.y = @y + @m[1] * deltaT + deltaTb2 * sinaDeltaT
+    @lastUpdate = TIME; null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 State.register 'maneuvering', class maneuvering extends State
@@ -155,16 +183,12 @@ State.register 'maneuvering', class maneuvering extends State
     @o.m = @m.slice()
     @turn = @o.turn || 1
     @turn = -@turn if @o.left
-  update: ->
-    return null if @lastUpdate is TIME
-    deltaT = ((@lastUpdate=TIME)-@t)/TICK
-    d = ( @d + @turn * deltaT ) % 360
-    d = ( 360 + d ) % 360 if d < 0
-    dir = d / RAD
-    @o.d = d
-    @o.x = @x + @m[0] * deltaT
-    @o.y = @y + @m[1] * deltaT
-    null
+  update: (time)->
+    if not time and @lastUpdate is TIME then return null else time = TIME
+    @o.x = @x + @m[0] *   ( deltaT = ( time - @t ) / TICK )
+    @o.y = @y + @m[1] *     deltaT
+    @o.d = ((( @d + @turn * deltaT ) % 360 ) + 360 ) % 360
+    @lastUpdate = TIME; null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 State.register 'orbit', class orbit extends State
@@ -189,13 +213,12 @@ State.register 'orbit', class orbit extends State
     @lx = @o.x = @relto.x + cos(@offs) * @orbit
     @ly = @o.y = @relto.y + sin(@offs) * @orbit
     # console.log '$orbit', @o.id, @orbit, @offs, @step, @dir if @o.id is 20
-  update: ->
+  update: (time)->
     return console.log 'update:no_relto' unless @relto
-    return null if @lastUpdate is TIME
+    if not time and @lastUpdate is TIME then return null else time = TIME
+    deltaT = ( time - @lastUpdate ) / TICK
     @relto.update()
-    deltaT = ( TIME - @lastUpdate ) / TICK
-    ticks  = ( TIME - @t ) / TICK
-    @lastUpdate = TIME
+    ticks  = ( time - @t ) / TICK
     @dir = ( TAU + @offs + ticks * @step ) % TAU
     @o.x = @relto.x + cos(@dir) * @orbit
     @o.y = @relto.y + sin(@dir) * @orbit
@@ -205,7 +228,7 @@ State.register 'orbit', class orbit extends State
     @o.m = @tmp.slice()
     @lx = @o.x
     @ly = @o.y
-    null
+    @lastUpdate = TIME; null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,relto:@relto.id
 
 State.register 'travel', class travel extends State
@@ -216,14 +239,17 @@ State.register 'travel', class travel extends State
       @from = {}
       @from.x = o.x; @from.y = o.y; @from.m = o.m.slice()
       @pta = 60 # secs
-  update:->
-    time_passed  = TIME - @from.t
-    deltaT = ( TIME - @lastUpdate ) / TICK
-    @lastUpdate = TIME
+  update: (time)->
+    unless time
+      if @lastUpdate is TIME then return null else time = TIME
+      deltaT = ( time - @lastUpdate ) / TICK
+      time_passed  = time - @from.t
+      @lastUpdate = time
     @to.state.update()
     @o.x = @from.x + time_passed * ( @from.x - @to.x )
     @o.y = @from.y + time_passed * ( @from.y - @to.y )
     @o.m = m = $v.zero.slice()
     m[0] = ( @o.x - @lx ) / deltaT; @lx = @o.x
     m[1] = ( @o.y - @ly ) / deltaT; @ly = @o.y
+    @lastUpdate = TIME; null
   toJSON:-> S:@S, from:from.toJSON(), to:@to.id

@@ -23,8 +23,8 @@
 $static 'Scanner', new class ScannerRenderer
   id     : 0
   type   : 0
-  width  : 150
-  height : 150
+  width  : 100
+  height : 100
   scale  : 1.0
   active : true
   label  : {}
@@ -41,10 +41,12 @@ $static 'Scanner', new class ScannerRenderer
 
   constructor: ->
     @gfx = Sprite.layer 'scan', new PIXI.Graphics true
-    @gfx.width = @gfx.height = 300; @fullscreen = true
+    @gfx.width = @gfx.height = 100
+    @circleMode = yes
+    @fullscreen = no
+    Sprite.renderScanner = @renderCircle.bind @
     #app.on '$obj:add', @addLabel()
     #app.on '$obj:del', @removeLabel()
-    Sprite.renderScanner = @render.bind @
 
   addLabel: -> (s) =>
     @removeLabel s if @label[s.id]
@@ -55,30 +57,51 @@ $static 'Scanner', new class ScannerRenderer
     @gfx.removeChild @label[s.id]
     delete @label[s.id]
 
-  render: -> if ( pl = VEHICLE )
+  renderRect:   -> if ( pl = VEHICLE )
     if @fullscreen
-      W2 = WDB2; H2 = HGB2; W = WIDTH; H = HEIGHT
-    else W2 = H2 = ( W = H = @width ) / 2
-    px = pl.x
-    py = pl.y
-    l = @label
+      W = min WIDTH, HEIGHT; W2 = W/2-100; W2R = WDB2; H2R = HGB2
+      @gfx.position.set 0,0 unless @gfx.position[0] is 0
+    else
+      W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 50
+      @gfx.position.set WDB2 + 10, HEIGHT - 135
+    px = pl.x; py = pl.y
     ( g = @gfx ).clear()
+    g.fillAlpha = 0.2
     for s in $obj.list
-      w = s.state.orbit / @scale
-      x = W2 + ( s.state.relto.x - px ) / @scale
-      y = H2 + ( s.state.relto.y - py ) / @scale
-      if s.state.S is $orbit and Scanner.orbits
-        if ( -w < x < W + w ) and ( -w < y < H + w ) and ( w < W or w < H )
-          g.lineStyle 2, @color.Orbit
-          g.endFill g.drawCircle x, y, w
-    for s in $obj.list
-      w = max 2,  min 5,                 floor s.size / @scale
-      x = max 10, min W  - 10, W2 + (s.x - px ) / @scale
-      y = max 10, min H - 10, H2 + (s.y - py ) / @scale
+      w = max 1, min 2, s.size * 100 / @scale
+      x = max 0, min W - 5, W2 + (s.x - px ) / @scale
+      y = max 0, min H - 5, H2 + (s.y - py ) / @scale
       g.beginFill if s is TARGET then 0xFF0000 else @color[s.constructor.name] || 0xFFFFFF
-      # g.endFill g.drawCircle x, y, w
-      g.endFill g.drawRect x - w/2, y - w/2, w, w
-      l[s.id].position.set x, y if l[s.id]
+      # g.endFill g.drawRect v[0] + W2 - w/2, v[1] + H2 - w/2, w, w
+      g.endFill g.drawCircle x, y, w
+      #l[s.id].position.set x, y if l[s.id]
+
+  renderCircle: -> if ( pl = VEHICLE )
+    return if @nextUpdate > TIME; @nextUpdate = TIME + if @scale < 1024 then TICK else 250
+    if @fullscreen
+      W = min WIDTH, HEIGHT; W2 = W/2-150; W2R = WDB2; H2R = HGB2
+      @gfx.position.set 0,0 unless @gfx.position[0] is 0
+    else
+      W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 50
+      @gfx.position.set WDB2 + 10, HEIGHT - 135
+    px = pl.x; py = pl.y
+    ( g = @gfx ).clear()
+    g.fillAlpha = 0.2
+    for s in $obj.list
+      w = max 1, min 2, s.size * 100 / @scale
+      l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
+      v = $v.mult $v.normalize(v), l
+      if s.state.S is $orbit and Scanner.orbits
+        o = s.state.orbit / @scale
+        ol = min W2-5, ( $v.mag ov = [ s.state.relto.x - px, s.state.relto.y - py ] ) / @scale
+        ov = $v.mult $v.normalize(ov), ol
+        if o + ol < W2
+          g.lineStyle 2, @color.Orbit
+          g.endFill g.drawCircle ov[0]+W2R, ov[1]+H2R, o
+      g.beginFill if s is TARGET then 0xFF0000 else @color[s.constructor.name] || 0xFFFFFF
+      # g.endFill g.drawRect v[0] + W2 - w/2, v[1] + H2 - w/2, w, w
+      g.endFill g.drawCircle v[0]+W2R, v[1]+H2R, w
+      #l[s.id].position.set x, y if l[s.id]
     null
 
   toggleFS: ->

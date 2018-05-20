@@ -72,7 +72,7 @@ $static 'HUD', new class HUDRenderer
       s.tint = 0x0000FF
       s.width  = 100
       s.height = r * 100
-      s.alpha  = 0.8
+      s.alpha  = 0.3
       Sprite.resize()
       clearTimeout tgtHandler.timer
       tgtHandler.timer = setTimeout ( ->
