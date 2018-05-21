@@ -27,12 +27,19 @@ NET.on 'login', NET.loginFunction = (msg,src) ->
   else if msg.user? then new User src, msg.user, msg.pass
   null
 
+NET.on 'switchMount', (msg,src) ->
+  u = src.handle
+  o = u.vehicle
+  src.json switchMount: o.setMount u, parseInt msg
+  null
+
 NET.on 'switchShip', (msg,src) ->
   u = src.handle
   o = u.vehicle
   vehicle = u.createVehicle src,msg
   # o.destructor() if o.mount[0] is u.db.id
   u.enterVehicle src, vehicle, 0, no
+  null
 
 NUU.users = []
 
@@ -109,19 +116,29 @@ User::createVehicle = (src,id,state)->
   console.log 'user$ship', @db.nick, vehicle.id
   vehicle
 
+Ship::setMount = (player,mountId)->
+  # console.log 'mountieJack', @name, mountId
+  # mountId = 0 unless mountId < @mount.length
+  @mount[player.mountId] = null if @mount[player.mountId] is player
+  if @mount[mountId]? and @mount[mountId] isnt player
+    mountId = 0
+    while @mount[mountId]? and @mount[mountId] isnt @
+      console.log 'already mounted', @name, mountId if debug
+      mountId++
+  @mount[player.mountId = mountId] = player
+  @flags = String.fromCharCode 0 if 0 is mountId
+  @inhabited = yes
+  console.log 'mounted', @name, mountId, player.db.nick if debug
+  mountId
+
 User::enterVehicle = (src,vehicle,mountId,spawn)->
-  @vehicle = vehicle; @mountId = mountId
-  while vehicle.mount[mountId]? and vehicle.mount[mountId] isnt @
-    console.log 'already mounted', vehicle.name, mountId
-    mountId++
-  vehicle.mount[mountId] = @
-  vehicle.flags = String.fromCharCode 0 if 0 is mountId
-  vehicle.inhabited = yes
-  NUU.emit 'userLeft', src.handle unless spawn
+  @mountId = ( @vehicle = vehicle ).setMount src.handle, mountId
+  NUU.emit 'userLeft',   src.handle unless spawn
   NUU.emit 'userJoined', src.handle
-  src.json 'switchShip': i:vehicle.id, m:mountId
-  src.json 'hostile': vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
-  console.log 'user$enter', @db.nick, vehicle.id, mountId
+  src.json
+    switchShip: i:vehicle.id, m:@mountId
+    hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
+  console.log 'user$enter', @db.nick, vehicle.id, @mountId if debug
   null
 
 User::action = (src,t,mode) ->

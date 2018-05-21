@@ -41,19 +41,30 @@ Object.defineProperty Player::, 'vehicle',
     console.log 'enterVehicle', v.id if debug
   get: -> @_vehicle
 
+Player::FighterBaySlotHook = ->
+  return false unless NUU.player.equip and NUU.player.equip.type is 'fighter bay'
+  NET.json.write switchShip: Item.byName[NUU.player.equip.stats.ammo.replace(' ','')].stats.ship
+  true
+
 app.on '$obj:add', (o)->
   # console.log 'yolo', o.id, NUU.player.vehicleId
   NUU.player.vehicle = o if o.id is NUU.player.vehicleId
   null
 
 NET.on 'switchShip', (opts) ->
-  # console.log 'switchShip', opts
-  NUU.player.mountId = opts.m
+  console.log 'switchShip', opts if debug
+  NUU.player.mountId = parseInt opts.m
   NUU.player.vehicle = Ship.byId[opts.i]
+  NET.emit 'switchMount', opts.m
 
 NET.on 'switchMount', (id) ->
-  NUU.player.vehicle.mount[NUU.player.mountId] = null
+  console.log 'NET:switchMount', id if debug
+  id = parseInt id
+  VEHICLE.mount[NUU.player.mountId] = null
+  VEHICLE.mount[id] = NUU.player
   NUU.player.mountId = id
-  NUU.player.vehicle.mount[id] = NUU.player
+  NUU.player.mount = VEHICLE.mountSlot[id]
+  NUU.player.equip = VEHICLE.mountSlot[id].equip if NUU.player.mount
+  HUD.widget 'mount', VEHICLE.name + '['+ id + ':' + VEHICLE.mountType[id] + ']', true
 
 NUU.frame = 0

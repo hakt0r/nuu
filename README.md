@@ -1,9 +1,18 @@
 ## nuu
-NUU is to be a (massive) multiplayer game of space trade and combat. 
+NUU is to be a (massive) multiplayer game of space trade and combat.
 
 It's **not finished yet** and probably will stay that way for a long time ;)
+Still it's somewhat playable and I do my best to not break master :D
 
 ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot.png "NUU in action - screenshot")
+
+### Features
+  * Trader AI's for Loot
+  * Fighter Bays
+    - AI escorts or real players
+  * Multiplayer Ships
+    - Dock with another ship, or let other players dock
+    - Take the helm, man turret, or sit in a fighter ready to be launched into mayhem
 
 ### History / Pointers
 NUU is heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money.
@@ -16,11 +25,11 @@ A **strong** pointer to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video
 
     npm install
     coffee tools/build.coffee deps
-  
+
 ### Running the server
 
     coffee tools/build.coffee run
-  
+
 To debug the server (with the nodejs debugger) just replace **run** with **debug**.
 
 ### To play
@@ -29,8 +38,10 @@ To debug the server (with the nodejs debugger) just replace **run** with **debug
 
     http://localhost:9999/
 
-  * Right now we only support Chrome/Chromium
+  * Right now we only support Chrome/Chromium (Firefox works sometimes ;)
   * Enable **WebGL** for the best gfx-experience (chrome://flags)
+  * The first login registers your user (blank password works)
+  * Press 'h' for help ;)
 
 ### Copyrights
 

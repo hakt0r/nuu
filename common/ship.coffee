@@ -68,10 +68,15 @@ $obj.register class Ship extends $obj
     @mockSystems() # fixme
     @updateMods()
     @mount     = [null,null]
+    @mountSlot = [null,null]
     @mountType = ['helm','passenger']
     for slot in @slots.weapon when slot and slot.equip
+      @mountSlot.push slot
       @mount.push null
-      @mountType = 'weap'
+      switch slot.equip.type
+        when 'fighter bay'
+          @mountType.push 'fighter'
+        else @mountType.push 'weap'
     null
 
   destructor: ->

@@ -126,6 +126,7 @@ Target.toggleMode = ->
   null
 
 Target.launch = ->
+  return if NUU.player.FighterBaySlotHook()
   NET.action.write TARGET || id:0, 'launch'
   null
 

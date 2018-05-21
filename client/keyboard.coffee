@@ -137,7 +137,12 @@ Kbd.macro 'debug', 'sBackquote', 'Debug', ->
   window.debug = not debug
 
 Kbd.macro 'debark', 'sKeyQ', 'Leave vehicle', ->
+  return if NUU.player.FighterBaySlotHook()
   NET.json.write switchShip: 'Exosuit' unless VEHICLE and VEHICLE.class is 'Exosuit'
+
+Kbd.macro 'mountNext',   'KeyM', 'Next mount', ->
+  m = ++NUU.player.mountId % VEHICLE.mount.length
+  NET.json.write switchMount: m
 
 Kbd.macro 'weapNext',    'Digit1', 'Next weapon (primary)', ->
   VEHICLE.nextWeap(NUU.player)
