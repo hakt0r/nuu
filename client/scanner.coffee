@@ -23,8 +23,8 @@
 $static 'Scanner', new class ScannerRenderer
   id     : 0
   type   : 0
-  width  : 100
-  height : 100
+  width  : 200
+  height : 200
   scale  : 1.0
   active : true
   label  : {}
@@ -32,65 +32,92 @@ $static 'Scanner', new class ScannerRenderer
   fullscreen : no
 
   color:
-    Orbit:    0x330000
-    Ship:     0xFF00FF
-    Stellar:  0xFFFF00
-    Debris:   0xCCCCCC
-    Cargo:    0xCCCCCC
-    Asteroid: 0xCCCCCC
+    Orbit:    [0x330000]
+    Stellar:  [0xFFFFFF,'◆']
+    Asteroid: [0xFFFFFF,'◆']
+    Debris:   [0xCCCCCC,'◆']
+    Cargo:    [0xCCCC00,'◆']
+    Planet:   [0xCCFFCC,'◎']
+    Moon:     [0x00FFFF,'◌']
+    Station:  [0xFF00FF,'◊']
+    Ship:     [0xCC00FF,'◭']
+    Star:     [0xFFFF00,'◍']
 
   constructor: ->
     @gfx = Sprite.layer 'scan', new PIXI.Graphics true
-    @gfx.width = @gfx.height = 100
+    # @gfx.cacheAsBitmap = yes
+    @gfx.width = @gfx.height = @width
     @circleMode = yes
     @fullscreen = no
-    Sprite.renderScanner = @renderCircle.bind @
-    #app.on '$obj:add', @addLabel()
-    #app.on '$obj:del', @removeLabel()
+    Sprite.renderScanner = @render.bind @
+    app.on '$obj:add', @addLabel()
+    app.on '$obj:del', @removeLabel()
+    app.on '$obj:inRange', (obj) ->
+      return unless obj and l = Scanner.label[obj.id]
+      [l.text, l.style.fill] = Scanner.labelStyle obj, true
+      PIXI.bringToFront l
+      null
+    app.on '$obj:outRange', (obj) ->
+      return unless obj and l = Scanner.label[obj.id]
+      [l.text, l.style.fill] = Scanner.labelStyle obj
+      null
+    NUU.on 'newTarget', (obj,old) ->
+      if obj and l = Scanner.label[obj.id]
+        [l.text, l.style.fill] = Scanner.labelStyle obj, true
+        PIXI.bringToFront l
+      if old and l = Scanner.label[old.id]
+        [l.text, l.style.fill] = Scanner.labelStyle old
+      null
+    null
+
+  labelStyle: (s,inRange=false)->
+    return ['◆','white'] unless t = Scanner.color[s.constructor.name]
+    [fill, name] = t
+    if      s.constructor is Star   then name += s.name || 'Star'
+    else if s.constructor is Planet then name += s.name || 'Planet'
+    else if                 inRange then name += s.name || ''
+    fill = 'red'     if s is TARGET
+    return [name,fill]
 
   addLabel: -> (s) =>
+    return unless s.name
     @removeLabel s if @label[s.id]
-    @gfx.addChild @label[s.id] = new PIXI.Text ( s.name || 'ukn' ),
-      fontFamily: 'monospace', fontSize:'10px', fill: 'white'
+    [name,fill] = @labelStyle s
+    @gfx.addChild l = @label[s.id] = new PIXI.Text name, fontFamily: 'monospace', fontSize:'10px', fill: fill
+    l.$obj = s
+    null
 
-  removeLabel: -> (s) => if @label[s.id]
+  removeLabel: -> (s) =>
+    return unless l= @label[s.id]
     @gfx.removeChild @label[s.id]
-    delete @label[s.id]
+    delete           @label[s.id]
+    # HOTFIX
+    @gfx.children.splice @gfx.children.indexOf l
+    l.visible = no
+    # HOTFIX
+    l.destroy()
 
-  renderRect:   -> if ( pl = VEHICLE )
-    if @fullscreen
-      W = min WIDTH, HEIGHT; W2 = W/2-100; W2R = WDB2; H2R = HGB2
-      @gfx.position.set 0,0 unless @gfx.position[0] is 0
-    else
-      W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 50
-      @gfx.position.set WDB2 + 10, HEIGHT - 135
-    px = pl.x; py = pl.y
-    ( g = @gfx ).clear()
-    g.fillAlpha = 0.2
-    for s in $obj.list
-      w = max 1, min 2, s.size * 100 / @scale
-      x = max 0, min W - 5, W2 + (s.x - px ) / @scale
-      y = max 0, min H - 5, H2 + (s.y - py ) / @scale
-      g.beginFill if s is TARGET then 0xFF0000 else @color[s.constructor.name] || 0xFFFFFF
-      # g.endFill g.drawRect v[0] + W2 - w/2, v[1] + H2 - w/2, w, w
-      g.endFill g.drawCircle x, y, w
-      #l[s.id].position.set x, y if l[s.id]
-
-  renderCircle: -> if ( pl = VEHICLE )
-    return if @nextUpdate > TIME; @nextUpdate = TIME + if @scale < 1024 then TICK else 250
+  render: ->
+    return unless pl = VEHICLE
     if @fullscreen
       W = min WIDTH, HEIGHT; W2 = W/2-150; W2R = WDB2; H2R = HGB2
       @gfx.position.set 0,0 unless @gfx.position[0] is 0
     else
-      W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 50
-      @gfx.position.set WDB2 + 10, HEIGHT - 135
+      W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 100
+      @gfx.position.set WDB2 - 100, HEIGHT - 335
+    lb = @label
     px = pl.x; py = pl.y
     ( g = @gfx ).clear()
     g.fillAlpha = 0.2
-    for s in $obj.list
+    canHazOrbit = Array.uniq [TARGET,VEHICLE].concat Object.values Target.hostile
+    canHazOrbit.map ( s )-> canHazOrbit.push s.state.relto if s.state.relto
+    canHazOrbit = Array.uniq canHazOrbit
+    skipId = canHazOrbit.map (i)-> i.id
+    for s in canHazOrbit
       w = max 1, min 2, s.size * 100 / @scale
       l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
       v = $v.mult $v.normalize(v), l
+      lb[s.id].position.set v[0]+W2R, v[1]+H2R if lb[s.id]
       if s.state.S is $orbit and Scanner.orbits
         o = s.state.orbit / @scale
         ol = min W2-5, ( $v.mag ov = [ s.state.relto.x - px, s.state.relto.y - py ] ) / @scale
@@ -98,10 +125,14 @@ $static 'Scanner', new class ScannerRenderer
         if o + ol < W2
           g.lineStyle 2, @color.Orbit
           g.endFill g.drawCircle ov[0]+W2R, ov[1]+H2R, o
-      g.beginFill if s is TARGET then 0xFF0000 else @color[s.constructor.name] || 0xFFFFFF
-      # g.endFill g.drawRect v[0] + W2 - w/2, v[1] + H2 - w/2, w, w
-      g.endFill g.drawCircle v[0]+W2R, v[1]+H2R, w
-      #l[s.id].position.set x, y if l[s.id]
+    # TODO: more inRange magic
+    # return if @nextUpdate > TIME; @nextUpdate = TIME + if @scale < 1024 then TICK else 250
+    for s in $obj.list
+      continue unless -1 is skipId.indexOf s.id
+      w = max 1, min 2, s.size * 100 / @scale
+      l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
+      v = $v.mult $v.normalize(v), l
+      lb[s.id].position.set v[0]+W2R, v[1]+H2R if lb[s.id]
     null
 
   toggleFS: ->

@@ -76,7 +76,7 @@ $static 'HUD', new class HUDRenderer
       Sprite.resize()
       clearTimeout tgtHandler.timer
       tgtHandler.timer = setTimeout ( ->
-        if Target.hostile[TARGET.id] then s.tint = 0xFF0000
+        if Target.hostile[t.id] then s.tint = 0xFF0000
         else if t.npc  then s.tint = 0xFFFF00
         else if t.ally then s.tint = 0x00FF00
         else s.tint = 0xFFFFFF
@@ -99,7 +99,8 @@ $static 'HUD', new class HUDRenderer
     @frame++
     dir = ((VEHICLE.d + 180) % 360) / RAD
     radius  = VEHICLE.size / 2 + 10
-
+    fox = WDB2 + 55; foy = HEIGHT - 85
+    # fox = WDB2; foy = HGB2 if Scanner.fullscreen
     # STATS
     g.clear()
     unless VEHICLE.dummy
@@ -111,22 +112,39 @@ $static 'HUD', new class HUDRenderer
       g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 - 105, HEIGHT - 20, VEHICLE.shield / VEHICLE.shieldMax * 100, 10
       g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 - 105, HEIGHT - 10, 100, 10
       g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 - 105, HEIGHT - 10, VEHICLE.armour / VEHICLE.armourMax * 100, 10
-    # DIR
+    if t = TARGET
+      g.lineStyle 0, 0x0000FF, 0
+      g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 + 5, HEIGHT - 20, 100, 10
+      g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 + 5, HEIGHT - 20, t.shield / t.shieldMax * 100, 10
+      g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 + 5, HEIGHT - 10, 100, 10
+      g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 + 5, HEIGHT - 10, t.armour / t.armourMax * 100, 10
+    # DIR-POINTER
     g.beginFill 0, 0
     g.lineStyle 3, 0xFFFF00, 1
     g.moveTo WDB2 - cos(dir) * radius,       HGB2 - sin(dir) * radius
     g.lineTo WDB2 - cos(dir) * radius * 1.1, HGB2 - sin(dir) * radius * 1.1
     g.endFill()
-    # SPEED
-    g.beginFill 0, 0
-    g.lineStyle 1.5, 0xFF0000, 1
-    g.moveTo WDB2, HGB2
-    g.lineTo WDB2 + VEHICLE.m[0], HGB2 + VEHICLE.m[1]
-    g.endFill()
-
-    # TARGET
-    if s = TARGET
-      dir = NavCom.relAngle VEHICLE, s
+    unless t
+      # MY-SPEED relto $obj[0]
+      m = VEHICLE.m.slice()
+      l = 50 / Speed.max * $v.mag(m)
+      m = $v.mult $v.normalize(m), l
+      g.beginFill 0, 0
+      g.lineStyle 1.5, 0xFF0000, 1
+      g.moveTo fox, foy
+      g.lineTo fox + m[0], foy + m[1]
+      g.endFill()
+    else # HAVE TARGET
+      dir = NavCom.relAngle VEHICLE, t
+      # MY-SPEED relto
+      m = $v.sub VEHICLE.m.slice(), t.m
+      l = 50 / Speed.max * $v.mag(m)
+      m = $v.mult $v.normalize(m), l
+      g.beginFill 0, 0
+      g.lineStyle 1.5, 0xFF0000, 1
+      g.moveTo fox, foy
+      g.lineTo fox + m[0], foy + m[1]
+      g.endFill()
       # - POINTER
       g.beginFill 0, 0
       g.lineStyle 3, 0xFF0000, 1
@@ -134,36 +152,39 @@ $static 'HUD', new class HUDRenderer
       g.lineTo WDB2 - cos(dir) * radius * 1.1, HGB2 - sin(dir) * radius * 1.1
       g.endFill()
       # - FORCE
+      vec = NavCom.steer(VEHICLE,t,'pursue')
+      m = $v.sub t.m.slice(), VEHICLE.m
+      l = 50 / Speed.max * $v.mag(m)
+      m = $v.mult $v.normalize(m), l
       g.beginFill 0, 0
       g.lineStyle 1.5, 0xFFFF00, 1
-      g.moveTo WDB2 - cos(dir) * radius * 1.1,          HGB2 - sin(dir) * radius * 1.1
-      g.lineTo WDB2 - cos(dir) * radius * 1.1 + s.m[0], HGB2 - sin(dir) * radius * 1.1 + s.m[1]
+      g.moveTo fox,        foy
+      g.lineTo fox + m[0], foy + m[1]
       g.endFill()
       # - GUIDE - pursuit
-      vec = NavCom.steer(VEHICLE,s,'pursue')
+      vec = NavCom.steer(VEHICLE,t,'pursue')
+      m = vec.force.slice()
+      l = 25 / Speed.max * $v.mag(m)
+      m = $v.mult $v.normalize(m), l
       g.beginFill 0, 0
       g.lineStyle 1, 0xaaaaFF, 0.8
-      g.moveTo WDB2, HGB2
-      g.lineTo (bsx = WDB2 + vec.force[0]), (bsy = HGB2 + vec.force[1])
+      g.moveTo fox, foy
+      g.lineTo (bsx = fox + m[0]), (bsy = foy + m[1])
       g.endFill()
       if vec.approach_force
+        m = vec.approach_force.slice()
+        l = 25 / Speed.max * $v.mag(m)
+        m = $v.mult $v.normalize(m), l
         g.beginFill 0, 0
         g.lineStyle 1, 0x0000FF, 0.8
         g.moveTo bsx, bsy
-        g.lineTo bsx + vec.approach_force[0], bsy + vec.approach_force[1]
+        g.lineTo bsx + m[0], bsy + m[1]
         g.endFill()
-
+      # ???
       g.beginFill 0, 0
-      g.moveTo WDB2 - cos(vec.rad) * radius,       HGB2 - sin(vec.rad) * radius
+      g.moveTo fox - cos(vec.rad) * radius,       foy - sin(vec.rad) * radius
       g.lineStyle 1, 0x0000FF, 1
-      g.lineTo WDB2 - cos(vec.rad) * radius * 1.1, HGB2 - sin(vec.rad) * radius * 1.1
-
-      # STATS
-      g.lineStyle 0, 0x0000FF, 0
-      g.beginFill(0x0000FF,0.3); g.endFill g.drawRect WDB2 + 5, HEIGHT - 20, 100, 10
-      g.beginFill(0x0000FF,1.0); g.endFill g.drawRect WDB2 + 5, HEIGHT - 20, s.shield / s.shieldMax * 100, 10
-      g.beginFill(0xFFFF00,0.3); g.endFill g.drawRect WDB2 + 5, HEIGHT - 10, 100, 10
-      g.beginFill(0xFFFF00,1.0); g.endFill g.drawRect WDB2 + 5, HEIGHT - 10, s.armour / s.armourMax * 100, 10
+      g.lineTo fox - cos(vec.rad) * radius * 1.1, foy - sin(vec.rad) * radius * 1.1
 
     # TEXT
     if ( p = NUU.player )

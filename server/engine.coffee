@@ -63,18 +63,20 @@ NUU.init =->
   # Load stellars
   console.log 'init:stars'
   for i in rules.stars
+    # [ id, Constructor, name, sprite, orbit, state, relto, orbitEcc ] = i
     rand  = random() * TAU
-    relto = $obj.byId[i[5]] || x:0,y:0,update:$void
+    relto = $obj.byId[i[6]] || x:0,y:0,update:$void
     relto.update()
-    m = [0,min 5,   max 1,  i[3] % 5]
-    if i[3] > 100000   then m = [0,min 19,  max 10,  i[3] % 19]
-    if i[3] > 1000000  then m = [0,min 99,  max 20,  i[3] % 99]
-    if i[3] > 10000000 then m = [0,min 199, max 100, i[3] % 199]
-    new Stellar id:i[0], name:i[1], sprite:i[2], state:
-      S:i[4]
+    m = [0,min 5,   max 1,  i[4] % 5]
+    if i[4] > 100000   then m = [0,min 19,  max 10,  i[4] % 19]
+    if i[4] > 1000000  then m = [0,min 99,  max 20,  i[4] % 99]
+    if i[4] > 10000000 then m = [0,min 199, max 100, i[4] % 199]
+    Constructor = i[1]
+    new Constructor id:i[0], name:i[2], sprite:i[3], state:
+      S:i[5]
       relto:relto# i[5]
-      x:relto.x + cos(rand) * i[3]
-      y:relto.y + sin(rand) * i[3]
+      x:relto.x + cos(rand) * i[4]
+      y:relto.y + sin(rand) * i[4]
       m:m
   console.log 'init:rules'
   rules @

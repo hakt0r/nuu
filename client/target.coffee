@@ -29,17 +29,17 @@ NUU.on 'ship:destroyed', (v) ->
   null
 
 NET.on 'hostile', addHostile = (id)->
-  if Array.isArray id
-    Object.empty Target.hostile
-    id.map (i)->
-      return console.log 'hostile:unknown', i unless v = $obj.byId[i]
-      return if v.destructing
-      Target.hostile[v.id] = v
-  else
-    return console.log 'hostile:unknown', id unless v = $obj.byId[id]
+  doAdd = (i)->
+    return console.log 'hostile:unknown', i unless v = $obj.byId[i]
     return if v.destructing
     Target.hostile[v.id] = v
+    app.emit 'hostile', i
+  if Array.isArray id
+    Object.empty Target.hostile
+    id.map doAdd
+  else doAdd id
   Target.types[0] = Target.hostile
+  app.emit 'hostiles', Target.hostile
   do Target.enemy
 
 window.TARGET = null
@@ -55,8 +55,8 @@ $public class Target
 Target.widget = ->
   HUD.widget 'target', "#{Target.mode}", yes
 
-Target.set = (target,callback)->
-  return NUU.emit 'newTarget' unless window.TARGET = target
+Target.set = (target,callback,old=TARGET)->
+  return NUU.emit 'newTarget', null, old unless window.TARGET = target
   if Target.class is 1 then Target.mode = 'dock'
   if Target.class is 2
     if TARGET and TARGET.constructor.name is 'Stellar'
@@ -67,7 +67,7 @@ Target.set = (target,callback)->
   return console.log '$target:nx:ks' unless ks = Object.keys cl
   Target.id = if -1 is id = ks.indexOf '' + target.id then 0 else id
   callback TARGET if callback? and typeof callback is 'function'
-  NUU.emit 'newTarget', target
+  NUU.emit 'newTarget', target, old
   return TARGET
 
 Target.mutate = (fnc)-> again = (callback,skipSelf=false)->

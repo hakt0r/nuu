@@ -33,7 +33,10 @@ $static 'isClient', yes
 $static 'isServer', no
 $static 'debug', no
 
-$static 'VEHICLE', dummy:yes, d:0, x:0, y:0, m: [0,0], update: (->), updateSprite: (->), state:S:'none'
+$static 'DUMMY', dummy:yes, id:0, d:0, x:0, y:0, m: [0,0], update: (->), updateSprite: (->), state:S:'none'
+$static 'VEHICLE',    DUMMY
+$static 'TARGET',     null
+$static 'SHORTRANGE', {}
 
 $static 'WIDTH',  640
 $static 'HEIGHT', 480

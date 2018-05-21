@@ -31,7 +31,13 @@
 
 ###
 
-String.filename = (p)-> p.replace(/.*\//, '').replace(/\..*/,'')
+PIXI.bringToFront = (sprite, parent) ->
+  sprite = if typeof sprite != 'undefined' then sprite.target or sprite else this
+  parent = parent or sprite.parent or 'children': false
+  return unless chd = parent.children
+  return unless -1 isnt idx = chd.indexOf sprite
+  chd.push sprite
+  return
 
 movieCache = {}
 $static 'movieFactory', (sprite, url, _loop) ->
@@ -128,8 +134,8 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     v.sprite.position.set hw - r, hh - r
 
   select: (timestamp) ->
-    W = WIDTH  * 4 # TODO: EventHorizon
-    H = HEIGHT * 4 # TODO: EventHorizon
+    W = WIDTH  * 10 # TODO: EventHorizon
+    H = HEIGHT * 10 # TODO: EventHorizon
     VEHICLE.update()
     { x,y } = VEHICLE
     # destructor-aware loop
@@ -142,7 +148,16 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
         if s.ttlFinal
           s.destructor(); length--; i--
         continue
-      if -W<(s.x-x)<W and -H<(s.y-y)<H then s.show() else s.hide()
+      if -W<(s.x-x)<W and -H<(s.y-y)<H
+        continue if SHORTRANGE[s.id]
+        SHORTRANGE[s.id] = s
+        app.emit '$obj:inRange', s
+      else
+        continue unless SHORTRANGE[s.id]
+        delete SHORTRANGE[s.id]
+        app.emit '$obj:outRange', s
+
+    null
 
   animate: (timestamp) ->
     window.TIME  = NUU.time()

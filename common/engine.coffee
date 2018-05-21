@@ -20,6 +20,9 @@
 
 ###
 
+Array.uniq = (a)->
+  a.filter (v,i,s)-> v? and s.indexOf v is i
+
 Array.empty = (a)->
   a.pop() while a.length > 0
   a
@@ -27,6 +30,9 @@ Array.empty = (a)->
 Object.empty = (o)->
   delete o[k] for k of o
   o
+
+String.filename = (p)->
+  p.replace(/.*\//, '').replace(/\..*/,'')
 
 console.colorDump = (opts={})->
   a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )
