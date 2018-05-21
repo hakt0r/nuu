@@ -73,6 +73,7 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
       0,0,rid])
 
   macro:(name,key,d10,func)->
+    app.settings.bind = {} unless app.settings.bind?
     key = app.settings.bind[name] || key
     console.log key, name, app.settings.bind[name]? if debug
     @macro[name] = func
