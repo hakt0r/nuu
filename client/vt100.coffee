@@ -102,7 +102,7 @@ $public class VT100 extends EventEmitter
     Sprite.stage.addChild @frame
     @focused = yes
     Kbd.unfocus()
-    $(window).on 'keydown', @keyDown
+    window.addEventListener 'keydown', @keyDown
     @draw()
     requestAnimationFrame @animation = =>
       @frame.alpha += 0.1
@@ -113,7 +113,7 @@ $public class VT100 extends EventEmitter
   unfocus: =>
     return unless @focused
     @focused = no
-    $(window).off 'keydown', @keyDown
+    window.removeEventListener 'keydown', @keyDown
     Kbd.focus()
     @draw()
     requestAnimationFrame @animation = =>
@@ -137,9 +137,12 @@ $public class VT100 extends EventEmitter
     true
 
   keyDown: (e) =>
+    # allow some browser-wide shortcuts that would otherwise not work
+    return if e.ctrlKey and e.code is 'KeyR' if isClient
+    return if e.ctrlKey and e.code is 'KeyL' if isClient
     code = e.keyCode
     c = @cursor.x
-    # console.log Kbd.cmap[code], code
+    console.log Kbd.cmap[code], code, e.code, e.ctrlKey, e
     if Kbd.cmap[code] is 'return'
       if (fnc = @onReturn)?
         i = @inputBuffer

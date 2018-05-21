@@ -97,6 +97,11 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     @state[key] = off
 
   __dn: (e) =>
+    # allow some browser-wide shortcuts that would otherwise not work
+    return if e.ctrlKey and e.code is 'KeyR'                if isClient
+    return if e.ctrlKey and e.code is 'KeyL'                if isClient
+    # allow the inspector; but only in debug mode ;)
+    return if e.ctrlKey and e.shiftKey and e.code is 'KeyI' if debug
     code = e.code
     code = 'c'+code if e.ctrlKey
     code = 'a'+code if e.altKey
