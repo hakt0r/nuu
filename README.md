@@ -1,8 +1,15 @@
 ## nuu
-NUU is to be a (massive) multiplayer game of space trade and combat.
+NUU is to be an open-source (massive) multiplayer game of space trade and combat: [demo](http://nuu.hakt0r.de/). That means it's free :P
 
-It's **not finished yet** and probably will stay that way for a long time ;)
-Still it's somewhat playable and I do my best to not break master :D
+It's **not finished yet, not secure, okay for LAN** and probably will stay that way for a long time ;)
+Still **somewhat playable** and I do my best to not break master :D
+100% pure JavaScript in its current incarnation, runs a NodeJS backend and targets Chrom(e|ium) as the frontend.
+
+It's excellent open-source cousin [naev](http://blog.naev.org/) currently lends NUU it's **assets**. It's a very nice singleplayer game packed with ages of fun and it is still being extended and improved.
+
+Like **naev**, NUU heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money.
+
+A **strong pointer** to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video_game)) should also be cast, explaining the continuous efforts to enable gravity in a playable way :) (at least we have funkey orbits now :>)
 
 ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot.png "NUU in action - screenshot")
 
@@ -14,15 +21,9 @@ Still it's somewhat playable and I do my best to not break master :D
     - Dock with another ship, or let other players dock
     - Take the helm, man turret, or sit in a fighter ready to be launched into mayhem
 
-### History / Pointers
-NUU is heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money.
-
-It's excellent open-source clone [naev](http://blog.naev.org/) currently lends NUU it's **assets**. It's a very nice singleplayer game packed with weeks of fun and it is still being extended and improved.
-
-A **strong** pointer to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video_game)) should also be extended, explaining the continuous efforts to enable gravity in a playable way :)
-
 ### Building
 
+    sudo npm -g install coffeescript
     npm install
     coffee tools/build.coffee deps
 
@@ -81,5 +82,7 @@ http://www.gnu.org/licenses/gpl.html
 
 ### Clarifications regarding commercial use
 
-Besides the fact that NUU is **not production-quality code** and is not recommended for commercial use at the time being, you are - within the boundaries of the GNU GPLv3 - explicitly allowed to run and modify NUU for commercial purposes.
+Besides the fact that NUU is **not production-quality code** and is not recommended for commercial use at the time being, you are - within the boundaries of the GNU GPLv3 - explicitly allowed to run and modify NUU for commercial purposes. This does not include any assets like images or sounds, which have their own respective licenses.
 Keep in mind to share patches to the source-code, uphold the license, and respect the attribution rights of the original authors of code and assets.
+
+**TLDR: This game is mostly an engine, any derivate engine must be GPLv3 or higher. Simple as pie.**
