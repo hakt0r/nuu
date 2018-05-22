@@ -160,6 +160,7 @@ State.register 'moving', class moving extends State
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m
 
 State.register 'accelerating', class accelerating extends State
+  acceleration: true
   curm: null
   convert: ->
     @o.m = @curm = @m.slice() || []

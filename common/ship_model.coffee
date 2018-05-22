@@ -45,7 +45,7 @@ Ship::updateMods = -> # calculate mods
 
   # scale model values
   @armourMax = @armour = @stats.armour / 1000
-  @fuelMax   = @fuel   = @fuel * 1000
+  @fuelMax   = @fuel   = @fuel * 10
   @turn      = @turn    / 10
   @thrust    = @thrust  / 100
 
@@ -56,12 +56,16 @@ Ship::updateMods = -> # calculate mods
   $worker.push @model = =>
     return 1000 if @destructing
     # return 1000 if @fuel <= 0
-    @fuel -= max 0, @state.a if @state.a
+    @fuel += @fuelRegen || 0.5
+    @fuel -= max 0, @state.a if @state.acceleration
     unless @shield is @shieldMax and @energy is @energyMax
       @energy = min @energyMax, @energy + @reactorOut
       @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
       @energy -= add
-    return unless isServer and @mount[0] and lastUpdate + 3000 < TIME
+    @fuel = 0 if @fuel <= 0
+    return unless isServer
+    @setState S:$moving if @fuel is 0 and @state.acceleration
+    return unless @mount[0] and lastUpdate + 3000 < TIME
     NET.health.write @
     lastUpdate = TIME
     return

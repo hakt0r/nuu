@@ -88,20 +88,6 @@ NET.define 0,'JSON',
     # console.log 'NET.json>', msg
     NET.send NET.JSON + JSON.stringify msg
 
-NET.on 'jump', (target,src) ->
-  o = src.handle.vehicle
-  if ( target = $obj.byId[parseInt target] )
-    o.accel = o.boost = o.retro = o.left = o.right = no
-    $static.list.TIME = Date.now()
-    target.update()
-    o.setState
-      S: $moving
-      x: parseInt target.x
-      y: parseInt target.y
-      m: target.m.slice()
-      relto: target.id
-    NET.state.write o
-
 ###
   STATE: Change ships motion and attachment
 ###

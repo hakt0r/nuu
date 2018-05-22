@@ -41,6 +41,25 @@ NET.on 'switchShip', (msg,src) ->
   u.enterVehicle src, vehicle, 0, no
   null
 
+NET.on 'jump', (target,src) ->
+  return unless o = src.handle.vehicle
+  return unless target = $obj.byId[parseInt target]
+  # fuel cost
+  return unless o.fuel > 50
+  o.fuel -= 50; NET.health.write o
+  # the jump
+  o.accel = o.boost = o.retro = o.left = o.right = no
+  $static.list.TIME = Date.now()
+  target.update()
+  o.setState
+    S: $moving
+    x: parseInt target.x - 1000 + random()*500
+    y: parseInt target.y - 1000 + random()*500
+    m: target.m.slice()
+    relto: target.id
+  # NET.state.write o # implied
+  null
+
 NUU.users = []
 
 UserDB = Db 'UserDb',
