@@ -166,7 +166,7 @@ User::action = (src,t,mode) ->
     when 'dock' then if dist < zone
       return unless t.mount
       console.log 'dock', t.id
-      o.destructor() if o.size < t.size / 2
+      o.destructor() # if o.fighter or o.size < t.size / 2
       @enterVehicle src, t, 0, no
     when 'land'
       return if t.mount # cant attach to vehicles
