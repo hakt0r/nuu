@@ -38,7 +38,7 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
   d10:
     execute:          "Execute something"
     accel:            "Accelerate"
-    retro:            "Decellerate"
+    retro:            "Decelerate"
     steerLeft:        "Turn left"
     steerRight:       "Turn right"
     autopilot:        "Turn to target"

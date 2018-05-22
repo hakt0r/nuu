@@ -152,7 +152,7 @@ Target.captureClosest = ->
   Target.closest (t)-> capture t if t?
   null
 
-Kbd.macro 'targetNothing',   'sKeyW', 'Disable targeting scanners', Target.nothing
+Kbd.macro 'targetNothing',   'sKeyW', 'Target nothing',             Target.nothing
 Kbd.macro 'targetNext',      'KeyD',  'Target next',                Target.next
 Kbd.macro 'targetClassNext', 'KeyW',  'Target next class',          Target.nextClass
 Kbd.macro 'targetPrev',      'KeyA',  'Target prev',                Target.prev

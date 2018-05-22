@@ -5,21 +5,24 @@ It's **not finished yet, not secure, okay for LAN** and probably will stay that 
 Still **somewhat playable** and I do my best to not break master :D
 100% pure JavaScript in its current incarnation, runs a NodeJS backend and targets Chrom(e|ium) as the frontend.
 
-It's excellent open-source cousin [naev](http://blog.naev.org/) currently lends NUU it's **assets**. It's a very nice singleplayer game packed with ages of fun and it is still being extended and improved.
+It's excellent open-source cousin [naev](http://blog.naev.org/) currently lends NUU it's **assets**. It's a very nice singleplayer game packed with ages of fun and it is still being extended and improved. Like **naev**, NUU is heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money. And just so it happens - naev uses assets which in turn are partly attributable to the [Vega Strike](http://vegastrike.sourceforge.net) project. So everyone's related :> A **strong pointer** to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video_game)) should also be cast, explaining the continuous efforts to enable gravity in a playable way :) (at least we have funkey orbits now :>)
 
-Like **naev**, NUU heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money.
-
-A **strong pointer** to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video_game)) should also be cast, explaining the continuous efforts to enable gravity in a playable way :) (at least we have funkey orbits now :>)
-
-![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot.png "NUU in action - screenshot")
+| **Screenshots** | |
+| :--------: | :--------: |
+| ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot0.png "NUU in action - screenshot") | ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot1.png "NUU in action - screenshot") |
 
 ### Features
+  * Missiles, Beams, Projectiles and Fighter Bays
   * Trader AI's for Loot
-  * Fighter Bays
     - AI escorts or real players
+  * EVA using your EXS-01 Exosuit
   * Multiplayer Ships
-    - Dock with another ship, or let other players dock
+    - Dock with another ship, let other players dock, or just EVA over :D
     - Take the helm, man turret, or sit in a fighter ready to be launched into mayhem
+  * Burns and jumps consume fuel, regeneration
+  * Ships drop LOOT
+  * Asteroids can be mined for resources
+  * Jump to distant targets - if you can spare the fuel
 
 ### Building
 
@@ -43,6 +46,76 @@ To debug the server (with the nodejs debugger) just replace **run** with **debug
   * Enable **WebGL** for the best gfx-experience (chrome://flags)
   * The first login registers your user (blank password works)
   * Press 'h' for help ;)
+
+### Mouse
+
+* Toggle mouse-turn (on by default) using the Z button (on QWERTY)
+
+| **Left Button**                 | |
+| --------: | :-------------------- |
+| **none**  | Accelerate            |
+| **ctrl**  | Retro                 |
+| **shift** | Boost                 |
+| **alt**   | Match target speed    |
+
+| **Middle Button**               | |
+| --------: | :-------------------- |
+| **none**  | Target closest        |
+| **ctrl**  | Target closest enemy  |
+| **shift** | Target next class     |
+| **alt**   | Toggle scanner        |
+
+| **Right Button**                | |
+| --------: | :-------------------- |
+| **none**  | Trigger primary       |
+| **ctrl**  | Trigger secondary     |
+| **shift** | Weapon next primary   |
+| **alt**   | Weapon next secondary |
+
+### Keyboard
+
+These are the default keybindings as found on as US/QWERTY-keyboard. You can change them in the Help-dialog.
+
+| **Key**         | **Function**                |
+| --------------: | :-------------------------- |
+| shift-ArrowUp   | Boost                       |
+| shift-Z         | Autopilot                   |
+| C               | Capture closest             |
+| shift-C         | Capture target              |
+| ArrowDown       | Decelerate                  |
+| J               | Jump to target              |
+| Q               | Land / Dock / Enter Orbit   |
+| shift-Tab       | Launch / Undock             |
+| shift-Q         | Leave vehicle               |
+| M               | Next mount                  |
+| Digit1          | Next weapon (primary)       |
+| Digit2          | Next weapon (secondary)     |
+| L               | Open Settings dialog        |
+| shift-Digit1    | Previous weapon (primary)   |
+| shift-Digit2    | Previous weapon (secondary) |
+| Space           | Primary trigger             |
+| X               | Secondary trigger           |
+| shift-Enter     | Show / hide console         |
+| shift-Slash     | Show about screen / License |
+| K               | Show equipment screen       |
+| H               | Show help                   |
+| R               | Target closest asteroid     |
+| E               | Target closest enemy        |
+| U               | Target closest target       |
+| D               | Target next                 |
+| W               | Target next class           |
+| shift-W         | Target nothing              |
+| A               | Target prev                 |
+| S               | Target prev class           |
+| Tab             | Toggle Land / Dock / Orbit  |
+| Z               | Toggle mouseturning         |
+| Enter           | Toggle Scanner              |
+| alt-Enter       | Toggle Scanner FS           |
+| ArrowLeft       | Turn left                   |
+| ArrowRight      | Turn right                  |
+| Equal           | Zoom scanner in             |
+| Minus           | Zoom scanner out            |
+| shift-Backquote | Debug                       |
 
 ### Copyrights
 

@@ -45,8 +45,9 @@ NET.on 'jump', (target,src) ->
   return unless o = src.handle.vehicle
   return unless target = $obj.byId[parseInt target]
   # fuel cost
-  return unless o.fuel > 50
-  o.fuel -= 50; NET.health.write o
+  console.log o.fuel, $dist o, target
+  return unless o.fuel > 500
+  o.fuel -= 500; NET.health.write o
   # the jump
   o.accel = o.boost = o.retro = o.left = o.right = no
   $static.list.TIME = Date.now()
