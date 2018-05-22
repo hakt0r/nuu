@@ -155,29 +155,30 @@ User::action = (src,t,mode) ->
       if o.state.S is $orbit
         o.setState S:$moving, x:o.x, y:o.y, m:o.m.slice()
       else o.setState S:$moving, x:o.x, y:o.y, m:t.m.slice()
-      NUU.emit 'ship:launch', o.vehicle, o
+      NUU.emit 'ship:launch', o.vehicle, o if debug
       o.locked = no
     when 'capture'
       if dist < zone
         NUU.emit 'ship:collect', o.vehicle, t, o
-        console.log o.id, 'collected', t.id, dist, t.size
+        console.log o.id, 'collected', t.id, dist, t.size if debug
         t.destructor()
-      else console.log 'capture', 'too far out', dist, o.size, t.size
+      else console.log 'capture', 'too far out', dist, o.size, t.size if debug
     when 'dock' then if dist < zone
       return unless t.mount
       console.log 'dock', t.id
-      o.destructor() # if o.fighter or o.size < t.size / 2
+      # TODO:hook: re-add ammo if fighter
+      o.destructor()
       @enterVehicle src, t, 0, no
     when 'land'
       return if t.mount # cant attach to vehicles
       if dist < zone
-        console.log 'land', t.id
+        console.log 'land', t.id if debug
         o.setState S:$relative,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
         o.locked = yes
         NUU.emit 'ship:land', o.vehicle, t, o
       else console.log 'land$', 'too far', dist, dists, zone, t.state.toJSON()
     when 'orbit' then if dist < t.size
-      console.log 'orbit', t.id
+      console.log 'orbit', t.id if debug
       o.locked = yes
       o.setState S:$orbit,orbit:dist,relto:t.id
     else console.log 'orbit/dock/land/enter', 'failed', mode, o.name, t.name
