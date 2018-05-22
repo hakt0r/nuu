@@ -3,7 +3,7 @@
     "colors",
     "crypto",
     "express",
-    "express-ws",
+    "ws",
     "fs",
     "path",
     "util",
@@ -21,6 +21,7 @@
     "user",
     "engine",
     "console",
+    "websocket",
     "server"
   ]
 }

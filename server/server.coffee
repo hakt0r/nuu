@@ -85,21 +85,22 @@ for lib in deps.server.sources
 $static 'app', app = express()
 
 ## Initialize WebSockets
-ws = require('express-ws') app
+ws = $websocket app
 app.ws "/nuu", (c, req) ->
   console.log 'ws'.yellow, 'connection'.grey
   c.json = (msg) -> c.send NET.JSON + JSON.stringify msg
   c.on "message", NET.route c
   c.on "error", (e) -> console.log 'ws'.yellow, 'error'.red, e
   # lag and jitter emulation # c.on "message", (msg) -> setTimeout (-> NET.route(c)(msg)), 100 # + Math.floor Math.random() * 40
-wss = ws.getWss '/nuu'
+wss = $websocket.server
+console.log wss.clients
 
 NUU.bincast = (data,origin) ->
-  wss.clients.map (c) ->
+  wss.clients.forEach (c) ->
     try c.send data catch error
       Array.remove wss.clients, c
 
-NUU.nearcast = NUU.bincast = (data,o) -> wss.clients.map (c) ->
+NUU.nearcast = NUU.bincast = (data,o) -> wss.clients.forEach (c) ->
   if o? and c.handle? and c.handle.vehicle? and o isnt c.handle.vehicle
     v = c.handle.vehicle
     return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
@@ -107,7 +108,7 @@ NUU.nearcast = NUU.bincast = (data,o) -> wss.clients.map (c) ->
 
 NUU.jsoncast = (data) ->
   data = NET.JSON + JSON.stringify data
-  wss.clients.map (c) ->
+  wss.clients.forEach (c) ->
     try c.send data catch error then Array.remove wss.clients, c
     null
   null
@@ -194,6 +195,8 @@ fs.open app.lockPath, 0, ->
 console.log 'server'.yellow, 'listen'.yellow, app.addr.red + ':' + app.port.toString().blue
 app.listen app.port, app.addr, ->
   console.log 'server'.yellow, 'ready'.green, app.addr.red + ':' + app.port.toString().blue
-  return unless app.chgid
-  process.setgid app.chgid
-  process.setuid app.chgid
+  if app.chgid
+    console.log 'server'.yellow, 'dropping privileges'.green
+    process.setgid app.chgid
+    process.setuid app.chgid
+  null
