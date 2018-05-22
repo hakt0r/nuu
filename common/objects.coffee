@@ -60,6 +60,7 @@ $public class $obj
     app.emit '$obj:add', @
 
   destructor: ->
+    @destructing = true # might be set already
     console.log 'destructor$', @id, @name if debug
     for i in @constructor.interfaces
       console.log 'destructor$', 'object', i.name if debug
@@ -111,22 +112,6 @@ $obj.register class Shootable extends $obj
   Some simple objects
 ###
 
-$obj.register class Debris extends $obj
-  @interfaces: [$obj,Collectable,Debris]
-  name: 'Debris'
-  toJSON: -> id:@id,key:@key,state:@state
-
-$obj.register class Cargo extends $obj
-  @interfaces: [$obj,Collectable,Debris]
-  name: 'Cargo Box'
-  item: null
-  ttlFinal: yes
-  constructor: (opts={})->
-    super opts
-    @ttl  = NUU.time() + 30000 unless @ttl
-    @item = Element.random()   unless @item
-  toJSON: -> id:@id,key:@key,state:@state,item:@item
-
 $obj.register class Stellar extends $obj
   @interfaces: [$obj,Stellar]
   toJSON: -> id:@id,key:@key,sprite:@sprite,state:@state,name:@name
@@ -142,3 +127,42 @@ $obj.register class Moon extends Stellar
 
 $obj.register class Station extends Stellar
   @interfaces: [$obj,Stellar]
+
+$obj.register class Debris extends $obj
+  @interfaces: [$obj,Shootable,Collectable,Debris]
+  name: 'Debris'
+  toJSON: -> id:@id,key:@key,state:@state
+
+$obj.register class Cargo extends $obj
+  @interfaces: [$obj,Shootable,Collectable,Debris]
+  name: 'Cargo Box'
+  item: null
+  ttlFinal: yes
+  constructor: (opts={})->
+    super opts
+    @ttl  = NUU.time() + 30000 unless @ttl
+    @item = Item.random() unless @item
+    @name = "[#{@item.name}]"
+  toJSON: -> id:@id,key:@key,state:@state,item:@item
+
+$obj.register class Asteroid extends $obj
+  @interfaces: [$obj,Shootable,Debris,Asteroid]
+  constructor: (opts) ->
+    unless opts
+      r    = 0.8 + random() / 5
+      phi  = random() * TAU
+      size = max 10, floor random() * 73
+      opts =
+        resource: ( Element.random() for i in [0...5] )
+        size: size
+        state:
+          S: $orbit
+          x: sqrt(r) * cos(phi) * 7000000000
+          y: sqrt(r) * sin(phi) * 7000000000
+          relto: 0
+    img = opts.size - 10
+    img = '0' + img if img < 10
+    opts.sprite = 'asteroid-D' + img
+    super opts
+    @name = 'roid-' + @id
+    @hp = 100

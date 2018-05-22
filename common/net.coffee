@@ -158,7 +158,7 @@ NET.define 3,'WEAP',
       return console.log 'WEAP:missing:sid' unless slot    = vehicle.slots.weapon[msg[2]]
       return console.log 'WEAP:missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
       action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
-      console.log action.red.inverse, vehicle.id if debug
+      console.log action, vehicle.id if debug
       slot.equip[action](null,vehicle,slot,target)
     server: (msg,src)->
       mode = msg[1]
@@ -212,8 +212,10 @@ NET.define 5,'MODS',
   read: client: (msg,src) ->
     mode = modsKey[msg[1]]
     vid  = msg.readUInt16LE 2
-    return console.log 'MODS:missing:vid', mode unless (ship = Ship.byId[vid])
-    NUU.emit "ship:" + mode, ship, msg.readUInt16LE(4), msg.readUInt16LE(6)
+    return console.log 'MODS:missing:vid', vid, mode unless ship = Shootable.byId[vid]
+    type = ship.constructor.name.toLowerCase() + ':'
+    ship.destructing = on if mode is 'destroyed'
+    NUU.emit '$obj:' + mode, ship, ship.shield = msg.readUInt16LE(4), ship.armour = msg.readUInt16LE(6)
   write: server: (ship,mod,a=0,b=0) ->
     msg = Buffer.from [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0, 0,0]
     msg.writeUInt16LE ship.id, 2

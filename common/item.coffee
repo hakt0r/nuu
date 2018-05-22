@@ -62,6 +62,9 @@ $public class Item
         Item.byType[type] = items.small
     NUU.emit 'init:items:done'
 
+Item.random = ->
+  Array.random Object.values Item.tpl
+
 $public class Outfit
   constructor: (name) ->
     tpl = Item.byName[name]

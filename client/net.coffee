@@ -102,7 +102,7 @@ class NET.Connection
   onerror: (e) =>
     console.log "NET.sock:error", e
     NUU.emit 'disconnect'
-    setTimeout ( => @connect @addr ), 1000
+    # setTimeout ( => @connect @addr ), 1000
 
 NET.login = (name, pass, callback) ->
   return console.log 'NOT IMPLEMENTED' if NET.Connection._?

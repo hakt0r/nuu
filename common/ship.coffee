@@ -21,7 +21,7 @@
 ###
 
 $obj.register class Ship extends $obj
-  @interfaces: [$obj,Ship]
+  @interfaces: [$obj,Ship,Shootable]
   @byName: {}
   @byTpl: {}
 
@@ -104,26 +104,6 @@ $obj.register class Ship extends $obj
     tg.slot = ws[tg.id].equip
     tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
     tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
-
-  hit: (src,wp) ->
-    return if @destructing
-    dmg = wp.stats
-    if @shield > 0
-      @shield -= dmg.penetrate
-      if @shield < 0
-        @shield = 0
-        @armour -= dmg.physical
-        NUU.emit 'ship:shieldsDown', @, src
-    else @armour -= dmg.penetrate + dmg.physical
-    if 0 < @armour < 25 and @disabled > 10
-      NUU.emit 'ship:disabled', @, src
-    else if @armour < 0
-      @armour = 0
-      @shield = 0
-      @destructing = true
-      NUU.emit 'ship:destroyed', @, src
-    NUU.emit 'ship:hit', @, src, @shield, @armour
-    NET.health.write @
 
   reset: ->
     @hostile = []

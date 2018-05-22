@@ -34,11 +34,8 @@ rules.server = ->
   NUU.on 'userLeft', (p) ->
     delete stats[p.vehicle.id]
 
-  NUU.on 'ship:hit', (ship,src) ->
-    NET.mods.write ship, 'hit', ship.shield, ship.armour
-
+  # NUU.on 'ship:hit', (ship,src) ->
   NUU.on 'ship:destroyed', (victim,perp) ->
-    NET.mods.write victim, 'destroyed', victim.id
     if victim.npc is yes then $timeout 4500, ->
       victim.dropLoot()
       victim.destructor()

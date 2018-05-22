@@ -30,21 +30,27 @@ $obj.register class Explosion extends $obj
     qs = @parent.size/4
     hs = @parent.size/2
     super
-      sprite: Array.random(Explosion.sizes)
+      sprite: Array.random Explosion.sizes
       state:
         S: $relative
         relto: @parent.id
-        x: -qs+Math.random()*hs
-        y: -qs+Math.random()*hs
+        x: -qs+random()*hs
+        y: -qs+random()*hs
     Sound['explosion0.wav'].play() if Sound.on
 
 $Animated Explosion, layer: 'fx', loop: no
 
 # A collage animation to 'splode ships and stuff :>
-$Animated.destroy = (v,t) -> for i in [0...25]
-  $Animated.explode v, Math.min(4000,Math.round(Math.random()*4000))
+$Animated.destroy = (v,t=4000,c=25) ->
+  $Animated.explode v, min(t,round(random()*t)) for i in [0...c]
+  null
 
-$Animated.explode = (v,t) -> setTimeout ( -> new Explosion v ), t
+$Animated.explode = (v,t) ->
+  setTimeout ( -> new Explosion v ), t
 
-NUU.on 'ship:hit',       (v) -> $Animated.explode v, 0
-NUU.on 'ship:destroyed', (v) -> $Animated.destroy v;    v.destructing = on
+NUU.on '$obj:hit', (v) ->
+  $Animated.explode v, 0
+
+NUU.on '$obj:destroyed', (v) ->
+  return $Animated.destroy v, 1500, 5 unless v.constructor.name is 'Ship'
+  return $Animated.destroy v

@@ -22,8 +22,7 @@
 
 NUU.on 'newTarget', (opts) -> Target.widget()
 
-NUU.on 'ship:destroyed', (v) ->
-  v.destructing = yes
+NUU.on '$obj:destroyed', (v) ->
   delete Target.hostile[k] for k,i of Target.hostile when i.id is v.id
   do Target.enemy          if TARGET? and v.id is TARGET.id
   null
@@ -49,8 +48,8 @@ $public class Target
   @class: 0
   @mode: 'land'
   @hostile: h = {}
-  @typeNames : ['hostile','ship','stellar','all','off']
-  @types : [h,Ship.byId,Stellar.byId,$obj.byId,[]]
+  @typeNames : ['hostile','ship','stellar','all','roid','off']
+  @types : [h,Ship.byId,Stellar.byId,$obj.byId,Asteroid.byId,[]]
 
 Target.widget = ->
   HUD.widget 'target', "#{Target.mode}", yes
@@ -144,18 +143,23 @@ Target.capture = capture = ->
   NET.action.write TARGET, 'capture'
   null
 
+Target.roid = ->
+  Target.class = 4
+  do Target.closest
+
 Target.captureClosest = ->
   Target.class = 3 # all
   Target.closest (t)-> capture t if t?
   null
 
 Kbd.macro 'targetNothing',   'sKeyW', 'Disable targeting scanners', Target.nothing
-Kbd.macro 'targetNext',      'KeyD',  'Next target',                Target.next
-Kbd.macro 'targetClassNext', 'KeyW',  'Next target class',          Target.nextClass
-Kbd.macro 'targetPrev',      'KeyA',  'Prev target',                Target.prev
-Kbd.macro 'targetClassPrev', 'KeyS',  'Previous target class',      Target.prevClass
-Kbd.macro 'targetClosest',   'KeyU',  'Closest target',             Target.closest
-Kbd.macro 'targetEnemy',     'KeyE',  'Closest enemy',              Target.enemy
+Kbd.macro 'targetNext',      'KeyD',  'Target next',                Target.next
+Kbd.macro 'targetClassNext', 'KeyW',  'Target next class',          Target.nextClass
+Kbd.macro 'targetPrev',      'KeyA',  'Target prev',                Target.prev
+Kbd.macro 'targetClassPrev', 'KeyS',  'Target prev class',          Target.prevClass
+Kbd.macro 'targetClosest',   'KeyU',  'Target closest target',      Target.closest
+Kbd.macro 'targetEnemy',     'KeyE',  'Target closest enemy',       Target.enemy
+Kbd.macro 'targetRoid',      'KeyR',  'Target closest asteroid',    Target.roid
 Kbd.macro 'targetMode',      'Tab',   'Toggle Land / Dock / Orbit', Target.toggleMode
 Kbd.macro 'launch',          'sTab',  'Launch / Undock',            Target.launch
 Kbd.macro 'orbit',           'KeyQ',  'Land / Dock / Enter Orbit',  Target.orbit
