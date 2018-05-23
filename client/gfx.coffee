@@ -88,7 +88,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @layer 'stel', new PIXI.Container
     @layer 'debr', new PIXI.Container
     @layer 'ship', new PIXI.Container
-    @layer 'weap', new PIXI.Graphics
+    @layer 'weap', new PIXI.Container
     @layer 'tile', new PIXI.Container
     @layer 'play', new PIXI.Container
     @layer 'fx',   new PIXI.Graphics
@@ -166,12 +166,12 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     window.OX = -VEHICLE.x + WDB2
     window.OY = -VEHICLE.y + HGB2
 
-    # SPEEDSCALE (REVIVAL)
-    if app.settings.gfx.speedScale
-      sc = 1 / ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
-      @bg.scale.x = @bg.scale.y = @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
-      @bg.position.x = @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
-      @bg.position.y = @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
+    # # SPEEDSCALE (REVIVAL)
+    # if app.settings.gfx.speedScale
+    #   sc = 1 / ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
+    #   @bg.scale.x = @bg.scale.y = @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
+    #   @bg.position.x = @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
+    #   @bg.position.y = @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
 
     # STARS
     [ mx, my ] = vectors.normalize Array::slice.call VEHICLE.m;
@@ -184,32 +184,26 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @parallax2.tilePosition.x -= mx * 1.5
     @parallax2.tilePosition.y -= my * 1.5
 
-    # clear weapons gfx area
-    @weap.clear()
-
-    # fastest case TODO: still?
     length = ( list = @visibleList ).length; i = -1
     while ++i < length
-      # loop reached
       ( s = list[i] ).updateSprite()
-      # draw beam weapon
-      if ( beam = Weapon.beam[s.id] ) and 0 < ( x = s.x + OX ) < WIDTH and 0 < ( y = s.y + OY ) < HEIGHT
-        d = s.d / RAD
-        @weap.beginFill 0xFF0000, 0.7
-        @weap.lineStyle 1+random(), 0xFF0000, 0.7
-        @weap.moveTo x, y
-        @weap.lineTo x + cos(d) * beam.range, y + sin(d) * beam.range
-        @weap.endFill()
+      continue unless beam = Weapon.beam[s.id]
+      sp = beam.sprite
+      sp.tilePosition.x += 0.5
+      sp.position.set s.x + OX, s.y + OY
+      sp.rotation = ( s.d + beam.dir ) / RAD
 
-    # draw projectiles
-    for s in Weapon.proj
-      ticks = (TIME - s.ms) / TICK
-      x = OX + s.sx + s.m[0] * ticks
-      y = OY + s.sy + s.m[1] * ticks
-      if 0 < x < WIDTH and 0 < y < HEIGHT
-        @weap.beginFill 0xFF0000, 0.7
-        @weap.drawCircle x-1, y-1, 3
-        @weap.endFill()
+    length = ( list = Weapon.proj ).length; i = -1
+    while ++i < length
+      s = list[i]
+      ticks = ( TIME - s.ms ) / TICK
+      x = floor s.sx + s.mx * ticks
+      y = floor s.sy + s.my * ticks
+      s.sprite.position.set x + OX, y + OY
+      if s.tt < TIME
+        Sprite.weap.removeChild s.sprite
+        list[i] = null
+    Weapon.proj = Weapon.proj.filter (i)-> i isnt null
 
     @renderHUD()     # if @renderHUD
     @renderScanner() # if ++@tick % 10 is 0

@@ -62,7 +62,8 @@ Ship::updateMods = -> # calculate mods
       @energy = min @energyMax, @energy + @reactorOut
       @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
       @energy -= add
-    @fuel = 0 if @fuel <= 0
+    @fuel = @fuelMax if @fuel > @fuelMax
+    @fuel = 0        if @fuel <= 0
     return unless isServer
     @setState S:$moving if @fuel is 0 and @state.acceleration
     return unless @mount[0] and lastUpdate + 3000 < TIME

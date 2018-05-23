@@ -25,65 +25,41 @@
   think of it as a factory
 ###
 
-prjId = 0
-
-class Projectile
-  id: null
-  src: null
-  weap: null
-  target: null
-  ms: null
-  tt: null
-  m: null
-  x: null
-  y: null
-  sx: null
-  sy: null
+detector = (perp,weap,ms,tt,sx,sy,mx,my) -> ->
+  return off if tt < TIME
+  for target in perp.hostile
+    ticks = ( TIME - ms ) / TICK
+    x = floor sx + mx * ticks
+    y = floor sy + my * ticks
+    continue if target.size < $dist (x:x,y:y), target
+    target.hit perp, weap if isServer
+    return off
+  return null
 
 Weapon.Projectile = ->
-  @cooldown = 1000
-  @release = $void
-  @trigger = (src,vehicle,slot,target)=>
-    if @release isnt $void
-      console.log 'emergency-release trigger'
-      do @release
-    @release = =>
-      console.log 'do-release' if debug
-      fire.stop = true
-      @release = $void
-    detector = (v) => =>
-      if v.tt < TIME
-        Array.remove Weapon.proj, v
-        v = null
-        return off
-      ticks = (TIME - v.ms) / TICK
-      v.x = floor(v.sx + v.m[0] * ticks)
-      v.y = floor(v.sy + v.m[1] * ticks)
-      if $dist(v,target) < target.size
-        target.hit(vehicle,v.weap) unless isClient
-        Array.remove Weapon.proj, v
-        return off
-      null
-    @release.fire = fire = =>
-      return off if fire.stop
-      vehicle.update()
-      Weapon.proj.push v = new Projectile
-      d = vehicle.d / RAD
-      cs = cos(d)
-      sn = sin(d)
-      v.id     = prjId++
-      v.src    = vehicle
-      v.weap   = slot.equip
-      v.target = target
-      v.ms     = TIME
-      v.tt     = TIME + ttl
-      v.m      = [ vehicle.m[0] + cs * spt, vehicle.m[1] + sn * spt ]
-      v.x = v.sx = floor vehicle.x # + slot.x * cs - slot.x * sn;
-      v.y = v.sy = floor vehicle.y # + slot.y * sn + slot.y * cs;
-      $worker.push detector v
-      NUU.emit 'shot', v
-      Weapon.hostility vehicle, target
-      @cooldown
-    ttl = @stats.range / @stats.speed * 1000
-    spt = @stats.speed / TICK
-    $worker.push fire
+  Weapon.Projectile.loadAssets.call @  if isClient
+  @delay  = @stats.delay * 500
+  @ttl    = 1000 / @stats.speed * 1000
+  @ppt    = @stats.speed / TICK
+  @dir    = 0
+  @lock = @stop = false
+  $worker.push @tracker = Weapon.tracker.call @ if @turret
+  @emitter = =>
+    if @stop then ( @stop = @lock = false; return off )
+    @ship.update()
+    cs = cos d = (( @ship.d + @dir ) % 360 ) / RAD
+    sn = sin d
+    m = [ @ship.m[0] + cs * @ppt, @ship.m[1] + sn * @ppt ]
+    x = @ship.x # + slot.x * cs
+    y = @ship.y # + slot.y * sn
+    $worker.push detector   @ship, @, TIME, TIME + @ttl, x, y, m[0], m[1]    if isServer
+    new ProjectileAnimation @ship, @, TIME, TIME + @ttl, x, y, m[0], m[1], d if isClient
+    NUU.emit 'shot', @
+    @delay
+  @trigger = (src,@ship,slot,@target)=>
+    return if @lock; @lock = true; @stop = false
+    Weapon.hostility @ship, @target
+    $worker.push @emitter
+    null
+  @release = => @stop = true
+  null

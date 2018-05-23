@@ -99,7 +99,9 @@ Target.nothing = ->
 
 Target.enemy = ->
   Target.class = 0 # hostile
-  do Target.closest
+  if TARGET and Target.hostile[TARGET.id]
+    HUD.targetSprite.tint = 0xFF0000
+  else do Target.closest
 
 Target.nextClass = ->
   list = Target.types

@@ -35,13 +35,13 @@ class Worker
     @remove = remove = (f) -> f.stop = true if f
     pushback = (f,t) -> setTimeout (-> push f), t
     callback = =>
-      pub.TIME  = time()
-      pub.ETIME = Math.floor(TIME/1000000)*1000000
       if (flip = not flip)
         cur = lista; @list = nxt = listb
       else cur = listb; @list = nxt = lista
       c = nxt.real = 0
       for idx in [0...cur.real]
+        pub.TIME  = time()
+        pub.ETIME = Math.floor(TIME/1000000)*1000000
         if typeof (f = cur[idx]) isnt 'function'
         else if f.stop
         else if typeof (r = f()) is 'number'

@@ -137,8 +137,6 @@ User::createVehicle = (src,id,state)->
   vehicle
 
 Ship::setMount = (player,mountId)->
-  # console.log 'mountieJack', @name, mountId
-  # mountId = 0 unless mountId < @mount.length
   @mount[player.mountId] = null if @mount[player.mountId] is player
   if @mount[mountId]? and @mount[mountId] isnt player
     mountId = 0
@@ -165,7 +163,7 @@ User::action = (src,t,mode) ->
   o = @vehicle
   unless mode is 'launch' or mode is 'capture'
     return if o.locked
-  # console.log 'action$', o.name, mode, t.name
+  console.log 'action$', o.name, mode, t.name if debug
   TIME = Date.now(); o.update(); t.update()
   dist = $dist(o,t)
   dists = $dist(o,t.state)
@@ -182,10 +180,10 @@ User::action = (src,t,mode) ->
         NUU.emit 'ship:collect', o.vehicle, t, o
         console.log o.id, 'collected', t.id, dist, t.size if debug
         t.destructor()
-      else console.log 'capture', 'too far out', dist, o.size, t.size if debug
+      else console.log 'capture', 'too far out', dist, o.size, t.size
     when 'dock' then if dist < zone
       return unless t.mount
-      console.log 'dock', t.id
+      console.log 'dock', t.id if debug
       # TODO:hook: re-add ammo if fighter
       o.destructor()
       @enterVehicle src, t, 0, no
@@ -195,6 +193,7 @@ User::action = (src,t,mode) ->
         console.log 'land', t.id if debug
         o.setState S:$relative,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
         o.locked = yes
+        o.fuel = o.fuelMax
         NUU.emit 'ship:land', o.vehicle, t, o
       else console.log 'land$', 'too far', dist, dists, zone, t.state.toJSON()
     when 'orbit' then if dist < t.size

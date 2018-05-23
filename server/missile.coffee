@@ -24,12 +24,15 @@ Weapon.Launcher =->
   ammo = Item.byName[@stats.ammo.replace(/ /g,'')]
   @trigger = switch ammo.type
     when 'fighter' then (src,vehicle,slot,target)=>
+      Weapon.hostility vehicle, target
       ship = Item.byName[ammo.stats.ship.replace(/ /g,'')]
       new Escort escortFor:vehicle.id, tpl:ship.itemId, state:vehicle.state.toJSON()
-      Weapon.hostility vehicle, target
     else (src,vehicle,slot,target)=>
-      new Missile source:vehicle, target:target
       Weapon.hostility vehicle, target
+      new Missile source:vehicle, target:target
+      setTimeout (-> new Missile source:vehicle, target:target), 100
+      setTimeout (-> new Missile source:vehicle, target:target), 200
+      setTimeout (-> new Missile source:vehicle, target:target), 300
   @release = $void
 
 $obj.register class Missile extends $obj
@@ -37,21 +40,19 @@ $obj.register class Missile extends $obj
   @interfaces: [$obj]
 
   constructor: (opts={})->
+    @turn = 6.0
+    @thrust = 1.4
     source = opts.source
     source.update()
-    opts.d = source.d
     sm = source.m.slice()
-    em = $v.multn $v.normalize(sm.slice()), 2
-    opts.m = [ sm[0] + em[0], sm[1] + em[1] ]
+    sd = source.d / RAD
+    @d = opts.d = source.d
+    @m = opts.m = [ sm[0] + cos(sd) * @thrust * 10, sm[1] + sin(sd) * @thrust * 10 ]
     opts.state =
       S: $moving
       x: source.x
       y: source.y
-
     super opts
-    @turn = 1.0
-    @thrust = 0.5
-
     @ttl = TIME + 10000
     update    = false
     state     = 0
@@ -78,9 +79,9 @@ $obj.register class Missile extends $obj
         @left  = -180 < dif < 0
         @right = not @left
         state = if @left then 1 else 2
-      else if 4 < abs( dif ) < 11
+      else if @turn < abs(dif) < 2 * @turn
         @left = @right = no
-        @d = dir
+        NET.steer.write @, dir # steer sets @d
         state = 3
       else state = 4
       @changeState() if state isnt prevState

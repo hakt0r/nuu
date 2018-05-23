@@ -38,42 +38,51 @@ lineCircleCollide = (a, b, c, r) ->
   dist = $v.dist c, closest
   dist < r
 
-class BeamInstance
-  src: null
-  weap: null
-  target: null
-  ms: null
-  tt: null
-  range: null
-  constructor: (@src,@weap,@range,@target,@ms,@tt)->
+Weapon.tracker = -> =>
+  return 3000 if not @ship? or @ship.DESTROYED
+  unless @target
+    @dir = 0
+    return null
+  td  = NavCom.fixAngle $v.heading(@target.p,@ship.p) * RAD
+  tdd = -180 + (((( @ship.d + @dir - td - 90 ) % 360 ) + 360 ) % 360 )
+  if @stats.track * 2 < abs tdd
+    @dir += ( if tdd > 0 then 1 else -1 ) * @stats.track
+  else @dir += tdd
+  null
 
-Weapon.Beam =->
-  @release = $void
-  @trigger = (src,vehicle,slot,target)=>
-    if @release isnt $void
-      # console.log 'emergency-release trigger'
-      do @release
-    @duration = @stats.duration.$t * 100
-    @range = @stats.range || 300
-    # TODO: implement recharge
-    @release = =>
-      @release = $void
-      detector.stop = true
-      delete Weapon.beam[vehicle.id]
-      off
-    detector = =>
-      return @release() if v.tt < TIME
-      dir = NavCom.unfixAngle(vehicle.d) / RAD
-      tpos = target.p
-      vpos = vehicle.p
-      bend = [
-        vehicle.x + sin(dir) * @range
-        vehicle.y - cos(dir) * @range ]
-      if lineCircleCollide vpos, bend, tpos, target.size
-        target.hit(vehicle,v.weap) unless isClient
+Weapon.Beam = ->
+  @lock = false
+  @dir = 0
+  @ship = d:0, DESTROYED: no # FIXME
+  @release  = $void
+  @duration = @stats.duration.$t * 100
+  @range    = @stats.range || 300
+  $worker.push @tracker = Weapon.tracker.call @ if @turret
+  @release = =>
+    @stop = true; @lock = false
+    do @hide if isClient
+    delete Weapon.beam[@ship.id]
+    off
+  @trigger = (src,@ship,slot,@target) =>
+    return if @lock; @lock = true; @stop = false
+    Weapon.hostility @ship, @target
+    do @show if isClient
+    Weapon.beam[@ship.id] = @
+    @ms = @TIME
+    @tt = TIME + @duration
+    $worker.push =>
+      return @release() if @stop or @tt < TIME
+      return null if isClient
+      @ship.update()
+      dir = NavCom.unfixAngle( @ship.d + @dir ) / RAD
+      bend = [ @ship.x + sin(dir) * @range, @ship.y - cos(dir) * @range ]
+      for @target in @ship.hostile
+        @target.update()
+        @target.hit @ship, @ if lineCircleCollide @ship.p, bend, @target.p, @target.size/2
       null
-    NUU.emit 'shot', Weapon.beam[vehicle.id] = v =
-      new BeamInstance vehicle, slot.equip, @range, target, TIME, TIME + @duration
-    $worker.push slot.worker = detector
-    Weapon.hostility vehicle, target
+    NUU.emit 'shot', @
     null
+  Weapon.Beam.loadAssets.call @ if isClient
+  @show = Weapon.Beam.show      if isClient
+  @hide = Weapon.Beam.hide      if isClient
+  null

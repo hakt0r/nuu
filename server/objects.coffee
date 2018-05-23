@@ -77,7 +77,8 @@ Asteroid::hit = (perp,weapon)->
   return unless @hp is 0
   if @resource.length > 1 then for r in @resource
     m = @m.slice(); m[0]+=-6+random()*6; m[1]+=-6+random()*6
-    new Asteroid
+    Weapon.hostility perp, new Asteroid
+      hostile: []
       resource: r
       size: size = max 10, floor random() * @size / 2
       state: S:$moving, x:@x, y:@y, m:m

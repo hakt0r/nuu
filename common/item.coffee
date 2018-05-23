@@ -60,6 +60,9 @@ $public class Item
     for type, items of Item.byType when items.medium?
       if Object.keys(items.medium).length is 0 and Object.keys(items.large).length is 0
         Item.byType[type] = items.small
+
+    Item.byName.CheatersRagnarokBeam.turret = yes
+    Item.byName.CheatersRagnarokBeam.stats.track = 1.6
     NUU.emit 'init:items:done'
 
 Item.random = ->

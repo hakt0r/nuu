@@ -59,12 +59,12 @@ module.exports = (destinationFile,callback)->
     d.stats[k] = v for k,v of general
 
     # from root to info
-    for k in ['license','fabricator','name','price','description'] when d[k]
+    for k in ['license','fabricator','name','price','description'] when d[k]?
       d.info[k] = d[k]
       delete d[k]
 
     # from stats to info
-    for k in ['description','gfx_store','price','name','license'] when d.stats[k]
+    for k in ['description','gfx_store','price','name','license'] when d.stats[k]?
       d.info[k] = d.stats[k]
       delete d.stats[k]
 
@@ -79,13 +79,13 @@ module.exports = (destinationFile,callback)->
       delete d.stats.range
 
     # from stats to root
-    for k in ['size','turret','slot','type'] when d.stats[k]
+    for k in ['size','turret','slot','type'] when d.stats[k]?
       d[k] = d.stats[k]
       delete d.stats[k]
 
     # from stats to sprite
     d.fx = {}
-    for k in ['gfx','gfx_end','spfx_armour','spfx_shield','sound','sound_hit','sound_off'] when d.stats[k]
+    for k in ['gfx','gfx_end','spfx_armour','spfx_shield','sound','sound_hit','sound_off'] when d.stats[k]?
       d.fx[k] = d.stats[k]
       delete d.stats[k]
     d.fx.sound = d.sound; delete d.sound
@@ -128,7 +128,6 @@ module.exports = (destinationFile,callback)->
 
     d.type = 'ship'
     flatten d
-
     d.sprite = sprite
     d.stats[k] = v for k,v of d.characteristics; delete d.characteristics
     d.stats[k] = v for k,v of d.health;          delete d.health

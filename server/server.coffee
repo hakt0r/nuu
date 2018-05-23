@@ -83,71 +83,8 @@ for lib in deps.server.sources
 
 ## Initialize express
 $static 'app', app = express()
-
-## Initialize WebSockets
-ws = $websocket app
-app.ws "/nuu", (c, req) ->
-  console.log 'ws'.yellow, 'connection'.grey
-  c.json = (msg) -> c.send NET.JSON + JSON.stringify msg
-  c.on "message", NET.route c
-  c.on "error", (e) -> console.log 'ws'.yellow, 'error'.red, e
-  # lag and jitter emulation # c.on "message", (msg) -> setTimeout (-> NET.route(c)(msg)), 100 # + Math.floor Math.random() * 40
-wss = $websocket.server
-console.log wss.clients
-
-NUU.bincast = (data,origin) ->
-  wss.clients.forEach (c) ->
-    try c.send data catch error
-      Array.remove wss.clients, c
-
-NUU.nearcast = NUU.bincast = (data,o) -> wss.clients.forEach (c) ->
-  if o? and c.handle? and c.handle.vehicle? and o isnt c.handle.vehicle
-    v = c.handle.vehicle
-    return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
-  try c.send data catch error then Array.remove wss.clients, c
-
-NUU.jsoncast = (data) ->
-  data = NET.JSON + JSON.stringify data
-  wss.clients.forEach (c) ->
-    try c.send data catch error then Array.remove wss.clients, c
-    null
-  null
-
-NUU.jsoncastTo = (v,data) ->
-  return unless v.inhabited
-  data = NET.JSON + JSON.stringify data
-  v.mount.map (i)-> if i and i.sock
-    console.log 'jsoncastTo', v.id, data
-    try i.sock.send data catch error then Array.remove wss.clients, i.sock
-  null
-
-## Sync - queue object-creation notification
-$static 'Sync', class Sync
-  @adds: []
-  @dels: []
-  @inst: false
-
-app.on '$obj:add', Sync.add = (obj)->
-  Sync.inst = setImmediate Sync.flush unless Sync.inst
-  Sync.adds.push obj
-  obj
-
-app.on '$obj:del', Sync.del = (obj)->
-  Sync.inst = setImmediate Sync.flush unless Sync.inst
-  Sync.dels.push obj
-  obj
-
-Sync.flush = ->
-  NUU.jsoncast sync: add:Sync.adds, del:freeIds = Sync.dels.map (i)-> i.id
-  Sync.adds = []; Sync.dels = []; Sync.inst = false
-  return unless 0 < freeIds.length
-  setImmediate -> $obj.freeId = $obj.freeId.concat freeIds
-  null
-
-## Initialize Engine
-console.log 'NUU'.yellow, 'initializing'.yellow
-NUU.init()
-
+## Setup WebSockets
+$websocket app
 ## Setup Webserver
 app.use require('morgan')() if debug
 app.use require('body-parser') keepExtensions: true, uploadDir: '/tmp/'
@@ -156,6 +93,30 @@ app.use require('cookie-parser')()
 app.use require('express-session') secret: 'what-da-nuu'
 app.use '/build', require('serve-static')('build',etag:no)
 app.use '/build', require('serve-index' )('build',etag:no)
+
+## Sync - queue object-creation notification
+$public class Sync
+  @flush: ->
+    NUU.jsoncast sync: add:Sync.adds, del:freeIds = Sync.dels.map (i)-> i.id
+    Sync.adds = []; Sync.dels = []; Sync.inst = false
+    return unless 0 < freeIds.length
+    setImmediate -> $obj.freeId = $obj.freeId.concat freeIds
+    null
+  @adds: []
+  @dels: []
+  @inst: false
+app.on '$obj:add', Sync.add = (obj)->
+  Sync.inst = setImmediate Sync.flush unless Sync.inst
+  Sync.adds.push obj
+  obj
+app.on '$obj:del', Sync.del = (obj)->
+  Sync.inst = setImmediate Sync.flush unless Sync.inst
+  Sync.dels.push obj
+  obj
+
+## Initialize Engine
+console.log 'NUU'.yellow, 'initializing'.yellow
+NUU.init()
 
 # Skeleton Page
 app.get '/', (req,res) ->

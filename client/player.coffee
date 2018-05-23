@@ -46,6 +46,18 @@ Player::FighterBaySlotHook = ->
   NET.json.write switchShip: Item.byName[NUU.player.equip.stats.ammo.replace(' ','')].stats.ship
   true
 
+switchWeap = (mutate)-> (player,trigger='primary') ->
+  primary = trigger is 'primary'
+  ws = player.vehicle.slots.weapon
+  ct = ws.length - 1
+  tg = player[trigger]
+  tg.id = mutate tg.id, ct
+  tg.slot = ws[tg.id].equip
+  tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
+  tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
+Ship::nextWeap = switchWeap (id,ct)-> ++id % ct
+Ship::prevWeap = switchWeap (id,ct)-> ( --tg.id + ct ) % ct
+
 app.on '$obj:add', (o)->
   # console.log 'yolo', o.id, NUU.player.vehicleId
   NUU.player.vehicle = o if o.id is NUU.player.vehicleId

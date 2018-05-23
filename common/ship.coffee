@@ -85,26 +85,6 @@ $obj.register class Ship extends $obj
       slot.equip.release()
     super
 
-  nextWeap: (player,trigger='primary') ->
-    primary = trigger is 'primary'
-    ws = player.vehicle.slots.weapon
-    ct = ws.length - 1
-    tg = player[trigger]
-    tg.id   = ++tg.id % ct
-    tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
-    tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
-
-  prevWeap: (player,trigger='primary') ->
-    primary = trigger is 'primary'
-    ws = player.vehicle.slots.weapon
-    ct = ws.length - 1
-    tg = player[trigger]
-    tg.id = ( --tg.id + ct ) % ct
-    tg.slot = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
-    tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
-
   reset: ->
     @hostile = []
     @destructing = false

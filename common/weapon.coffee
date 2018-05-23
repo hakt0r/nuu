@@ -37,7 +37,6 @@ $public class Weapon extends Outfit
 
   constructor: (name,opts={}) ->
     tpl = Item.byName[name]
-    # console.log name, tpl.extends
     @[k] = v for k,v of tpl
     @id = Weapon.count++
     Weapon[name] = @
@@ -51,5 +50,3 @@ Weapon.hostility = (vehicle,target)->
   if vehicle.hostile and -1 is vehicle.hostile.indexOf target
     vehicle.hostile.push target
     NUU.jsoncastTo vehicle, hostile: target.id if vehicle.inhabited
-
-Weapon.Bay =->

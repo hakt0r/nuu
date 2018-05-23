@@ -110,10 +110,16 @@ NET.define 2,'STATE',
       src
 
 NET.define 7,'STEER',
-  write:client:(action,value)->
-    msg = Buffer.from [NET.steerCode,0,0]
-    msg.writeUInt16LE value, 1
-    NET.send msg.toString 'binary'
+  write:
+    client:(action,value)->
+      msg = Buffer.from [NET.steerCode,0,0]
+      msg.writeUInt16LE value, 1
+      NET.send msg.toString 'binary'
+    server:(o,value)->
+      cast = Buffer.from [NET.steerCode,0,0,0,0]
+      cast.writeUInt16LE   o.id,          1
+      cast.writeUInt16LE ( o.d = value ), 3
+      NUU.bincast ( cast.toString 'binary' ), o
   read:
     client:(msg,src)->
       return unless v = $obj.byId[id = msg.readUInt16LE 1]
@@ -122,11 +128,7 @@ NET.define 7,'STEER',
     server:(msg,src)->
       return unless o = src.handle.vehicle
       return unless o.mount[0] is src.handle
-      o.d = value = msg.readUInt16LE 1
-      cast = Buffer.from [NET.steerCode,0,0,0,0]
-      cast.writeUInt16LE o.id,  1
-      cast.writeUInt16LE value, 3
-      NUU.bincast ( cast.toString 'binary' ), o
+      NET.steer.write o, ( 360 + msg.readUInt16LE 1 ) % 360
 
 NET.steer.setDir = 0
 
@@ -144,16 +146,15 @@ NET.define 3,'WEAP',
       return console.log 'WEAP:missing:sid' unless slot    = vehicle.slots.weapon[msg[2]]
       return console.log 'WEAP:missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
       action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
-      console.log action, vehicle.id if debug
+      console.log '$net', action, vehicle.id if debug
       slot.equip[action](null,vehicle,slot,target)
     server: (msg,src)->
       mode = msg[1]
-      return unless (vehicle = src.handle.vehicle)
-      return unless (slot = vehicle.slots.weapon[sid = msg[3]])
-      return unless (target = slot.target = $obj.byId[msg.readUInt16LE 4])
+      return unless vehicle = src.handle.vehicle
+      return unless slot = vehicle.slots.weapon[sid = msg[3]]
+      return unless target = slot.target = $obj.byId[msg.readUInt16LE 4]
       slot.id = sid # FIXME
       NET.weap.write src, mode, slot, vehicle, target
-
   write:
     client: (action,primary,slotid,tid)->
       return unless tid
@@ -162,8 +163,8 @@ NET.define 3,'WEAP',
       msg.writeUInt16LE tid, 4
       NET.send msg.toString 'binary'
     server: (src,mode,slot,vehicle,target)->
-      return console.log 'no weapon equipped' unless ( equipped = slot.equip )
-      return console.log 'no trigger/release' unless ( modeCall = equipped[if mode is 0 then 'trigger' else 'release'] )
+      return console.log 'no weapon equipped' unless equipped = slot.equip
+      return console.log 'no trigger/release' unless modeCall = equipped[if mode is 0 then 'trigger' else 'release']
       modeCall src, vehicle, slot, target
       msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
@@ -251,4 +252,4 @@ NET.define 8,'HEALTH',
     t.energy = msg[4] * ( t.energyMax / 255 )
     t.armour = msg[5] * ( t.armourMax / 255 )
     t.fuel   = msg[6] * ( t.fuelMax   / 255 )
-    console.log 'health', t.id, t.shield, t.armour if debug
+    # console.log 'health', t.id, t.shield, t.armour if debug

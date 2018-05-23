@@ -67,6 +67,7 @@ websocketUrl = (url)->
   [baseUrl, query] = url.split '?'
   return "#{trailingSlash(baseUrl)}.websocket?#{query}"
 
+wsServer = null
 $static '$websocket',  (app,httpServer,options={}) ->
   server = httpServer
   unless server?
@@ -85,8 +86,41 @@ $static '$websocket',  (app,httpServer,options={}) ->
     dummyResponse = new http.ServerResponse request
     dummyResponse.writeHead = writeHead = (statusCode) ->
       socket.close() if statusCode > 200
+    app.handle request, dummyResponse, -> socket.close() unless request.wsHandled
+    app.ws "/nuu", (c, req) ->
+      console.log 'ws'.yellow, 'connection'.grey
+      c.json = (msg) -> c.send NET.JSON + JSON.stringify msg
+      c.on "message", NET.route c
+      c.on "error", (e) -> console.log 'ws'.yellow, 'error'.red, e
+      # lag and jitter emulation # c.on "message", (msg) -> setTimeout (-> NET.route(c)(msg)), 100 # + Math.floor Math.random() * 40
+      null
+    null
+    app
 
-    app.handle request, dummyResponse, ->
-      socket.close() unless request.wsHandled
+NUU.bincast = (data,origin) ->
+  wsServer.clients.forEach (c) ->
+    try c.send data catch error then wsServer.clients.delete c
+    null
+  null
 
-  return app:app, applyTo: addWsMethod, getWss: getWss = -> $websocket.server
+NUU.nearcast = NUU.bincast = (data,o) -> wsServer.clients.forEach (c) ->
+  if o? and c.handle? and c.handle.vehicle? and o isnt c.handle.vehicle
+    v = c.handle.vehicle
+    return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
+  try c.send data catch error then wsServer.clients.delete c
+  null
+
+NUU.jsoncast = (data) ->
+  data = NET.JSON + JSON.stringify data
+  wsServer.clients.forEach (c) ->
+    try c.send data catch error then wsServer.clients.delete c
+    null
+  null
+
+NUU.jsoncastTo = (v,data) ->
+  return unless v.inhabited
+  data = NET.JSON + JSON.stringify data
+  v.mount.map (i)-> if i and i.sock
+    console.log 'jsoncastTo', v.id, data
+    try i.sock.send data catch error then wsServer.clients.delete i.sock
+  null

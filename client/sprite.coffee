@@ -38,8 +38,6 @@ $obj::show = ->
   Sprite.visible[@id] = @sprite
   Sprite.visibleList.push @
   Sprite[@layer].addChild @sprite
-  # @sprite.interactive = yes
-  # @sprite.click = => NUU.emit 'newTarget', TARGET = @
   null
 
 $obj::hide = ->
