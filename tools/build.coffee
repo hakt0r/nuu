@@ -57,7 +57,8 @@ require('./csmake.coffee')(
       c null
 
   node: (c)-> depend(dirs)( ->
-    generate('build/node_packages.html',path.join NUUWD,'tools','import_npm.coffee')(c)
+    # generate('build/git_history.html',   path.join NUUWD,'tools','import_git.coffee')(->)
+    generate('build/node_packages.html', path.join NUUWD,'tools','import_npm.coffee')(c)
    )
 
   contrib: (c)-> depend(node)( -> $p (
@@ -66,7 +67,7 @@ require('./csmake.coffee')(
 
   libs: (c)-> depend(dirs)( ->
     if exists 'build/lib.js'
-      console.log 'build/lib.js'.green
+      console.log ':bld', 'build/lib.js'.green
       return c null
     browserify = require('browserify')()
     bundle  = (module) -> browserify.require module, expose : module

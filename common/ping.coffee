@@ -59,7 +59,7 @@ $public class RTPing extends Mean
         remote = @lastRemoteTime = msg.readDoubleLE 2
         local  = @lastLocalTime  = Date.now()
         unless @ringBf[msg[1]]
-          console.log 'ERROR', msg[1], 'is not a ping id'
+          console.log ':net', 'ping-error', msg[1], 'is not a ping id'
         trip   = local - @ringBf[msg[1]]   # time it took from ping to response
         delta  = local - (trip/2) - remote # raw current time delta to remote
         @trip.add trip

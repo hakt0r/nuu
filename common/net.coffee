@@ -38,7 +38,7 @@ $public class RTSync extends EventEmitter
     a.reverse()
 
   define: (c,name,opts={}) ->
-    # console.log 'NET.define', c, name
+    console.log ':net', 'define', c, name if debug
     lower = name.toLowerCase()
     unless @[name]?
       @[name] = s = String.fromCharCode c
@@ -85,7 +85,7 @@ NET.define 0,'JSON',
       msg = JSON.parse ( msg.slice 1 ).toString('utf8')
       NET.emit k, v, src for k, v of msg
   write: client: (msg) ->
-    # console.log 'NET.json>', msg
+    console.log ':net', 'json', msg if debug
     NET.send NET.JSON + JSON.stringify msg
 
 ###
@@ -142,9 +142,9 @@ weaponActionKey = ['trigger','release','reload']
 NET.define 3,'WEAP',
   read:
     client: (msg,src) ->
-      return console.log 'WEAP:missing:vid' unless vehicle = Ship.byId[msg.readUInt16LE 3]
-      return console.log 'WEAP:missing:sid' unless slot    = vehicle.slots.weapon[msg[2]]
-      return console.log 'WEAP:missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
+      return console.log 'weap', 'missing:vid' unless vehicle = Ship.byId[msg.readUInt16LE 3]
+      return console.log 'weap', 'missing:sid' unless slot    = vehicle.slots.weapon[msg[2]]
+      return console.log 'weap', 'missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
       action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
       console.log '$net', action, vehicle.id if debug
       slot.equip[action](null,vehicle,slot,target)
@@ -163,8 +163,8 @@ NET.define 3,'WEAP',
       msg.writeUInt16LE tid, 4
       NET.send msg.toString 'binary'
     server: (src,mode,slot,vehicle,target)->
-      return console.log 'no weapon equipped' unless equipped = slot.equip
-      return console.log 'no trigger/release' unless modeCall = equipped[if mode is 0 then 'trigger' else 'release']
+      return console.log 'weap', 'nothing equipped'   unless equipped = slot.equip
+      return console.log 'weap', 'no trigger/release' unless modeCall = equipped[if mode is 0 then 'trigger' else 'release']
       modeCall src, vehicle, slot, target
       msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
@@ -180,7 +180,7 @@ NET.define 3,'WEAP',
 action_key = ['launch','land','orbit','dock','capture']
 NET.define 4,'ACTION',
   read:server:(msg,src) ->
-    return console.log 'nx$obj', t unless t = $obj.byId[msg.readUInt16LE 2]
+    return console.log ':net', 'action:nx:t', msg unless t = $obj.byId[msg.readUInt16LE 2]
     src.handle.action src, t, action_key[msg[1]]
   write:client:(t,mode) ->
     console.log mode+'$', t.name, t.id
@@ -199,7 +199,7 @@ NET.define 5,'MODS',
   read: client: (msg,src) ->
     mode = modsKey[msg[1]]
     vid  = msg.readUInt16LE 2
-    return console.log 'MODS:missing:vid', vid, mode unless ship = Shootable.byId[vid]
+    return console.log ':net', 'mods', 'missing:vid', vid, mode unless ship = Shootable.byId[vid]
     type = ship.constructor.name.toLowerCase() + ':'
     ship.destructing = on if mode is 'destroyed'
     NUU.emit '$obj:' + mode, ship, ship.shield = msg.readUInt16LE(4), ship.armour = msg.readUInt16LE(6)
@@ -252,4 +252,4 @@ NET.define 8,'HEALTH',
     t.energy = msg[4] * ( t.energyMax / 255 )
     t.armour = msg[5] * ( t.armourMax / 255 )
     t.fuel   = msg[6] * ( t.fuelMax   / 255 )
-    # console.log 'health', t.id, t.shield, t.armour if debug
+    console.log ':net', 'health', t.id, t.shield, t.armour if debug

@@ -42,7 +42,7 @@ Db = (name,obj={}) ->
       db.put 'db.init', true, -> obj.ready null
     else do obj.ready
     null
-  console.log 'db', 'register', name, util.inspect db if debug
+  console.log '::db', 'register', name, util.inspect db if debug
   db
 
 $static 'Db', Db

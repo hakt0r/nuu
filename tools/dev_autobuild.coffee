@@ -47,7 +47,7 @@ addFile = (f,dir) ->
 
 changeFile = (path,name) -> ->
   if rebuildLock is on
-    console.log '[locked]', path
+    console.log ':dev', '[locked]', path
     return
   clearTimeout timeout
   rebuildFiles.push path
@@ -78,4 +78,4 @@ rebuild = ->
 
 readDir root + '/common/', addFile
 readDir root + '/client/', addFile
-console.log 'watching', Object.keys(watch).length
+console.log ':dev', 'watching', Object.keys(watch).length

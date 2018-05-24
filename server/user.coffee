@@ -83,7 +83,7 @@ UserDB = Db 'UserDb',
 $public class User
   @byId: {}
   constructor: (src, user, pass) ->
-    console.log 'USER', user, pass
+    console.log 'user', user, pass if debug
     unless user? and pass?
       return @deny src, pass
     unless @db = UserDB.get user
@@ -102,26 +102,27 @@ $public class User
       @createVehicle src, vehicleType, S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
     ), 0, yes
     src.authenticated = yes
-    console.log @db.nick, 'joined'.green, @db.id, vehicleType
+    console.log 'user', @db.nick.green, 'joined'.green, @db.id, vehicleType
     true
 
 User::rejoin = (src)->
   @sock = src
   src.handle = @
   @enterVehicle src, @vehicle, @mountId, no
-  console.log @db.nick, 'rejoined', @vehicle?
+  console.log 'user', @db.nick.green, 'rejoined'.yellow, @vehicle?
   true
 
 User::deny = (src, pass)->
   src.json 'user.login.failed':'wrong_credentials'
-  console.log 'ws'.yellow, 'login'.red, util.inspect(@db).red, pass.red
+  console.log 'user', ' login failed '.red.inverse.bold, @db.nick.yellow
+  console.log util.inspect(@db).red, pass.red if debug
   false
 
 User::register = (src, user, pass)->
   @db = UserDb.create user, nick: user, pass: pass.pass, salt:pass.salt
   rec = UserDB.get user
   src.json 'user.login.register': user
-  console.log 'User'.yellow, 'register'.red, util.inspect rec if debug
+  console.log 'user', 'register'.red, util.inspect rec if debug
   true
 
 User::part = (user) ->
@@ -133,7 +134,7 @@ User::createVehicle = (src,id,state)->
   state = @vehicle.state if @vehicle
   vehicle = new Ship tpl:tpl, state:state, iff:['@'+@nick]
   NUU.jsoncast 'join': vehicle
-  console.log 'user$ship', @db.nick, vehicle.id
+  console.log 'user', 'ship', @db.nick.green, vehicle.id
   vehicle
 
 Ship::setMount = (player,mountId)->
@@ -141,12 +142,12 @@ Ship::setMount = (player,mountId)->
   if @mount[mountId]? and @mount[mountId] isnt player
     mountId = 0
     while @mount[mountId]? and @mount[mountId] isnt @
-      console.log 'already mounted', @name, mountId if debug
+      console.log 'uesr', 'setMount', 'already mounted', @name, mountId if debug
       mountId++
   @mount[player.mountId = mountId] = player
   @flags = String.fromCharCode 0 if 0 is mountId
   @inhabited = yes
-  console.log 'mounted', @name, mountId, player.db.nick if debug
+  console.log 'user' ,'setMount', @name.green, mountId, player.db.nick if debug
   mountId
 
 User::enterVehicle = (src,vehicle,mountId,spawn)->
@@ -156,14 +157,14 @@ User::enterVehicle = (src,vehicle,mountId,spawn)->
   src.json
     switchShip: i:vehicle.id, m:@mountId
     hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
-  console.log 'user$enter', @db.nick, vehicle.id, @mountId if debug
+  console.log 'user', 'enter', @db.nick.green, vehicle.id, @mountId if debug
   null
 
 User::action = (src,t,mode) ->
   o = @vehicle
   unless mode is 'launch' or mode is 'capture'
     return if o.locked
-  console.log 'action$', o.name, mode, t.name if debug
+  console.log 'user', 'action', o.name, mode, t.name if debug
   TIME = Date.now(); o.update(); t.update()
   dist = $dist(o,t)
   dists = $dist(o,t.state)
@@ -178,27 +179,27 @@ User::action = (src,t,mode) ->
     when 'capture'
       if dist < zone
         NUU.emit 'ship:collect', o.vehicle, t, o
-        console.log o.id, 'collected', t.id, dist, t.size if debug
+        console.log 'user', o.id, 'collected', t.id, dist, t.size if debug
         t.destructor()
-      else console.log 'capture', 'too far out', dist, o.size, t.size
+      else console.log 'user', 'capture', 'too far out', dist, o.size, t.size
     when 'dock' then if dist < zone
       return unless t.mount
-      console.log 'dock', t.id if debug
+      console.log 'user', 'dock', t.id if debug
       # TODO:hook: re-add ammo if fighter
       o.destructor()
       @enterVehicle src, t, 0, no
     when 'land'
       return if t.mount # cant attach to vehicles
       if dist < zone
-        console.log 'land', t.id if debug
+        console.log 'user', 'land', t.id if debug
         o.setState S:$relative,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
         o.locked = yes
         o.fuel = o.fuelMax
         NUU.emit 'ship:land', o.vehicle, t, o
-      else console.log 'land$', 'too far', dist, dists, zone, t.state.toJSON()
+      else console.log 'user', 'land', 'too far', dist, dists, zone, t.state.toJSON()
     when 'orbit' then if dist < t.size
-      console.log 'orbit', t.id if debug
+      console.log 'user', 'orbit', t.id if debug
       o.locked = yes
       o.setState S:$orbit,orbit:dist,relto:t.id
-    else console.log 'orbit/dock/land/enter', 'failed', mode, o.name, t.name
+    else console.log 'user', 'orbit/dock/land/enter', 'failed', mode, o.name, t.name
   null

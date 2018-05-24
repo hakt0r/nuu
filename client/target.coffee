@@ -29,7 +29,7 @@ NUU.on '$obj:destroyed', (v) ->
 
 NET.on 'hostile', addHostile = (id)->
   doAdd = (i)->
-    return console.log 'hostile:unknown', i unless v = $obj.byId[i]
+    return console.log ':tgt', 'hostile:unknown', i unless v = $obj.byId[i]
     return if v.destructing
     Target.hostile[v.id] = v
     app.emit 'hostile', i
@@ -61,18 +61,18 @@ Target.set = (target,callback,old=TARGET)->
     if TARGET and TARGET.constructor.name is 'Stellar'
       Target.mode = 'orbit'
     else Target.mode = 'land'
-  return console.log '$target:nx:ty' unless ty = Target.types
-  return console.log '$target:nx:cl' unless cl = ty[Target.class]
-  return console.log '$target:nx:ks' unless ks = Object.keys cl
+  return console.log ':tgt', 'nx:ty' unless ty = Target.types
+  return console.log ':tgt', 'nx:cl' unless cl = ty[Target.class]
+  return console.log ':tgt', 'nx:ks' unless ks = Object.keys cl
   Target.id = if -1 is id = ks.indexOf '' + target.id then 0 else id
   callback TARGET if callback? and typeof callback is 'function'
   NUU.emit 'newTarget', target, old
   return TARGET
 
 Target.mutate = (fnc)-> again = (callback,skipSelf=false)->
-  return console.log '$target:nx:ty' unless ty = Target.types
-  return console.log '$target:nx:cl' unless cl = ty[Target.class]
-  return console.log '$target:nx:ks' unless ks = Object.keys cl
+  return console.log ':tgt', 'nx:ty' unless ty = Target.types
+  return console.log ':tgt', 'nx:cl' unless cl = ty[Target.class]
+  return console.log ':tgt', 'nx:ks' unless ks = Object.keys cl
   ct = ks.length
   ix = if ( cu = TARGET || cl[ks[0]] || null ) then ks.indexOf '' + cu.id else 0
   id = ks[fnc ix, ct, cl, ks, skipSelf]
@@ -85,7 +85,7 @@ Target.prev = Target.mutate (ix,ct)-> ( ct + --ix ) % ct
 Target.next = Target.mutate (ix,ct)-> ++ix % ct
 
 Target.closest = Target.mutate (ix,ct,cl,ks,skipSelf) ->
-  return console.log '$target:nx:v' unless v = VEHICLE
+  return console.log ':tgt', 'nx:v' unless v = VEHICLE
   dist = Infinity; closest = null
   for k,t of cl when t and t.id isnt v.id and (d = $dist v, t) < dist
     continue if t.destructing

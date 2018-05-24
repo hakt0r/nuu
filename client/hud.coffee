@@ -79,7 +79,7 @@ $static 'HUD', new class HUDRenderer
     Sprite.renderHUD = @render.bind @, @layer
     # EVENT HOOKS
     NUU.on 'enterVehicle', shpHandler = (t) =>
-      console.log 'shp', t if debug
+      console.log 'ship', t if debug
       if @playerSprite
         @layer.removeChild @playerSprite
         delete @playerSprite
@@ -104,7 +104,7 @@ $static 'HUD', new class HUDRenderer
     null
 
     NUU.on 'switchWeapon', switchWeapon = (slot,weap) =>
-      console.log "weap"
+      console.log "weap", slot, weap if debug
       p = NUU.player
       @primary.text = if p.primary.slot?
         @primary.style.fill = if p.primary.slot.color then p.primary.slot.color else @turret[cix].color
@@ -121,7 +121,7 @@ $static 'HUD', new class HUDRenderer
         @layer.removeChild @targetSprite
         delete @targetSprite
       return unless t?
-      console.log 'tgt', t if debug
+      console.log 'targ', t if debug
       img = t.imgCom || t.img || '/build/imag/noscanimg.png'
       @layer.addChild @targetSprite = s = PIXI.Sprite.fromImage img
       r = s.width / s.height

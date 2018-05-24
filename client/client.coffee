@@ -72,7 +72,7 @@ do app.loadSettings
   Load the more strightforward deps
 ###
 
-console.log 'NUU.loading.deps'
+console.log ':nuu', 'loading deps'
 
 for lib in deps.client.require
   if Array.isArray lib
@@ -97,7 +97,7 @@ EventEmitter.call app
 #     # baseTexture.updateSourceImage cachedUrl
 #   PIXI.BaseTexture._fromImage imageUrl, crossorigin, scaleMode, sourceScale
 
-console.log 'NUU.libs.loading'
+console.log ':nuu', 'loading libs'
 
 $ -> app.emit 'runtime:ready'
 

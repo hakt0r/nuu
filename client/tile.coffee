@@ -47,7 +47,7 @@ $Tile Ship,
   layer: 'ship'
 
   loadAssets: ->
-    # console.log 'ship$', 'assets', @id, @name
+    console.log ':gfx', 'ship$', 'assets', @id, @name if debug
     p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
     @imgCom = p + '_comm.png'
     # Cache.get p + '_comm.png', (cached) => @imgCom = cached

@@ -34,12 +34,14 @@ NUU.sync = (list,callback) ->
   if list.del
     do o.destructor for id in list.del when o = $obj.byId[id]
   if list.add then for obj in list.add
-    o.destructor console.log '$obj:exists:replace', obj.id if o = $obj.byId[obj.id]
+    if o = $obj.byId[obj.id]
+      console.log '$obj', 'exists:replace', obj.id if debug
+      o.destructor()
     new $obj.byClass[obj.key] obj
   callback null if callback
 
 NUU.firstSync = (opts,callback)->
-  @player = new Player opts
+  @player = new User opts
   Sprite.start => @start callback
 
 NUU.loginPrompt = ->
@@ -84,7 +86,7 @@ class NET.Connection
       NET.json.write login: user:@name, pass: pass:pass,salt:@lsalt
     @connect @addr
   connect: (@addr) =>
-    console.log 'NET.connect', @addr
+    console.log ':net', 'connect', @addr
     s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
     NET[k] = @[k] for k in [ 'send' ]
     s[k]   = @[k] for k in [ 'onmessage', 'onopen', 'onerror' ]
@@ -100,13 +102,13 @@ class NET.Connection
   onmessage: (msg) =>
     NET.route @sock, msg.data
   onerror: (e) =>
-    console.log "NET.sock:error", e
+    console.log ':net', 'sock:error', e
     NUU.emit 'disconnect'
     # setTimeout ( => @connect @addr ), 1000
 
 NET.login = (name, pass, callback) ->
-  return console.log 'NOT IMPLEMENTED' if NET.Connection._?
-  console.log 'NET.login', name
+  return console.log 'auth', 'REAUTH NOT IMPLEMENTED' if NET.Connection._?
+  console.log ':net', 'login', name
   NET.Connection._ = new NET.Connection name, pass, callback
 
 # Stats

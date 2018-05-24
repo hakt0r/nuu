@@ -44,7 +44,7 @@ $public class $obj
 
     # apply other keys
     @[k] = v for k,v of opts
-    # console.log 'constructor$', @id, @name
+    # console.log '$obj', 'constructor$', @id, @name
 
     # choose id
     unless @id?
@@ -61,9 +61,9 @@ $public class $obj
 
   destructor: ->
     @destructing = true # might be set already
-    console.log 'destructor$', @id, @name if debug
+    console.log '$obj', 'destructor$', @id, @name if debug
     for i in @constructor.interfaces
-      console.log 'destructor$', 'object', i.name if debug
+      console.log '$obj', 'destructor$', 'object', i.name if debug
       delete i.byId[@id]
       Array.remove i.list, @
     app.emit '$obj:del', @

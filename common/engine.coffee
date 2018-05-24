@@ -49,7 +49,7 @@ class Engine extends EventEmitter
   init: $void
   thread: (name,time,fnc) -> @threadList[name] = setInterval fnc, time
   start: (callback) ->
-    console.log 'NUU.engine.start', @tstart = Date.now()
+    console.log ':nuu', 'engine'.green, @tstart = Date.now()
     @emit 'start'
     callback null if callback
     null

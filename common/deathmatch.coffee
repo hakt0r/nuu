@@ -29,7 +29,7 @@ rules.server = ->
 
   NUU.on 'userJoined', (p) ->
     stats[p.vehicle.id] = stats[p.vehicle.id] || name : p.name, k:0, d:0
-    console.log 'user$joined$'.green, p.name, stats
+    console.log '::dm', 'joined'.green, p.name, stats
 
   NUU.on 'userLeft', (p) ->
     delete stats[p.vehicle.id]
@@ -41,7 +41,7 @@ rules.server = ->
       victim.destructor()
     else
       stats[victim.id].d++
-      console.log victim.name.red, stats[victim.id].d
+      console.log '::dm', 'destroyed'.red, victim.name.red, stats[victim.id].k.toString().green, stats[victim.id].d.toString().red
       $timeout 4500, ->
         victim.dropLoot()
         victim.respawn()

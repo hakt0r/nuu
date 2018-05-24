@@ -84,11 +84,11 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     opt = @macro[macro] unless opt?
     delete @rmap[combo]
     delete @help[combo]
-    return console.log 'bind:opt:undefined', macro, key, combo, opt unless opt?
+    return console.log ':kbd', 'bind:opt:undefined', macro, key, combo, opt unless opt?
     opt = up: opt if typeof opt is 'function'
     key = combo.replace /^[cas]/,''
-    return console.log 'bind:key:unknown', macro, key, combo, opt if -1 is @workingKeycodes2018.indexOf key
-    console.log '$bind', combo, opt
+    return console.log ':kbd', 'bind:key:unknown', macro, key, combo, opt if -1 is @workingKeycodes2018.indexOf key
+    console.log ':kbd', 'bind', combo, opt if debug
     @_up[macro] = opt.up if opt.up?
     @_dn[macro] = opt.dn if opt.dn?
     @mmap[macro] = combo

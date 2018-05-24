@@ -32,9 +32,9 @@ $obj::update = $void
 
 if isServer then $obj::changeState = (state)->
   # TODO: orbit modifiction (needs elliptical orbits)
-  # return console.log 'relto' if @state.relto?
+  # return console.log '::st', 'changeState' 'relto' if @state.relto?
   # return @setState state if state
-  return console.log 'locked$', @name if @locked or @state.S is $orbit
+  return console.log '::st', 'locked', @name if @locked or @state.S is $orbit
   @state.update true
   @a = (
     if @state.S is $orbit then 0
@@ -47,7 +47,7 @@ if isServer then $obj::changeState = (state)->
     else if @accel or @retro or @boost then State.accelerating
     else if not ( @m[0] is @m[1] is 0 ) then State.moving
     else State.fixed )
-  # console.log ' changeState '.white.inverse, @name, @state.name, '>', state.name if @name is 'Kestrel'
+  # console.log '::st', ' changeState '.white.inverse, @name, @state.name, '>', state.name if @name is 'Kestrel'
   new state @, @x, @y, @d, @m, @a, @t, @relto
   @
 
@@ -84,7 +84,7 @@ $public class State
     @toBuffer()     if isServer
     @convert ostate if @convert
     @update null
-    # console.log 'state$', @S, @o.id
+    # console.log '::st', @S, @o.id
     return if isClient
     NET.state.write @o
 
@@ -200,7 +200,7 @@ State.register 'orbit', class orbit extends State
   ly:   0
   tmp:  null
   convert: (o)->
-    return console.log 'set:no_relto' unless @relto
+    return console.log '::st', 'orbit', 'set:no-relto' unless @relto
     dx = @x - @relto.x
     dy = @y - @relto.y
     @offs = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
@@ -213,9 +213,9 @@ State.register 'orbit', class orbit extends State
     @step  = TAU * ( t / @orbit )
     @lx = @o.x = @relto.x + cos(@offs) * @orbit
     @ly = @o.y = @relto.y + sin(@offs) * @orbit
-    # console.log '$orbit', @o.id, @orbit, @offs, @step, @dir if @o.id is 20
+    # console.log '::st', 'orbit', @o.id, @orbit, @offs, @step, @dir if @o.id is 20
   update: (time)->
-    return console.log 'update:no_relto' unless @relto
+    return console.log '::st', 'orbit', 'set:no-relto' unless @relto
     if not time and @lastUpdate is TIME then return null else time = TIME
     deltaT = ( time - @lastUpdate ) / TICK
     @relto.update()

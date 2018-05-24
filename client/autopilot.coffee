@@ -77,11 +77,11 @@ $public class Autopilot
     unless ap = Autopilot.instance
       Autopilot.instance = new Autopilot VEHICLE, TARGET
     else if not ap.active
-      console.log 'ap:start'
+      console.log '::ap', 'start'
       ap.commit(VEHICLE, TARGET, Target.mode)
       ap.start()
     else
-      console.log 'ap:stop'
+      console.log '::ap', 'stop'
       ap.stop()
 
 Kbd.macro 'autopilot', 'sKeyZ', 'Autopilot', Autopilot.macro

@@ -32,7 +32,7 @@ Ship::updateMods = -> # calculate mods
             if @mods[k] then @[k] += v
             else @[k] = v
             @mods[k] = true
-  console.log 'mass::', @stats.mass - @mass if debug
+  console.log 'smod', 'mass', @stats.mass - @mass if debug
 
   # apply mods
   map =

@@ -88,10 +88,10 @@ $static '$websocket',  (app,httpServer,options={}) ->
       socket.close() if statusCode > 200
     app.handle request, dummyResponse, -> socket.close() unless request.wsHandled
     app.ws "/nuu", (c, req) ->
-      console.log 'ws'.yellow, 'connection'.grey
+      console.log '::ws', 'connection'.yellow
       c.json = (msg) -> c.send NET.JSON + JSON.stringify msg
       c.on "message", NET.route c
-      c.on "error", (e) -> console.log 'ws'.yellow, 'error'.red, e
+      c.on "error", (e) -> console.log '::ws', 'error'.red, e
       # lag and jitter emulation # c.on "message", (msg) -> setTimeout (-> NET.route(c)(msg)), 100 # + Math.floor Math.random() * 40
       null
     null
@@ -121,6 +121,6 @@ NUU.jsoncastTo = (v,data) ->
   return unless v.inhabited
   data = NET.JSON + JSON.stringify data
   v.mount.map (i)-> if i and i.sock
-    console.log 'jsoncastTo', v.id, data
+    console.log '::ws', 'jsoncastTo', v.id, data
     try i.sock.send data catch error then wsServer.clients.delete i.sock
   null

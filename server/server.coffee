@@ -1,5 +1,5 @@
-console.log """#######################################################################################
-#### NUU ### 0.4.71 ### Gordon Cooper - Astronaut - * 3-6 1927 † 10-4 2004 ############
+console.log """\n#######################################################################################
+#### NUU ### 0.4.72 ### Gordon Cooper - Astronaut - * 3-6 1927 † 10-4 2004 ############
 #######################################################################################
 
     ``````````````,,',,,,,,++#+;::;;;;;;;:;:::::;;;:::::;;;;;;;:##;;;;,``........,,,.
@@ -87,10 +87,10 @@ $static 'app', app = express()
 $websocket app
 ## Setup Webserver
 app.use require('morgan')() if debug
-app.use require('body-parser') keepExtensions: true, uploadDir: '/tmp/'
+# app.use require('body-parser') keepExtensions: true, uploadDir: '/tmp/'
 app.use require('compression')()
 app.use require('cookie-parser')()
-app.use require('express-session') secret: 'what-da-nuu'
+app.use require('express-session') secret: 'what-da-nuu', saveUninitialized:no, resave:no
 app.use '/build', require('serve-static')('build',etag:no)
 app.use '/build', require('serve-index' )('build',etag:no)
 
@@ -115,7 +115,7 @@ app.on '$obj:del', Sync.del = (obj)->
   obj
 
 ## Initialize Engine
-console.log 'NUU'.yellow, 'initializing'.yellow
+console.log ':nuu', 'initializing'.yellow
 NUU.init()
 
 # Skeleton Page
@@ -146,18 +146,22 @@ if fs.existsSync app.lockPath
   pid = parseInt fs.readFileSync app.lockPath, 'utf8'
   cp = require 'child_process'
   try
-    cp.execSync "while fuser -k #{app.lockPath}; do :; done"
-    console.log 'killed', pid
+    cp.execSync "while fuser -k #{app.lockPath}; do :; done >/dev/null 2>&1"
+    console.log 'lock', 'killed'.green, pid.toString().red
   catch
-    console.log 'stale lockfile', pid
+    console.log ':nuu', 'stale lockfile', pid
 fs.writeFileSync app.lockPath, process.pid
 fs.open app.lockPath, 0, ->
 
-console.log 'server'.yellow, 'listen'.yellow, app.addr.red + ':' + app.port.toString().blue
+$static '$release', JSON.parse fs.readFileSync './build/release.json'
+$release.banner = $release.v.green + $release.git.red
+
+console.log 'http', 'listen'.yellow, app.addr.red + ':' + app.port.toString().magenta
 app.listen app.port, app.addr, ->
-  console.log 'server'.yellow, 'ready'.green, app.addr.red + ':' + app.port.toString().blue
+  console.log 'http', 'online'.green, app.addr.red + ':' + app.port.toString().magenta
+  console.log ':nuu', $release.banner
   if app.chgid
-    console.log 'server'.yellow, 'dropping privileges'.green
+    console.log 'http', 'dropping privileges'.green
     process.setgid app.chgid
     process.setuid app.chgid
   null

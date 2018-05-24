@@ -35,7 +35,7 @@ $public class AI extends Ship
       d: floor random() * 359 }
     super opts
     @name = @aiType + "[##{@id}]"
-    console.log "#{@name} at", opts.stel.name if debug
+    console.log '::ai', "#{@name} at", opts.stel.name if debug
     @primarySlot = @slots.weapon[0]
     @primaryWeap = @slots.weapon[0].equip
     AI.list.push @
@@ -89,7 +89,7 @@ AI::attackPlayersTarget = ->
       closestDist = d
       closest =  p.vehicle
   return @target = null if closestDist > 5000
-  console.log 'Drone SELECTED', closestDist if debug
+  console.log '::ai', 'Drone SELECTED', closestDist if debug
   @target = closest
   null
 
@@ -98,7 +98,7 @@ AI::approach = ->
   do @approachTarget unless @target
   return 1000        unless @target
   if @inRange = abs(distance = $dist(@,@target)) < 150
-    console.log "#{@name} at", @target.name if debug
+    console.log '::ai', "#{@name} at", @target.name if debug
     @target = null
     return 10000
   # else if @state.S isnt $travel
@@ -114,14 +114,14 @@ AI::approach = ->
 
 AI::approachTarget = ->
   @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
-  console.log "#{@name} to", @target.name if @target if debug
+  console.log '::ai', "#{@name} to", @target.name if @target if debug
 
 AI::escort = ->
   do @update
   @escortTarget() if not @target or @target.destructing or ( @target.hostile and @target.hostile.length > 0 )
   return 1000     unless @target
   if @inRange = abs(distance = $dist(@,@target)) < 150
-    console.log "#{@name} reached", @target.name if debug
+    console.log '::ai', "#{@name} reached", @target.name if debug
     return 250
   v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
@@ -132,14 +132,14 @@ AI::escort = ->
 
 AI::escortTarget = ->
   if target = $obj.byId[@escortFor]
-    console.log "#{@name} Escorting", target.name if debug
+    console.log '::ai', "#{@name} Escorting", target.name if debug
     return @target = target unless target.hostile.length > 0 or target.destructing
     return @target if @target and not @target.destructing
     @target = target.hostile[0]
-    console.log "#{@name} Escort:Attack", @target.name if debug
+    console.log '::ai', "#{@name} Escort:Attack", @target.name if debug
     return @target
   @changeStrategy 'attackPlayers'
-  console.log "#{@name} going berserk" if debug
+  console.log '::ai', "#{@name} going berserk" if debug
   false
 
 AI.list = []

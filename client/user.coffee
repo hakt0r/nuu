@@ -20,15 +20,15 @@
 
 ###
 
-$public class Player
+$public class User
   _vehicle: null
   primary: id: 0
   secondary: id: 0
   constructor: (opts)->
     @[k] = k for k,v of opts
-    console.log 'player$', @
+    console.log 'user', @
 
-Object.defineProperty Player::, 'vehicle',
+Object.defineProperty User::, 'vehicle',
   set: (v) ->
     return unless v
     window.VEHICLE = @_vehicle = v
@@ -40,10 +40,10 @@ Object.defineProperty Player::, 'vehicle',
     NUU.emit 'enterVehicle', v
     switchWeap(-1) NUU.player, 'primary'
     switchWeap(-1) NUU.player, 'secondary'
-    console.log 'enterVehicle', v.id if debug
+    console.log 'user', 'enterVehicle', v.id if debug
   get: -> @_vehicle
 
-Player::FighterBaySlotHook = ->
+User::FighterBaySlotHook = ->
   return false unless NUU.player.equip and NUU.player.equip.type is 'fighter bay'
   NET.json.write switchShip: Item.byName[NUU.player.equip.stats.ammo.replace(' ','')].stats.ship
   true
@@ -68,13 +68,13 @@ app.on '$obj:add', (o)->
   null
 
 NET.on 'switchShip', (opts) ->
-  console.log 'switchShip', opts if debug
+  console.log 'user', 'switchShip', opts if debug
   NUU.player.mountId = parseInt opts.m
   NUU.player.vehicle = Ship.byId[opts.i]
   NET.emit 'switchMount', opts.m
 
 NET.on 'switchMount', (id) ->
-  console.log 'NET:switchMount', id if debug
+  console.log 'user', 'switchMount', id if debug
   id = parseInt id
   VEHICLE.mount[NUU.player.mountId] = null
   VEHICLE.mount[id] = NUU.player

@@ -29,10 +29,10 @@ NUU.players = []
 
 NUU.loadMeta = (obj) ->
   if ( meta = $meta[ obj.sprite ] )
-    # console.log '$meta', obj.sprite, $meta[obj.sprite]
+    # console.log ':nuu', '$meta', obj.sprite, $meta[obj.sprite] if debug
     obj.size = meta.size
     obj.radius = meta.radius
-  else console.log 'no meta for', obj.sprite
+  else console.log ':nuu', 'no meta for', obj
 
 NUU.fix_sprites = (o)->
   for k,v of o
@@ -45,7 +45,7 @@ NUU.fix_sprites = (o)->
   o
 
 NUU.init =->
-  console.log 'init:items'
+  console.log ':nuu', 'init:items' if debug
   # Load objects
   items = JSON.parse fs.readFileSync './build/objects_naev.json'
   nuu_i = JSON.parse fs.readFileSync './build/imag/objects_nuu.json'
@@ -61,7 +61,7 @@ NUU.init =->
   $static '$meta', meta
   app.on '$obj:add', NUU.loadMeta
   # Load stellars
-  console.log 'init:stars'
+  console.log ':nuu', 'init:stars' if debug
   for i in rules.stars
     # [ id, Constructor, name, sprite, orbit, state, relto, orbitEcc ] = i
     rand  = random() * TAU
@@ -78,7 +78,7 @@ NUU.init =->
       x:relto.x + cos(rand) * i[4]
       y:relto.y + sin(rand) * i[4]
       m:m
-  console.log 'init:rules'
+  console.log ':nuu', 'init:rules' if debug
   rules @
   now = Date.now
   @thread 'group', 1000, =>
