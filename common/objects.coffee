@@ -131,10 +131,12 @@ $obj.register class Station extends Stellar
 $obj.register class Debris extends $obj
   @interfaces: [$obj,Shootable,Collectable,Debris]
   name: 'Debris'
+  sprite: 'debris2'
   toJSON: -> id:@id,key:@key,state:@state
 
 $obj.register class Cargo extends $obj
   @interfaces: [$obj,Shootable,Collectable,Debris]
+  sprite: 'cargo'
   name: 'Cargo Box'
   item: null
   ttlFinal: yes
