@@ -38,6 +38,8 @@ Object.defineProperty Player::, 'vehicle',
     Sprite.repositionPlayer()
     @vehicleId = v.id
     NUU.emit 'enterVehicle', v
+    switchWeap(-1) NUU.player, 'primary'
+    switchWeap(-1) NUU.player, 'secondary'
     console.log 'enterVehicle', v.id if debug
   get: -> @_vehicle
 
@@ -51,10 +53,12 @@ switchWeap = (mutate)-> (player,trigger='primary') ->
   ws = player.vehicle.slots.weapon
   ct = ws.length - 1
   tg = player[trigger]
-  tg.id = mutate tg.id, ct
-  tg.slot = ws[tg.id].equip
-  tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
-  tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
+  unless mutate is -1
+    tg.id = mutate tg.id, ct
+    tg.slot = weap = ws[tg.id].equip
+    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
+    tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
+  NUU.emit 'switchWeapon', trigger, weap
 Ship::nextWeap = switchWeap (id,ct)-> ++id % ct
 Ship::prevWeap = switchWeap (id,ct)-> ( --tg.id + ct ) % ct
 

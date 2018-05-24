@@ -45,6 +45,7 @@ Weapon.Projectile = ->
   @lock = @stop = false
   $worker.push @tracker = Weapon.tracker.call @ if @turret
   @emitter = =>
+    @release() if not @target or @target.destructing
     if @stop then ( @stop = @lock = false; return off )
     @ship.update()
     cs = cos d = (( @ship.d + @dir ) % 360 ) / RAD

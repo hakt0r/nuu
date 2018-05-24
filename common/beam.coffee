@@ -43,6 +43,10 @@ Weapon.tracker = -> =>
   unless @target
     @dir = 0
     return null
+  if @target.destructing
+    @dir = 0
+    @target = null
+    return null
   td  = NavCom.fixAngle $v.heading(@target.p,@ship.p) * RAD
   tdd = -180 + (((( @ship.d + @dir - td - 90 ) % 360 ) + 360 ) % 360 )
   if @stats.track * 2 < abs tdd
