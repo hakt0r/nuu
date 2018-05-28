@@ -114,7 +114,7 @@ $public class User
       return @deny src, pass
     @sock = src
     src.json 'user.login.success': {user:@db}, sync:add:$obj.list # TODO: inRange & Stellar only
-    src.off "message", src.router
+    src.removeListener "message", src.router
     src.on  "message", src.router = NET.route src
     NUU.emit 'userJoined', @
     return handle.rejoin src if handle = User.byId[@db.id]
