@@ -70,13 +70,20 @@ $obj.register class Ship extends $obj
     @mount     = [false,false]
     @mountSlot = [false,false]
     @mountType = ['helm','passenger']
+    @mountName = ['Helm','PassengerSeat']
     for slot in @slots.weapon when slot and slot.equip
-      @mountSlot.push slot
-      @mount.push false
       switch slot.equip.type
         when 'fighter bay'
           @mountType.push 'fighter'
-        else @mountType.push 'weap'
+          @mountName.push slot.equip.name
+          @mountSlot.push slot
+          @mount.push false
+        else
+          if slot.equip.turret
+            @mountType.push 'weap'
+            @mountName.push slot.equip.name
+            @mountSlot.push slot
+            @mount.push false
     null
 
   destructor: ->

@@ -105,7 +105,7 @@ $static 'HUD', new class HUDRenderer
 
     NET.on 'setMount', (users) -> HUD.widget 'mount', (
       id = NUU.player.mountId
-      VEHICLE.name + '['+ id + ':' + VEHICLE.mountType[id] + ']\n' + users
+      VEHICLE.name + '['+ id + ':' + VEHICLE.mountName[id] + ']\n' + users
         .filter (i)-> i
         .join ' '
     ), true
