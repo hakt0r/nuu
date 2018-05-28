@@ -20,14 +20,6 @@
 
 ###
 
-NET.on 'join', (vc) ->
-  return if Ship.byId[vc.id]
-  new Ship vc
-
-NET.on '$obj:del', (opts) ->
-  # freeId.push opts.id
-  # try $obj.byId[opts.id].destructor()
-
 NET.on 'sync', (opts) -> NUU.sync opts
 
 NUU.sync = (list,callback) ->
@@ -52,11 +44,6 @@ NUU.loginPrompt = ->
       NET.login user, pass, (success) =>
         return @login user, pass  if typeof success is 'object'
         return @loginPrompt() unless success
-
-String.random = (length) ->
-  text = ''; i = 0
-  text += String.fromCharCode floor 80 + 36 * random() while i++ < length
-  text
 
 class NET.Connection
   constructor: (@name,@pass,callback)->
@@ -93,7 +80,7 @@ class NET.Connection
     NUU.emit 'connecting', @sock = s
   send: (msg) =>
     NET.TX++
-    return @connect @addr if @sock.readyState >= @sock.CLOSING
+    return do @reconnect if @sock.readyState >= @sock.CLOSING
     return if @sock.readyState isnt @sock.OPEN
     @sock.send msg
   onopen: (e) =>
@@ -104,7 +91,8 @@ class NET.Connection
   onerror: (e) =>
     console.log ':net', 'sock:error', e
     NUU.emit 'disconnect'
-    # setTimeout ( => @connect @addr ), 1000
+  reconnect: (e) =>
+    setTimeout ( => @connect @addr ), 5000
 
 NET.login = (name, pass, callback) ->
   return console.log 'auth', 'REAUTH NOT IMPLEMENTED' if NET.Connection._?

@@ -103,6 +103,13 @@ $static 'HUD', new class HUDRenderer
       null
     null
 
+    NET.on 'setMount', (users) -> HUD.widget 'mount', (
+      id = NUU.player.mountId
+      VEHICLE.name + '['+ id + ':' + VEHICLE.mountType[id] + ']\n' + users
+        .filter (i)-> i
+        .join ' '
+    ), true
+
     NUU.on 'switchWeapon', switchWeapon = (slot,weap) =>
       console.log "weap", slot, weap if debug
       p = NUU.player

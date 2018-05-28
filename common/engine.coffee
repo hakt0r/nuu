@@ -31,6 +31,11 @@ Object.empty = (o)->
   delete o[k] for k of o
   o
 
+String.random = (length) ->
+  text = ''; i = 0
+  text += String.fromCharCode floor 80 + 36 * random() while i++ < length
+  text
+
 String.filename = (p)->
   p.replace(/.*\//, '').replace(/\..*/,'')
 

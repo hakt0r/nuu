@@ -29,10 +29,15 @@ $public class Item
   @tpl: {}
   @byId: {}
   @byName: {}
-  @byType: ship:{}
+  @byType: ship:{}, station:{}
   @byProp: {}
   @init: (items) ->
     id = 0
+    for k,o of Station when o? and o::? and o::consumes?
+      o.name = o.constructor.name
+      Item.byType.station[o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
+      console.log 'Station', id, o.name, o::sprite if debug
+      id++
     for o in items.ship
       Item.byType['ship'][o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
       Ship.byTpl[id] = o.name

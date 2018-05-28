@@ -25,7 +25,7 @@ $public class User
   primary: id: 0
   secondary: id: 0
   constructor: (opts)->
-    @[k] = k for k,v of opts
+    @[k] = v for k,v of opts
     console.log 'user', @
 
 Object.defineProperty User::, 'vehicle',
@@ -43,24 +43,21 @@ Object.defineProperty User::, 'vehicle',
     console.log 'user', 'enterVehicle', v.id if debug
   get: -> @_vehicle
 
-User::FighterBaySlotHook = ->
-  return false unless NUU.player.equip and NUU.player.equip.type is 'fighter bay'
-  NET.json.write switchShip: Item.byName[NUU.player.equip.stats.ammo.replace(' ','')].stats.ship
-  true
-
 switchWeap = (mutate)-> (player,trigger='primary') ->
   primary = trigger is 'primary'
   ws = player.vehicle.slots.weapon
   ct = ws.length - 1
   tg = player[trigger]
   unless mutate is -1
-    tg.id = mutate tg.id, ct
-    tg.slot = weap = ws[tg.id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, tg.id, if TARGET then TARGET.id else undefined
-    tg.release = -> NET.weap.write 'release', primary, tg.id, if TARGET then TARGET.id else undefined
+    id = 0 if isNaN id = parseInt tg.id
+    id = max 0, min ct, id
+    tg.id = mutate id, ct
+    tg.slot = weap = ws[id].equip
+    tg.trigger = -> NET.weap.write 'trigger', primary, id, if TARGET then TARGET.id else undefined
+    tg.release = -> NET.weap.write 'release', primary, id, if TARGET then TARGET.id else undefined
   NUU.emit 'switchWeapon', trigger, weap
-Ship::nextWeap = switchWeap (id,ct)-> ++id % ct
-Ship::prevWeap = switchWeap (id,ct)-> ( --tg.id + ct ) % ct
+Ship::nextWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ++id % ct
+Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --tg.id + ct ) % ct
 
 app.on '$obj:add', (o)->
   # console.log 'yolo', o.id, NUU.player.vehicleId
@@ -69,18 +66,19 @@ app.on '$obj:add', (o)->
 
 NET.on 'switchShip', (opts) ->
   console.log 'user', 'switchShip', opts if debug
-  NUU.player.mountId = parseInt opts.m
   NUU.player.vehicle = Ship.byId[opts.i]
-  NET.emit 'switchMount', opts.m
+  NET.emit 'setMount', opts.m
 
-NET.on 'switchMount', (id) ->
-  console.log 'user', 'switchMount', id if debug
+NET.on 'setMount', (list) ->
+  console.log 'user', 'setMount', id if debug
   id = parseInt id
-  VEHICLE.mount[NUU.player.mountId] = null
-  VEHICLE.mount[id] = NUU.player
-  NUU.player.mountId = id
+  VEHICLE.mount = list
+  NUU.player.mountId = list.indexOf NUU.player.user.nick
   NUU.player.mount = VEHICLE.mountSlot[id]
   NUU.player.equip = VEHICLE.mountSlot[id].equip if NUU.player.mount
-  HUD.widget 'mount', VEHICLE.name + '['+ id + ':' + VEHICLE.mountType[id] + ']', true
+  VEHICLE.name + '['+ id + ':' + VEHICLE.mountType[id] + ']\n' + VEHICLE.mount
+    .map (i,k)-> if i then "[#{k}]i" else false
+    .filter (i)-> i
+    .join ' '
 
 NUU.frame = 0

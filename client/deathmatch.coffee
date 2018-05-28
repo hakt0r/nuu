@@ -20,16 +20,26 @@
 
 ###
 
-Window.Ships = class ShipsWindow extends ModalListWindow
-  name: 'ship'
+Window.Ships = class DebugShipWindow extends ModalListWindow
+  name: 'dbg_ship'
   title: 'Ships'
   subject: Item.byType.ship
-  closeKey: 'Sd'
+  closeKey: 'sKeyS'
   render: (key,val)->
     Render.Ship.call @,key, val, @close.bind @
     null
 
-Kbd.macro 'ships',  'sKeyS', 'Show ships', -> new Window.Ships
+Window.Station = class DebugBuildWindow extends ModalListWindow
+  name: 'dbg_build'
+  title: 'Station'
+  subject: Item.byType.station
+  closeKey: 'aKeyS'
+  render: (key,val)->
+    Render.Station.call @,key, val, @close.bind @
+    null
+
+Kbd.macro 'ships', 'sKeyS', 'Show ship menu',  -> new Window.Ships
+Kbd.macro 'build', 'aKeyS', 'Show build menu', -> new Window.Station
 
 Render =
   Ship: (name,item,close)->
@@ -47,3 +57,15 @@ Render =
     bBuy    = entry.find 'button.buy'
     bSelect = entry.find 'button.select'
     bSelect.click -> close NET.json.write switchShip: item.name
+  Station: (name,item,close)->
+    sprite = item::sprite
+    @body.append entry = $ """
+      <div class="list-item select-ship">
+      <label>#{item.name}</label>
+      <div id="ship_select_#{name}" class="ship-select noselect">
+        <img class="ship_comm" src="build/stel/#{sprite}.png"></img>
+        <button class="build">Build</button>
+      </div>
+      </div>"""
+    bBuild = entry.find 'button.build'
+    bBuild.click -> close NET.json.write build: item.name

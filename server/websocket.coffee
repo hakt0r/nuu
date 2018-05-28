@@ -52,7 +52,7 @@ addWsRoute = (route, middlewares...) ->
   return @
 
 trailingSlash = (string) ->
-  string =+ '/' if '/' isnt string.charAt string.length - 1
+  string += '/' if '/' isnt string.charAt string.length - 1
   string
 
 wrapMiddleware = (middleware) -> (req, res, next) ->
@@ -86,41 +86,54 @@ $static '$websocket',  (app,httpServer,options={}) ->
     dummyResponse = new http.ServerResponse request
     dummyResponse.writeHead = writeHead = (statusCode) ->
       socket.close() if statusCode > 200
+    console.log '::ws', 'connection:pre'.yellow, request.url.yellow if debug
     app.handle request, dummyResponse, -> socket.close() unless request.wsHandled
-    app.ws "/nuu", (c, req) ->
-      console.log '::ws', 'connection'.yellow
-      c.json = (msg) -> c.send NET.JSON + JSON.stringify msg
-      c.on "message", NET.route c
-      c.on "error", (e) -> console.log '::ws', 'error'.red, e
-      # lag and jitter emulation # c.on "message", (msg) -> setTimeout (-> NET.route(c)(msg)), 100 # + Math.floor Math.random() * 40
+    app.ws "/nuu", (src, req) ->
+      console.log '::ws', 'connection'.yellow if debug
+      src.json = (msg) ->
+        src.send (NET.JSON + JSON.stringify msg), $websocket.error(src)
+      src.on "message", src.router = NET.awaitLogin(src)
+      src.on "error", $websocket.error(src)
+      # lag and jitter emulation # src.on "message", (msg) -> setTimeout (-> NET.route(src)(msg)), 100 # + Math.floor Math.random() * 40
       null
     null
     app
 
-NUU.bincast = (data,origin) ->
-  wsServer.clients.forEach (c) ->
-    try c.send data catch error then wsServer.clients.delete c
-    null
+$websocket.error = (src)-> (error)-> if error
+  console.log '::ws'.red, error
+  wsServer.clients.delete src
+
+NET.awaitLogin = (src)-> (msg)->
+  unless typeof msg is 'string' and msg[1] is '{'
+    console.log ':net', 'pre-login'.red, msg, typeof msg, msg[1]
+    return src.close()
+  try msg = JSON.parse msg.substr(1) catch e
+    console.log ':net', 'pre-login'.red, msg, e.message
+    src.close()
+  return src.close() unless msg.login?
+  console.log ':net', 'pre-login', msg if debug
+  NET.loginFunction msg.login, src
+
+NUU.bincast = (data,o) ->  wsServer.clients.forEach (src) ->
+  src.send data, $websocket.error(src)
   null
 
-NUU.nearcast = NUU.bincast = (data,o) -> wsServer.clients.forEach (c) ->
-  if o? and c.handle? and c.handle.vehicle? and o isnt c.handle.vehicle
-    v = c.handle.vehicle
+NUU.nearcast = NUU.bincast = (data,o) -> wsServer.clients.forEach (src) ->
+  if o? and src.handle? and src.handle.vehicle? and o isnt src.handle.vehicle
+    v = src.handle.vehicle
     return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
-  try c.send data catch error then wsServer.clients.delete c
+  src.send data, $websocket.error(src)
   null
 
 NUU.jsoncast = (data) ->
   data = NET.JSON + JSON.stringify data
-  wsServer.clients.forEach (c) ->
-    try c.send data catch error then wsServer.clients.delete c
-    null
+  wsServer.clients.forEach (src)-> src.send data, $websocket.error(src)
   null
 
 NUU.jsoncastTo = (v,data) ->
   return unless v.inhabited
   data = NET.JSON + JSON.stringify data
-  v.mount.map (i)-> if i and i.sock
+  v.mount.map (user)-> if user and src = user.sock
     console.log '::ws', 'jsoncastTo', v.id, data
-    try i.sock.send data catch error then wsServer.clients.delete i.sock
+    src.send data, $websocket.error(src)
   null

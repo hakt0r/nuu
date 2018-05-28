@@ -27,8 +27,8 @@ $static 'Mouse', new class MouseInput
   timer: undefined
   event: x:0, y:0
   accel: no
-  destDir: -1
-  lastDir: -1
+  destDir: 0
+  lastDir: 0
   lastAccel: no
 
   constructor:->

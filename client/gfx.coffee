@@ -207,6 +207,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
 
     @renderHUD()     # if @renderHUD
     @renderScanner() # if ++@tick % 10 is 0
+    VEHICLE.updateSprite() # FIX: THE-WIGGLER
     @renderer.render @stage
     null
 

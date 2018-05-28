@@ -177,13 +177,13 @@ NET.define 3,'WEAP',
   UInt8 UInt16  UInt16
 ###
 
-action_key = ['launch','land','orbit','dock','capture']
+action_key = ['eva','launch','land','orbit','dock','capture']
 NET.define 4,'ACTION',
   read:server:(msg,src) ->
     return console.log ':net', 'action:nx:t', msg unless t = $obj.byId[msg.readUInt16LE 2]
-    src.handle.action src, t, action_key[msg[1]]
+    src.handle.action t, action_key[msg[1]]
   write:client:(t,mode) ->
-    console.log mode+'$', t.name, t.id
+    console.log mode+'$', t.name, t.id if debug
     msg = Buffer.from [NET.actionCode,action_key.indexOf(mode),0,0]
     msg.writeUInt16LE t.id, 2
     NET.send msg.toString 'binary'

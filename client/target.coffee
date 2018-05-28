@@ -126,9 +126,12 @@ Target.toggleMode = ->
   Target.widget()
   null
 
+Target.eva = ->
+  NET.action.write 0, 'eva'
+  null
+
 Target.launch = ->
-  return if NUU.player.FighterBaySlotHook()
-  NET.action.write TARGET || id:0, 'launch'
+  NET.action.write 0, 'launch'
   null
 
 Target.orbit = ->
@@ -142,7 +145,8 @@ Target.jump = ->
   null
 
 Target.capture = capture = ->
-  NET.action.write TARGET, 'capture'
+  return unless t = TARGET
+  NET.action.write t, 'capture'
   null
 
 Target.roid = ->
@@ -154,17 +158,18 @@ Target.captureClosest = ->
   Target.closest (t)-> capture t if t?
   null
 
-Kbd.macro 'targetNothing',   'sKeyW', 'Target nothing',             Target.nothing
-Kbd.macro 'targetNext',      'KeyD',  'Target next',                Target.next
-Kbd.macro 'targetClassNext', 'KeyW',  'Target next class',          Target.nextClass
-Kbd.macro 'targetPrev',      'KeyA',  'Target prev',                Target.prev
-Kbd.macro 'targetClassPrev', 'KeyS',  'Target prev class',          Target.prevClass
-Kbd.macro 'targetClosest',   'KeyU',  'Target closest target',      Target.closest
-Kbd.macro 'targetEnemy',     'KeyE',  'Target closest enemy',       Target.enemy
-Kbd.macro 'targetRoid',      'KeyR',  'Target closest asteroid',    Target.roid
-Kbd.macro 'targetMode',      'Tab',   'Toggle Land / Dock / Orbit', Target.toggleMode
-Kbd.macro 'launch',          'sTab',  'Launch / Undock',            Target.launch
-Kbd.macro 'orbit',           'KeyQ',  'Land / Dock / Enter Orbit',  Target.orbit
-Kbd.macro 'jump',            'KeyJ',  'Jump to target',             Target.jump
-Kbd.macro 'capture',         'sKeyC', 'Capture target',             Target.capture
-Kbd.macro 'captureClosest',  'KeyC',  'Capture closest',            Target.captureClosest
+Kbd.macro 'targetNothing',  'sKeyW', 'Target nothing',            Target.nothing
+Kbd.macro 'targetNext',      'KeyD', 'Target next',               Target.next
+Kbd.macro 'targetClassNext', 'KeyW', 'Target next class',         Target.nextClass
+Kbd.macro 'targetPrev',      'KeyA', 'Target prev',               Target.prev
+Kbd.macro 'targetClassPrev', 'KeyS', 'Target prev class',         Target.prevClass
+Kbd.macro 'targetClosest',   'KeyU', 'Target closest target',     Target.closest
+Kbd.macro 'targetEnemy',     'KeyE', 'Target closest enemy',      Target.enemy
+Kbd.macro 'targetRoid',      'KeyR', 'Target closest asteroid',   Target.roid
+Kbd.macro 'targetMode',      'sTab', 'Toggle Land/Dock/Orbit',    Target.toggleMode
+Kbd.macro 'orbit',            'Tab', 'Land / Dock / Enter Orbit', Target.orbit
+Kbd.macro 'launch',         'aKeyQ', 'Launch / Undock',           Target.launch
+Kbd.macro 'eva',           'saKeyQ', 'EVA',                       Target.eva
+Kbd.macro 'jump',            'KeyJ', 'Jump to target',            Target.jump
+Kbd.macro 'capture',        'sKeyC', 'Capture target',            Target.capture
+Kbd.macro 'captureClosest',  'KeyC', 'Capture closest',           Target.captureClosest

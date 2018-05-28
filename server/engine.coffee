@@ -63,21 +63,22 @@ NUU.init =->
   # Load stellars
   console.log ':nuu', 'init:stars' if debug
   for i in rules.stars
-    # [ id, Constructor, name, sprite, orbit, state, relto, orbitEcc ] = i
+    [ id, Constructor, name, sprite, orbit, state, relto, args ] = i
     rand  = random() * TAU
-    relto = $obj.byId[i[6]] || x:0,y:0,update:$void
+    relto = $obj.byId[relto] || x:0,y:0,update:$void
     relto.update()
-    m = [0,min 5,   max 1,  i[4] % 5]
-    if i[4] > 100000   then m = [0,min 19,  max 10,  i[4] % 19]
-    if i[4] > 1000000  then m = [0,min 99,  max 20,  i[4] % 99]
-    if i[4] > 10000000 then m = [0,min 199, max 100, i[4] % 199]
-    Constructor = i[1]
-    new Constructor id:i[0], name:i[2], sprite:i[3], state:
-      S:i[5]
-      relto:relto# i[5]
-      x:relto.x + cos(rand) * i[4]
-      y:relto.y + sin(rand) * i[4]
+    m = [0,min 5,   max 1,  orbit % 5]
+    if orbit > 100000   then m = [0,min 19,  max 10,  orbit % 19]
+    if orbit > 1000000  then m = [0,min 99,  max 20,  orbit % 99]
+    if orbit > 10000000 then m = [0,min 199, max 100, orbit % 199]
+    opts = id:id, name:name, sprite:sprite, state:
+      S:state
+      relto:relto
+      x:relto.x + cos(rand) * orbit
+      y:relto.y + sin(rand) * orbit
       m:m
+    opts[k] = v for k,v of args
+    new Constructor opts
   console.log ':nuu', 'init:rules' if debug
   rules @
   now = Date.now

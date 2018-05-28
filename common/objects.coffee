@@ -112,22 +112,6 @@ $obj.register class Shootable extends $obj
   Some simple objects
 ###
 
-$obj.register class Stellar extends $obj
-  @interfaces: [$obj,Stellar]
-  toJSON: -> id:@id,key:@key,sprite:@sprite,state:@state,name:@name
-
-$obj.register class Star extends Stellar
-  @interfaces: [$obj,Stellar]
-
-$obj.register class Planet extends Stellar
-  @interfaces: [$obj,Stellar]
-
-$obj.register class Moon extends Stellar
-  @interfaces: [$obj,Stellar]
-
-$obj.register class Station extends Stellar
-  @interfaces: [$obj,Stellar]
-
 $obj.register class Debris extends $obj
   @interfaces: [$obj,Shootable,Collectable,Debris]
   name: 'Debris'

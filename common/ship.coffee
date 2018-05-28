@@ -67,12 +67,12 @@ $obj.register class Ship extends $obj
     @slots = _.clone @slots
     @mockSystems() # fixme
     @updateMods()
-    @mount     = [null,null]
-    @mountSlot = [null,null]
+    @mount     = [false,false]
+    @mountSlot = [false,false]
     @mountType = ['helm','passenger']
     for slot in @slots.weapon when slot and slot.equip
       @mountSlot.push slot
-      @mount.push null
+      @mount.push false
       switch slot.equip.type
         when 'fighter bay'
           @mountType.push 'fighter'
@@ -92,3 +92,9 @@ $obj.register class Ship extends $obj
     @shield = @shieldMax
     @armour = @armourMax
     @fuel   = @fuelMax
+
+Object.defineProperty Ship::, 'd',
+  get:-> @_d || 0
+  set:(v)->
+    debugger if v is -1
+    @_d = v

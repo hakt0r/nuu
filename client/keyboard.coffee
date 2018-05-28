@@ -86,7 +86,7 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
     delete @help[combo]
     return console.log ':kbd', 'bind:opt:undefined', macro, key, combo, opt unless opt?
     opt = up: opt if typeof opt is 'function'
-    key = combo.replace /^[cas]/,''
+    key = combo.replace /^[cas]+/,''
     return console.log ':kbd', 'bind:key:unknown', macro, key, combo, opt if -1 is @workingKeycodes2018.indexOf key
     console.log ':kbd', 'bind', combo, opt if debug
     @_up[macro] = opt.up if opt.up?
@@ -136,10 +136,6 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
 Kbd.macro 'debug', 'sBackquote', 'Debug', ->
   window.debug = not debug
 
-Kbd.macro 'debark', 'sKeyQ', 'Leave vehicle', ->
-  return if NUU.player.FighterBaySlotHook()
-  NET.json.write switchShip: 'Exosuit' unless VEHICLE and VEHICLE.class is 'Exosuit'
-
 Kbd.macro 'mountNext',   'KeyM', 'Next mount', ->
   m = ++NUU.player.mountId % VEHICLE.mount.length
   NET.json.write switchMount: m
@@ -163,3 +159,6 @@ Kbd.macro 'primaryTrigger', 'Space', 'Primary trigger',
 Kbd.macro 'secondaryTrigger', 'KeyX', 'Secondary trigger',
   dn:-> if f = NUU.player.secondary.trigger then do f
   up:-> if f = NUU.player.secondary.release then do f
+
+Kbd.macro 'debugOrbit', 'KeyO', 'debug orbit', ->
+  NET.json.write debugOrbit:TARGET.id

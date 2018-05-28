@@ -4,6 +4,7 @@
   "worker",
   "engine",
   "objects",
+  "stellar",
   "state",
   "net",
   "ping",
