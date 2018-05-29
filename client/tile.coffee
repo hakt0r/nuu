@@ -36,7 +36,7 @@ $abstract 'Tile',
 
   updateSprite: ->
     do @update
-    p = @sprite.position.set @x + OX, @y + OY
+    p = @sprite.position.set @x + OX, @y + OY unless @ is VEHICLE
     @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
     true
 

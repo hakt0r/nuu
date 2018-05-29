@@ -81,9 +81,7 @@ NUU.init =->
     new Constructor opts
   console.log ':nuu', 'init:rules' if debug
   rules @
-  now = Date.now
   @thread 'group', 1000, =>
-    global.TIME  = now()
-    global.ETIME = Math.floor(TIME/1000000)*1000000
-    o.update() for o in $obj.list
+    time = NUU.time()
+    o.update time for o in $obj.list
   @start()

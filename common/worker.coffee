@@ -20,17 +20,15 @@
 
 ###
 
-pub = $static.list
-pub.TIME  = Date.now()
-pub.ETIME = Math.floor(TIME/1000000)*1000000
+window.global = window if window?
+global.TIME  = NUU.time()
 
 class Worker
   constructor : (interval) ->
-    time = Date.now; r = f = null
+    r = f = null
     lista = []; lista.real = 0; lista.name = 'a'
     listb = []; listb.real = 0; listb.name = 'b'
     flip = no; cur = listb; nxt = lista
-    @setTimer = (f) -> time = f
     @push   = push = (f) -> nxt[nxt.real++] = f
     @remove = remove = (f) -> f.stop = true if f
     pushback = (f,t) -> setTimeout (-> push f), t
@@ -39,18 +37,18 @@ class Worker
         cur = lista; @list = nxt = listb
       else cur = listb; @list = nxt = lista
       c = nxt.real = 0
+      began = NUU.time()
       for idx in [0...cur.real]
-        pub.TIME  = time()
-        pub.ETIME = Math.floor(TIME/1000000)*1000000
+        global.TIME  = NUU.time()
+        global.ETIME = Math.floor(TIME/1000000)*1000000
         if typeof (f = cur[idx]) isnt 'function'
         else if f.stop
-        else if typeof (r = f()) is 'number'
+        else if typeof (r = f NUU.time() ) is 'number'
           pushback f, r; continue
         else if r isnt no
           nxt[nxt.real++] = f
       @count = nxt.real
-      @last = time() - TIME
-    @setClock = (v) -> time = v
+      @last = NUU.time() - began
     @timer = setInterval(callback,interval)
 
 $static '$worker', new Worker TICK

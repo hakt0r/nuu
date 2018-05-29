@@ -47,19 +47,18 @@ Math.scale = (val,minp=0,maxp=Speed.max,minv=0,maxv=50)->
   minv = Math.log minv; maxv = Math.log maxv
   return Math.exp minv + ((maxv-minv)/(maxp-minp)) * ( abs(val) - minp )
 
-class Engine extends EventEmitter
+$static 'NUU', new class Engine extends EventEmitter
   time: Date.now
+  timePrefix: -> 1000000 * Math.floor @time() / 1000000
   threadList: {}
   players: {}
   init: $void
   thread: (name,time,fnc) -> @threadList[name] = setInterval fnc, time
   start: (callback) ->
-    console.log ':nuu', 'engine'.green, @tstart = Date.now()
+    console.log ':nuu', 'engine'.green, @tstart = @time()
     @emit 'start'
     callback null if callback
     null
   stop: ->
     clearInterval i for k,i of @threadList
     null
-
-$static 'NUU', new Engine

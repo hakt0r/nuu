@@ -72,10 +72,10 @@ Weapon.Beam = ->
     Weapon.hostility @ship, @target
     do @show if isClient
     Weapon.beam[@ship.id] = @
-    @ms = @TIME
-    @tt = TIME + @duration
-    $worker.push =>
-      return @release() if @stop or @tt < TIME
+    @ms = NUU.time()
+    @tt = @ms + @duration
+    $worker.push (time)=>
+      return @release() if @stop or @tt < time
       return null if isClient
       @ship.update()
       dir = NavCom.unfixAngle( @ship.d + @dir ) / RAD

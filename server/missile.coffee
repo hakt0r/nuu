@@ -53,7 +53,7 @@ $obj.register class Missile extends $obj
       x: source.x
       y: source.y
     super opts
-    @ttl = TIME + 10000
+    @ttl = NUU.time() + 10000
     update    = false
     state     = 0
     prevState = 0
@@ -61,7 +61,7 @@ $obj.register class Missile extends $obj
     prototype = Item.tpl[@tpl]
     vdiff     = [0,0]
     $worker.push @autopilot = =>
-      if TIME > @ttl
+      if NUU.time() > @ttl
         @destructor()
         return false
       @update @target.update()

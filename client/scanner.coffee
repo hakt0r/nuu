@@ -126,7 +126,7 @@ $static 'Scanner', new class ScannerRenderer
           g.lineStyle 2, @color.Orbit
           g.endFill g.drawCircle ov[0]+W2R, ov[1]+H2R, o
     # TODO: more inRange magic
-    # return if @nextUpdate > TIME; @nextUpdate = TIME + if @scale < 1024 then TICK else 250
+    # return if @nextUpdate > NUU.time(); @nextUpdate = NUU.time() + if @scale < 1024 then TICK else 250
     for s in $obj.list
       continue unless -1 is skipId.indexOf s.id
       w = max 1, min 2, s.size * 100 / @scale

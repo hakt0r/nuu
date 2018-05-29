@@ -72,8 +72,7 @@ NET.on 'jump', (target,src) ->
   o.fuel -= 500; NET.health.write o
   # the jump
   o.accel = o.boost = o.retro = o.left = o.right = no
-  $static.list.TIME = Date.now()
-  target.update()
+  target.update NUU.time()
   o.setState
     S: $moving
     x: parseInt target.x - 1000 + random()*500
@@ -91,7 +90,7 @@ UserDB = Db 'UserDb',
     nick: ''
     mail: ''
     pass: ''
-    regtime: -> Date.now()/1000
+    regtime: -> NUU.time() / 1000
     credits: 100
   exports: ->
     nick: nick
@@ -193,7 +192,8 @@ User::action = (t,mode) ->
     console.log ':act', 'cannot', mode.red
     return
   console.log 'user', 'action', o.name, mode, t.name if debug
-  global.TIME = Date.now(); o.state.update(); t.state.update()
+  o.state.update time = NUU.time()
+  t.state.update time
   dist  = $dist o, t
   dists = $dist o, t.state
   zone  = o.size + t.size / 2

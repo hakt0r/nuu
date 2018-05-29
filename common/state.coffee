@@ -35,7 +35,7 @@ if isServer then $obj::changeState = (state)->
   # return console.log '::st', 'changeState' 'relto' if @state.relto?
   # return @setState state if state
   return console.log '::st', 'locked', @name if @locked or @state.S is $orbit
-  @state.update true
+  @state.update()
   @a = (
     if @state.S is $orbit then 0
     else if @boost then @thrust * Speed.boost
@@ -77,7 +77,7 @@ $public class State
     @d = parseInt d || o.d
     @m = ( m || o.m ).slice()
     @a = a || o.a
-    @t = t || TIME
+    @t = t || NUU.time()
     @relto = $obj.byId[0]
     @relto = relto  if relto? and ( relto.id? or relto = $obj.byId[relto] )
     @relto.update() if @relto
@@ -121,7 +121,7 @@ State.fromBuffer = (msg)->
   y = msg.readDoubleLE 26
   m = [ msg.readDoubleLE(42), msg.readDoubleLE(58) ]
   a = msg.readFloatLE 74
-  t = ETIME + msg.readUInt32LE 82
+  t = NUU.timePrefix() + msg.readUInt32LE 82
   new state o,x,y,d,m,a,t,relto
   o
 
@@ -141,22 +141,22 @@ State.register 'fixed', class fixed extends State
 State.register 'relative', class relative extends State
   constructor: State
   update: (time)->
-    if not time and @lastUpdate is TIME then return null else time = TIME
-    @relto.update()
+    time = NUU.time() unless time
+    @relto.update time
     @o.x = @relto.x + @x
     @o.y = @relto.y + @y
     @o.m = @relto.m.slice()
-    @lastUpdate = TIME; null
+    @lastUpdate = time; null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,relto:@relto.id
 
 State.register 'moving', class moving extends State
   convert: -> @o.m = @m.slice()
   update: (time)->
-    if not time and @lastUpdate is TIME then return null else time = TIME
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     deltaT = ( time - @t ) / TICK
     @o.x = @x + @m[0] * deltaT
     @o.y = @y + @m[1] * deltaT
-    @lastUpdate = TIME; null
+    null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m
 
 State.register 'accelerating', class accelerating extends State
@@ -169,14 +169,14 @@ State.register 'accelerating', class accelerating extends State
     # tmaxY = ( Speed.max - @m[1] ) / @a * sin(@d/RAD)
     # console.log tmaxX, tmaxY
   update: (time) ->
-    if not time and @lastUpdate is TIME then return null else time = TIME
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     deltaTb2 = .5 * ( deltaT = ( time - @t ) / TICK )
     aDeltaT = @a * deltaT
     @curm[0] = @m[0] + cosaDeltaT = aDeltaT * cos @dir
     @curm[1] = @m[1] + sinaDeltaT = aDeltaT * sin @dir
     @o.x = @x + @m[0] * deltaT + deltaTb2 * cosaDeltaT
     @o.y = @y + @m[1] * deltaT + deltaTb2 * sinaDeltaT
-    @lastUpdate = TIME; null
+    null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 State.register 'maneuvering', class maneuvering extends State
@@ -185,11 +185,11 @@ State.register 'maneuvering', class maneuvering extends State
     @turn = @o.turn || 1
     @turn = -@turn if @o.left
   update: (time)->
-    if not time and @lastUpdate is TIME then return null else time = TIME
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     @o.x = @x + @m[0] *   ( deltaT = ( time - @t ) / TICK )
     @o.y = @y + @m[1] *     deltaT
     @o.d = ((( @d + @turn * deltaT ) % 360 ) + 360 ) % 360
-    @lastUpdate = TIME; null
+    null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 State.register 'orbit', class orbit extends State
@@ -216,7 +216,7 @@ State.register 'orbit', class orbit extends State
     # console.log '::st', 'orbit', @o.id, @orbit, @offs, @step, @dir if @o.id is 20
   update: (time)->
     return console.log '::st', 'orbit', 'set:no-relto' unless @relto
-    if not time and @lastUpdate is TIME then return null else time = TIME
+    time = NUU.time() unless time; return null if @lastUpdate is time
     deltaT = ( time - @lastUpdate ) / TICK
     @relto.update()
     ticks  = ( time - @t ) / TICK
@@ -229,7 +229,7 @@ State.register 'orbit', class orbit extends State
     @o.m = @tmp.slice()
     @lx = @o.x
     @ly = @o.y
-    @lastUpdate = TIME; null
+    @lastUpdate = time; null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,relto:@relto.id
 
 State.register 'travel', class travel extends State
@@ -241,16 +241,14 @@ State.register 'travel', class travel extends State
       @from.x = o.x; @from.y = o.y; @from.m = o.m.slice()
       @pta = 60 # secs
   update: (time)->
-    unless time
-      if @lastUpdate is TIME then return null else time = TIME
-      deltaT = ( time - @lastUpdate ) / TICK
-      time_passed  = time - @from.t
-      @lastUpdate = time
+    time = NUU.time() unless time; return null if @lastUpdate is time
+    deltaT = ( time - @lastUpdate ) / TICK
+    time_passed  = time - @from.t
     @to.state.update()
     @o.x = @from.x + time_passed * ( @from.x - @to.x )
     @o.y = @from.y + time_passed * ( @from.y - @to.y )
     @o.m = m = $v.zero.slice()
     m[0] = ( @o.x - @lx ) / deltaT; @lx = @o.x
     m[1] = ( @o.y - @ly ) / deltaT; @ly = @o.y
-    @lastUpdate = TIME; null
+    @lastUpdate = time; null
   toJSON:-> S:@S, from:from.toJSON(), to:@to.id

@@ -53,7 +53,7 @@ Ship::updateMods = -> # calculate mods
   add = null
   $worker.remove @model if @model
   lastUpdate = 0
-  $worker.push @model = =>
+  $worker.push @model = (time)=>
     return 1000 if @destructing
     # return 1000 if @fuel <= 0
     @fuel += @fuelRegen || 0.5
@@ -66,9 +66,9 @@ Ship::updateMods = -> # calculate mods
     @fuel = 0        if @fuel <= 0
     return unless isServer
     @setState S:$moving if @fuel is 0 and @state.acceleration
-    return unless @mount[0] and lastUpdate + 3000 < TIME
+    return unless @mount[0] and lastUpdate + 3000 < time
     NET.health.write @
-    lastUpdate = TIME
+    lastUpdate = time
     return
   null
 

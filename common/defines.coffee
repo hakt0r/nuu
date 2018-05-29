@@ -22,7 +22,6 @@
 
 $static '$version',      '0.4.72'
 
-$static 'TIME',          Date.now()
 $static 'TICK',          16.6
 $static 'STICK',         1000/16.6
 $static 'OX',            0 # global delta

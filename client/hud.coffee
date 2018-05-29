@@ -215,7 +215,7 @@ $static 'HUD', new class HUDRenderer
       t += "d[#{htime(TARGET.ap_eta)}/#{hdist TARGET.ap_dist}]\n"
       t += "m[#{round TARGET.m[0]}x#{round TARGET.m[0]}y]\n\n"
       t += "[#{list[cid]}:#{cid}:#{Target.id}]"
-      # @startTime = TIME; @frame = 0
+      # @startTime = NUU.time(); @frame = 0
     else
       @targetShield.visible = @targetArmour.visible = @targetDir.visible = false
       t += "[#{list[cid]}] no target"
@@ -224,8 +224,8 @@ $static 'HUD', new class HUDRenderer
     @notice.text = Notice.queue.join '\n'
     @notice.position.set WIDTH - 20 - @notice.width, 10
     # DEBUG STATS
-    fps = round((TIME - @startTime) / @frame)
-    @debug.text = if debug then "[tps#{fps}|" +
+    fps = round((NUU.time() - @startTime) / @frame)
+    @debug.text = if debug then "[t:#{Date.now()}:#{NUU.time()-Date.now()}] [tps#{fps}|" +
       "o#{$obj.list.length}|"+
       "v#{Sprite.visibleList.length}]\n"+
       "co[#{parseInt VEHICLE.d}|#{VEHICLE.x.toFixed 0}|#{VEHICLE.y.toFixed 0}|" +

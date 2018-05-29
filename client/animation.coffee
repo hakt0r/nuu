@@ -32,8 +32,8 @@ $abstract 'Animated',
     @sprite.play()
     @show @loaded = true
 
-  updateSprite:->
-    @update()
+  updateSprite:(time)->
+    @update time
     @sprite.position.set @x + OX - @radius, @y + OY - @radius
     true
 

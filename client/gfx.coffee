@@ -140,10 +140,11 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     { x,y } = VEHICLE
     # destructor-aware loop
     i = -1; s = null; list = $obj.list; length = list.length
+    time = NUU.time()
     while ++i < length
       s = list[i]
       s.update()
-      if s.ttl and s.ttl < TIME
+      if s.ttl and s.ttl < time
         s.hide()
         if s.ttlFinal
           s.destructor(); length--; i--
@@ -160,9 +161,9 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     null
 
   animate: (timestamp) ->
-    window.TIME  = NUU.time()
-    window.ETIME = Math.floor(TIME/1000000)*1000000
-    VEHICLE.updateSprite()
+    return unless VEHICLE
+    time = NUU.time()
+    VEHICLE.update time
     window.OX = -VEHICLE.x + WDB2
     window.OY = -VEHICLE.y + HGB2
 
@@ -186,7 +187,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
 
     length = ( list = @visibleList ).length; i = -1
     while ++i < length
-      ( s = list[i] ).updateSprite()
+      ( s = list[i] ).updateSprite time
       continue unless beam = Weapon.beam[s.id]
       sp = beam.sprite
       sp.tilePosition.x += 0.5
@@ -194,20 +195,23 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
       sp.rotation = ( s.d + beam.dir ) / RAD
 
     length = ( list = Weapon.proj ).length; i = -1
+    # time = NUU.time()
     while ++i < length
       s = list[i]
-      ticks = ( TIME - s.ms ) / TICK
+      ticks = ( time - s.ms ) / TICK
       x = floor s.sx + s.mx * ticks
       y = floor s.sy + s.my * ticks
       s.sprite.position.set x + OX, y + OY
-      if s.tt < TIME
+      if s.tt < time
         Sprite.weap.removeChild s.sprite
         list[i] = null
     Weapon.proj = Weapon.proj.filter (i)-> i isnt null
 
     @renderHUD()     # if @renderHUD
     @renderScanner() # if ++@tick % 10 is 0
-    VEHICLE.updateSprite() # FIX: THE-WIGGLER
+    if VEHICLE.sprite
+      # VEHICLE.sprite.anchor = [0,0]
+      VEHICLE.sprite.position.set WDB2, HGB2
     @renderer.render @stage
     null
 

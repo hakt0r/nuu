@@ -52,7 +52,7 @@ class NET.Connection
     @lsalt = String.random 255 + Math.random @pass.length
     NET.on 'user.login.success', (opts) =>
       log "Login successful."
-      $worker.setTimer => Ping.remoteTime()
+      NUU.time = Ping.remoteTime.bind Ping
       NUU.firstSync opts, => callback true
       NUU.emit 'connect', @
     NET.once 'user.login.failed', (opts) =>

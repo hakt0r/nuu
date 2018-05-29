@@ -25,10 +25,10 @@
   think of it as a factory
 ###
 
-detector = (perp,weap,ms,tt,sx,sy,mx,my) -> ->
-  return off if tt < TIME
+detector = (perp,weap,ms,tt,sx,sy,mx,my) -> (time)->
+  return off if tt < time
   for target in perp.hostile
-    ticks = ( TIME - ms ) / TICK
+    ticks = ( time - ms ) / TICK
     x = floor sx + mx * ticks
     y = floor sy + my * ticks
     continue if target.size < $dist (x:x,y:y), target
@@ -44,7 +44,7 @@ Weapon.Projectile = ->
   @dir    = 0
   @lock = @stop = false
   $worker.push @tracker = Weapon.tracker.call @ if @turret
-  @emitter = =>
+  @emitter = (time)=>
     @release() if not @target or @target.destructing
     if @stop then ( @stop = @lock = false; return off )
     @ship.update()
@@ -53,8 +53,8 @@ Weapon.Projectile = ->
     m = [ @ship.m[0] + cs * @ppt, @ship.m[1] + sn * @ppt ]
     x = @ship.x # + slot.x * cs
     y = @ship.y # + slot.y * sn
-    $worker.push detector   @ship, @, TIME, TIME + @ttl, x, y, m[0], m[1]    if isServer
-    new ProjectileAnimation @ship, @, TIME, TIME + @ttl, x, y, m[0], m[1], d if isClient
+    $worker.push detector   @ship, @, time, time + @ttl, x, y, m[0], m[1]    if isServer
+    new ProjectileAnimation @ship, @, time, time + @ttl, x, y, m[0], m[1], d if isClient
     NUU.emit 'shot', @
     @delay
   @trigger = (src,@ship,slot,@target)=>
