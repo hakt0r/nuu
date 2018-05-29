@@ -75,9 +75,9 @@ $obj.register class Stellar extends $obj
 Object.defineProperty Stellar::, 'buildRoot', get:->
   p = @; u = {}; u[p.id] = true
   console.log '-', @name
-  p.state.update()
+  p.state.update time = NUU.time()
   while r = p.state.relto
-    r.state.update()
+    r.state.update time
     if 1500 < d = $dist(p,r)
       console.log 'x:dist', d
       break

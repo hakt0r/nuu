@@ -77,11 +77,11 @@ Weapon.Beam = ->
     $worker.push (time)=>
       return @release() if @stop or @tt < time
       return null if isClient
-      @ship.update()
+      @ship.update time
       dir = NavCom.unfixAngle( @ship.d + @dir ) / RAD
       bend = [ @ship.x + sin(dir) * @range, @ship.y - cos(dir) * @range ]
       for @target in @ship.hostile
-        @target.update()
+        @target.update time
         @target.hit @ship, @ if lineCircleCollide @ship.p, bend, @target.p, @target.size/2
       null
     NUU.emit 'shot', @

@@ -22,14 +22,12 @@
 
 $public class RTPing extends Mean
   INTERVAL : 500
-
   lag    : new Mean
   trip   : new Mean
   skew   : new Mean
   delta  : new Mean
   error  : new Mean
   jitter : new Mean
-
   ringId : 0
   ringBf : [null,null,null,null,null,null,null,null,null,null]
 
@@ -38,24 +36,9 @@ $public class RTPing extends Mean
 
   constructor : ->
     super
-
-    if isClient
-      @ringId = 0
-      @ringBf = []
-      timer = null
-      NUU.on 'connect', =>
-        timer = $interval @INTERVAL, =>
-          id = ++@ringId % 32
-          local = @ringBf[id] = Date.now()
-          msg = Buffer.from [NET.pingCode,id,0,0,0,0,0,0,0,0]
-          msg.writeDoubleLE local, 2
-          NET.send msg.toString('binary')
-      NUU.on 'disconnect', =>
-        clearInterval timer
-
     NET.define 1,'PING', read:
       client: (msg,src) =>
-        prediction = @remoteTime()
+        prediction = NUU.time()
         remote = @lastRemoteTime = msg.readDoubleLE 2
         local  = @lastLocalTime  = Date.now()
         unless @ringBf[msg[1]]
@@ -79,6 +62,18 @@ $public class RTPing extends Mean
         b.writeDoubleLE(Date.now(),2)
         src.send b.toString('binary')
         null
+    return if isServer
+    @ringId = 0
+    @ringBf = []
+    timer = null
+    NUU.on 'connect', =>
+      timer = $interval @INTERVAL, =>
+        id = ++@ringId % 32
+        local = @ringBf[id] = Date.now()
+        msg = Buffer.from [NET.pingCode,id,0,0,0,0,0,0,0,0]
+        msg.writeDoubleLE local, 2
+        NET.send msg.toString('binary')
+    NUU.on 'disconnect', -> clearInterval timer
     null
 
   reset : ->
@@ -90,10 +85,14 @@ $public class RTPing extends Mean
     @jitter.reset()
     @error.reset()
 
-if isClient
-  RTPing::remoteTime = ->
-    now = Date.now()
-    skew = (now - @lastLocalTime) / @INTERVAL * @skew.avrg # total skew since last sync
-    return now - @delta.avrg + skew                        # now - delta to server + clock skew
-
 $static 'Ping', new RTPing
+
+return if isServer
+
+NUU.time = ->
+  now = Date.now()
+  skew = (now - Ping.lastLocalTime) / Ping.INTERVAL * Ping.skew.avrg # total skew since last sync
+  return now - Ping.delta.avrg + skew                        # now - delta to server + clock skew
+
+NUU.on 'start', ->
+  NUU.thread 'ping', 500, Ping.send

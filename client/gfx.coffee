@@ -133,14 +133,13 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     r = v.radius
     v.sprite.position.set hw - r, hh - r
 
-  select: (timestamp) ->
+  select: ->
     W = WIDTH  * 10 # TODO: EventHorizon
     H = HEIGHT * 10 # TODO: EventHorizon
-    VEHICLE.update()
+    VEHICLE.update time = NUU.time()
     { x,y } = VEHICLE
     # destructor-aware loop
     i = -1; s = null; list = $obj.list; length = list.length
-    time = NUU.time()
     while ++i < length
       s = list[i]
       s.update()
@@ -186,6 +185,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @parallax2.tilePosition.y -= my * 1.5
 
     length = ( list = @visibleList ).length; i = -1
+    # time = NUU.time()
     while ++i < length
       ( s = list[i] ).updateSprite time
       continue unless beam = Weapon.beam[s.id]
@@ -222,7 +222,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     container
 
   start: (callback) =>
-    @startTime = Ping.remoteTime()
+    @startTime = NUU.time()
     callback null if callback
     null
 

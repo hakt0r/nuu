@@ -88,16 +88,15 @@ $static '$websocket',  (app,httpServer,options={}) ->
       socket.close() if statusCode > 200
     console.log '::ws', 'connection:pre'.yellow, request.url.yellow if debug
     app.handle request, dummyResponse, -> socket.close() unless request.wsHandled
-    app.ws "/nuu", (src, req) ->
-      console.log '::ws', 'connection'.yellow if debug
-      src.json = (msg) ->
-        src.send (NET.JSON + JSON.stringify msg), $websocket.error(src)
-      src.on "message", src.router = NET.awaitLogin(src)
-      src.on "error", $websocket.error(src)
-      # lag and jitter emulation # src.on "message", (msg) -> setTimeout (-> NET.route(src)(msg)), 100 # + Math.floor Math.random() * 40
-      null
     null
-    app
+  app.ws "/nuu", (src, req) ->
+    src.json = (msg) -> src.send (NET.JSON + JSON.stringify msg), $websocket.error(src)
+    src.on "message", src.router = NET.awaitLogin(src)
+    src.on "error", $websocket.error(src)
+    # lag and jitter emulation # src.on "message", (msg) -> setTimeout (-> NET.route(src)(msg)), 100 # + Math.floor Math.random() * 40
+    console.log '::ws', 'connection'.yellow
+    null
+  app
 
 $websocket.error = (src)-> (error)-> if error
   console.log '::ws'.red, error
@@ -111,7 +110,7 @@ NET.awaitLogin = (src)-> (msg)->
     console.log ':net', 'pre-login'.red, msg, e.message
     src.close()
   return src.close() unless msg.login?
-  console.log ':net', 'pre-login', msg if debug
+  console.log ':net', 'pre-login'.yellow, msg if debug
   NET.loginFunction msg.login, src
 
 NUU.bincast = (data,o) ->  wsServer.clients.forEach (src) ->

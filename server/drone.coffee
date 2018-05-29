@@ -30,6 +30,7 @@ $public class AI extends Ship
     opts.npc  = if opts.npc? then opts.npc else yes
     opts.state = opts.state || {
       S: $moving
+      m: [0,0]
       x: floor random() * 1000 - 500 + opts.stel.x
       y: floor random() * 1000 - 500 + opts.stel.y
       d: floor random() * 359 }
@@ -76,7 +77,7 @@ AI::attackPlayers = ->
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
   @left = turnLeft
   @right = turn and not turnLeft
-  do @changeState if ( @flags isnt v.flags ) or v.setDir
+  do @applyControlFlags if ( @flags isnt v.flags ) or v.setDir
   33
 
 AI::attackPlayersTarget = ->
@@ -108,7 +109,7 @@ AI::approach = ->
   @left = turnLeft
   @right = turn and not turnLeft
   if ( @flags isnt v.flags ) or v.setDir
-    do @changeState
+    do @applyControlFlags
     return 0
   return 1000
 
@@ -127,7 +128,7 @@ AI::escort = ->
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
   @left = turnLeft
   @right = turn and not turnLeft
-  do @changeState if ( @flags isnt v.flags ) or v.setDir
+  do @applyControlFlags if ( @flags isnt v.flags ) or v.setDir
   null
 
 AI::escortTarget = ->

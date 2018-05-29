@@ -49,6 +49,6 @@ class Worker
           nxt[nxt.real++] = f
       @count = nxt.real
       @last = NUU.time() - began
-    @timer = setInterval(callback,interval)
+    @timer = setInterval callback, interval
 
 $static '$worker', new Worker TICK

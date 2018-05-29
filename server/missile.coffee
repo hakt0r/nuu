@@ -84,7 +84,7 @@ $obj.register class Missile extends $obj
         NET.steer.write @, dir # steer sets @d
         state = 3
       else state = 4
-      @changeState() if state isnt prevState
+      @applyControlFlags() if state isnt prevState
       prevState = state
       null
 

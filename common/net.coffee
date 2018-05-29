@@ -94,7 +94,8 @@ NET.define 0,'JSON',
 
 NET.define 2,'STATE',
   write:
-    server: (o) -> NUU.bincast ( o.state.toBuffer().toString 'binary' ), o
+    server: (s) ->
+      NUU.bincast ( s.toBuffer().toString 'binary' ), s.o
     client:(o,flags) ->
       msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0]
       msg.writeUInt16LE parseInt(o.d), 2
@@ -106,7 +107,7 @@ NET.define 2,'STATE',
       return unless o.mount[0] is src.handle
       [ o.accel, o.retro, o.right, o.left, o.boost ] = NET.getFlags msg[1]
       o.d = msg.readUInt16LE 2
-      o.changeState()
+      o.applyControlFlags()
       src
 
 NET.define 7,'STEER',

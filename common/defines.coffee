@@ -23,7 +23,8 @@
 $static '$version',      '0.4.72'
 
 $static 'TICK',          16.6
-$static 'STICK',         1000/16.6
+$static 'ITICK',         1/16.6    # old habit, avoid division
+$static 'STICK',         1000/16.6 # old habit, avoid division
 $static 'OX',            0 # global delta
 $static 'OY',            0 # global delta
 

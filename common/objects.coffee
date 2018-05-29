@@ -31,33 +31,27 @@ $public class $obj
   hit: $void
 
   constructor: (opts={})->
-
-    # read or setup momentum vector
-    @m = opts.m || [0,0]
-    delete opts.m
-
     # read state if specified
     delete opts.state if ( state = opts.state )
-
     # apply template
     @[k] = v for k,v of Item.tpl[opts.tpl] if opts.tpl
-
     # apply other keys
     @[k] = v for k,v of opts
-    # console.log '$obj', 'constructor$', @id, @name
-
     # choose id
     unless @id?
       @id = if freeId.length is 0 then lastId++ else freeId.shift()
     else lastId = max(lastId,@id+1)
-
     # register
     i.list.push i.byId[@id] = @ for i in @constructor.interfaces
-
-    # apply state
+    # read or setup momentum vector
+    @m = state.m || [0,0]
+    @x = state.x || 0
+    @y = state.x || 0
+    @d = state.d || 0
     @setState state
     do @loadAssets if @loadAssets
     app.emit '$obj:add', @
+    # console.log '$obj', 'constructor$', @id, @name
 
   destructor: ->
     @destructing = true # might be set already
@@ -73,7 +67,7 @@ $public class $obj
   toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl
 
 Object.defineProperty $obj::, 'p',
-  get: -> @update(); return [@x,@y]
+  get: -> do @update; return [@x,@y]
   set: (@x,@y)->
 
 $obj.byId = {}

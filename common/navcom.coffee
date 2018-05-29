@@ -34,7 +34,7 @@ class NavCom
     dx = s.x - t.x
     dy = s.y - t.y
     dir = 360-((360+floor(atan2(dx,dy)*RAD))%360)
-    reldir = dir-((s.d+90)%360)
+    reldir = -180 + (( ( dir - s.d + 90 ) % 360 ) + 360 ) % 360
     return [ true, 180 < reldir or reldir < 0, dir, reldir ] if abs(reldir) >= limit
     return [ false, false, dir, reldir ]
 
@@ -62,11 +62,14 @@ class NavCom
     angle = atan2 force[0], -force[1]
     v.rad = rad = @absRad( @FIX + angle )
     v.dir = dir = parseInt NavCom.fixAngle( angle * RAD )
-    v.dir_diff_abs = abs ( v.dir_diff = ( v.dir - v.current_dir ) % 360 )
+    # v.dir_diff_abs = abs ( v.dir_diff = ( v.dir - v.current_dir ) % 360 )
+    v.dir_diff_abs = abs ( v.dir_diff = -180 + (((( v.dir - v.current_dir ) % 360 ) + 360 ) % 360 ))
     v
 
   @steer: ( ship, target, strategy='seek' ) ->
-    ship.update(); target.update()
+    time = NUU.time()
+    ship.update time
+    target.update time
     v = @[strategy] ship, target, ( maxSpeed = @maxSpeed ship, target )
     v.approach_force = v.force
     v.force = force = $v.sub v.force.slice(), ship.m

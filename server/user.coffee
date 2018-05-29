@@ -72,14 +72,13 @@ NET.on 'jump', (target,src) ->
   o.fuel -= 500; NET.health.write o
   # the jump
   o.accel = o.boost = o.retro = o.left = o.right = no
-  target.update NUU.time()
+  target.update()
   o.setState
     S: $moving
     x: parseInt target.x - 1000 + random()*500
     y: parseInt target.y - 1000 + random()*500
     m: target.m.slice()
     relto: target.id
-  # NET.state.write o # implied
   null
 
 NUU.users = []
@@ -203,10 +202,10 @@ User::action = (t,mode) ->
     when 'launch'
       if o.state.S is $orbit and @mountId is 0
         o.locked = no
-        o.setState S:$moving, x:o.x, y:o.y, m:o.m.slice()
+        o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
       else if o.landedAt and @mountId is 0
         o.landedAt = o.locked = no
-        o.setState S:$moving, x:o.x, y:o.y, m:t.m.slice()
+        o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
       else if @equip? and @equip.type is 'fighter bay'
         @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
       else if o.name isnt 'Exosuit'
@@ -238,7 +237,7 @@ User::action = (t,mode) ->
       if dist < t.size
         console.log 'user', 'orbit', t.id if debug
         o.locked = yes
-        o.setState S:$orbit,orbit:dist,relto:t.id
+        o.setState S:$orbit,orbt:dist,relto:t
       else console.log 'user', 'orbit', 'too far', dist, dists, zone, t.state.toJSON()
     else console.log 'user', 'orbit/dock/land/enter', 'failed', mode, o.name, t.name
   null

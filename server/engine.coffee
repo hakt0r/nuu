@@ -81,7 +81,8 @@ NUU.init =->
     new Constructor opts
   console.log ':nuu', 'init:rules' if debug
   rules @
-  @thread 'group', 1000, =>
+  @thread 'group', 1000, ->
     time = NUU.time()
     o.update time for o in $obj.list
+    null
   @start()

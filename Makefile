@@ -18,9 +18,8 @@ sysgen:
 	coffee tools/build.coffee sysgen
 
 debug-brk:
-	# coffee --nodejs debug tools/build.coffee run
-	coffee -o build server/*.coffee
-	nodejs --debug-brk build/server.js
+	coffee tools/build.coffee assets
+	nodejs --inspect-brk build/server.js
 
 clean:
 	coffee tools/build.coffee clean

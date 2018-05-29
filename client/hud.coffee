@@ -26,7 +26,7 @@ $static '$palette', red:0xe6194b,green:0x3cb44b,yellow:0xffe119,blue:0x0082c8,or
 $static 'HUD', new class HUDRenderer
   fontSize:12
   constructor: ->
-    @startTime = Ping.remoteTime()
+    @startTime = NUU.time()
     @frame = 0
     @label = {}
     Sprite.hud = @
@@ -98,7 +98,7 @@ $static 'HUD', new class HUDRenderer
       v.remove() for v in @turret
       @turretPalette = [ $palette.orange, $palette.purple, $palette.lime, $palette.teal, $palette.brown, $palette.maroon ]
       @turret = VEHICLE.slots.weapon
-        .filter (i)-> i.equip.turret
+        .filter (i)-> i and i.equip and i.equip.turret
         .map  (v,i)=> @arrow 'turret' + i, @turretPalette[i], '⧋', v.equip
       null
     null
@@ -215,7 +215,6 @@ $static 'HUD', new class HUDRenderer
       t += "d[#{htime(TARGET.ap_eta)}/#{hdist TARGET.ap_dist}]\n"
       t += "m[#{round TARGET.m[0]}x#{round TARGET.m[0]}y]\n\n"
       t += "[#{list[cid]}:#{cid}:#{Target.id}]"
-      # @startTime = NUU.time(); @frame = 0
     else
       @targetShield.visible = @targetArmour.visible = @targetDir.visible = false
       t += "[#{list[cid]}] no target"

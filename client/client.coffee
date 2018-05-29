@@ -115,7 +115,4 @@ app.on 'gfx:ready', ->
     rules NUU
   null
 
-  NUU.on 'start', ->
-    @time = -> Ping.remoteTime()
-    @thread 'ping', 500,  Ping.send
-    app.emit 'settings'
+  NUU.on 'start', -> app.emit 'settings'

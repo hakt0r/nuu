@@ -55,8 +55,8 @@ $obj::changeSprite = (newSprite) ->
   Sprite[@layer].removeChild old
   null
 
-$obj::updateSprite = ->
-  @update()
+$obj::updateSprite = (time)->
+  @update time
   @sprite.position.set @x + OX - @radius, @y + OY - @radius
   true
 

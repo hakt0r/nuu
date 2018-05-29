@@ -28,7 +28,7 @@
 detector = (perp,weap,ms,tt,sx,sy,mx,my) -> (time)->
   return off if tt < time
   for target in perp.hostile
-    ticks = ( time - ms ) / TICK
+    ticks = ( time - ms ) * ITICK
     x = floor sx + mx * ticks
     y = floor sy + my * ticks
     continue if target.size < $dist (x:x,y:y), target
@@ -40,14 +40,14 @@ Weapon.Projectile = ->
   Weapon.Projectile.loadAssets.call @  if isClient
   @delay  = @stats.delay * 500
   @ttl    = 1000 / @stats.speed * 1000
-  @ppt    = @stats.speed / TICK
+  @ppt    = @stats.speed * ITICK
   @dir    = 0
   @lock = @stop = false
   $worker.push @tracker = Weapon.tracker.call @ if @turret
   @emitter = (time)=>
     @release() if not @target or @target.destructing
     if @stop then ( @stop = @lock = false; return off )
-    @ship.update()
+    @ship.update time
     cs = cos d = (( @ship.d + @dir ) % 360 ) / RAD
     sn = sin d
     m = [ @ship.m[0] + cs * @ppt, @ship.m[1] + sn * @ppt ]
