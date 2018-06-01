@@ -140,6 +140,9 @@ These are the default keybindings as found on as US/QWERTY-keyboard. You can cha
 
 ## Copyrights
 
+  * c) 1999-2002 Sebastian Glaser <anx@ulzq.de> (as EVArena)
+  * c) 2003-2004 Sebastian Glaser <anx@ulzq.de> (as U)
+  * c) 2006 Sebastian Glaser <anx@ulzq.de> (as Uu)
   * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
 

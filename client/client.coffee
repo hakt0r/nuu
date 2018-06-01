@@ -112,18 +112,24 @@ app.on 'gfx:ready', ->
   ], =>
     vt.write NUU.intro = """
 
-    <center><img src="/build/imag/nuulogo.png"/></center>
-    (c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt;
-        Code: GNU General Public License v3
-        Contrib: see license screen (alt-L)
+------------------------------------------------------------------------------------------------
 
-    --- [ CoNN ] BREAKING ---------------------------------------------------
-    Earth and Luna have been overrun by the drones our own creation, but now:
-      Her Majesty the Kernel is scheming to take Mars and the Jupiter-system!
-    -------------------------------------------------------------------------
+        (c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt;
+        (c) 2007-2008 flyc0r
+        GNU General Public License v3 / see license screen (alt-L)
 
-    Press alt-R to register
-    Press alt-L to show license screen
+------------------------------------------------------------------------------------------------
+
+<center><img src="/build/imag/nuulogo.png"/></center>
+--- [ FakeNN ] BREAKING ------------------------------------------------------------------------
+
+        Earth and Luna have been overrun by the drones our own creation, and now,
+        her Majesty the Kernel is scheming to take Mars and the Jupiter-system!
+
+------------------------------------------------------------------------------------------------
+
+Press alt-R to register
+Press alt-L to show license screen
 
     """
     unless debug then NUU.loginPrompt()
