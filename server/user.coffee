@@ -20,9 +20,6 @@
 
 ###
 
-NET.on 'debugOrbit', (msg,src) ->
-  return console.log ':dbg', 'nx:o', msg unless o = $obj.byId[msg]
-
 NET.on 'login', NET.loginFunction = (msg,src) ->
   if msg.match
     unless user = UserDB.get msg
@@ -110,11 +107,12 @@ $public class User
       return @register src, user, pass
     unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
       return @deny src, pass
+    do @upgradeDb
     @sock = src
     src.json 'user.login.success': {user:@db}, sync:add:$obj.list # TODO: inRange & Stellar only
     src.removeListener "message", src.router
     src.on  "message", src.router = NET.route src
-    NUU.emit 'userJoined', @
+    NUU.emit 'user:joined', @
     return handle.rejoin src if handle = User.byId[@db.id]
     @name = @db.nick
     @user = @db.user
@@ -129,6 +127,11 @@ $public class User
     src.authenticated = yes
     console.log 'user', @db.nick.green, 'joined'.green, @db.id, vehicleType
     true
+
+User::upgradeDb = (src)->
+  @db.inventory = {} unless @db.inventory
+  @db.unlocks = {} unless @db.unlocks
+  @db.loadout = {} unless @db.loadout
 
 User::rejoin = (src)->
   @sock = src
@@ -152,13 +155,14 @@ User::register = (src, user, pass)->
 
 User::part = (user) ->
   console.log 'PART'.red, user
-  NUU.emit 'userLeft', @ unless spawn
+  NUU.emit 'user:left', @ unless spawn
 
 User::createVehicle = (id,state)->
   tpl = Ship.byName[id] || Ship.byId[id]
   return console.error 'noship$', id unless tpl?
   state = @vehicle.state if @vehicle
-  vehicle = new Ship tpl:tpl, state:state, iff:['@'+@nick]
+  vehicle = new Ship tpl:tpl, state:state, iff:[Math.random()],
+    loadout:@db.loadout
   @sock.json sync:add:[vehicle.toJSON()]
   console.log 'user', 'ship', @db.nick.green, vehicle.id
   vehicle
@@ -204,16 +208,19 @@ User::action = (t,mode) ->
         o.locked = no
         o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
       else if o.landedAt and @mountId is 0
+        NUU.emit 'ship:launch', o, o.landedAt
         o.landedAt = o.locked = no
         o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
       else if @equip? and @equip.type is 'fighter bay'
         @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
       else if o.name isnt 'Exosuit'
         @enterVehicle @createVehicle('Exosuit'), 0, no
-      NUU.emit 'ship:launch', o.vehicle, o if debug
     when 'capture'
-      if dist < zone
-        NUU.emit 'ship:collect', o.vehicle, t, o
+      unless t.constructor.is.Collectable
+        console.log t.constructor.name, 'isnt Collectable'
+        return
+      if dist < max 200, zone
+        NUU.emit 'ship:collect', o, t
         console.log 'user', o.id, 'collected', t.id, dist, t.size if debug
         t.destructor()
       else console.log 'user', 'capture', 'too far out', dist, o.size, t.size

@@ -35,7 +35,7 @@ $public class AI extends Ship
       y: floor random() * 1000 - 500 + opts.stel.y
       d: floor random() * 359 }
     super opts
-    @name = @aiType + "[##{@id}]"
+    @name = 'HKS ' + @id.toString(2) + ' (' + @aiType + ')'
     console.log '::ai', "#{@name} at", opts.stel.name if debug
     @primarySlot = @slots.weapon[0]
     @primaryWeap = @slots.weapon[0].equip

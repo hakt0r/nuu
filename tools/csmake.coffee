@@ -126,6 +126,7 @@ module.exports = (__targets) ->
 
   global.depend = (deps...)-> (c)->
     $s deps, -> c null
+    null
 
   global.target = (obj={}) ->
     for name, fnc of obj
@@ -134,6 +135,7 @@ module.exports = (__targets) ->
       else
         console.log name.yellow, 'is already defined'.red
         process.exit 1
+    null
 
   target.exec = (name,c) -> global[name](c||->)
 

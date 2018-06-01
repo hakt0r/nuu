@@ -27,11 +27,33 @@ ROIDS_MAX     = 100
 rules.server = ->
   rules.stats = stats = {}
 
-  NUU.on 'userJoined', (p) ->
+  NET.on 'shipname', (msg,src) ->
+    return unless typeof msg is 'string'
+    return unless u = src.handle
+    return unless o = u.vehicle
+    s = u.db.loadout[v.tplName] || s = u.db.loadout[v.tplName] = {}
+    s.name = o.name = msg
+
+  NET.on 'inventory', (msg,src) ->
+    return unless typeof msg is 'string'
+    return unless u = src.handle
+    return unless o = u.vehicle
+    src.json inventory: switch msg
+      when 'ship' then o.inventory || o.inventory = {}
+      else u.db.inventory || u.db.inventory = {}
+    null
+
+  NET.on 'unlocks', (msg,src) ->
+    return unless typeof msg is 'string'
+    return unless u = src.handle
+    src.json unlocks: u.db.unlocks || u.db.unlocks = {}
+    null
+
+  NUU.on 'user:joined', (p) ->
     stats[p.db.nick] = name : p.db.nick, k:0, d:0 unless stats[p.db.nick]
     console.log '::dm', 'joined'.green, p.db.nick, stats[p.db.nick].k.toString().green, stats[p.db.nick].d.toString().red
 
-  NUU.on 'userLeft', (p) ->
+  NUU.on 'user:left', (p) ->
     delete stats[p.db.nick]
 
   NUU.on 'ship:destroyed', (victim,perp) ->
@@ -48,8 +70,19 @@ rules.server = ->
         victim.respawn()
     if perp.inhabited then perp.mount.map (user)-> if user
       stats[user.db.nick].k++
+      i = user.db.unlocks; if v = i[victim.tplName] then i[victim.tplName]++ else i[victim.tplName] = 1
       console.log '::dm', 'kill '.green, user.db.nick.green, '['+perp.name.yellow+']', stats[user.db.nick].k.toString().green, stats[user.db.nick].d.toString().red
     NUU.jsoncast stats: stats
+
+  NUU.on 'asteroid:destroyed', (v, resource)-> v.mount.map (user)-> if user
+    console.log '::dm', 'collect', user.db.nick, t.name
+    i = user.db.inventory; if v = i[t.name] then i[t.name]++ else i[t.name] = 1
+    null
+
+  NUU.on 'ship:collect', (v,t,o)-> v.mount.map (user)-> if user
+    console.log '::dm', 'collect', user.db.nick, t.name
+    i = user.db.unlocks; if v = i[t.name] then i[t.name]++ else i[t.name] = 1
+    null
 
   Asteroid.autospawn max: ROIDS_MAX
   AI.autospawn max: DRONES_MAX if DRONES_ACTIVE

@@ -1,4 +1,5 @@
-## nuu
+# nuu
+
 NUU is to be an open-source (massive) multiplayer game of space trade and combat: [demo](http://nuu.hakt0r.de/). That means it's free :P
 
 It's **not finished yet, not secure, okay for LAN** and probably will stay that way for a long time ;)
@@ -11,32 +12,52 @@ It's excellent open-source cousin [naev](http://blog.naev.org/) currently lends 
 | :--------: | :--------: |
 | ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot0.png "NUU in action - screenshot") | ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot1.png "NUU in action - screenshot") |
 
-### Features
-  * Missiles, Beams, Projectiles and Fighter Bays
-  * Trader AI's for Loot
-    - AI escorts or real players
-  * EVA using your EXS-01 Exosuit
-  * Multiplayer Ships
-    - Dock with another ship, let other players dock, or just EVA over :D
-    - Take the helm, man turret, or sit in a fighter ready to be launched into mayhem
-  * Burns and jumps consume fuel, regeneration
-  * Ships drop LOOT
-  * Asteroids can be mined for resources
-  * Jump to distant targets - if you can spare the fuel
+## Intro
 
-### Building
+  **The 22nd - mankind at it's best**. Despite numerous warnings and attempts to prevent it -
+  dating back into the early 21st - ***Earth has been overrun by the drones it's own creation***.
+  But you know... we had used it all up and left a stinking pile garbage there -
+  which covered most of the surface. So we weren't going to use it that much anymore...
+
+  But now ***Her Majesty the Kernel*** has conquered ***Luna*** and is scheming to take the last human
+  strongholds: ***Mars*** and the colonies of the ***Jupiter-system***!!!
+  For the past few months we've been struggling to keep the human race afloat and breathing...
+
+## Features
+
+  * Multiplayer Ships
+    - Dock with another ship
+      - Let other players dock
+      - EVA using your EXS-01 Exosuit
+    - Take the helm
+    - Man a turret
+    - Sit in a fighter ready to be launched into mayhem
+    - Engine burns and jumps consume fuel, regeneration
+  * Weapons
+    - Missiles ***dumb*** and ***seeker***
+    - Beams ***short-range*** but deadly
+    - Projectiles ***plasma***, ***blasters*** or ***real-metal***
+    - Fighter Bays ***AI escorts or real players***
+  * Loot ***applies for all inhabitants of a vehicle***
+    - Cargo Boxes: ***Items*** (upgrade blueprints, one level per collect)
+    - Asteroids: ***Resources*** (crafting/building/trading)
+    - Ships: collect debris of ***each ship*** type to reverse-engineer their blueprints
+  * Trader AI's for Loot
+  * Drones in seek-and-destroy mode
+
+## Building
 
     sudo npm -g install coffeescript
     npm install
     coffee tools/build.coffee deps
 
-### Running the server
+## Running the server
 
     coffee tools/build.coffee run
 
 To debug the server (with the nodejs debugger) just replace **run** with **debug**.
 
-### To play
+## To play
 
   Direct you browser to the following url, once the game is loaded you will be prompted to login.
 
@@ -47,7 +68,7 @@ To debug the server (with the nodejs debugger) just replace **run** with **debug
   * The first login registers your user (blank password works)
   * Press 'h' for help ;)
 
-### Mouse
+## Mouse
 
 * Toggle mouse-turn (on by default) using the Z button (on QWERTY)
 
@@ -72,7 +93,7 @@ To debug the server (with the nodejs debugger) just replace **run** with **debug
 | **shift** | Weapon next primary   |
 | **alt**   | Weapon next secondary |
 
-### Keyboard
+## Keyboard
 
 These are the default keybindings as found on as US/QWERTY-keyboard. You can change them in the Help-dialog.
 
@@ -96,8 +117,8 @@ These are the default keybindings as found on as US/QWERTY-keyboard. You can cha
 | Space           | Primary trigger             |
 | X               | Secondary trigger           |
 | shift-Enter     | Show / hide console         |
-| shift-Slash     | Show about screen / License |
-| K               | Show equipment screen       |
+| shift-Slash     | Show about / license        |
+| O               | Show main menu              |
 | H               | Show help                   |
 | R               | Target closest asteroid     |
 | E               | Target closest enemy        |
@@ -117,7 +138,7 @@ These are the default keybindings as found on as US/QWERTY-keyboard. You can cha
 | Minus           | Zoom scanner out            |
 | shift-Backquote | Debug                       |
 
-### Copyrights
+## Copyrights
 
   * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
   * c) 2007-2008 flyc0r
@@ -134,7 +155,7 @@ These are the default keybindings as found on as US/QWERTY-keyboard. You can cha
   to the build directory, as well as being made available in the
   client's about-screen and the server-splash.
 
-### Licensed under GNU GPLv3
+## Licensed under GNU GPLv3
 
 nuu is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -153,7 +174,7 @@ Boston, MA 02111-1307 USA
 
 http://www.gnu.org/licenses/gpl.html
 
-### Clarifications regarding commercial use
+## Clarifications regarding commercial use
 
 Besides the fact that NUU is **not production-quality code** and is not recommended for commercial use at the time being, you are - within the boundaries of the GNU GPLv3 - explicitly allowed to run and modify NUU for commercial purposes. This does not include any assets like images or sounds, which have their own respective licenses.
 Keep in mind to share patches to the source-code, uphold the license, and respect the attribution rights of the original authors of code and assets.

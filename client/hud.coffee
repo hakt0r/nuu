@@ -48,7 +48,8 @@ $static 'HUD', new class HUDRenderer
       tex = @[k+'Texture'] = Sprite.renderer.generateTexture gfx
       @layer.addChild @[k+"bg"] = bg = new PIXI.Sprite tex
       bg.alpha = 0.3
-      @layer.addChild @[k] = new PIXI.Sprite @[k+'Texture']
+      @layer.addChild @[k] = fg = new PIXI.Sprite @[k+'Texture']
+      fg.visible = bg.visible = no
     @healhBar k,v for k,v of @healhBars
     # DIRECTION INDICATOR
     @turret = []
@@ -79,6 +80,7 @@ $static 'HUD', new class HUDRenderer
     Sprite.renderHUD = @render.bind @, @layer
     # EVENT HOOKS
     NUU.on 'enterVehicle', shpHandler = (t) =>
+      @[k].visible = @[k+'bg'].visible = true for k,v of @healhBars
       console.log 'ship', t if debug
       if @playerSprite
         @layer.removeChild @playerSprite
@@ -215,9 +217,10 @@ $static 'HUD', new class HUDRenderer
       t += "d[#{htime(TARGET.ap_eta)}/#{hdist TARGET.ap_dist}]\n"
       t += "m[#{round TARGET.m[0]}x#{round TARGET.m[0]}y]\n\n"
       t += "[#{list[cid]}:#{cid}:#{Target.id}]"
-    else
+    else if not VEHICLE.dummy
       @targetShield.visible = @targetArmour.visible = @targetDir.visible = false
       t += "[#{list[cid]}] no target"
+    else t = ''
     @text.text = t
     # NOTICES
     @notice.text = Notice.queue.join '\n'

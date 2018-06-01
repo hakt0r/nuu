@@ -18,14 +18,46 @@ h1, h2 {
 .window {
   font-size: 12px;
   text-align: center;
-  position: fixed;
-  top: 5px;
-  left: 5px;
-  right: 5px;
-  bottom: 5px;
-  background: rgba(222,222,222,0.6);
   padding: 5px;
+  border: solid gray 1px;
+  position: fixed;
+  top: 10%;
+  left: 10%;
+  bottom: 10%;
+  right: 10%;
+  min-width: 260px;
+  max-width: 600px;
+  min-height: 260px;
+  max-height: 80%;
+  background: rgba(0, 0, 0, 0.9);
   border-radius: 5px; }
+.window * { color: white; }
+.window.vt {
+  opacity: 0.8; }
+.window.vt * {
+  padding: 10px;
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: monospace;
+  color: 'gray'; }
+.window.vt i, .window.vt b { padding:0; }
+.window.vt center { text-align: center; }
+.window.vt .vt-cursor {
+  /* width: 0px; */
+  height: 12px;
+  padding: 0;
+  margin: 0;
+  position:absolute; }
+.window.vt .vt-cursor::after {
+  position: relative; left: 0px;
+  content:' ';
+  width: 1em;
+  background:green;
+  height: 12px;
+  background: 'green';
+  z-index: -1; }
+.window.full { margin: auto; overflow-y: auto; overflow-x: hidden; }
 .window p { font-size: 12px; }
 .window a, .window a:visited, .window a:active, .window a:hover, .version, .description {
   font-size: 12px;
@@ -36,19 +68,41 @@ h1, h2 {
   padding: 5px;
   border-radius: 4px; }
 .window .version {
-  background: #545454; color: #969696; }
+  background: #545454;
+  color: #969696;
+  float: left;
+  width: 60px;
+  height: 10px;
+  padding: 4px;
+  line-height: 10px;
+  text-align: right; }
 .window .description {
   font-weight: normal;
   display: block;
   margin: 3px;
   padding: 3px; }
-.window img {
+.window h2 {
+  font-size: 14px; }
+.window #game img {
+  background: none;
   margin: auto;
   width: 500px;
-  display: block; }
+  height: auto;
+  display: block;
+  }
+.window.about img {
+  height: 32px;
+  padding: 2px;
+  width: auto;
+  background: black;
+  border-radius 2px;
+  border-radius: 4px;
+  }
+.window a.tabbtn {
+  background: #cdcdcd; }
 .window .tab {
   position: absolute;
-  top: 20px;
+  top: 90px;
   left: 5px;
   right: 5px;
   bottom: 5px;
@@ -73,7 +127,7 @@ h1, h2 {
 .window ul.libs {
   text-align:left; }
 .window ul.libs li {
-  margin: 5px;line-height:20px; display: inline-block; }
+  margin: 5px;line-height:20px; padding-left: 40px; }
 .pre {
   font-family: monospace;
   white-space: pre; }
@@ -82,21 +136,11 @@ h1, h2 {
   right: 10px;
   top: 10px;}
 
-.window {
-  position: fixed;
-  top: 10%;
-  left: 10%;
-  bottom: 10%;
-  right: 10%;
-  min-width: 100px;
-  min-height: 100px;
-  max-height: 80%;
-  max-width: 80%;
-  background: rgba(255,255,255,0.9);
-  border-radius: 5px; }
 .window.about { overflow: auto; }
 .window header {
   font-weight:bold;font-size:12px;padding:8px; }
+.window.about header {
+  font-size:16px;padding:16px; }
 
 .slot { position:relative; display:inline-block;vertical-align:top;width:115px;min-height:100px; }
 .slot > span {
@@ -143,11 +187,20 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
   right: 7px;
 }
 
+.window ul.copyrights li {
+  font-size: 14px;
+  display: block;
+  text-align: left;
+  margin: 5px 100px;
+  width: 15em;
+  height: 20px;
+}
+
 .window.modal_list {
   text-align: left;
   background: rgba(0, 0,   0, 0.9);
   border:     rgba(0, 255, 0, 0.9) solid 1px;
-  max-width: 250px;
+  max-width: 260px;
   left: 7px; }
 
 .window.modal_list * {
@@ -173,10 +226,11 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
   background: green;
   color: black;
   font-weight: bold;
-  width: 80px;
+  width: 140px;
   display: inline-block;
   margin-right: 2px;
-  text-align: right; }
+  text-align: right;
+  }
 
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
@@ -205,7 +259,10 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
 .ship-select { height: 32px; padding: 5px; margin-top: 1px; }
 .ship-select h2 { margin-left: 37px; text-align: left;}
 .ship-select p { margin-left: 37px; text-align: left; }
-
+.window p.desc {
+  text-align: left;
+  padding: 2px 32px;
+}
 .window button { padding: 3px; margin-left: 2px;
   color: black;
   font-size: 11px;

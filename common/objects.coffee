@@ -25,7 +25,7 @@ lastId = 0
 
 $public class $obj
   @freeId: freeId
-  @interfaces: [$obj]
+  @interfaces: []
   tpl: null
   size: 0
   hit: $void
@@ -84,6 +84,10 @@ $obj.register = (blueprint)->
       if typeof implement is 'function'
         implement blueprint
       else console.log 'ERROR:', blueprint::constructor.name
+  if blueprint.interfaces then for Interface in blueprint.interfaces
+    console.log blueprint.name, 'is', Interface.name
+    blueprint.is = {} unless blueprint.is
+    blueprint.is[Interface.name] = true
   blueprint::key = ( $obj.byClass.push blueprint ) - 1
   blueprint.byId = {}
   blueprint.list = []

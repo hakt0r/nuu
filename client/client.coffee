@@ -106,12 +106,28 @@ app.on 'gfx:ready', ->
   $static 'vt', new VT100
 
   async.parallel [
-    (c) -> $.ajax('/build/objects.json').success (result) ->
+    (c) -> $.ajax '/build/objects.json', success: (result) ->
       Item.init result
       c null
   ], =>
+    vt.write NUU.intro = """
+
+    <center><img src="/build/imag/nuulogo.png"/></center>
+    (c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt;
+        Code: GNU General Public License v3
+        Contrib: see license screen (alt-L)
+
+    --- [ CoNN ] BREAKING ---------------------------------------------------
+    Earth and Luna have been overrun by the drones our own creation, but now:
+      Her Majesty the Kernel is scheming to take Mars and the Jupiter-system!
+    -------------------------------------------------------------------------
+
+    Press alt-R to register
+    Press alt-L to show license screen
+
+    """
     unless debug then NUU.loginPrompt()
-    else $timeout 500, => NET.login 'anx', sha512(''), -> vt.unfocus()
+    else $timeout 500, => NET.login 'anx', sha512(''), -> vt.hide()
     rules NUU
   null
 

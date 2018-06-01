@@ -159,6 +159,3 @@ Kbd.macro 'primaryTrigger', 'Space', 'Primary trigger',
 Kbd.macro 'secondaryTrigger', 'KeyX', 'Secondary trigger',
   dn:-> if f = NUU.player.secondary.trigger then do f
   up:-> if f = NUU.player.secondary.release then do f
-
-Kbd.macro 'debugOrbit', 'KeyO', 'debug orbit', ->
-  NET.json.write debugOrbit:TARGET.id

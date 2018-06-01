@@ -20,6 +20,11 @@
 
 ###
 
+NET.login = (name, pass, callback, register=no) ->
+  console.log ':net', 'login', name if debug
+  new NET.Connection name, pass, callback, register
+NET.register = (name, pass, callback) -> NET.login name, pass, callback, yes
+
 NET.on 'sync', (opts) -> NUU.sync opts
 
 NUU.sync = (list,callback) ->
@@ -36,67 +41,77 @@ NUU.firstSync = (opts,callback)->
   @player = new User opts
   Sprite.start => @start callback
 
-NUU.loginPrompt = ->
-  vt.prompt 'Login', (user) =>
-    return @loginPrompt() if user is null
-    vt.prompt 'Password', (pass) =>
-      return @loginPrompt() if pass is null
-      NET.login user, pass, (success) =>
-        return @login user, pass  if typeof success is 'object'
-        return @loginPrompt() unless success
-
 class NET.Connection
-  constructor: (@name,@pass,callback)->
+  constructor: (@name,@pass,callback,@register)->
+    NET.Connection._.close() if NET.Connection._
+    NET.Connection._ = @
     @addr = window.location.toString().replace('http','ws').
       replace(/#.*/,'').replace(/\/$/,'') + '/nuu'
     @lsalt = String.random 255 + Math.random @pass.length
+    NET.removeAllListeners 'user.login.success'
+    NET.removeAllListeners 'user.login.challenge'
+    NET.removeAllListeners 'user.login.register'
+    NET.removeAllListeners 'user.login.failed'
+    NET.removeAllListeners 'user.login.nx'
     NET.on 'user.login.success', (opts) =>
-      log "Login successful."
+      vt.status 'Login', '<i style="color:green">Success</i> [<i style="color:yellow">' + @name + '</i>]'
       NUU.firstSync opts, => callback true
       NUU.emit 'connect', @
     NET.once 'user.login.failed', (opts) =>
-      log "Login failed."
+      vt.status 'Login', '<b style="color:red">Failed</b> [<i style="color:yellow">' + @name + '</i>]'
       callback false
     NET.on 'user.login.nx', (opts) =>
-      @rsalt = String.random 255 + Math.random @pass.length
-      pass = sha512 [ @rsalt, @pass ].join ':'
-      log "User unexistant. Registering credentials for", @name
-      NET.json.write login: user:@name, pass: pass:pass,salt:@rsalt
+      if @register
+        vt.status 'Register', '<i style="color:green">Name is free</i> [<i style="color:yellow">' + @name + '</i>] :)'
+        @rsalt = String.random 255 + Math.random @pass.length
+        pass = sha512 [ @rsalt, @pass ].join ':'
+        NET.json.write login: user:@name, pass: pass:pass,salt:@rsalt
+      else
+        vt.status 'Login failed', '<b style="color:red">Wrong name / password.</b>'
+        callback false
     NET.on 'user.login.challenge', (opts) =>
+      vt.status 'Login', 'Got challenge, sending response.'
       pass = sha512 [ @lsalt, sha512 [ opts.salt, @pass ].join ':' ].join ':'
       NET.json.write login: user:@name, pass: pass:pass,salt:@lsalt
     NET.on 'user.login.register', (opts) =>
-      log "Registered. Re-sending credentials for", @name
+      vt.status 'Register', 'Success.'
       @lsalt = String.random 255 + Math.random @pass.length
       pass = sha512 [ @lsalt, sha512 [ @rsalt, @pass ].join ':' ].join ':'
       NET.json.write login: user:@name, pass: pass:pass,salt:@lsalt
     @connect @addr
+
+  close: =>
+    try @sock.close()
+    NUU.emit 'disconnected', @
+
   connect: (@addr) =>
+    vt.status 'Connecting', '[<i style="color:yellow">'+ @addr + '</i>]'
     console.log ':net', 'connect', @addr
     s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
     NET[k] = @[k] for k in [ 'send' ]
     s[k]   = @[k] for k in [ 'onmessage', 'onopen', 'onerror' ]
     NUU.emit 'connecting', @sock = s
+
   send: (msg) =>
     NET.TX++
     return do @reconnect if @sock.readyState >= @sock.CLOSING
     return if @sock.readyState isnt @sock.OPEN
     @sock.send msg
+
   onopen: (e) =>
-    log "Connected. Getting challenge for #{@name}"
+    vt.status "Connected", '[<i style="color:yellow">' + @addr + '</i>]'
+    vt.status "Login", "Getting challenge for " + '[<i style="color:yellow">' + @name + '</i>]'
     NET.json.write login: @name
+
   onmessage: (msg) =>
     NET.route @sock, msg.data
+
   onerror: (e) =>
     console.log ':net', 'sock:error', e
     NUU.emit 'disconnect'
+
   reconnect: (e) =>
     setTimeout ( => @connect @addr ), 5000
-
-NET.login = (name, pass, callback) ->
-  return console.log 'auth', 'REAUTH NOT IMPLEMENTED' if NET.Connection._?
-  console.log ':net', 'login', name
-  NET.Connection._ = new NET.Connection name, pass, callback
 
 # Stats
 NET.PPS = in:0,out:0,inAvg:new Mean,outAvg:new Mean

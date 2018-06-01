@@ -101,6 +101,7 @@ $obj.register class Moon extends Stellar
   @interfaces: [$obj,Stellar]
 
 $obj.register class Station extends Stellar
+  @type:'station'
   @interfaces: [$obj,Stellar,Station]
   level:1
   population:1

@@ -65,6 +65,7 @@ $obj.register class Ship extends $obj
     @hostile = []
     super opts
     @slots = _.clone @slots
+    @tplName = @name
     @mockSystems() # fixme
     @updateMods()
     @mount     = [false,false]
@@ -99,6 +100,8 @@ $obj.register class Ship extends $obj
     @shield = @shieldMax
     @armour = @armourMax
     @fuel   = @fuelMax
+
+  toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl,name:@name
 
 Object.defineProperty Ship::, 'd',
   get:-> @_d || 0

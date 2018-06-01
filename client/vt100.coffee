@@ -20,7 +20,7 @@
 
 ###
 
-$public class VT100 extends EventEmitter
+$public class VT100 extends Window
   line: []
   hist: []
   frame: null
@@ -30,150 +30,107 @@ $public class VT100 extends EventEmitter
   promptActive: no
 
   constructor: (opts={}) ->
-    @[k] = v for k,v of opts
-
-    @frame = Sprite.layer 'vt', new PIXI.Container
-
-    @frame.addChild @bg = new PIXI.Graphics
-    @bg.alpha = 0
-
-    @frame.addChild @text = new PIXI.Text 'nuu console',
-      fontFamily: 'monospace'
-      fontSize:'12px'
-      fill: 'green'
-      breakWords: yes
-      wordWrap: yes
-      wordWrapWidth: 500
-
-    @frame.addChild @copyright  = new PIXI.Text """
-      (c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
-      Code: GNU General Public License v3
-      Contrib: (press ? for details)
-    """, fontFamily: 'monospace', fontSize:'12px', fill: 'green'
-
-    Cache.get '/build/imag/nuulogo.png', (url)=>
-      @frame.addChildAt ( @image = PIXI.Sprite.fromImage '/build/imag/nuulogo.png', 0, 0 ), 1
-      # @image.alpha = 0.2
-      Sprite.resize()
-
-    Sprite.on 'resize', @resize()
-    Sprite.resize()
-
+    super
+    @$.addClass 'vt full'
     console.user = @write
     null
 
   draw: =>
     c = @cursor.x
-    @text.text = @input +
-      ( if @promptQuery then "\n" + @promptQuery + ": " else '' ) +
-     @inputBuffer.substr(0,c) + '|' + @inputBuffer.substr(c)
-
-  resize: -> (wd,hg,hw,hh) =>
-    @draw()
-    @copyright.position.set 10, 10
-    return unless @image
-    requestAnimationFrame ( => @resize() wd,hg,hw,hh ) if @image.width is 1 # or @bg.width is 1
-    @center @image, hw, hh
-    @text.position.set 40, hh/2 + @image.height + 40
-    @text.style.wordWrapWidth = wd - 40
-    @bg.position.set 20, hh/2+@image.height+20
-    @bg.width = w = wd - 40
-    @bg.height = h = hg - (hh/2+@image.height) - 40
-    @bg.clear()
-    @bg.beginFill 0x000000
-    @bg.drawRoundedRect 0,0,w,h,5
-    @bg.endFill()
-    # @center @bg   , hw, hh
-    null
-
-  center: (image,hw,hh)->
-    # image.anchor.set [0.5,0.5]
-    # image.position.set hw, hh
-    bgOffsetH = image.width / 2
-    bgOffsetV = image.height / 2
-    image.position.set hw - bgOffsetH, hh/2 - bgOffsetV
+    p = if @promptQuery then "\n" + @promptQuery + ": " else ''
+    b = @inputBuffer
+    b = b.replace /./g, "*" if @stars
+    b = b.substr(0,c) + '<i class="vt-cursor"></i>' + b.substr c
+    @body.html @input + p + b
+    @$[0].scroll top: @body.height()
 
   stopAnimation: =>
     clearInterval @animation if @animation
     @animation = null
 
-  focus: =>
-    return if @focused
-    Sprite.stage.addChild @frame
-    @focused = yes
-    Kbd.unfocus()
-    window.addEventListener 'keydown', @keyDown
-    @draw()
-    requestAnimationFrame @animation = =>
-      @frame.alpha += 0.1
-      return requestAnimationFrame @animation if @frame.alpha < 1.0
-      @frame.alpha = 1.0; @animation = null
-    null
-
-  unfocus: =>
-    return unless @focused
-    @focused = no
-    window.removeEventListener 'keydown', @keyDown
-    Kbd.focus()
-    @draw()
-    requestAnimationFrame @animation = =>
-      @frame.alpha -= 0.1
-      return requestAnimationFrame @animation if @frame.alpha > 0.0
-      @frame.alpha = 0.0; @animation = null
-    null
-
   write: (lines) =>
-    @draw @input = @input + '\n' + lines.trim()
+    @draw @input = @input + '\n' + lines
 
-  prompt: (p,callback) =>
-    return false if @promptActive
+  status: (p,t)->
+    do @show
+    if @lastSP and ( @lastSP isnt p or @lastST isnt t )
+      log @lastSP+':', @lastST
+    @inputBuffer = t+'\n'
+    @cursor.x = t.length + 1
+    @draw @promptQuery = p
+    @lastSP = p; @lastST = t
+
+  prompt: (p,callback,override) =>
+    log @lastSP+':', @lastST if @lastSP and not @stars; @lastST = @lastSP = null
+    return false if @promptActive unless override or p.override
+    if typeof p is 'object'
+      @stars = p.stars || false
+      @overrideKeys = p.key
+      callback = p.then
+      p = p.p
     @focus()
     @promptActive = yes
     @promptQuery = p
     @inputBuffer = ''
-    @onReturn = callback
+    @onReturn = =>
+      log @lastSP+':', @lastST if @lastSP and not @stars; @lastST = @lastSP = null
+      return true if true is callback.apply @, arguments
+      @promptQuery = 'nuu#'
+      @hide()
+      false
     @cursor.x = 0
     @draw()
     true
 
-  keyDown: (e) =>
+  keyHandler: (e) =>
     # allow some browser-wide shortcuts that would otherwise not work
     return if e.ctrlKey and e.code is 'KeyR' if isClient
     return if e.ctrlKey and e.code is 'KeyL' if isClient
+    return if true is @overrideKeys e if @overrideKeys
+    key = e.code
+    key = 'c' + key if e.ctrlKey
+    key = 'a' + key if e.altKey
+    key = 's' + key if e.shiftKey
     code = e.keyCode
     c = @cursor.x
-    console.log Kbd.cmap[code], code, e.code, e.ctrlKey, e
-    if Kbd.cmap[code] is 'return'
+    console.log Kbd.cmap[code], code, e.code, e.ctrlKey, e, e.char
+    if key is 'Enter'
       if (fnc = @onReturn)?
         i = @inputBuffer
         delete @onReturn
-        @write @promptQuery + ': ' + @inputBuffer
+        @write @promptQuery + ': ' + if @stars then @inputBuffer.replace(/./g,'*') else @inputBuffer
         @hist.cursor = @hist.push(@inputBuffer) - 1
         @cursor.x = 0
         @promptActive = no
         @inputBuffer  = ''
         res = fnc i unless e.shiftKey
-        @unfocus()  unless res is true
-    else if Kbd.cmap[code] is 'esc'
+        @hide() unless res is true
+    else if key is 'Escape' or key is 'sEscape' or key is 'Backquote'
       res = fnc null if not e.shiftKey and ( fnc = @onReturn )?
-      @unfocus() unless res is true
-    else if Kbd.cmap[code] is 'left'
+      @hide() unless res is true
+    else if key is 'ArrowLeft'
       @cursor.x = max(0,--@cursor.x)
-    else if Kbd.cmap[code] is 'right'
+    else if key is 'ArrowRight'
       @cursor.x = min(@inputBuffer.length,++@cursor.x)
-    else if Kbd.cmap[code] is 'up'
+    else if key is 'ArrowUp'
       @hist.cursor = max(0,--@hist.cursor)
       @inputBuffer = @hist[@hist.cursor]
       @cursor.x =  @inputBuffer.length
-    else if Kbd.cmap[code] is 'down'
+    else if key is 'ArrowDown'
       @hist.cursor = min(@hist.length-1,++@hist.cursor)
       @inputBuffer = @hist[@hist.cursor]
       @cursor.x = @inputBuffer.length
-    else if Kbd.cmap[code] is 'del'
+    else if key is 'Delete'
       @inputBuffer = @inputBuffer.substr(0,c) + @inputBuffer.substr(c+1)
-    else if Kbd.cmap[code] is 'bksp'
+    else if key is 'aDelete'
+      @inputBuffer = @inputBuffer.substr(0,c)
+      @cursor.x = @inputBuffer.length
+    else if key is 'Backspace'
       @inputBuffer = @inputBuffer.substr(0,c-1) + @inputBuffer.substr(c)
       @cursor.x = max(0,--@cursor.x)
+    else if key is 'aBackspace'
+      @inputBuffer = @inputBuffer.substr(c)
+      @cursor.x = 0
     else if Kbd.cmap[code]
       k = Kbd.cmap[code]
       k = k.toUpperCase() if e.shiftKey
@@ -183,11 +140,16 @@ $public class VT100 extends EventEmitter
     false
 
 VT100.toggle = ->
-  vt.bg.alpha = 0.95
+  vt.show()
   vt.prompt 'nuu #', p = (text) ->
-    try console.user eval(text).toString()
-    catch e then console.user ( if e and e.message then e.message else e )
+    return false unless text
+    try
+      v = eval(text)
+      console.user v.toString() if v?
+    catch e
+      console.user ( if e and e.message then e.message else e )
+      true
     setTimeout ( new Function 'VT100.toggle()' ), 0
     true
 
-Kbd.macro 'console', 'sEnter', 'Show / hide console', VT100.toggle
+Kbd.macro 'console', 'Backquote', 'Show / hide console', VT100.toggle
