@@ -140,17 +140,19 @@ Kbd.macro 'mountNext',   'KeyM', 'Next mount', ->
   m = ++NUU.player.mountId % VEHICLE.mount.length
   NET.json.write switchMount: m
 
-Kbd.macro 'weapNext',    'Digit1', 'Next weapon (primary)', ->
-  VEHICLE.nextWeap(NUU.player)
+Kbd.macro 'weapPri1', 'Digit1', 'Set primary #1', -> VEHICLE.setWeap 0
+Kbd.macro 'weapPri2', 'Digit2', 'Set primary #2', -> VEHICLE.setWeap 1
+Kbd.macro 'weapPri3', 'Digit3', 'Set primary #3', -> VEHICLE.setWeap 2
+Kbd.macro 'weapPri4', 'Digit4', 'Set primary #4', -> VEHICLE.setWeap 3
+Kbd.macro 'weapPri5', 'Digit5', 'Set primary #5', -> VEHICLE.setWeap 4
+Kbd.macro 'weapPri6', 'Digit6', 'Set primary #6', -> VEHICLE.setWeap 5
+Kbd.macro 'weapPri7', 'Digit7', 'Set primary #7', -> VEHICLE.setWeap 6
+Kbd.macro 'weapPri8', 'Digit8', 'Set primary #8', -> VEHICLE.setWeap 7
 
-Kbd.macro 'weapPrev',    'sDigit1', 'Previous weapon (primary)', ->
-  VEHICLE.prevWeap(NUU.player)
-
-Kbd.macro 'weapNextSec', 'Digit2', 'Next weapon (secondary)', ->
-  VEHICLE.nextWeap(NUU.player,'secondary')
-
-Kbd.macro 'weapPrevSec', 'sDigit2', 'Previous weapon (secondary)', ->
-  VEHICLE.prevWeap(NUU.player,'secondary')
+Kbd.macro 'weapNext',    'F1', 'Next weapon (primary)',       -> VEHICLE.nextWeap(NUU.player)
+Kbd.macro 'weapPrev',    'F2', 'Previous weapon (primary)',   -> VEHICLE.prevWeap(NUU.player)
+Kbd.macro 'weapNextSec', 'F3', 'Next weapon (secondary)',     -> VEHICLE.nextWeap(NUU.player,'secondary')
+Kbd.macro 'weapPrevSec', 'F4', 'Previous weapon (secondary)', -> VEHICLE.prevWeap(NUU.player,'secondary')
 
 Kbd.macro 'primaryTrigger', 'Space', 'Primary trigger',
   dn:-> if f = NUU.player.primary.trigger then do f

@@ -112,24 +112,39 @@ NET.define 2,'STATE',
 
 NET.define 7,'STEER',
   write:
-    client:(action,value)->
+    client:(value)->
       msg = Buffer.from [NET.steerCode,0,0]
       msg.writeUInt16LE value, 1
       NET.send msg.toString 'binary'
-    server:(o,value)->
-      cast = Buffer.from [NET.steerCode,0,0,0,0]
-      cast.writeUInt16LE   o.id,          1
-      cast.writeUInt16LE ( o.d = value ), 3
+    server:(o,idx,value)->
+      if idx is 0 then o.d = value
+      else if s = o.mountSlot[idx]
+           if e = s.equip then e.target = value = ( 360 + value - o.d ) % 360
+      else return false
+      cast = Buffer.from [NET.steerCode,0,0,0,0,0]
+      cast.writeUInt16LE o.id,  1
+      cast.writeUInt16LE value, 3
+      cast[5] = idx
       NUU.bincast ( cast.toString 'binary' ), o
   read:
     client:(msg,src)->
-      return unless v = $obj.byId[id = msg.readUInt16LE 1]
-      v.d = value = msg.readUInt16LE 3
-      v.updateSprite()
+      return unless o = $obj.byId[id = msg.readUInt16LE 1]
+      idx = msg[5]
+      value = msg.readUInt16LE 3
+      if idx is 0
+        o.d = value
+        o.updateSprite()
+      else if o.mountType[idx] is 'weap'
+        return unless s = o.mountSlot[idx]
+        return unless e = s.equip
+        e.target = value
     server:(msg,src)->
-      return unless o = src.handle.vehicle
-      return unless o.mount[0] is src.handle
-      NET.steer.write o, ( 360 + msg.readUInt16LE 1 ) % 360
+      return unless u = src.handle
+      return unless o = u.vehicle
+      return unless m = o.mount
+      return if -1 is idx = m.indexOf u
+      return if -1 is ['helm','weap'].indexOf t = o.mountType[idx] # FIXME:cache
+      NET.steer.write o, idx, ( msg.readUInt16LE 1 ) % 360
 
 NET.steer.setDir = 0
 

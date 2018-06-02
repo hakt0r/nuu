@@ -32,7 +32,7 @@ NUU.loadMeta = (obj) ->
     # console.log ':nuu', '$meta', obj.sprite, $meta[obj.sprite] if debug
     obj.size = meta.size
     obj.radius = meta.radius
-  else console.log ':nuu', 'no meta for', obj
+  else console.log ':nuu', 'no meta for', obj if debug
 
 NUU.fix_sprites = (o)->
   for k,v of o

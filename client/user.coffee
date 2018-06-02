@@ -46,16 +46,21 @@ Object.defineProperty User::, 'vehicle',
 switchWeap = (mutate)-> (player,trigger='primary') ->
   primary = trigger is 'primary'
   ws = player.vehicle.slots.weapon
-  ct = ws.length - 1
+  ct = ws.length
   tg = player[trigger]
   unless mutate is -1
     id = 0 if isNaN id = parseInt tg.id
     id = max 0, min ct, id
-    tg.id = mutate id, ct
-    tg.slot = weap = ws[id].equip
-    tg.trigger = -> NET.weap.write 'trigger', primary, id, if TARGET then TARGET.id else undefined
-    tg.release = -> NET.weap.write 'release', primary, id, if TARGET then TARGET.id else undefined
+    tg.id = id = mutate id, ct
+    if ct is tg.id
+      tg.slot = weap = null
+      tg.trigger = tg.release = ->
+    else
+      tg.slot = weap = ws[id].equip
+      tg.trigger = -> NET.weap.write 'trigger', primary, id, if TARGET then TARGET.id else undefined
+      tg.release = -> NET.weap.write 'release', primary, id, if TARGET then TARGET.id else undefined
   NUU.emit 'switchWeapon', trigger, weap
+Ship::setWeap  = (idx,trigger='primary')-> switchWeap( -> idx )(NUU.player,'primary')
 Ship::nextWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ++id % ct
 Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --tg.id + ct ) % ct
 

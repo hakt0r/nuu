@@ -106,8 +106,12 @@ $static 'HUD', new class HUDRenderer
     null
 
     NET.on 'setMount', (users) -> HUD.widget 'mount', (
-      id = NUU.player.mountId
-      VEHICLE.name + '['+ id + ':' + VEHICLE.mountName[id] + ']\n' + users
+      idx = NUU.player.mountId
+      if ( s = VEHICLE.mountSlot[idx] ) and ( e = s.equip ) and e.turret
+        VEHICLE.setWeap s.idx
+      else if VEHICLE.slots.weapon.length isnt idx
+        VEHICLE.setWeap VEHICLE.slots.weapon.length
+      VEHICLE.name + '['+ idx + ':' + VEHICLE.mountName[idx] + ']\n' + users
         .filter (i)-> i
         .join ' '
     ), true

@@ -43,15 +43,15 @@ $obj.register class Missile extends $obj
     @turn = 6.0
     @thrust = 1.4
     source = opts.source
-    source.update()
     sm = source.m.slice()
     sd = source.d / RAD
-    @d = opts.d = source.d
-    @m = opts.m = [ sm[0] + cos(sd) * @thrust * 10, sm[1] + sin(sd) * @thrust * 10 ]
+    source.update NUU.time()
     opts.state =
       S: $moving
+      d: source.d
       x: source.x
       y: source.y
+      m: [ sm[0] + cos(sd) * @thrust * 10, sm[1] + sin(sd) * @thrust * 10 ]
     super opts
     @ttl = NUU.time() + 10000
     update    = false
@@ -81,7 +81,7 @@ $obj.register class Missile extends $obj
         state = if @left then 1 else 2
       else if @turn < abs(dif) < 2 * @turn
         @left = @right = no
-        NET.steer.write @, dir # steer sets @d
+        NET.steer.write @, 0, dir # steer sets @d
         state = 3
       else state = 4
       @applyControlFlags() if state isnt prevState

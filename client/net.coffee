@@ -48,11 +48,8 @@ class NET.Connection
     @addr = window.location.toString().replace('http','ws').
       replace(/#.*/,'').replace(/\/$/,'') + '/nuu'
     @lsalt = String.random 255 + Math.random @pass.length
-    NET.removeAllListeners 'user.login.success'
-    NET.removeAllListeners 'user.login.challenge'
-    NET.removeAllListeners 'user.login.register'
-    NET.removeAllListeners 'user.login.failed'
-    NET.removeAllListeners 'user.login.nx'
+    NET.removeAllListeners e for e in [
+      'user.login.success','user.login.challenge','user.login.register','user.login.failed','user.login.nx' ]
     NET.on 'user.login.success', (opts) =>
       vt.status 'Login', '<i style="color:green">Success</i> [<i style="color:yellow">' + @name + '</i>]'
       NUU.firstSync opts, => callback true
@@ -82,36 +79,61 @@ class NET.Connection
 
   close: =>
     try @sock.close()
-    NUU.emit 'disconnected', @
+    NUU.emit 'disconnect', @
 
   connect: (@addr) =>
+    @close()
     vt.status 'Connecting', '[<i style="color:yellow">'+ @addr + '</i>]'
     console.log ':net', 'connect', @addr
-    s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
+    try s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
+    catch e then @onerror e
+    @connectTimeout = setTimeout ( =>
+      s.close() unless s.readyState is 1
+    ), 5000
     NET[k] = @[k] for k in [ 'send' ]
-    s[k]   = @[k] for k in [ 'onmessage', 'onopen', 'onerror' ]
+    s[k]   = @[k] for k in [ 'onmessage', 'onopen', 'onerror', 'onclose' ]
     NUU.emit 'connecting', @sock = s
 
   send: (msg) =>
     NET.TX++
-    return do @reconnect if @sock.readyState >= @sock.CLOSING
-    return if @sock.readyState isnt @sock.OPEN
+    return do @reconnect if @sock.readyState > 1
+    return unless @sock.readyState is 1
     @sock.send msg
 
   onopen: (e) =>
     vt.status "Connected", '[<i style="color:yellow">' + @addr + '</i>]'
     vt.status "Login", "Getting challenge for " + '[<i style="color:yellow">' + @name + '</i>]'
     NET.json.write login: @name
+    do @onReconnectSuccessful
 
   onmessage: (msg) =>
     NET.route @sock, msg.data
 
+  onclose: (e) =>
+    log ':net', 'sock:close', e.code, e.message
+    NUU.emit 'disconnect', @
+    @reconnect @reconnect.underway = no
+
   onerror: (e) =>
-    console.log ':net', 'sock:error', e
-    NUU.emit 'disconnect'
+    @sock.close()
+    log ':net', 'sock:error', e
+
+  onReconnectSuccessful: (e) =>
+    @reconnect.underway = no
+    HUD.widget 'reconnect'
 
   reconnect: (e) =>
-    setTimeout ( => @connect @addr ), 5000
+    return console.log 'blocked' if @reconnect.underway
+    @reconnect.underway = yes
+    HUD.widget 'reconnect', 'wait -----'
+    setTimeout ( -> HUD.widget 'reconnect', 'wait |----' ), 1000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ||---' ), 2000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait |||--' ), 3000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ||||-' ), 4000
+    setTimeout ( =>
+      HUD.widget 'reconnect', '[***]'
+      @connect @addr
+    ), 5000
 
 # Stats
 NET.PPS = in:0,out:0,inAvg:new Mean,outAvg:new Mean

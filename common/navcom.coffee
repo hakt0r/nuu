@@ -62,8 +62,7 @@ class NavCom
     angle = atan2 force[0], -force[1]
     v.rad = rad = @absRad( @FIX + angle )
     v.dir = dir = parseInt NavCom.fixAngle( angle * RAD )
-    # v.dir_diff_abs = abs ( v.dir_diff = ( v.dir - v.current_dir ) % 360 )
-    v.dir_diff_abs = abs ( v.dir_diff = -180 + (((( v.dir - v.current_dir ) % 360 ) + 360 ) % 360 ))
+    v.dir_diff_abs = abs ( v.dir_diff = ( v.dir - v.current_dir ) % 360 )
     v
 
   @steer: ( ship, target, strategy='seek' ) ->

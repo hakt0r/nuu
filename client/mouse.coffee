@@ -59,13 +59,16 @@ $static 'Mouse', new class MouseInput
     dirChanged = @destDir isnt @lastDir
     accelChanged = @lastAccel isnt @accel
     return unless dirChanged or accelChanged
-    return unless NUU.player.mountId is 0
-    if dirChanged and not accelChanged
-      v.d = @destDir
-      NET.steer.write NET.steer.setDir, v.d
-    else
-      v.d = @destDir
-      do Kbd.setState 'accel', @accel
+    return if -1 is ['helm','weap'].indexOf
+    switch VEHICLE.mountType[NUU.player.mountId]
+      when 'helm'
+        # v.d = @destDir if NUU.settings.trueInstantWorld
+        if dirChanged and not accelChanged
+          NET.steer.write @destDir
+        else do Kbd.setState 'accel', @accel
+      when 'weap'
+        do Kbd.setState 'accel', @accel
+    NET.steer.write @destDir
     @lastDir = @destDir; @lastAccel = @accel
     null
 

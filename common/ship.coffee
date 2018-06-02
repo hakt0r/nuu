@@ -68,24 +68,23 @@ $obj.register class Ship extends $obj
     @tplName = @name
     @mockSystems() # fixme
     @updateMods()
-    @mount     = [false,false]
+    @mount     = [false,false]; idx = 0
     @mountSlot = [false,false]
+    @mountWeap = [false,false]
     @mountType = ['helm','passenger']
     @mountName = ['Helm','PassengerSeat']
-    for slot in @slots.weapon when slot and slot.equip
-      switch slot.equip.type
-        when 'fighter bay'
-          @mountType.push 'fighter'
-          @mountName.push slot.equip.name
-          @mountSlot.push slot
-          @mount.push false
-        else
-          if slot.equip.turret
-            @mountType.push 'weap'
-            @mountName.push slot.equip.name
-            @mountSlot.push slot
-            @mount.push false
-    null
+    for slot in @slots.weapon
+      slot.idx = idx++
+      continue unless slot and slot.equip
+      @mount.push false
+      @mountName.push slot.equip.name
+      @mountSlot.push slot
+      if slot.equip.type is 'fighter bay'
+        @mountType.push 'fighter'
+      else if slot.equip.turret
+        @mountType.push 'weap'
+        null
+      else @mountType.push 'weaX'
 
   destructor: ->
     $worker.remove @model

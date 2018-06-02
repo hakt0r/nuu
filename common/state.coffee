@@ -166,10 +166,10 @@ State.register = (constructor) ->
 
 State.register class State.fixed extends State
   t: 0
-  constructor:->
+  constructor:(o)->
     super
-    @o.x = @x
-    @o.y = @y
+    o.x = @x
+    o.y = @y
   toJSON: -> S:@S,x:@x,y:@y,d:@d
   update: ->
 
@@ -184,9 +184,9 @@ State.register class State.relative extends State
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,relto:@relto.id
 
 State.register class State.moving extends State
-  constructor:->
+  constructor:(o)->
     super
-    @o.m = @m.slice()
+    o.m = @m.slice()
   update: (time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     deltaT = ( time - @t ) / TICK
@@ -216,11 +216,11 @@ State.register class State.accelerating extends State
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 State.register class State.maneuvering extends State
-  constructor: ->
+  constructor: (o)->
+    @turn = o.turn || 1
+    @turn = -@turn if o.left
     super
-    @o.m = @m.slice()
-    @turn = @o.turn || 1
-    @turn = -@turn if @o.left
+    o.m = @m.slice()
   update: (time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     @o.x = @x + @m[0] *   ( deltaT = ( time - @t ) / TICK )

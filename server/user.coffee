@@ -178,8 +178,8 @@ User::enterVehicle = (vehicle,mountId,spawn)->
   null
 
 User::leaveVehicle = ->
-  unless idx = @vehicle.mount.indexOf @
-    console.log 'asd201pt', @vehicle.mount
+  if -1 is idx = @vehicle.mount.indexOf @
+    console.log 'user', 'leaveVehicle'.red, @vehicle.name, @db.nick
     return false
   @vehicle.mount[idx] = false; @equip = @mount = undefined
   NUU.jsoncastTo @vehicle, leaveVehicle: @db.nick
