@@ -89,13 +89,20 @@ EventEmitter.call app
   # PITFALL: Hack PIXI to use Cache
 ###
 
-# PIXI.BaseTexture._fromImage = PIXI.BaseTexture.fromImage
-# PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode, sourceScale) ->
-#   return baseTexture if baseTexture = PIXI.utils.BaseTextureCache[imageUrl]
-#   Cache.get imageUrl, (cachedUrl) ->
-#     return unless baseTexture = PIXI.utils.BaseTextureCache[imageUrl]
-#     # baseTexture.updateSourceImage cachedUrl
-#   PIXI.BaseTexture._fromImage imageUrl, crossorigin, scaleMode, sourceScale
+PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode, sourceScale) ->
+  baseTexture = PIXI.utils.BaseTextureCache[imageUrl]
+  if !baseTexture
+    image = new Image
+    image.crossOrigin = 'anonymous'
+    baseTexture = new PIXI.BaseTexture(image, scaleMode)
+    baseTexture.imageUrl = imageUrl
+    baseTexture.sourceScale = sourceScale if sourceScale
+    baseTexture.resolution = PIXI.utils.getResolutionOfUrl(imageUrl)
+    Cache.get imageUrl, (cachedUrl) ->
+      image.src = cachedUrl
+      # Setting this triggers load
+      PIXI.BaseTexture.addToCache baseTexture, imageUrl
+  baseTexture
 
 console.log ':nuu', 'loading libs'
 

@@ -96,3 +96,7 @@ $static 'Cache', new class BlobCacheIndexedDB
       x.send()
       null
     null
+
+  drop:->
+    indexedDB.deleteDatabase 'nuucache'
+    window.location.reload()
