@@ -38,41 +38,34 @@ $public class RTPing extends Mean
     super
     NET.define 1,'PING', read:
       client: (msg,src) =>
-        prediction = NUU.time()
+        prediction = NUU.time() - @avrg
         remote = @lastRemoteTime = msg.readDoubleLE 2
         local  = @lastLocalTime  = Date.now()
-        unless @ringBf[msg[1]]
-          console.log ':net', 'ping-error', msg[1], 'is not a ping id'
-        trip   = local - @ringBf[msg[1]]   # time it took from ping to response
-        delta  = local - (trip/2) - remote # raw current time delta to remote
-        @trip.add trip
-        if @trip.count > 1                # delta to last delta
-          @skew.add skew = @delta.last - delta
-        @delta.add delta
+        return console.log ':net', 'ping-error', msg[1], 'is not a ping id'     unless @ringBf[msg[1]]
+        @trip  .add trip  = local - @ringBf[msg[1]]                             # time it took from ping to response
+        @delta .add delta = local - (trip/2) - remote                           # raw current time delta to remote
         @add trip / 2
         @lastError = remote - prediction
-        if @trip.count > 10
-          @error.add @lastError
-          if abs(@error.avrg) / abs(@avrg) > 0.3
-            @reset()
-            @error.reset()
+        return unless @trip.count > 10
+        @error.add @lastError
+        if abs(@error.avrg) / abs(@avrg) > 0.3
+          console.log "resetting ping due to", @lastError, @error.avrg, @avrg, abs(@error.avrg) / abs(@avrg)
+          @reset()
+          @error.reset()
         null
       server: (msg,src) =>
         b = Buffer.from [NET.pingCode,msg[1],0,0,0,0,0,0,0,0]
-        b.writeDoubleLE(Date.now(),2)
+        b.writeDoubleLE Date.now(), 2
         src.send b.toString('binary')
         null
     return if isServer
     @ringId = 0
     @ringBf = []
     timer = null
-    NUU.on 'connect', =>
-      timer = $interval @INTERVAL, =>
-        id = ++@ringId % 32
-        local = @ringBf[id] = Date.now()
-        msg = Buffer.from [NET.pingCode,id,0,0,0,0,0,0,0,0]
-        msg.writeDoubleLE local, 2
-        NET.send msg.toString('binary')
+    NUU.on 'connect', => timer = $interval @INTERVAL, =>
+      @ringBf[id = ++@ringId % 32] = Date.now()
+      msg = Buffer.from [NET.pingCode,id]
+      NET.send msg.toString 'binary'
     NUU.on 'disconnect', -> clearInterval timer
     null
 
@@ -91,8 +84,8 @@ return if isServer
 
 NUU.time = ->
   now = Date.now()
-  skew = (now - Ping.lastLocalTime) / Ping.INTERVAL * Ping.skew.avrg # total skew since last sync
-  return now - Ping.delta.avrg + skew                        # now - delta to server + clock skew
+  # skew = (now - Ping.lastLocalTime) / Ping.INTERVAL * Ping.skew.avrg # total skew since last sync
+  return now - Ping.delta.avrg # + skew                        # now - delta to server + clock skew
 
 NUU.on 'start', ->
   NUU.thread 'ping', 500, Ping.send
