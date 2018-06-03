@@ -55,14 +55,6 @@ $obj::setState = (
     new byKey[s.S] @, s
   else (s)->
     @locked = false if @locked
-    @update()
-    @m = s.m = s.m || @m
-    @a = s.a = s.a || @a
-    @x = s.x = s.x || @x
-    @y = s.y = s.y || @y
-    @d = s.d = s.d || @d
-    s.m = @m.slice()
-    @m = @m.slice()
     new byKey[s.S] @, s
     console.log '::st:set', s.S, @m if @name is 'Kestrel'
     @ )
@@ -70,8 +62,17 @@ $obj::setState = (
 if isServer then $public class State
   constructor: (@o,opts={}) ->
     @t = time = NUU.time()
-    @o.state = @; @o.update = @update.bind @
+    @o.update time if @o.update
     Object.assign @, opts
+    @o.m = @m = @m || @o.m
+    @o.a = @a = @a || @o.a
+    @o.x = @x = @x || @o.x
+    @o.y = @y = @y || @o.y
+    @o.d = @d = @d || @o.d
+    @o.m = @m.slice()
+    @m   = @m.slice()
+    @o.state  = @
+    @o.update = @update.bind @
     if @relto? and ( @relto.id? or @relto = $obj.byId[@relto] )
       @relto.update time
     else @relto = null
@@ -85,12 +86,15 @@ if isClient then $public class State
   constructor: (@o,opts={},fromBuffer) ->
     @o.state = @; @o.update = @update.bind @
     time = NUU.time()
-    Object.assign @, opts
+    Object.assign @,  opts
+    Object.assign @o, opts; @o.m = @m.slice()
     @relto.update time if @relto? and @relto = $obj.byId[@relto]
     @translate @ if @translate and fromBuffer
     @update time
-    # debugger if isClient and @o.name is "Kestrel"
-    # console.log '::st', 'w', @toJSON()
+    if isClient and 100 < ( @o.ttl - time )
+      VEHICLE.update time
+      debugger if 5 < abs VEHICLE.x - @o.x
+    # console.log '::st', 'w', Object.keys @o.rr
 
 State::S = $fixed
 State::o = null
@@ -105,6 +109,7 @@ State::lastUpdate = 0
 State::update = $void
 State::translate = false
 
+###
 Object.debugPropNaN = (o,k)-> Object.defineProperty o,k,
   get: -> @['_'+k]
   set: (v)-> debugger if isNaN v; @['_'+k] = v
@@ -119,6 +124,7 @@ Object.debugPropNaN.v2  $obj::, 'm'
 Object.debugPropNaN.v2 State::, 'm'
 Object.defineProperty $obj::, 'state', get:(->@_state), set:(v)->
   debugger if v.void; @_state = v
+###
 
 Object.defineProperty State::, 'p',
   get: -> return [ @x, @y ]
@@ -166,7 +172,8 @@ State.register = (constructor) ->
 
 State.register class State.fixed extends State
   t: 0
-  constructor:(o)->
+  constructor:(o,p)->
+    p.m = [0,0]
     super
     o.x = @x
     o.y = @y
@@ -184,26 +191,20 @@ State.register class State.relative extends State
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,relto:@relto.id
 
 State.register class State.moving extends State
-  constructor:(o)->
-    super
-    o.m = @m.slice()
   update: (time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    deltaT = ( time - @t ) / TICK
-    @o.x = @x + @m[0] * deltaT
-    @o.y = @y + @m[1] * deltaT
+    dt = ( time - @t ) * ITICK
+    @o.x = @x + @m[0] * dt
+    @o.y = @y + @m[1] * dt
     null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m
 
 State.register class State.accelerating extends State
-    #constructor:->
-    #  super
-    #  tmaxX = ( Speed.max - @m[0] ) / @a * cos(@d/RAD)
-    #  tmaxY = ( Speed.max - @m[1] ) / @a * sin(@d/RAD)
-    #  console.log '!'.red.inverse, o.m
-    #  console.log tmaxX, tmaxY
   acceleration: true
   update: (time) ->
+    #  tmaxX = ( Speed.max - @m[0] ) / @a * cos(@d/RAD)
+    #  tmaxY = ( Speed.max - @m[1] ) / @a * sin(@d/RAD)
+    # debugger
     @dir = @d / RAD
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     hdt = .5 * ( dt = ( time - @t ) * ITICK )
@@ -220,12 +221,12 @@ State.register class State.maneuvering extends State
     @turn = o.turn || 1
     @turn = -@turn if o.left
     super
-    o.m = @m.slice()
   update: (time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    @o.x = @x + @m[0] *   ( deltaT = ( time - @t ) / TICK )
-    @o.y = @y + @m[1] *     deltaT
-    @o.d = ((( @d + @turn * deltaT ) % 360 ) + 360 ) % 360
+    dt = ( time - @t ) * ITICK
+    @o.x = @x + @m[0] * dt
+    @o.y = @y + @m[1] * dt
+    @o.d = $v.umod360 @d + @turn * dt
     null
   toJSON: -> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
@@ -303,3 +304,81 @@ State.register class State.travel extends State
     m[1] = ( @o.y - @ly ) / deltaT; @ly = @o.y
     @lastUpdate = time; null
   toJSON:-> S:@S, from:from.toJSON(), to:@to.id
+
+###
+setTimeout ( ->
+  return
+  try
+    assert = require 'assert'
+    states = [$fixed,$relative,$moving,$accelerating,$maneuvering,$orbit]
+    NUU._time = NUU.time
+    NUU.time = -> 2342
+    mko = (opts={})-> Object.assign {a:2.2, turn:1.2}, opts
+    mkst= (opts={})->
+      s = x:10, y:11, m:[1,1], d:42
+      s.t = NUU.time() if isClient
+      Object.assign s, opts
+    # Fixed state
+    s = new State.fixed ( o = do mko ), mkst()
+    test = "fixed:pre:x"; assert.equal o.x, 10
+    test = "fixed:pre:y"; assert.equal o.y, 11
+    test = "fixed:pre:d"; assert.equal o.d, 42
+    test = "fixed:pre:m"; assert.deepEqual o.m, [0,0]
+    s.update 2342 + TICK
+    test = "move:tick:x"; assert.equal o.x, 10
+    test = "move:tick:y"; assert.equal o.y, 11
+    test = "move:tick:d"; assert.equal o.d, 42
+    test = "move:tick:m"; assert.deepEqual o.m, [0,0]
+    # Moving state
+    s = new State.moving ( o = do mko ), mkst()
+    test = "move:pre:x"; assert.equal o.x, 10
+    test = "move:pre:y"; assert.equal o.y, 11
+    test = "move:pre:d"; assert.equal o.d, 42
+    test = "move:pre:m"; assert.deepEqual o.m, [1,1]
+    s.update 2342 + TICK
+    test = "move:tick:x"; assert.equal round(o.x), 11
+    test = "move:tick:y"; assert.equal round(o.y), 12
+    test = "move:tick:d"; assert.equal round(o.d), 42
+    test = "move:tick:m"; assert.deepEqual o.m, [1,1]
+    # Accelerating state
+    s = new State.accelerating ( o = do mko ), mkst a:2.2
+    test = "accel:plain:x"; assert.equal o.x, 10
+    test = "accel:plain:y"; assert.equal o.y, 11
+    test = "accel:plain:d"; assert.equal o.d, 42
+    test = "accel:plain:m"; assert.deepEqual o.m, [1,1]
+    s.update 2342 + TICK
+    test = "accel:tick:x"; assert.equal true, o.x > 11
+    test = "accel:tick:y"; assert.equal true, o.y > 12
+    test = "accel:tick:d"; assert.equal o.d, 42
+    test = "accel:tick:X"; assert.equal true, 2.63 < o.m[0] < 2.7
+    test = "accel:tick:Y"; assert.equal true, 2.45 < o.m[1] < 2.5
+    # Maneuvering state
+    s = new State.maneuvering ( o = do mko ), mkst turn:1.1
+    test = "turn:plain:x"; assert.equal o.x, 10
+    test = "turn:plain:y"; assert.equal o.y, 11
+    test = "turn:plain:d"; assert.equal o.d, 42
+    test = "turn:plain:m"; assert.deepEqual o.m, [1,1]
+    s.update 2342 + TICK
+    test = "turn:tick:x"; assert.equal round(o.x),    11
+    test = "turn:tick:y"; assert.equal round(o.y),    12
+    test = "turn:tick:d"; assert.equal round(o.d*10), 431
+    test = "turn:tick:m"; assert.deepEqual o.m, [1,1]
+    # Orbit state
+    suns = new State.fixed ( sun = mko id: 0 ), x:0, y:0
+    s = new State.orbit ( o = do mko ), mkst relto: sun
+    test = "orbt:plain:x"; assert.equal o.x, 10
+    test = "orbt:plain:y"; assert.equal o.y, 11
+    test = "orbt:plain:d"; assert.equal o.d, 42
+    test = "orbt:plain:m"; assert.deepEqual o.m, [1,1]
+    s.update 2342 + TICK
+    test = "orbt:tick:x"; assert.equal round(o.x),    11
+    test = "orbt:tick:y"; assert.equal round(o.y),    12
+    test = "orbt:tick:d"; assert.equal round(o.d*10), 431
+    test = "orbt:tick:m"; assert.deepEqual o.m, [1,1]
+    NUU.time = NUU._time
+  catch e
+    console.log 'test', 'state', test, e.message
+    console.log require('util').inspect s
+    console.log require('util').inspect o
+), 0
+###

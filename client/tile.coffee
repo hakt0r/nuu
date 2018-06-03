@@ -28,14 +28,15 @@ $abstract 'Tile',
   loadAssets: ->
     @loadTile ( @assetPrefix + @sprite + '.png' ), 'sprite', (e,s)=>
       @count = @sprite.meta.count
-      @show @updateSprite @loaded = true
+      @loaded = true
+      @show @updateSprite()
       @sprite.anchor.set 0.5
 
   loadTile: (url,dest='sprite',callback=$void) ->
     callback null, @[dest] = movieFactory url, url
 
-  updateSprite: ->
-    do @update
+  updateSprite: (time)->
+    @update time
     p = @sprite.position.set @x + OX, @y + OY unless @ is VEHICLE
     @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
     true
@@ -53,11 +54,12 @@ $Tile Ship,
     # Cache.get p + '_comm.png', (cached) => @imgCom = cached
     @loadTile p + '.png', 'sprite', (e,s) =>
       { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
-      @show @updateSprite @loaded = true
+      @loaded = true
+      @show @updateSprite()
     @loadTile p + '_engine.png', 'spriteEngine'
 
-  updateSprite: ->
-    do @update
+  updateSprite: (time)->
+    @update time
     if @state.S isnt 3 then if @spriteMode is 1
       @changeSprite @spriteNormal
       @spriteMode = 0

@@ -52,7 +52,7 @@ switchWeap = (mutate)-> (player,trigger='primary') ->
     id = 0 if isNaN id = parseInt tg.id
     id = max 0, min ct, id
     tg.id = id = mutate id, ct
-    if ct is tg.id
+    if ct is id
       tg.slot = weap = null
       tg.trigger = tg.release = ->
     else
@@ -61,8 +61,8 @@ switchWeap = (mutate)-> (player,trigger='primary') ->
       tg.release = -> NET.weap.write 'release', primary, id, if TARGET then TARGET.id else undefined
   NUU.emit 'switchWeapon', trigger, weap
 Ship::setWeap  = (idx,trigger='primary')-> switchWeap( -> idx )(NUU.player,'primary')
-Ship::nextWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ++id % ct
-Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --tg.id + ct ) % ct
+Ship::nextWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ++id % (ct + 1 )
+Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --tg.id + ct ) % (ct + 1 )
 
 app.on '$obj:add', (o)->
   # console.log 'yolo', o.id, NUU.player.vehicleId

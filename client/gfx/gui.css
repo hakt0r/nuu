@@ -2,7 +2,8 @@
   margin: 0;
   padding: 0;
   font-size: 10px;
-  font-family: sans-serif; }
+  font-style: normal !important;
+  font-family: "monospace" !important; }
 
 h1, h2 {
   font-size: 12px;
@@ -39,7 +40,6 @@ h1, h2 {
   text-align: left;
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-family: monospace;
   color: 'gray'; }
 .window.vt i, .window.vt b { padding:0; }
 .window.vt center { text-align: center; }

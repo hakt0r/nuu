@@ -51,6 +51,9 @@ require('./csmake.coffee')(
   assets: (c)->
     dirs = fs.readdirSync('mod')
     series = []
+    # fetch 'contrib/fontawesome.zip', 'https://use.fontawesome.com/releases/v5.0.13/fontawesome-free-5.0.13.zip'
+    # unzip 'contrib/fontawesome.zip', 'contrib/fontawesome'
+    # link  'contrib/fontawesome/web-fonts-with-css',     'build/fontawesome'
     series.push require f for d in dirs when fs.existsSync f = path.join NUUWD, 'mod', d, 'build.coffee'
     $s series, ->
       console.log 'done'

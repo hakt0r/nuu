@@ -160,7 +160,7 @@ User::part = (user) ->
 User::createVehicle = (id,state)->
   tpl = Ship.byName[id] || Ship.byId[id]
   return console.error 'noship$', id unless tpl?
-  state = @vehicle.state if @vehicle
+  state = @vehicle.state.toJSON() if @vehicle
   vehicle = new Ship tpl:tpl, state:state, iff:[Math.random()],
     loadout:@db.loadout
   @sock.json sync:add:[vehicle.toJSON()]

@@ -45,9 +45,10 @@ $obj.register class Missile extends $obj
     source = opts.source
     sm = source.m.slice()
     sd = source.d / RAD
-    source.update NUU.time()
+    source.update time = NUU.time()
     opts.state =
       S: $moving
+      t: time
       d: source.d
       x: source.x
       y: source.y

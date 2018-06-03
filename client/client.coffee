@@ -135,8 +135,8 @@ app.on 'gfx:ready', ->
 
 ------------------------------------------------------------------------------------------------
 
-Press alt-R to register
-Press alt-L to show license screen
+  ➜ Press alt-R to register
+  ➜ Press alt-L to show license screen
 
     """
     unless debug then NUU.loginPrompt()

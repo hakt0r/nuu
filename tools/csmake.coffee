@@ -95,8 +95,14 @@ module.exports = (__targets) ->
     $p ( rm a for a in args ), -> c null
 
   global.unzip = (src,dst)-> (c)->
-    unless dirExists dst
-      exec("""sh -c 'sync; cd #{path.dirname src}; unzip #{path.basename src}'""")(c)
+    unless dirExists dst then exec( """sh -c '
+      sync;
+      rm -rf   _nuu_extract_;
+      mkdir -p _nuu_extract_;
+      unzip -d _nuu_extract_   #{src};
+      mv       _nuu_extract_/* #{dst};
+      rm -rf   _nuu_extract_;
+    '""" )(c)
     else dst.green; c null
 
   global.fetch = (dst,src)-> (c)->
@@ -105,9 +111,9 @@ module.exports = (__targets) ->
       r = request.get src
       r.on 'headers', ->
       r.on 'end', ->
-        console.log '\x1b[2K\x1b[0G' + 'fetch'.green, dst, src, filesize(fs.statSync(dst).size).human(si:yes, fixed:2), 'done'.green
+        console.log '\x1b[2K\x1b[0G' + 'fetch'.green, dst, filesize(fs.statSync(dst).size).human(si:yes, fixed:2), 'done'.green
         c null
-      r.on 'data', -> util.print '\x1b[2K\x1b[0G' + [ 'fetch'.yellow, dst, src, filesize(fs.statSync(dst).size).human(si:yes, fixed:2) ].join ' '
+      r.on 'data', -> util.print '\x1b[2K\x1b[0G' + [ 'fetch'.yellow, dst, filesize(fs.statSync(dst).size).human(si:yes, fixed:2) ].join ' '
       r.pipe(fs.createWriteStream dst)
     else c null
 

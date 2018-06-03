@@ -209,9 +209,9 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
 
     @renderHUD()     # if @renderHUD
     @renderScanner() # if ++@tick % 10 is 0
-    if VEHICLE.sprite
-      # VEHICLE.sprite.anchor = [0,0]
-      VEHICLE.sprite.position.set WDB2, HGB2
+    # if VEHICLE.sprite
+    #   # VEHICLE.sprite.anchor = [0,0]
+    #   VEHICLE.sprite.position.set WDB2, HGB2
     @renderer.render @stage
     null
 

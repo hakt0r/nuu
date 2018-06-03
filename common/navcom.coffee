@@ -33,8 +33,8 @@ class NavCom
   @turnTo: (s,t,limit=5) ->
     dx = s.x - t.x
     dy = s.y - t.y
-    dir = 360-((360+floor(atan2(dx,dy)*RAD))%360)
-    reldir = -180 + (( ( dir - s.d + 90 ) % 360 ) + 360 ) % 360
+    dir = 360 - (( 360 + floor(atan2(dx,dy) * RAD)) % 360 )
+    reldir = -180 + $v.umod360 dir - s.d + 90
     return [ true, 180 < reldir or reldir < 0, dir, reldir ] if abs(reldir) >= limit
     return [ false, false, dir, reldir ]
 

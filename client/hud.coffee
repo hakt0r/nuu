@@ -23,7 +23,15 @@
 
 $static '$palette', red:0xe6194b,green:0x3cb44b,yellow:0xffe119,blue:0x0082c8,orange:0xf58231,purple:0x911eb4,cyan:0x46f0f0,magenta:0xf032e6,lime:0xd2f53c,pink:0xfabebe,teal:0x008080,lavender:0xe6beff,brown:0xaa6e28,beige:0xfffac8,maroon:0x800000,mint:0xaaffc3,olive:0x808000,coral:0xffd8b1,navy:0x000080,grey:0x808080,white:0xFFFFFF,black:0x000000
 
-$static 'HUD', new class HUDRenderer
+ntime = ->
+  d = new Date NUU.time()
+  h = d.getUTCHours();   h = '0' + h if h < 10
+  m = d.getUTCMinutes(); m = '0' + m if m < 10
+  s = d.getUTCSeconds(); s = '0' + m if s < 10
+  return [h,m,s].join ':'
+# setInterval ( -> HUD.wdg aa_date: v:ntime() ), 250
+
+$static 'HUD', new class uiHUD
   fontSize:12
   constructor: ->
     @startTime = NUU.time()
@@ -71,10 +79,12 @@ $static 'HUD', new class HUDRenderer
       system:{align:'right',fill:$palette.green}
       primary:{align:'right',fill:$palette.grey}
       secondary:{align:'right',fill:$palette.grey}
+      topLeft:{fill:'grey'}
       text:{}
       notice:{}
       debug:{}
     @text.position.set WDB2 - 50, HEIGHT - 120
+    @topLeft.position.set 10, 10
     @system.position.set 10, HEIGHT - 10 - @system.height
     @resize Sprite.on 'resize', @resize.bind @
     Sprite.renderHUD = @render.bind @, @layer
@@ -105,28 +115,37 @@ $static 'HUD', new class HUDRenderer
       null
     null
 
-    NET.on 'setMount', (users) -> HUD.widget 'mount', (
+    NET.on 'setMount', (users) ->
       idx = NUU.player.mountId
       if ( s = VEHICLE.mountSlot[idx] ) and ( e = s.equip ) and e.turret
         VEHICLE.setWeap s.idx
       else if VEHICLE.slots.weapon.length isnt idx
         VEHICLE.setWeap VEHICLE.slots.weapon.length
-      VEHICLE.name + '['+ idx + ':' + VEHICLE.mountName[idx] + ']\n' + users
-        .filter (i)-> i
-        .join ' '
-    ), true
+      mounts = VEHICLE.mount.map (user,idx)->
+        Weapon.guiSymbol VEHICLE.mountSlot[idx].equip || VEHICLE.mountType[idx], user
+      n = NUU.player.user.nick + '@' + VEHICLE.name + '.' + $obj.byId[0].name + ' '
+      HUD.wdg mount:v:n+mounts.join(''), true
 
     NUU.on 'switchWeapon', switchWeapon = (slot,weap) =>
       console.log "weap", slot, weap if debug
       p = NUU.player
-      @primary.text = if p.primary.slot?
-        @primary.style.fill = if p.primary.slot.color then p.primary.slot.color else @turret[cix].color
-        "#{p.primary.slot.name}"
-      else @primary.style.fill = $palette.grey; "locked [0]"
-      @secondary.text = if p.secondary.slot?
-        @secondary.style.fill = if p.secondary.slot.color then p.secondary.slot.color else @turret[cix].color
-        "#{p.secondary.slot.name}"
-      else @secondary.style.fill = $palette.grey; "locked [1]"
+      if e = p.primary.slot
+        @primary.style.fontWeight = 'bold'
+        @primary.style.fontFamily = 'monospace'
+        @primary.style.fill = if e.color then e.color
+        @primary.text = "#{Weapon.guiName e}"
+      else
+        @primary.style.fill = $palette.grey;
+        @primary.text = "locked [0]"
+      if e = p.secondary.slot
+        s = NUU.symbol[e.extends]
+        s = if s.length is 1 then s else if e.type is 'fighter bay' then s[1] else s[0]
+        s += NUU.symbol.turret if e.turret
+        @secondary.style.fill = if e.color then e.color
+        @secondary.text = "#{Weapon.guiName e}"
+      else
+        @secondary.style.fill = $palette.grey
+        @secondary.text = "locked [1]"
       @resize()
 
     NUU.on 'newTarget', tgtHandler = (t) =>
@@ -159,7 +178,7 @@ $static 'HUD', new class HUDRenderer
     RightAlign = (o,x,y)-> o.position.set WDB2 + x + 5, HEIGHT - y
     @system.fontSize = @text.fontSize = @notice.fontSize = @debug.fontSize = @fontSize + 'px'
     @notice.position.set        WIDTH - 20 - @notice.width, 10
-    @debug.position.set         10,  10
+    @debug.position.set         10,  26
     LeftAlign  @system,         110 + @system.width, @system.height + 10
     LeftAlign  @playerSprite,   100, @playerSprite.height + 35 if @playerSprite
     LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
@@ -304,8 +323,20 @@ $static 'HUD', new class HUDRenderer
       g.lineTo fox - cos(vec.rad) * radius * 1.1, foy - sin(vec.rad) * radius * 1.1
     ###
   widgetList: []
+
   widget: (name,v,nokey=false)->
     value = name + ': ' + v
     value = v if nokey
     if v then @widgetList[name] = value
     else delete @widgetList[name]
+
+  wdg: (opts)-> for name, o of opts
+    o = v:o if o.match
+    o.p = 'topLeft'    unless o.p
+    l = @wdg[o.p] = {} unless l = @wdg[o.p] = {}
+    if o.v
+      value = o.v
+      value = name + ': ' + v if o.k is yes
+      l[name] = value
+    else delete l[name]
+    @[o.p].text = Object.values(l).join ' '

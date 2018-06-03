@@ -20,6 +20,30 @@
 
 ###
 
+NUU.symbol = Launcher:'➜➤', Beam:'⌇', Projectile:'•', turret: '⦿', helm:'☸', passenger:'♿'
+
+Weapon.guiSymbol = (e,u)->
+  s = NUU.symbol[e.extends||e]
+  s = if s.length is 1 then s else if e.type is 'fighter bay' then s[1] else s[0]
+  s += NUU.symbol.turret if e.turret
+  s = s + '☢' if e.name and e.name.match 'Cheaters'
+  s = if u then "[#{s}:#{u}]" else "[#{s}]"
+  s
+
+Weapon.guiName = (e)->
+  s = Weapon.guiSymbol e
+  n = e.name
+  n = n.replace 'FighterBay', ''
+  n = n.replace 'Beam', ''
+  n = n.replace 'Launcher', ''
+  n = n.replace 'Turret', ''
+  n = n.replace 'Cannon', ''
+  n = n.replace 'Cheaters', '' if n.match 'Cheaters'
+  n = n.replace /.*Systems/, ''
+  while m = n.match /([^ ])([A-Z])/
+    n = n.replace m[0], m[1] + ' ' + m[2]
+  return n.trim() + s
+
 console.user = console.log
 console.real = console.log
 

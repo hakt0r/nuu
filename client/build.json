@@ -1,5 +1,7 @@
 {
   "require": [
+    "assert",
+    "util",
     "synaptic",
     "vectors",
     "steering",
@@ -14,6 +16,8 @@
     ["$v","vectors"]
   ],
   "libs": [
+    "assert",
+    "util",
     "synaptic",
     "crypto",
     "events",

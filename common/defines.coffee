@@ -74,6 +74,7 @@ $v.normalize =           $v.normalize 2
 $v.zero =                [0,0]
 $v.smod =                (a) -> a - floor( a / 360 ) * 360
 $v.reldeg =              (dira,dirb) -> $v.smod( dira - dirb + 180 ) - 180
+$v.umod360 =             (v)-> ((( v % 360 ) + 360 ) % 360 )
 
 $static '$dist',         (s,o) -> sqrt(pow(s.x-o.x,2)+pow(s.y-o.y,2))
 $static '$interval',     (i,f) -> setInterval f,i
