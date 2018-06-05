@@ -23,7 +23,7 @@
 $obj::update = $void
 
 if isClient then $public class State
-  constructor:(opts,fromBuffer) ->
+  constructor:(opts) ->
     time = NUU.time()
     Object.assign @, opts
     @o = if @o.id? then @o else $obj.byId[@o]
@@ -107,7 +107,7 @@ State::toBuffer = ->
 State.fromBuffer = (msg)->
   return unless o = $obj.byId[id = msg.readUInt16LE 1]
   [ o.accel, o.retro, o.right, o.left, o.boost ] = o.flags = NET.getFlags msg[3]
-  new State.byKey[msg[6]] (
+  new State.byKey[msg[6]]
     o: o
     d: msg.readUInt16LE 8
     x: msg.readDoubleLE 10
@@ -116,7 +116,6 @@ State.fromBuffer = (msg)->
     a: msg.readFloatLE 74
     t: NUU.timePrefix() + msg.readUInt32LE 82
     relto: msg.readUInt16LE 4
-  ), true
   return o
 
 if isClient then NET.on 'state', (list)->
@@ -221,9 +220,15 @@ State.register class State.maneuvering extends State
 State.register class State.orbit extends State
   json: yes
   constructor:(s) ->
-    @vel = @orb = @off = @stp = null
-    super
-    s.d = parseInt s.d || s.o.d
+    if s.stp # cloning from JSON
+      Object.assign @, s
+      @o = if @o.id? then @o else $obj.byId[@o]
+      @relto = $obj.byId[@relto] if @relto? and not @relto.id?
+      @o.state = @
+      @o.update = @update.bind @
+    else
+      @vel = @orb = @off = @stp = null
+      super
     s.a = s.a || s.o.a || 0
   translate:->
     return console.log '::st', 'orbit', 'set:no-relto' unless @relto
