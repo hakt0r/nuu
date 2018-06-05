@@ -28,7 +28,7 @@
 detector = (perp,weap,ms,tt,sx,sy,mx,my) -> (time)->
   return off if tt < time
   for target in perp.hostile
-    ticks = ( time - ms ) * ITICK
+    ticks = ( time - ms ) * TICKi
     x = floor sx + mx * ticks
     y = floor sy + my * ticks
     continue if target.size < $dist (x:x,y:y), target
@@ -40,7 +40,7 @@ Weapon.Projectile = ->
   Weapon.Projectile.loadAssets.call @  if isClient
   @delay  = @stats.delay * 500
   @ttl    = 1000 / @stats.speed * 1000
-  @ppt    = @stats.speed * ITICK
+  @ppt    = @stats.speed * TICKi
   @dir    = 0
   @lock = @stop = false
   $worker.push @tracker = Weapon.tracker.call @ if @turret

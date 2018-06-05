@@ -42,7 +42,7 @@ $obj::show = ->
 
 $obj::hide = ->
   return unless old = Sprite.visible[@id]
-  console.log ':gfx', 'hide$', @id, @name
+  console.log ':gfx', 'hide$', @id, @name if debug
   delete Sprite.visible[@id]
   Array.remove Sprite.visibleList, @
   Sprite[@layer].removeChild old

@@ -6,7 +6,9 @@ It's **not finished yet, not secure, okay for LAN** and probably will stay that 
 Still **somewhat playable** and I do my best to not break master :D
 100% pure JavaScript in its current incarnation, runs a NodeJS backend and targets Chrom(e|ium) as the frontend.
 
-It's excellent open-source cousin [naev](http://blog.naev.org/) currently lends NUU it's **assets**. It's a very nice singleplayer game packed with ages of fun and it is still being extended and improved. Like **naev**, NUU is heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money. And just so it happens - naev uses assets which in turn are partly attributable to the [Vega Strike](http://vegastrike.sourceforge.net) project. So everyone's related :> A **strong pointer** to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video_game)) should also be cast, explaining the continuous efforts to enable gravity in a playable way :) (at least we have funkey orbits now :>)
+It's excellent open-source cousin [naev](http://blog.naev.org/) currently lends NUU it's **assets**. It's a very nice singleplayer game packed with ages of fun and it is still being extended and improved. Like **naev**, NUU is heavily inspired by [Ambrosia Software](http://www.ambrosiasw.com/)'s [Escape Velocity](http://www.ambrosiasw.com/games/evn/). Still worth it's money. And just so it happens - naev uses assets which in turn are partly attributable to the [Vega Strike](http://vegastrike.sourceforge.net) project. So everyone's related :> A **strong pointer** to [Spacewar!](http://en.wikipedia.org/wiki/Spacewar_(video_game)) should also be cast, explaining the continuous efforts to enable gravity in a playable way :) (at least we have funky orbits now :>)
+
+A tip of the hat should also be extended to [Endless Sky](https://github.com/endless-sky/endless-sky) another excellent EV-esque open-source project.
 
 | **Screenshots** | |
 | :--------: | :--------: |

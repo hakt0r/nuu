@@ -73,7 +73,6 @@ $static 'HUD', new class uiHUD
     @textNode = (struct)=> for name, opts of struct
       o = fontFamily: 'monospace', fontSize:@fontSize+'px', fill: 'red'
       o[k] = v for k,v of opts
-      console.log name, o
       @layer.addChild @[name] = new PIXI.Text (o.text or ''), o
     @textNode
       system:{align:'right',fill:$palette.green}

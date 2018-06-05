@@ -85,7 +85,7 @@ rules.server = ->
     null
 
   Asteroid.autospawn max: ROIDS_MAX
-  # AI.autospawn max: DRONES_MAX if DRONES_ACTIVE
+  AI.autospawn max: DRONES_MAX if DRONES_ACTIVE
 
 rules.client = ->
 

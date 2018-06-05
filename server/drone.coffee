@@ -67,18 +67,21 @@ AI::attackPlayers = ->
   do @update
   @attackPlayersTarget() if not @target or @target.destructing
   return 1000            unless @target
-  if @inRange = abs(distance = $dist(@,@target)) < 150
-    v = NavCom.steer @, @target, 'aim'
+  if @inRange = 500 > abs distance = $dist @, @target
+    v = NavCom.aim @, @target
     if v.fire and not @fire
       NET.weap.write('ai',0,@primarySlot,@,@target)
     else if @fire and not v.fire
       NET.weap.write('ai',1,@primarySlot,@,@target)
   else v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
+  if v.setDir
+    NET.steer.write @, 0, v.dir
+    return null
   { turn, turnLeft, @accel, @boost, @retro, @fire } = v
   @left = turnLeft
   @right = turn and not turnLeft
   do @applyControlFlags if ( @flags isnt v.flags ) or v.setDir
-  33
+  null
 
 AI::attackPlayersTarget = ->
   @target = null

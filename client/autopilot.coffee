@@ -61,13 +61,16 @@ $public class Autopilot
     s += @target.name + '\n'
     s += v.message + '\n'
     s += 'm: ' + parseInt(@target.m[0]) + ':' + parseInt(@target.m[1]) + '\n'
-    s += 'rad:' + (round v.rad) + ' dir: ' + (round v.dir) + '\n'
-    s += 'diff:' + (round v.error) + ' ddiff: ' + (round v.dir_diff) + '\nflags['
-    s += 'a' if v.accel
-    s += 'b' if v.boost
-    s += 'l' if v.left
-    s += 'r' if v.right
-    s += 's' if v.setdir
+    s += 'vdiff:' + (rdec3 v.error) + '\n'
+    s += 'rad:' + (round v.rad) + ' dir: ' + (rdec3 v.dir) + '\n'
+    s += 'ddiff: ' + (rdec3 v.dir_diff) + '\n'
+    s += '\n⚑['
+    s += '▲' if v.boost
+    s += '△' if v.accel
+    s += '▽' if v.retro
+    s += '◀' if v.left
+    s += '▶' if v.right
+    s += '◉' if v.setdir
     s += ']\nFm:' + hdist v.maxSpeed
     Sprite.hud.widget 'autopilot', s, yes
     v

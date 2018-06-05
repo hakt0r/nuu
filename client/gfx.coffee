@@ -39,6 +39,11 @@ PIXI.bringToFront = (sprite, parent) ->
   chd.push sprite
   return
 
+# Moved in v5 we use both atm
+PIXI.Ticker = PIXI.ticker.Ticker                 unless PIXI.Ticker
+PIXI.AnimatedSprite = PIXI.extras.AnimatedSprite unless PIXI.AnimatedSprite
+PIXI.TilingSprite   = PIXI.extras.TilingSprite   unless PIXI.TilingSprite
+
 movieCache = {}
 $static 'movieFactory', (sprite, url, _loop) ->
   unless (c = movieCache[sprite])
@@ -55,7 +60,7 @@ $static 'movieFactory', (sprite, url, _loop) ->
       y = floor(n / l) * s
       a.push new PIXI.Texture base, new PIXI.Rectangle(x,y,s,s)
     movieCache[sprite] = c = (_loop)->
-      c = new PIXI.extras.AnimatedSprite a, true
+      c = new PIXI.AnimatedSprite a, true
       c.meta = meta
       c.onComplete = _loop unless ( c.loop = _loop is true )
       c
@@ -72,7 +77,7 @@ makeStarfield = (mod...)->
   c = $ '<canvas class="offscreen" width=1024 height=1024>'
   g = c[0].getContext '2d'
   field.apply null, x for i in [0..x[2]] while x = mod.shift()
-  return new PIXI.extras.TilingSprite PIXI.Texture.fromCanvas c[0]
+  return new PIXI.TilingSprite PIXI.Texture.fromCanvas c[0]
 
 $static 'Sprite', new class SpriteSurface extends EventEmitter
   visible: {}
@@ -82,7 +87,8 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
   constructor: (callback)->
     @tick = 0
     @stage    = stage    = new PIXI.Container # 0x000000
-    @renderer = renderer = PIXI.autoDetectRenderer 640,480, antialias: yes
+    @pixi = new PIXI.Application 640, 480, antialias: yes, forceFXAA:yes
+    @renderer = renderer = @pixi.renderer
 
     @layer 'bg',   new PIXI.Container
     @layer 'stel', new PIXI.Container
@@ -91,7 +97,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @layer 'weap', new PIXI.Container
     @layer 'tile', new PIXI.Container
     @layer 'play', new PIXI.Container
-    @layer 'fx',   new PIXI.Graphics
+    @layer 'fx',   new PIXI.Container
     @layer 'fg',   new PIXI.Container
 
     @bg.addChild @starfield = makeStarfield [1,0.3,2000],[1.5,0.7,20]
@@ -100,10 +106,11 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
 
     app.on 'runtime:ready', =>
       document.body.appendChild renderer.view
+      d = $ document
       w = $ window
       do @resize = =>
-        window.WIDTH  = w.width()
-        window.HEIGHT = w.height()
+        window.WIDTH  = d.width()
+        window.HEIGHT = d.height()
         window.WDB2 = WIDTH  / 2
         window.HGB2 = HEIGHT / 2
         window.WDT2 = WIDTH  + WIDTH
@@ -111,7 +118,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
         @renderer.resize WIDTH, HEIGHT
         @emit 'resize', WIDTH, HEIGHT, WDB2, HGB2
       w.on 'resize', @resize
-      @ticker = new PIXI.ticker.Ticker
+      @ticker = new PIXI.Ticker
       @ticker.add => do @animate
       @ticker.start()
       $interval 500, @select.bind @
@@ -198,7 +205,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     # time = NUU.time()
     while ++i < length
       s = list[i]
-      ticks = ( time - s.ms ) / TICK
+      ticks = ( time - s.ms ) * TICKi
       x = floor s.sx + s.mx * ticks
       y = floor s.sy + s.my * ticks
       s.sprite.position.set x + OX, y + OY

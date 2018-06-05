@@ -74,18 +74,18 @@ $obj.register class Stellar extends $obj
 
 Object.defineProperty Stellar::, 'buildRoot', get:->
   p = @; u = {}; u[p.id] = true
-  console.log '-', @name
+  console.log '-', @name if debug
   p.state.update time = NUU.time()
   while r = p.state.relto
     r.state.update time
     if 1500 < d = $dist(p,r)
-      console.log 'x:dist', d
+      console.log 'x:dist', d if debug
       break
     if u[r.id]
-      console.log 'x:uniq', r.name
+      console.log 'x:uniq', r.name if debug
       break
     u[(p = r).id] = true
-    console.log '--', p.name
+    console.log '--', p.name if debug
   switch p.constructor.name
     when 'Star','Planet','Moon' then p
     else null

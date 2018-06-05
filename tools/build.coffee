@@ -91,7 +91,15 @@ require('./csmake.coffee')(
         targets.common.filter (i) -> list.push 'build/common/' + i + '.js'
         targets.client.sources.filter (i) -> list.push 'build/client/' + i + '.js'
         list.unshift list.pop()
-        exec('cat ' + list.join(' ') + ' > build/client.js')(c)
+        exec("""
+          cat #{list.join(' ')} > build/client.js;
+          sha512sum build/client.js > build/hashsums
+          awk '
+          BEGIN{ print "NUU.hash = {" }
+               { RS=","; print c "\\"" $2 "\\": \\"" $1 "\\"" }
+            END{ print "}" }
+          ' build/hashsums >> build/client.js
+        """)(c)
     ], c )
 
   sysgen: (c)-> depend(assets)(-> exec("coffee mod/nuu/sysgen.coffee")(c))

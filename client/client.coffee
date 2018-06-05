@@ -117,6 +117,8 @@ app.on 'gfx:ready', ->
       Item.init result
       c null
   ], =>
+    # powered by
+    # <center><img class="powered" src="https://camo.githubusercontent.com/eae4496331dc8533db7c7ff8879c0d6a12da2282/687474703a2f2f706978696a732e646f776e6c6f61642f706978696a732d62616e6e65722e706e67"/> <img class="powered" src="https://nodejs.org/static/images/logos/nodejs-new-white.png"/> <img class="powered" src="https://cdn-1.wp.nginx.com/wp-content/uploads/2018/03/icon-NGINX-OSS.svg"/></center>
     vt.write NUU.intro = """
 
 ------------------------------------------------------------------------------------------------
@@ -125,10 +127,7 @@ app.on 'gfx:ready', ->
         (c) 2007-2008 flyc0r
         GNU General Public License v3 / see license screen (alt-L)
 
-------------------------------------------------------------------------------------------------
-
-<center><img src="/build/imag/nuulogo.png"/></center>
---- [ FakeNN ] BREAKING ------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------<center><img src="/build/imag/nuulogo.png"/></center>--- [ FakeNN ] BREAKING ------------------------------------------------------------------------
 
         Earth and Luna have been overrun by the drones our own creation, and now,
         her Majesty the Kernel is scheming to take Mars and the Jupiter-system!

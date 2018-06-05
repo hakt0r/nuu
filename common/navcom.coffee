@@ -59,10 +59,11 @@ class NavCom
     slowingRadius = 0.5 * a * t * t
 
   @vectorAddDir : (v,force)->
-    angle = atan2 force[0], -force[1]
+    angle = atan2 force[0], force[1]
     v.rad = rad = @absRad( @FIX + angle )
-    v.dir = dir = parseInt NavCom.fixAngle( angle * RAD )
-    v.dir_diff_abs = abs ( v.dir_diff = ( v.dir - v.current_dir ) % 360 )
+    angle = $v.heading([0,0],force) * RAD
+    v.dir = dir = $v.umod360 v.current_dir - angle
+    v.dir_diff_abs = abs v.dir_diff = -180 + dir
     v
 
   @steer: ( ship, target, strategy='seek' ) ->
@@ -122,47 +123,48 @@ class NavCom
     if v.error > 2
       if dir_diff_abs > 15
         v.turn = yes
-        v.turnLeft = -180 < dir_diff < 0
-        message += ':bear('+(round dir_diff)+'/'+(round dir_diff_abs)+' > '+s.d+'/'+v.dir+')'
-      else if dir_diff_abs > 0
+        v.turnLeft = not ( -180 < dir_diff < 0 )
+        message += ':bear(' +
+          (rdec3 dir_diff) + '/' +
+          (rdec3 dir_diff_abs) + '>' +
+          (rdec3 s.d) + '/' +
+          (rdec3 v.dir) + ')'
+      else if 5 > dir_diff_abs > 2
         v.setdir = yes
-        message += ':setd('+v.dir+')'
-      else if 1 < v.error
+        message += ':setd(' +
+          rdec3(v.dir) + ')'
+      else if 2 < v.error
         v.accel = yes
-        v.boost = 100 < v.error
-        message += ':accl(f'+(round v.error)+'/d'+dir_diff+' > '+s.d+'/'+v.dir+')'
+        # v.boost = 100 < v.error
+        message += ':accl(f' +
+          (rdec3 v.error) + '/d' +
+          (rdec3 dir_diff) + ' > ' +
+          (rdec3 s.d) + '/' +
+          (rdec3 v.dir) + ')'
       # else TODO:
       #   v.retro = yes
-      #   message += ':decl('+(round v.error)+')'
-    else message += ':wait(dF:'+(round v.error)+')'
+      #   message += ':decl('+(rdec3 v.error)+')'
+    else message += ':wait(dF:'+(rdec3 v.error)+')'
     v.message = message
-    s.d = v.dir if v.setdir
+    # s.d = v.dir if v.setdir # FIXME
     v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.turn and not v.turnLeft, v.turnLeft, v.boost, no, no, no ]
     v
 
   @aim: (s,target)->
-    force = $v.sub target.p, s.p
-    v = @vectorAddDir (
-      left: no
-      right: no
-      accel: no
-      boost: no
-      distance: $dist s,target
-      velocity: $v.mag force
-      current_dir: s.d
-      force: force
-      maxSpeed: 0
-      eta: 0
-    ), force
-    v.fire = v.dir_diff_abs is 0
-    if v.dir_diff_abs > 4
-      v.left  = -180 < v.dir_diff < 0
-      v.right = not v.left
-    else
-      v.left = v.right = no
-      v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.turn and not v.turnLeft, v.turnLeft, v.boost, no, no, no ]
-      v.setDir = yes
-      s.d = v.dir
+    s.update time = NUU.time()
+    target.update time
+    angle = $v.heading(target.p,s.p) * RAD
+    v = {}
+    v.dir = dir = $v.umod360 angle
+    v.dir_diff_abs = abs v.dir_diff = -180 + dir
+    v.fire = v.dir_diff_abs < 5
+    # v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.right||v.left, v.left, v.boost, no, no, no ]
+    # if v.dir_diff_abs > 4
+    #   v.left  = -180 < v.dir_diff < 0
+    #   v.right = not v.left
+    # else
+    v.setDir = yes
+    # s.d = v.dir
     return v
 
 $public NavCom

@@ -20,49 +20,47 @@
 
 ###
 
-$public class RTSync extends EventEmitter
-  resolve: {}
-  VERSION:    $version
-  COMPATIBLE: "0.4.70"
+NET.resolve = {}
+NET.VERSION =    $version
+NET.COMPATIBLE = "0.4.70"
 
-  constructor: -> @define.index = 1
+NET.bind = (name,fnc)->
+  @resolve[@[name]] = fnc
 
-  setFlags: (a) ->
-    c = 0
-    c += Math.pow(2,k) for k,v of a when v
-    c
+NET.setFlags = (a) ->
+  c = 0
+  c += Math.pow(2,k) for k,v of a when v
+  c
 
-  getFlags: (c) ->
-    a = []
-    a.push(if c >> i is 1 then (c -= Math.pow(2,i); true) else false) for i in [7..0]
-    a.reverse()
+NET.getFlags = (c) ->
+  a = []
+  a.push(if c >> i is 1 then (c -= Math.pow(2,i); true) else false) for i in [7..0]
+  a.reverse()
 
-  define: (c,name,opts={}) ->
-    console.log ':net', 'define', c, name if debug
-    lower = name.toLowerCase()
-    unless @[name]?
-      @[name] = s = String.fromCharCode c
-      @[lower] = {}
-      @[lower+'Code'] = c
-    for k,v of opts
-      @[lower][k] = (
-        if v? and (typeof v is 'object') and (v.client? or v.server?)
-          if      isClient and v.client then v.client
-          else if isServer and v.server then v.server
-        else v )
-    @resolve[@[lower+'Code']] = @[lower].read if @[lower].read?
+NET.define = (c,name,opts={}) ->
+  console.log ':net', 'define', c, name if debug
+  lower = name.toLowerCase()
+  unless @[name]?
+    @[name] = s = String.fromCharCode c
+    @[lower] = {}
+    @[lower+'Code'] = c
+  for k,v of opts
+    @[lower][k] = (
+      if v? and (typeof v is 'object') and (v.client? or v.server?)
+        if      isClient and v.client then v.client
+        else if isServer and v.server then v.server
+      else v )
+  @resolve[@[lower+'Code']] = @[lower].read if @[lower].read?
+NET.define.index = 1
 
-  bind: (name,fnc) -> @resolve[@[name]] = fnc
 
-$static 'NET', new RTSync
-
-if isClient then RTSync::route = (src,msg)->
+if isClient then NET.route = (src,msg)->
   NET.RX++
   msg = new Buffer msg, 'binary'
   fnc = NET.resolve[msg[0]]
   fnc.call NET, msg, src if fnc?
 
-else if isServer then RTSync::route = (src) ->
+else if isServer then NET.route = (src) ->
   res = NET.resolve
   (msg)->
     msg = Buffer.from msg, 'binary'
@@ -95,7 +93,8 @@ NET.define 0,'JSON',
 NET.define 2,'STATE',
   write:
     server: (s) ->
-      NUU.bincast ( s.toBuffer().toString 'binary' ), s.o
+      if s.json then NUU.jsoncast state:[s.toJSON()]
+      else NUU.bincast ( s.toBuffer().toString 'binary' ), s.o
     client:(o,flags) ->
       msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0]
       msg.writeUInt16LE parseInt(o.d), 2

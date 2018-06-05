@@ -20,11 +20,42 @@
 
 ###
 
+# LANG-CONSTANTS
+$static '$void', ->
+
+# ENGINE (GLUE OBJECT :)
+class Engine extends EventEmitter
+  time: Date.now
+  timePrefix: -> 1000000 * Math.floor @time() / 1000000
+  threadList: {}
+  players: {}
+  init: $void
+  thread: (name,time,fnc) ->
+    @threadList[name] = setInterval fnc, time
+  start: (callback) ->
+    console.log ':nuu', 'engine'.green, @tstart = @time()
+    @emit 'start'
+    callback null if callback
+    null
+  stop: ->
+    clearInterval i for k,i of @threadList
+    null
+
+$static 'NET', new EventEmitter
+$static 'NUU', new Engine
+
 $static '$version',      '0.4.72'
 
+# ENGINE CONSTANTS
 $static 'TICK',          16.6
-$static 'ITICK',         1/16.6    # old habit, avoid division
-$static 'STICK',         1000/16.6 # old habit, avoid division
+$static 'TICKi',         1/16.6    # old habit, avoid division
+$static 'TICKs',         1000/16.6 # old habit, avoid division
+$static 'Speed',
+  ofLight: 299792.458
+  max:     299792.458 * TICKi
+  boost:   10
+
+# ENGINE VARIABLES
 $static 'OX',            0 # global delta
 $static 'OY',            0 # global delta
 
@@ -37,16 +68,17 @@ $static '$maneuvering',  4
 $static '$orbit',        5
 $static '$travel',       6
 
-# CONSTANTS
+# MATH-CONSTANTS
 $static 'PI',            Math.PI
-$static 'TAU',           Math.PI * 2
-$static 'RAD',           180 / Math.PI
-$static 'DAR',           Math.PI / 180
-$static 'PIcent',        PI / 100
+$static 'PIi',           1 / PI
+$static 'PIcent',        PI  / 100
+$static 'TAU',           PI * 2
+$static 'TAUi',          1 / TAU
 $static 'TAUcent',       TAU / 100
-$static '$void',         ->
-$static '$voidObj',      {} # TODO: catcher functions
-$static '$voidArr',      [] # TODO: catcher functions
+$static 'RAD',           180 / PI
+$static 'DAR',           PI  / 180
+$static 'RADi',          1 / RAD
+$static 'DARi',          1 / DAR
 
 # MATH
 $static 'floor',         Math.floor
@@ -61,20 +93,30 @@ $static 'cos',           Math.cos
 $static 'random',        Math.random
 $static 'round',         Math.round
 
+$static 'scaleLog', (val,minp=0,maxp=Speed.max,minv=0,maxv=50)->
+  minv = Math.log minv; maxv = Math.log maxv
+  return Math.exp minv + ((maxv-minv)/(maxp-minp)) * ( abs(val) - minp )
+
+$static 'rdec3', (n)->
+  (if n < 0 then '-' else '') + ('000' + abs round n).substr -3
+
+$static 'sha512', (str) ->
+  Crypto.createHash('sha512').update(str).digest 'hex'
+
 # VECTORMATH
-$v.sub =                 $v.sub 2
-$v.add =                 $v.add 2
-$v.dot =                 $v.dot 2
-$v.mag =                 $v.mag  2
-$v.dist =                $v.dist 2
-$v.mult =                $v.mult 2
-$v.limit =               $v.limit 2
-$v.heading =             $v.heading 2
-$v.normalize =           $v.normalize 2
-$v.zero =                [0,0]
-$v.smod =                (a) -> a - floor( a / 360 ) * 360
-$v.reldeg =              (dira,dirb) -> $v.smod( dira - dirb + 180 ) - 180
-$v.umod360 =             (v)-> ((( v % 360 ) + 360 ) % 360 )
+$v       .sub = $v.sub       2
+$v       .add = $v.add       2
+$v       .dot = $v.dot       2
+$v       .mag = $v.mag       2
+$v      .dist = $v.dist      2
+$v      .mult = $v.mult      2
+$v     .limit = $v.limit     2
+$v   .heading = $v.heading   2
+$v .normalize = $v.normalize 2
+$v      .zero = [0,0]
+$v      .smod = (a) -> a - floor( a / 360 ) * 360
+$v    .reldeg = (dira,dirb) -> $v.smod( dira - dirb + 180 ) - 180
+$v   .umod360 = (v)-> ((( v % 360 ) + 360 ) % 360 )
 
 $static '$dist',         (s,o) -> sqrt(pow(s.x-o.x,2)+pow(s.y-o.y,2))
 $static '$interval',     (i,f) -> setInterval f,i
@@ -101,11 +143,6 @@ $static 'htime', (t) ->
   else if t < 60 * 60 * 24 * 356 then d + "d " + h + ":" + m + ":" + s + "h"
   else t.toFixed 0
 
-$static 'Speed',
-  ofLight: 299792.458
-  max:     299792.458 / TICK
-  boost:   10
-
 if debug
   Speed.bost *= 10
   Speed.boost = 30
@@ -128,9 +165,33 @@ $public class Mean
     @total += v
     @avrg = @total / @count
 
-Array.remove = (a,v) -> a.splice a.indexOf(v), 1
-Array.random = (a) -> a[round random()*(a.length-1)]
+Array.remove = (a,v) ->
+  a.splice a.indexOf(v), 1
 
-$static 'sha512', (str) -> Crypto.createHash('sha512').update(str).digest 'hex'
+Array.random = (a) ->
+  a[round random()*(a.length-1)]
+
+Array.uniq = (a)->
+  a.filter (v,i,s)-> v? and s.indexOf v is i
+
+Array.empty = (a)->
+  a.pop() while a.length > 0
+  a
+
+Object.empty = (o)->
+  delete o[k] for k of o
+  o
+
+String.random = (length) ->
+  text = ''; i = 0
+  text += String.fromCharCode floor 80 + 36 * random() while i++ < length
+  text
+
+String.filename = (p)->
+  p.replace(/.*\//, '').replace(/\..*/,'')
+
+console.colorDump = (opts={})->
+  a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )
+  a.join ''
 
 $static 'rules', -> if isClient then rules.client() else rules.server()

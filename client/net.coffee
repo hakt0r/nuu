@@ -100,7 +100,9 @@ class NET.Connection
     return unless @sock.readyState is 1
     @sock.send msg
 
-  onopen: (e) =>
+  onopen: (e) => $.ajax url: 'build/hashsums', success: (d) =>
+    h = {}; d.trim().split('\n').map (i)-> i = i.split /[ \t]+/; h[i[1]] = i[0]
+    return window.location.reload() unless h['build/client.js'] is NUU.hash['build/client.js']
     vt.status "Connected", '[<i style="color:yellow">' + @addr + '</i>]'
     vt.status "Login", "Getting challenge for " + '[<i style="color:yellow">' + @name + '</i>]'
     NET.json.write login: @name
@@ -126,10 +128,10 @@ class NET.Connection
     return console.log 'blocked' if @reconnect.underway
     @reconnect.underway = yes
     HUD.widget 'reconnect', 'wait -----'
-    setTimeout ( -> HUD.widget 'reconnect', 'wait |----' ), 1000
-    setTimeout ( -> HUD.widget 'reconnect', 'wait ||---' ), 2000
-    setTimeout ( -> HUD.widget 'reconnect', 'wait |||--' ), 3000
-    setTimeout ( -> HUD.widget 'reconnect', 'wait ||||-' ), 4000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚----' ), 1000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚---' ), 2000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚--' ), 3000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚❚-' ), 4000
     setTimeout ( =>
       HUD.widget 'reconnect', '[***]'
       @connect @addr

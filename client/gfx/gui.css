@@ -15,7 +15,13 @@ h1, h2 {
   border:2px groove silver;
   background-color: #444;
 }
-
+.window img.powered {
+  display: inline;
+  height: 24px;
+  background: #272930;
+  border-radius: 10px; }
+.window img.powered.inverse {
+  background: #FFF; }
 .window {
   font-size: 12px;
   text-align: center;
@@ -66,16 +72,29 @@ h1, h2 {
   color: black;
   background: rgba(255,255,255,0.6);
   padding: 5px;
-  border-radius: 4px; }
+  border-radius: 4px;
+  width: 100px;
+  display: inline-block;
+  }
+.window .libs a, .window .libs a:visited, .window .libs a:active, .window .libs a:hover {
+  width: 300px;
+  border-radius: 5px 5px 0px 5px;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  padding: 3px 10px;
+  }
 .window .version {
   background: #545454;
   color: #969696;
-  float: left;
-  width: 60px;
+  float: right;
+  width: 80px;
   height: 10px;
   padding: 4px;
   line-height: 10px;
-  text-align: right; }
+  text-align: right;
+  margin-right: 5px;
+  border-radius: 0px 0px 5px 5px;
+  }
 .window .description {
   font-weight: normal;
   display: block;
@@ -86,7 +105,7 @@ h1, h2 {
 .window #game img {
   background: none;
   margin: auto;
-  width: 500px;
+  width: 340px;
   height: auto;
   display: block;
   }
@@ -125,9 +144,17 @@ h1, h2 {
   height: 96%;
   width: 96%; }
 .window ul.libs {
-  text-align:left; }
+  text-align: left;
+  width: 375px;
+  margin: auto;
+  list-style: none;
+  }
 .window ul.libs li {
-  margin: 5px;line-height:20px; padding-left: 40px; }
+  margin: 5px;
+  line-height:20px;
+  padding-left: 40px;
+  margin-bottom: 20px;
+  }
 .pre {
   font-family: monospace;
   white-space: pre; }
@@ -192,9 +219,12 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
   display: block;
   text-align: left;
   margin: 5px 100px;
-  width: 15em;
-  height: 20px;
-}
+  width: 25em;
+  height: 20px; }
+
+.window ul.copyrights li:last-child {
+  margin-bottom: 20px;
+  }
 
 .window.modal_list {
   text-align: left;
@@ -261,7 +291,7 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
 .ship-select p { margin-left: 37px; text-align: left; }
 .window p.desc {
   text-align: left;
-  padding: 2px 32px;
+  padding: 4px 32px;
 }
 .window button { padding: 3px; margin-left: 2px;
   color: black;

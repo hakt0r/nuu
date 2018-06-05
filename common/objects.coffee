@@ -143,7 +143,7 @@ $obj.register class Asteroid extends $obj
           S: $orbit
           x: sqrt(r) * cos(phi) * 7000000000
           y: sqrt(r) * sin(phi) * 7000000000
-          relto: 0
+          relto: Stellar.byId[0]
     img = opts.size - 10
     img = '0' + img if img < 10
     opts.sprite = 'asteroid-D' + img

@@ -42,7 +42,7 @@ $Animated Cargo,  sprite: 'cargo', loop: yes
 
 Weapon.Beam.loadAssets = ->
   @meta = $meta[@sprite]
-  @sprite = new PIXI.extras.TilingSprite PIXI.Texture.fromImage '/build/outfit/space/' + @sprite + '.png'
+  @sprite = new PIXI.TilingSprite PIXI.Texture.fromImage '/build/outfit/space/' + @sprite + '.png'
   @sprite.height = @meta.height
   @sprite.width  = @range
   @sprite.anchor.set 0, 0.5

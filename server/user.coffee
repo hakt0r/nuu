@@ -160,7 +160,8 @@ User::part = (user) ->
 User::createVehicle = (id,state)->
   tpl = Ship.byName[id] || Ship.byId[id]
   return console.error 'noship$', id unless tpl?
-  state = @vehicle.state.toJSON() if @vehicle
+  if @vehicle
+    state = @vehicle.state.toJSON()
   vehicle = new Ship tpl:tpl, state:state, iff:[Math.random()],
     loadout:@db.loadout
   @sock.json sync:add:[vehicle.toJSON()]
@@ -206,6 +207,7 @@ User::action = (t,mode) ->
     when 'launch'
       if o.state.S is $orbit and @mountId is 0
         o.locked = no
+        debugger
         o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
       else if o.landedAt and @mountId is 0
         NUU.emit 'ship:launch', o, o.landedAt

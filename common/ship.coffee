@@ -85,7 +85,6 @@ $obj.register class Ship extends $obj
         @mountType.push 'weap'
         null
       else @mountType.push 'weaX'
-
   destructor: ->
     $worker.remove @model
     for slot in @slots.weapon when slot and slot.equip

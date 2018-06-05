@@ -1,7 +1,6 @@
 [
   "buffer",
   "defines",
-  "engine",
   "worker",
   "objects",
   "stellar",
