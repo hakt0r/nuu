@@ -263,6 +263,7 @@ State.register class State.orbit extends State
     @o.y = @relto.y + @orb * sin angl
     angl += PI/2 if @stp > 0
     angl -= PI/2 if @stp < 0
+    angl = (( angl % TAU ) + TAU ) % TAU
     @o.m = [ @relto.m[0] + (@vel * cos angl), @relto.m[1] + (@vel * sin angl) ]
     @o.d = angl * RAD
     @lastUpdate = time; null
