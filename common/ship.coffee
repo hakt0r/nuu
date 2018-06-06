@@ -101,8 +101,84 @@ $obj.register class Ship extends $obj
 
   toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl,name:@name
 
+###
 Object.defineProperty Ship::, 'd',
   get:-> @_d || 0
   set:(v)->
     debugger if v is -1
     @_d = v
+###
+
+Ship::updateMods = -> # calculate mods
+  @mods = {}
+  @mass = 0
+  for type of @slots
+    for idx, slot of @slots[type]
+      if ( item = slot.equip )
+        @mass += item.stats.mass || 0
+        unless type is 'weapon'
+          for k,v of item.stats when k isnt 'turret'
+            if @mods[k] then @[k] += v
+            else @[k] = v
+            @mods[k] = true
+  console.log 'smod', 'mass', @stats.mass - @mass if debug
+
+  # apply mods
+  map =
+    thrust:      @stats.thrust_mod || 100
+    turn:        @stats.turn_mod   || 100
+    shield:      @stats.shield_mod || 100
+    shieldMax:   @stats.shield_mod || 100
+    shieldRegen: @stats.shield_mod || 100
+  @[k] += @[k] * ( v / 100 ) for k,v of map
+
+  # scale model values
+  @armourMax = @armour = @stats.armour / 1000
+  @fuelMax   = @fuel   = @fuel * 10
+  @turn      = @turn    / 10
+  @thrust    = @thrust  / 100
+
+  # add/exchange model-worker
+  add = null
+  $worker.remove @model if @model
+  lastUpdate = 0
+  $worker.push @model = (time)=>
+    return 1000 if @destructing
+    # return 1000 if @fuel <= 0
+    @fuel += @fuelRegen || 0.5
+    @fuel -= max 0, @state.a if @state.acceleration
+    unless @shield is @shieldMax and @energy is @energyMax
+      @energy = min @energyMax, @energy + @reactorOut
+      @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
+      @energy -= add
+    @fuel = @fuelMax if @fuel > @fuelMax
+    @fuel = 0        if @fuel <= 0
+    return unless isServer
+    @setState S:$moving if @fuel is 0 and @state.acceleration
+    return unless @mount[0] and lastUpdate + 3000 < time
+    NET.health.write @
+    lastUpdate = time
+    return
+  null
+
+Ship::mockSystems = -> # equip fake weapons for development
+  MockWeap = ["CheatersLaserCannon","CheatersRagnarokBeam","EnygmaSystemsSpearheadLauncher","HeavyRipperTurret","CheatersDroneFighterBay"]
+  Mock =
+    utility:
+      large: Object.keys Item.byType.utility.large
+      medium: Object.keys Item.byType.utility.medium
+      small: Object.keys Item.byType.utility.small
+    structure:
+      large: Object.keys Item.byType.structure.large
+      medium: Object.keys Item.byType.structure.medium
+      small: Object.keys Item.byType.structure.small
+  for k,slt of @slots.weapon when not slt.equip?
+    continue if MockWeap.length is 0
+    # slt.equip = new Outfit slt.default if slt.default
+    slt.equip = new Weapon MockWeap.shift()
+  for k,slt of @slots.structure when not slt.equip?
+    slt.equip = new Outfit slt.default if slt.default
+    #else slt.equip = new Outfit(Mock.structure[slt.size].shift())
+  for k,slt of @slots.utility when not slt.equip?
+    slt.equip = new Outfit slt.default if slt.default
+    #else slt.equip = new Outfit(Mock.utility[slt.size].shift())

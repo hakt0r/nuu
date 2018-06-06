@@ -1,6 +1,6 @@
 [
   "buffer",
-  "defines",
+  "engine",
   "worker",
   "objects",
   "stellar",
@@ -13,8 +13,5 @@
   "ship_model",
   "item",
   "weapon",
-  "projectile",
-  "beam",
-  "missile",
   "deathmatch"
 ]

@@ -18,6 +18,46 @@
   You should have received a copy of the GNU General Public License
   along with NUU.  If not, see <http://www.gnu.org/licenses/>.
 
+                 .  .,:cddxddoddxxkO0KKOo,'...
+             .ll:xxxkKXXXKKKKKXXXXXXXXXNNXKK0Oxc'.
+              'OKK0kkOxO0O0K0occdOokxx:dO0KKKKK00Od;,
+             .cOKKx:..o00x0X0l:;;;lKx,.. .o0KKOkldOOddl,
+            ,KK0x, .c:xKKKXKdcd0;..'dKk:.;cxXXX0ocox:dkko.
+           lK0KO' .l0XXXXNNX0Kkc',. ,OKX0KXNNXNNNNXO,.,l00d;.
+          ;KXKX, 'OXXXOOKkkO,;dOll'.o;lKNXNWWNWNNNNNNk. ;OK0d
+         .xKXXk.,OXXX0OccdlldKK0Kl'.:loO0OkK0oll,;kXXX0' .ldKo
+        .ldOXk:.okk0xl,.  .cOKXXK0dooc;'.  ..   .,cOKXXO,   ;ol.
+        :dxkO;.cKl.kk;lc:...cOK0Odcl::cc;::::lllodoclo0X0x'.;kOc
+        l0K0o..OX0.'dd:oo;;;;:x0kkxodkkkkkxx;;,xl::,,,lKXXx;x0XO;
+        oXKKd ,0XK; .;;;ooco,...,'.. .,,'. .,'.;:,::.;;:OXX0c.,dd.
+        oXXKd.,OXKd. .,lx0xoo:;c,....  .'',codk00O00OokdOXKXKcloo.
+        lKXx. .d00x,.  ..cxxk0KXNNNNK0l;;.,0XNNNWWWNK0kxk0kdXOO00:
+        o0Ko  lKXKOoooxxx0XXXXKXXNNXXKx',:lO0kd:;,'.     ':dXXKXNo
+        :0Od. 'KXXKk:dx:'........;cd0KKOd;,dd.  .'',,;::. ,0KXKKX;
+         lXKk..oXX0:... ,;'';::;.   .:okoxOx.   .,,,c::cc.c0X0lxk.
+         'XXX0Olkx,.;;......  ..;.     xKXXc   .,c:;loxkxx0KKc .'d0K0kOkkdoc'.
+         .OXXN0. . ,KNNNX0xc'',;:,.'.. ;XWN0kxdc;,,;coKNNXO:.    ;NWWWWWWWWWWWNO
+          .kXXXk. .oKXXKXNWNK0kkOKKKOl  kNWO;dO0XNNNNNX0xo.      'NWNNNNNNNNNNKX
+            :x0Kx. .,cc;:xXNNNWWWNXO'   lXWNKl..:x0KKK0doc       .ONXXNNNNXKXXk,
+           ;lxkod:       .lOKXXXNXXd .,.:KXXXK0O;  .':xxdOo. .   'KNXdKNNNNNNNNd
+        'l0XXXK, ,. .. ';. .lO0Oo:. .,.  ....'..,ll,.   ..'. .. .kXKd  '..,xO0Oc
+      ,ONNNNNNx. ';. ..'.   ,;'.  'o:....    .,kKNXNXXkc.       ;XNN0..0o  ,0XX'
+    ,kNWNNXXXXOc..ol;'..::,.    .lkOKXXKKkd;'dKKXNX0Okdloxc.   .ONNNX, kNd  cKNO
+  .kWWWN0l'.:kXXK:'x;..:;,....'xNXKKK0OOoo,;..:,,,.   ...cO:   cXNWNX' 'XNl  'oX
+.dNWWNx;     oNWNX:.'. .:,..;:kXd;o:.    ',;c;'dOKKdodo:lxO;  .OXNWWN,  oWX:   .
+NWWNx:   ..  dWWWN0'.oc.::::,,l0dd:...:okKXXK0xO0NNXOkKxc'   ',OXNNWWk  .OW0.
+Kx0o   'OXk..xNNXo,xl'l,'lx:,c,OXo;0k0kOO0kcld0x:;:lOO;... .lKx0XXKO0Nc  :NNx. .
+. .l:  ;kKKk0XOc. 'OXo,d:..'.,odxoocxl.OKk. ..ccko,,.o'   lKX0KKKK:  ,k,  xN0,
+oc,.'o:. ,0Ko,  .xXloXl.dOc.  ...:ld;;oxlkckOkkddNKK00ddkKNWK'.:0d  ,lKXc '0NO:
+XXKK00Kx. ..', .;0X' cXc.xNN0x:.   .'',cd0XXNXXXKkd:..oXNWNWWd  ;;.cKNWWXl.lXKd.
+X0xx0XOd.   ,kO0XWWd  c0d.cKNNNNKkc;..  .c0x,;,.       .oXWWWXl  lKo..dXNXkx0Kx.
+oNWXKX0:.     ckKNWX; .kXl .c0XKKXXXXXX00Xx              .kWWXc  cXXl  .xKXOx0K:
+ ,l0KOdxOo. .   ,0NNO. ,0Kc   ,lco0XNNWWWx.ld:... . .'. ...cKk'  'KNNl    . .kK0
+kxl. .cOXXO..;,  .0WNl  .00k;'l:oXNKXNNNc,xX00Kl   ,:l; '0OOKK:   oNNXl    ,ldkK
+KWW0.  .kNNk cO;  ;NWN,  xWWW00X::NxkXNo.0XNOOXX' ,;dO:  OWWWWNd. dKXN0.   lk0lo
+
+                                                       David L. Mills * 6/3/1938
+                                   designer of NTP, inernet pioneer, hero of man
 ###
 
 $public class RTPing extends Mean

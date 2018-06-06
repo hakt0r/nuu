@@ -1,12 +1,12 @@
 {
   "require": [
+    "util",
     "colors",
     "crypto",
     "express",
     "ws",
     "fs",
     "path",
-    "util",
     ["_","underscore"],
     ["Crypto","crypto"],
     ["EventEmitter","events","EventEmitter"],

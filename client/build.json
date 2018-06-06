@@ -1,7 +1,5 @@
 {
   "require": [
-    "assert",
-    "util",
     "synaptic",
     "vectors",
     "steering",
@@ -10,19 +8,14 @@
     ["Buffer","buffer","Buffer"],
     ["$","jquery"],
     ["_","underscore"],
-    ["async","async"],
     ["PIXI","pixi.js"],
-    ["vm","voronoi-map"],
     ["$v","vectors"]
   ],
   "libs": [
-    "assert",
-    "util",
     "synaptic",
     "crypto",
     "events",
     "jquery",
-    "async",
     "pixi.js",
     "buffer",
     "vectors",

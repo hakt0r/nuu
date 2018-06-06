@@ -246,7 +246,7 @@ User::action = (t,mode) ->
       if dist < t.size
         console.log 'user', 'orbit', t.id if debug
         o.locked = yes
-        o.setState S:$orbit,orbt:dist,relto:t
+        o.setState S:$orbit,orb:dist,relto:t
       else console.log 'user', 'orbit', 'too far', dist, dists, zone, t.state.toJSON()
     else console.log 'user', 'orbit/dock/land/enter', 'failed', mode, o.name, t.name
   null

@@ -24,7 +24,8 @@ $public class VT100 extends Window
   line: []
   hist: []
   frame: null
-  input: 'nuu console / v ' + $version
+  input: 'nuu console / v ' + $version + '<span class="right">(c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2008 flyc0r</span>' +
+    '<span class="right">GNU General Public License v3 / see license screen (alt-L)</span>'
   cursor: x: 0, y: 0
   inputBuffer: ''
   promptActive: no

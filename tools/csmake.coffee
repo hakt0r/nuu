@@ -35,6 +35,8 @@ module.exports = (__targets) ->
   global.filesize = require 'file-size'
   global.fast_image_size = require 'fast-image-size'
 
+  util.print = (s)-> process.stdout.write(s,'utf8')
+
   process.chdir path.dirname __dirname
 
   global.$s = async.series
@@ -107,7 +109,7 @@ module.exports = (__targets) ->
 
   global.fetch = (dst,src)-> (c)->
     if not fs.existsSync dst
-      util.print [ 'fetch'.yellow, dst, dst, src, 'connecting...'.blue ].join ' '
+      util.print [ 'fetch'.yellow, dst, src.replace(/\/.*\//,'/.../'), 'connecting...'.blue ].join ' '
       r = request.get src
       r.on 'headers', ->
       r.on 'end', ->
