@@ -123,11 +123,11 @@ Window.About = class AboutWindow extends Window
         <a class="close"  href="#">Close</a>
       </div>
       <div class="tab" id="game">
-        <img src="/build/imag/nuuseal.png">
-        <p/><ul class="copyrights">
+        <img src="/build/imag/nuulogo.png">
+        <p><ul class="copyrights">
           <li>c) 2007-2018 Sebastian Glaser <anx@ulzq.de></li>
           <li>c) 2007-2008 flyc0r</li>
-        </ul>
+        </ul></p>
 
         <p class="desc">The nuu project intends to use all the asset files
         according to their respective licenses.</p>
@@ -221,12 +221,12 @@ class Object.editor extends ModalListWindow
       @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
       i.on 'click', i[0].action = => new String.editor parent:@ title:key, default:val, callback:(error,value)=>
         i.find('span').html if @subject[key] = val = value
-        app.saveSettings()
+        NUU.saveSettings()
     when 'boolean'
       @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{if val then 'true' else '<span class="red">false</div>'}</span></div>"""
       i.on 'click', i[0].action = =>
         i.find('span').html if @subject[key] = val = not val then 'true' else '<span class="red">false</div>'
-        app.saveSettings()
+        NUU.saveSettings()
 
 Window.KeyBinder = class KeyBinder extends ModalListWindow
   constructor: (opts)->
@@ -267,9 +267,9 @@ Window.Help = class HelpWindow extends ModalListWindow
       @unfocus()
       new Window.KeyBinder parent: @, title:"Press Key for "  + Kbd.d10[val], default:key, callback:(error,value)=>
         i.find('span').html key = value
-        app.settings.bind = app.settings.bind || {}
-        app.settings.bind[val] = key
-        app.saveSettings()
+        NUU.settings.bind = NUU.settings.bind || {}
+        NUU.settings.bind[val] = key
+        NUU.saveSettings()
         Kbd.bind key, val
         @focus()
 
@@ -277,7 +277,7 @@ Kbd.macro 'help',     'KeyH', 'Show help',             -> new Window.Help
 Kbd.macro 'about',   'aKeyH', 'Show about / license',  -> new Window.About
 Kbd.macro 'settings', 'KeyL', 'Open Settings dialog',  ->
   return window.settings.close() if window.settings
-  new Object.editor name:'settings', title:'Settings', subject: app.settings, closeKey: 'KeyL'
+  new Object.editor name:'settings', title:'Settings', subject: NUU.settings, closeKey: 'KeyL'
 
 
 

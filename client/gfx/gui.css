@@ -1,7 +1,12 @@
+body {
+  background: #222; position: relative;
+}
+
 * {
   margin: 0;
   padding: 0;
   font-size: 10px;
+  line-height: 16px;
   font-style: normal !important;
   font-family: "monospace" !important; }
 
@@ -63,7 +68,15 @@ h1, h2 {
   height: 12px;
   background: 'green';
   z-index: -1; }
-.window.full { margin: auto; overflow-y: auto; overflow-x: hidden; }
+.window.full {
+  padding: 10px 20px;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  bottom: unset; right: unset;
+  margin: auto; overflow-y: auto; overflow-x: hidden;
+  width: fit-content;
+  height: fit-content;
+  max-width: 95vw;
+  max-height: 95vh; }
 .window p { font-size: 12px; }
 .window a, .window a:visited, .window a:active, .window a:hover, .version, .description {
   font-size: 12px;
@@ -163,7 +176,7 @@ h1, h2 {
   right: 10px;
   top: 10px;}
 
-.window.about { overflow: auto; }
+.window.about { overflow: auto; min-width: 600px; min-height: 550px; }
 .window header {
   font-weight:bold;font-size:12px;padding:8px; }
 .window.about header {
@@ -219,7 +232,7 @@ canvas {position:fixed;bottom:0;right:0;left:0;top:0;color:#fff}
   display: block;
   text-align: left;
   margin: 5px 100px;
-  width: 25em;
+  width: 35em;
   height: 20px; }
 
 .window ul.copyrights li:last-child {

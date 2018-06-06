@@ -64,7 +64,7 @@ Ship::setWeap  = (idx,trigger='primary')-> switchWeap( -> idx )(NUU.player,'prim
 Ship::nextWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ++id % (ct + 1 )
 Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --tg.id + ct ) % (ct + 1 )
 
-app.on '$obj:add', (o)->
+NUU.on '$obj:add', (o)->
   # console.log 'yolo', o.id, NUU.player.vehicleId
   NUU.player.vehicle = o if o.id is NUU.player.vehicleId
   null

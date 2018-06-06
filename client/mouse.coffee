@@ -139,5 +139,5 @@ $static 'Mouse', new class MouseInput
     else @reset()
     null
 
-app.on 'settings', -> do Mouse.macro() unless app.settings.mouseturnoff
+NUU.on 'settings', -> do Mouse.macro() unless NUU.settings.mouseturnoff
 Kbd.macro 'mouseturn', 'KeyZ', 'Toggle mouseturning', Mouse.macro()

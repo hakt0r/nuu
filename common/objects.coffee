@@ -50,7 +50,7 @@ $public class $obj
     @d = state.d || 0
     @setState state
     do @loadAssets if @loadAssets
-    app.emit '$obj:add', @
+    NUU.emit '$obj:add', @
     # console.log '$obj', 'constructor$', @id, @name
 
   destructor: ->
@@ -60,7 +60,7 @@ $public class $obj
       console.log '$obj', 'destructor$', 'object', i.name if debug
       delete i.byId[@id]
       Array.remove i.list, @
-    app.emit '$obj:del', @
+    NUU.emit '$obj:del', @
 
   dist: (o)-> sqrt(pow(abs(o.x-@x),2)-pow(abs(o.y-@y),2))
 

@@ -33,6 +33,9 @@ $static 'isClient', yes
 $static 'isServer', no
 $static 'debug', no
 
+$static 'NET', {}
+$static 'NUU', {}
+
 $static 'DUMMY', dummy:yes, id:0, d:0, x:0, y:0, m: [0,0], update: (->), updateSprite: (->), state:S:'none'
 $static 'VEHICLE',    DUMMY
 $static 'TARGET',     null
@@ -45,28 +48,27 @@ $static 'HGB2',   240
 $static 'WDT2',   1280
 $static 'HGT2',   960
 
-$static 'app', {}
-
-app.defaults =
+NUU.defaults =
   mouseturn: off
   gfx: hud: off, scanner: off, speedScale: off
 
-app.saveSettings = ->
-  localStorage.setItem 'config', JSON.stringify app.settings
-  app.emit 'settings'
-  app.settings
-app.loadSettings = ->
-  try data = app.applyDefaults JSON.parse( localStorage.getItem "config" ), app.defaults
-  catch error then data = app.defaults
-  app.settings = data
+NUU.saveSettings = ->
+  localStorage.setItem 'config', JSON.stringify NUU.settings
+  NUU.emit 'settings'
+  NUU.settings
 
-app.applyDefaults = (o={},d={})->
+NUU.loadSettings = ->
+  try data = NUU.applyDefaults JSON.parse( localStorage.getItem "config" ), NUU.defaults
+  catch error then data = NUU.defaults
+  NUU.settings = data
+
+NUU.applyDefaults = (o={},d={})->
   for k,v of d
-    if typeof v is 'object' then o[k] = app.applyDefaults o[k] || {}, v
+    if typeof v is 'object' then o[k] = NUU.applyDefaults o[k] || {}, v
     else if not o[k]? then o[k] = v
   return o
 
-do app.loadSettings
+do NUU.loadSettings
 
 ###
   Load the more strightforward deps
@@ -81,8 +83,9 @@ for lib in deps.client.require
     else $static lib[0], require(lib[1])
   else   $static lib,    require(lib)
 
-app[k] = v for k,v of EventEmitter::
-EventEmitter.call app
+# Extend NUU/NET (GLUE OBJECTs:)
+NUU[k] = v for k,v of EventEmitter::; EventEmitter.call NUU
+NET[k] = v for k,v of EventEmitter::; EventEmitter.call NET
 
 ###
   WebGL with Canvas fallback powered by PIXI.js
@@ -106,9 +109,9 @@ PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode, sourceScale) ->
 
 console.log ':nuu', 'loading libs'
 
-$ -> app.emit 'runtime:ready'
+$ -> NUU.emit 'runtime:ready'
 
-app.on 'gfx:ready', ->
+NUU.on 'gfx:ready', ->
 
   $static 'vt', new VT100
 
@@ -123,11 +126,26 @@ app.on 'gfx:ready', ->
 
 ------------------------------------------------------------------------------------------------
 
-        (c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt;
-        (c) 2007-2008 flyc0r
-        GNU General Public License v3 / see license screen (alt-L)
+        (c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; | (c) 2007-2008 flyc0r
+            GNU General Public License v3 / see license screen (alt-L)
 
-------------------------------------------------------------------------------------------------<center><img src="/build/imag/nuulogo.png"/></center>--- [ FakeNN ] BREAKING ------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+<center style="white-space: nowrap;">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="500" height="180" viewBox="0 0 63.970978 20" version="1.1" id="nuulogo">
+<defs id="defs912">
+  <clipPath clipPathUnits="userSpaceOnUse" id="clipPath881"><rect id="rect883" width="20" height="20" x="40" y="97" rx="5" ry="5" style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:6.01288509;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></clipPath>
+  <clipPath clipPathUnits="userSpaceOnUse" id="clipPath905"><rect id="rect903" width="20" height="20" x="40" y="97" rx="5" ry="5" style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:6.01288509;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></clipPath>
+  <clipPath clipPathUnits="userSpaceOnUse" id="clipPath877"><rect ry="5" rx="5" y="97" x="40" height="20" width="20" id="rect879" style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:6.01288509;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></clipPath>
+</defs>
+<g id="layer1" transform="translate(-184.21689,-303.63095)">
+  <path style="fill:#333333;fill-rule:evenodd;stroke:none;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="m 46.5,107 v 10 H 39.999999 V 97 L 46.5,97.000001 53.5,107 V 97.000001 L 60.000001,97 v 20 H 53.5 Z" id="path839" clip-path="url(#clipPath877)" transform="translate(144.21689,206.63095)" />
+  <path id="path875" d="M 39.999999,117 V 97 L 46.5,97.000001 V 107 h 7 V 97.000001 L 60.000001,97 v 20 z" style="fill:#333333;fill-rule:evenodd;stroke:none;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" clip-path="url(#clipPath881)" transform="translate(166.18788,206.63095)" />
+  <path transform="translate(188.18787,206.63095)" clip-path="url(#clipPath881)" style="fill:#333333;fill-rule:evenodd;stroke:none;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M 39.999999,117 V 97 L 46.5,97.000001 V 107 h 7 V 97.000001 L 60.000001,97 v 20 z" id="path891" />
+</g>
+</svg>
+</center>\
+--- [ FakeNN ] BREAKING ------------------------------------------------------------------------
 
         Earth and Luna have been overrun by the drones our own creation, and now,
         her Majesty the Kernel is scheming to take Mars and the Jupiter-system!
@@ -143,4 +161,4 @@ app.on 'gfx:ready', ->
     rules NUU
   null
 
-  NUU.on 'start', -> app.emit 'settings'
+  NUU.on 'start', -> NUU.emit 'settings'

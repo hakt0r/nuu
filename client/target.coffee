@@ -32,13 +32,13 @@ NET.on 'hostile', addHostile = (id)->
     return console.log ':tgt', 'hostile:unknown', i unless v = $obj.byId[i]
     return if v.destructing
     Target.hostile[v.id] = v
-    app.emit 'hostile', i
+    NUU.emit 'hostile', i
   if Array.isArray id
     Object.empty Target.hostile
     id.map doAdd
   else doAdd id
   Target.types[0] = Target.hostile
-  app.emit 'hostiles', Target.hostile
+  NUU.emit 'hostiles', Target.hostile
   do Target.enemy
 
 window.TARGET = null

@@ -60,7 +60,7 @@ require('./csmake.coffee')(
       c null
 
   node: (c)-> depend(dirs)( ->
-    # generate('build/git_history.html',   path.join NUUWD,'tools','import_git.coffee')(->)
+    generate('build/release.json',       path.join NUUWD,'tools','import_git.coffee')(->)
     generate('build/node_packages.html', path.join NUUWD,'tools','import_npm.coffee')(c)
    )
 

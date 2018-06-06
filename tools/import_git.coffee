@@ -45,8 +45,8 @@ module.exports = (destinationFile,callback)->
         a.charCodeAt(5) - b.charCodeAt(5) ).join('\n').substr(6)
   current.git = head
   fs.writeFileSync path.join(path.dirname(destinationFile),'release.json'), JSON.stringify current
+  callback null
   # console.log head, current.v, current.m
   # for k,v of release
-  process.exit 1
-
+  # process.exit 1
   # callback null

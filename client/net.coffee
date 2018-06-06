@@ -45,8 +45,12 @@ class NET.Connection
   constructor: (@name,@pass,callback,@register)->
     NET.Connection._.close() if NET.Connection._
     NET.Connection._ = @
-    @addr = window.location.toString().replace('http','ws').
-      replace(/#.*/,'').replace(/\/$/,'') + '/nuu'
+    @addr = window.location
+      .toString()
+      .replace('http','ws')
+      .replace(/start/,'')
+      .replace(/#.*/,'')
+      .replace(/\/$/,'') + '/nuu'
     @lsalt = String.random 255 + Math.random @pass.length
     NET.removeAllListeners e for e in [
       'user.login.success','user.login.challenge','user.login.register','user.login.failed','user.login.nx' ]

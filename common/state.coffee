@@ -135,8 +135,8 @@ if isServer then $obj::applyControlFlags = (state)->
     else @thrust )
   ControlState = (
     if @state.S is $orbit then State.orbit
-    else if @right or @left then State.maneuvering
-    else if @accel or @retro or @boost then State.accelerating
+    else if @right or @left then State.turn
+    else if @accel or @retro or @boost then State.burn
     else if not ( @m[0] is @m[1] is 0 ) then State.moving
     else State.fixed )
   new ControlState o:@, x:@x, y:@y, x:@x, d:@d, a:@a, m:@m.slice()
@@ -167,15 +167,15 @@ State.register class State.fixed extends State
   toJSON:-> S:@S,x:@x,y:@y,d:@d
   update: $void
 
-State.register class State.relative extends State
+State.register class State.fixedTo extends State
   update:(time)->
-    time = NUU.time() unless time
-    @relto.update time
+    @relto.update time || time = NUU.time()
     @o.x = @relto.x + @x
     @o.y = @relto.y + @y
     @o.m = @relto.m.slice()
-    @lastUpdate = time; null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,t:@t,relto:@relto.id
+    @lastUpdate = time
+    null
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,relto:@relto.id
 
 State.register class State.moving extends State
   update:(time)->
@@ -186,7 +186,7 @@ State.register class State.moving extends State
     null
   toJSON:-> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m
 
-State.register class State.accelerating extends State
+State.register class State.burn extends State
   acceleration: true
   update:(time) ->
     #  tmaxX = ( Speed.max - @m[0] ) / @a * cos(@d/RAD)
@@ -201,9 +201,9 @@ State.register class State.accelerating extends State
     @o.x = @x + @m[0] * dt + hdt * cosadt
     @o.y = @y + @m[1] * dt + hdt * sinadt
     null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
 
-State.register class State.maneuvering extends State
+State.register class State.turn extends State
   constructor:(s)->
     @turn = s.o.turn || 1
     @turn = -@turn if s.o.left
@@ -215,7 +215,20 @@ State.register class State.maneuvering extends State
     @o.y = @y + @m[1] * dt
     @o.d = $v.umod360 @d + @turn * dt
     null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
+
+State.register class State.turnTo extends State
+  constructor:(s,@td)->
+    @turn = s.o.turn || 1
+    super
+  update:(time)->
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+    dt = ( time - @t ) * TICKi
+    @o.x = @x + @m[0] * dt
+    @o.y = @y + @m[1] * dt
+    @o.d = $v.umod360 @d + @turn * dt
+    null
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,td:@td
 
 State.register class State.orbit extends State
   json: yes
@@ -319,7 +332,7 @@ setTimeout ( ->
   return
   try
     assert = require 'assert'
-    states = [$fixed,$relative,$moving,$accelerating,$maneuvering,$orbit]
+    states = [$fixed,$fixedTo,$moving,$burn,$turn,$orbit]
     NUU._time = NUU.time
     NUU.time = -> 2342
     mko = (opts={})-> Object.assign {a:2.2, turn:1.2}, opts
@@ -349,8 +362,8 @@ setTimeout ( ->
     test = "move:tick:y"; assert.equal round(o.y), 12
     test = "move:tick:d"; assert.equal round(o.d), 42
     test = "move:tick:m"; assert.deepEqual o.m, [1,1]
-    # Accelerating state
-    s = new State.accelerating ( o = do mko ), mkst a:2.2
+    # burn state
+    s = new State.burn ( o = do mko ), mkst a:2.2
     test = "accel:plain:x"; assert.equal o.x, 10
     test = "accel:plain:y"; assert.equal o.y, 11
     test = "accel:plain:d"; assert.equal o.d, 42
@@ -361,8 +374,8 @@ setTimeout ( ->
     test = "accel:tick:d"; assert.equal o.d, 42
     test = "accel:tick:X"; assert.equal true, 2.63 < o.m[0] < 2.7
     test = "accel:tick:Y"; assert.equal true, 2.45 < o.m[1] < 2.5
-    # Maneuvering state
-    s = new State.maneuvering ( o = do mko ), mkst turn:1.1
+    # turn state
+    s = new State.turn ( o = do mko ), mkst turn:1.1
     test = "turn:plain:x"; assert.equal o.x, 10
     test = "turn:plain:y"; assert.equal o.y, 11
     test = "turn:plain:d"; assert.equal o.d, 42

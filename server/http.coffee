@@ -68,11 +68,9 @@ websocketUrl = (url)->
   return "#{trailingSlash(baseUrl)}.websocket?#{query}"
 
 wsServer = null
-$static '$websocket',  (app,httpServer,options={}) ->
-  server = httpServer
-  unless server?
-    server = http.createServer app
-    app.listen = server.listen.bind server
+$static '$websocket', (app,options={}) ->
+  server = http.createServer app
+  app.listen = server.listen.bind server
   addWsMethod app
   addWsMethod express.Router unless options.leaveRouterUntouched
   wsOptions = options.wsOptions || {}
@@ -136,3 +134,71 @@ NUU.jsoncastTo = (v,data) ->
     console.log '::ws', 'jsoncastTo', v.id, data
     src.send data, $websocket.error(src)
   null
+
+NUU.splashPage = ->
+  page = """
+<html><head>
+  <title>nuu (v#{$version} - Gordon Cooper)</title>
+  <link rel="shortcut icon" href="build/favicon.ico" />
+  <style>
+    @keyframes fadein { 0% { padding: 40px 20px;} 50% { padding: 50px 30px; } 100% { padding: 40px 20px; } }
+    @keyframes fadein2 { 0% { box-shadow: 0 0 1px 1px red; } 50% { box-shadow: 0 0 4px 2px red; } 100% { box-shadow: 0 0 1px 1px red; } }
+    body { background: #060606; position: relative; }
+    * { user-select: none; margin:0; padding:0; color:white; font-size:10px; line-height:16px; font-family:"monospace" !important; }
+    p { padding: 10px 0px; }
+    .window {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      overflow-y:auto; overflow-x:hidden; margin:auto; padding:10px 20px; min-width: 50em;
+      box-shadow: 0 0 1px 1px #b400ff; background:rgba(0, 0, 0, 0.9); border:solid gray 1px; border-radius:5px; text-align:center; }
+    img { user-drag:none; -webkit-user-drag: none; }
+    a, a:visited { display:inline-block; padding:5px; color:white; background:rgb(3,3,3); border-radius:4px; font-size:30px; font-weight:bolder; text-decoration:none; }
+    a.start,  a.start:visited { box-shadow: 0 0 1px 1px red; display:block;line-height: 30px;border: solid 1px #4d4c4c; width: 465px;margin: auto;transition: 0.1s;animation: fadein2 0.3s; padding: 40px 0px; }
+    a.small,  a.small:visited { padding: 4px 7px; width: unset; font-size: 10px; animation: fadein2 0.2s; }
+    a:hover,  a.small:hover  { background:rgb(4,12,6); transition: 0.1s; }
+    a:active, a.small:active { background:rgba(150,255,150,0.6); color:black; transition: 0.1s; }
+            img { user-drag:none; -webkit-user-drag: none; }
+    a:hover img { filter: hue-rotate(10deg); transition: 3s; }
+  </style>
+  <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
+  <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+</head><body>
+<div class="window full splash" id="splash"><p>
+  -------------------------------------------------------------------------------<br/>
+  NUU is open-source multiplayer game of space trade and combat.<br/>
+  The source-code is available from <a class="small" href="http://hakt0r.de/nuu">hakt0r</a>
+  and on <a class="small" href="http://github.com/hakt0r/nuu">github</a><br/>
+  -------------------------------------------------------------------------------
+</p><p>
+  <a class="start" href="start">#{fs.readFileSync('mod/nuu/artwork/logo_2018.svg')}</a>
+</p><p>
+  -------------------------------------------------------------------------------<br/><br/>
+  If you consent to using JavaScript and WebGL, please click the link above.<br/>
+  NUU stores no personal data except hashes of your username and password.
+</p><p>
+  You are seeing this page because <i>-IMHO-</i> JavaScript should be <b>off by default</b>.<br/>
+  Just bookmark the link above if you don't want to do this everytime.
+</p><p>
+  -------------------------------------------------------------------------------<br/>
+  &copy; 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; | &copy; 2007-2008 flyc0r<br/>
+  -------------------------------------------------------------------------------
+</p></div></body></html>"""
+  return (req,res) ->
+    res.set('Connection', 'close');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send page
+
+NUU.startPage = ->
+  page = """<html><head>
+  <title>nuu (v#{$version} - Gordon Cooper)</title>
+  <link rel="shortcut icon" href="build/favicon.ico" />
+  <link rel="stylesheet" type="text/css" href="build/imag/gui.css"/>
+  <script>
+    window.deps = JSON.parse('#{JSON.stringify common:NUU.deps.common, client:NUU.deps.client}')
+  </script>
+  #{( """<script src='build/#{n}'></script>""" for n in NUU.deps.client.scripts ).join '\n'}
+  <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
+  <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+</head><body></body></html>"""
+  return (req,res) -> res.send page

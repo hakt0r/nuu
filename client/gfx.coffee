@@ -104,7 +104,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @bg.addChild @parallax  = makeStarfield [1,0.3,2000]
     @bg.addChild @parallax2 = makeStarfield [1,0.3,2000]
 
-    app.on 'runtime:ready', =>
+    NUU.on 'runtime:ready', =>
       document.body.appendChild renderer.view
       d = $ document
       w = $ window
@@ -127,7 +127,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
         # preload animations
         for k in ['exps','expm','expl','expl2','cargo','debris0','debris1','debris2','debris3','debris4','debris5']
           movieFactory k, '/build/spfx/' + k + '.png'
-        app.emit 'gfx:ready'
+        NUU.emit 'gfx:ready'
 
     @on 'resize', @repositionPlayer.bind @
     @on 'resize', (wd,hg,hw,hh) =>
@@ -158,11 +158,11 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
       if -W<(s.x-x)<W and -H<(s.y-y)<H
         continue if SHORTRANGE[s.id]
         SHORTRANGE[s.id] = s
-        app.emit '$obj:inRange', s
+        NUU.emit '$obj:inRange', s
       else
         continue unless SHORTRANGE[s.id]
         delete SHORTRANGE[s.id]
-        app.emit '$obj:outRange', s
+        NUU.emit '$obj:outRange', s
 
     null
 
@@ -174,7 +174,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     window.OY = -VEHICLE.y + HGB2
 
     # # SPEEDSCALE (REVIVAL)
-    # if app.settings.gfx.speedScale
+    # if NUU.settings.gfx.speedScale
     #   sc = 1 / ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
     #   @bg.scale.x = @bg.scale.y = @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
     #   @bg.position.x = @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )

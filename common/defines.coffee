@@ -23,26 +23,30 @@
 # LANG-CONSTANTS
 $static '$void', ->
 
-# ENGINE (GLUE OBJECT :)
-class Engine extends EventEmitter
-  time: Date.now
-  timePrefix: -> 1000000 * Math.floor @time() / 1000000
-  threadList: {}
-  players: {}
-  init: $void
-  thread: (name,time,fnc) ->
-    @threadList[name] = setInterval fnc, time
-  start: (callback) ->
-    console.log ':nuu', 'engine'.green, @tstart = @time()
-    @emit 'start'
-    callback null if callback
-    null
-  stop: ->
-    clearInterval i for k,i of @threadList
-    null
+# Extend NUU/NET (GLUE OBJECTs:)
+if isServer
+  NUU[k] = v for k,v of EventEmitter::; EventEmitter.call NUU
+  NET[k] = v for k,v of EventEmitter::; EventEmitter.call NET
 
-$static 'NET', new EventEmitter
-$static 'NUU', new Engine
+NUU.init = $void
+
+NUU.time = Date.now
+NUU.timePrefix = ->
+  1000000 * Math.floor @time() / 1000000
+
+NUU.threadList = {}
+NUU.thread = (name,time,fnc) ->
+  @threadList[name] = setInterval fnc, time
+
+NUU.start = (callback) ->
+  console.log ':nuu', 'engine'.green, @tstart = @time()
+  @emit 'start'
+  callback null if callback
+  null
+
+NUU.stop = ->
+  clearInterval i for k,i of @threadList
+  null
 
 $static '$version',      '0.4.72'
 
@@ -61,10 +65,10 @@ $static 'OY',            0 # global delta
 
 # STATES
 $static '$fixed',        0
-$static '$relative',     1
+$static '$fixedTo',      1
 $static '$moving',       2
-$static '$accelerating', 3
-$static '$maneuvering',  4
+$static '$burn',         3
+$static '$turn',         4
 $static '$orbit',        5
 $static '$travel',       6
 

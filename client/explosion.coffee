@@ -32,7 +32,7 @@ $obj.register class Explosion extends $obj
     super
       sprite: Array.random Explosion.sizes
       state:
-        S: $relative
+        S: $fixedTo
         relto: @parent.id
         x: -qs+random()*hs
         y: -qs+random()*hs

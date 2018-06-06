@@ -50,14 +50,14 @@ $static 'Scanner', new class ScannerRenderer
     @circleMode = yes
     @fullscreen = no
     Sprite.renderScanner = @render.bind @
-    app.on '$obj:add', @addLabel()
-    app.on '$obj:del', @removeLabel()
-    app.on '$obj:inRange', (obj) ->
+    NUU.on '$obj:add', @addLabel()
+    NUU.on '$obj:del', @removeLabel()
+    NUU.on '$obj:inRange', (obj) ->
       return unless obj and l = Scanner.label[obj.id]
       [l.text, l.style.fill] = Scanner.labelStyle obj, true
       PIXI.bringToFront l
       null
-    app.on '$obj:outRange', (obj) ->
+    NUU.on '$obj:outRange', (obj) ->
       return unless obj and l = Scanner.label[obj.id]
       [l.text, l.style.fill] = Scanner.labelStyle obj
       null

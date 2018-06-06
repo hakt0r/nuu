@@ -236,7 +236,7 @@ User::action = (t,mode) ->
       return if t.mount # cant attach to vehicles
       if dist < zone
         console.log 'user', 'land'.green, t.name if debug
-        o.setState S:$relative,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
+        o.setState S:$fixedTo,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
         o.locked = yes
         o.fuel = o.fuelMax
         @db.landed = o.landedAt = t.name

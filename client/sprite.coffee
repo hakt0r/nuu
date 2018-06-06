@@ -62,10 +62,10 @@ $obj::updateSprite = (time)->
 
 Stellar::layer = 'stel'
 
-app.on '$obj:inRange', (obj) -> obj.show()
-app.on '$obj:outRange', (obj) -> obj.hide()
-app.on '$obj:del', (obj) ->
+NUU.on '$obj:inRange', (obj) -> obj.show()
+NUU.on '$obj:outRange', (obj) -> obj.hide()
+NUU.on '$obj:del', (obj) ->
   delete SHORTRANGE[obj.id]
-  app.emit '$obj:outRange', obj
+  NUU.emit '$obj:outRange', obj
   Array.remove VEHICLE.hostile, obj if -1 is VEHICLE.hostile.indexOf obj
   null

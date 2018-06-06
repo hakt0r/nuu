@@ -51,6 +51,8 @@ console.log """\n###############################################################
 
 #######################################################################################"""
 
+fs = require 'fs'
+
 global.$static   = (name,value) -> global[name] = value
 $static.list     = global
 global.$library  = (args...) -> for a in args
@@ -62,8 +64,11 @@ $static 'debug',    no
 $static 'isClient', no
 $static 'isServer', yes
 
+$static 'NET', {}
+$static 'NUU', {}
+
 ## Load sources
-fs = require 'fs'; deps =
+deps =
   common : JSON.parse fs.readFileSync './common/build.json'
   client : JSON.parse fs.readFileSync './client/build.json'
   server : JSON.parse fs.readFileSync './server/build.json'
@@ -78,90 +83,54 @@ for lib in deps.server.require
 for lib in deps.common
   require '../build/common/' + lib
 
+NUU.deps = deps
+
 for lib in deps.server.sources
   require '../build/server/' + lib + '.js' if lib isnt 'server'
 
-## Initialize express
-$static 'app', app = express()
-## Setup WebSockets
-$websocket app
+## Initialize express / setup WebSockets
+$websocket NUU.web = express()
 ## Setup Webserver
-app.use require('morgan')() if debug
-# app.use require('body-parser') keepExtensions: true, uploadDir: '/tmp/'
-app.use require('compression')()
-app.use require('cookie-parser')()
-app.use require('express-session') secret: 'what-da-nuu', saveUninitialized:no, resave:no
-app.use '/build', require('serve-static')('build',etag:no)
-app.use '/build', require('serve-index' )('build',etag:no)
-
-## Sync - queue object-creation notification
-$public class Sync
-  @flush: ->
-    NUU.jsoncast sync: add:Sync.adds, del:freeIds = Sync.dels.map (i)-> i.id
-    Sync.adds = []; Sync.dels = []; Sync.inst = false
-    return unless 0 < freeIds.length
-    setImmediate -> $obj.freeId = $obj.freeId.concat freeIds
-    null
-  @adds: []
-  @dels: []
-  @inst: false
-app.on '$obj:add', Sync.add = (obj)->
-  Sync.inst = setImmediate Sync.flush unless Sync.inst
-  Sync.adds.push obj
-  obj
-app.on '$obj:del', Sync.del = (obj)->
-  Sync.inst = setImmediate Sync.flush unless Sync.inst
-  Sync.dels.push obj
-  obj
+NUU.web.use require('morgan')() if debug
+# NUU.web.use require('body-parser') keepExtensions: true, uploadDir: '/tmp/'
+NUU.web.use require('compression')()
+NUU.web.use require('cookie-parser')()
+NUU.web.use require('express-session') secret: 'what-da-nuu', saveUninitialized:no, resave:no
+NUU.web.use '/build', require('serve-static')('build',etag:no)
+NUU.web.use '/build', require('serve-index' )('build',etag:no)
+NUU.web.get '/',      NUU.splashPage()
+NUU.web.get '/start', NUU.startPage()
 
 ## Initialize Engine
 console.log ':nuu', 'initializing'.yellow
 NUU.init()
 
-# Skeleton Page
-app.get '/', (req,res) ->
-  h = []; for n in deps.client.scripts
-    h.push """<script src='build/#{n}'></script>"""
-  res.send """
-    <html><head>
-      <title>nuu (v#{$version} - Gordon Cooper)</title>
-      <link rel="shortcut icon" href="build/favicon.ico" />
-      <link rel="stylesheet" type="text/css" href="build/imag/gui.css"/>
-      <script>
-        window.deps = JSON.parse('#{JSON.stringify common:deps.common, client:deps.client}')
-      </script>
-      #{h.join '\n'}
-      <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
-      <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
-      <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-    </head><body></body></html>"""
+NUU.chgid  = process.env.CHGID || false
+NUU.port   = process.env.PORT  || 9999
+NUU.addr   = process.env.ADDR  || '127.0.0.1'
 
-app.chgid  = process.env.CHGID || false
-app.port   = process.env.PORT  || 9999
-app.addr   = process.env.ADDR  || '127.0.0.1'
+NUU.lockPath = '/tmp/nuu.lock.' + ( NUU.chgid || process.getuid() )
 
-app.lockPath = '/tmp/nuu.lock.' + ( app.chgid || process.getuid() )
-
-if fs.existsSync app.lockPath
-  pid = parseInt fs.readFileSync app.lockPath, 'utf8'
+if fs.existsSync NUU.lockPath
+  pid = parseInt fs.readFileSync NUU.lockPath, 'utf8'
   cp = require 'child_process'
   try
-    cp.execSync "while fuser -k #{app.lockPath}; do :; done >/dev/null 2>&1"
+    cp.execSync "while fuser -k #{NUU.lockPath}; do :; done >/dev/null 2>&1"
     console.log 'lock', 'killed'.green, pid.toString().red
   catch
     console.log ':nuu', 'stale lockfile', pid
-fs.writeFileSync app.lockPath, process.pid
-fs.open app.lockPath, 0, ->
+fs.writeFileSync NUU.lockPath, process.pid
+fs.open NUU.lockPath, 0, ->
 
 $static '$release', JSON.parse fs.readFileSync './build/release.json'
 $release.banner = $release.v.green + $release.git.red
 
-console.log 'http', 'listen'.yellow, app.addr.red + ':' + app.port.toString().magenta
-app.listen app.port, app.addr, ->
-  console.log 'http', 'online'.green, app.addr.red + ':' + app.port.toString().magenta
+console.log 'http', 'listen'.yellow, NUU.addr.red + ':' + NUU.port.toString().magenta
+NUU.web.listen NUU.port, NUU.addr, ->
+  console.log 'http', 'online'.green, NUU.addr.red + ':' + NUU.port.toString().magenta
   console.log ':nuu', $release.banner
-  if app.chgid
+  if NUU.chgid
     console.log 'http', 'dropping privileges'.green
-    process.setgid app.chgid
-    process.setuid app.chgid
+    process.setgid NUU.chgid
+    process.setuid NUU.chgid
   null

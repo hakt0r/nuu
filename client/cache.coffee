@@ -60,7 +60,7 @@ $static 'Cache', new class BlobCacheIndexedDB
     ready = =>
       @get = @get_
       @get k, c for c in v for k, v of queue
-      app.emit 'cache:ready'
+      NUU.emit 'cache:ready'
     null
 
   get: (path,callback) ->
