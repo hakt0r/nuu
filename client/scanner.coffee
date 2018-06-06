@@ -119,7 +119,7 @@ $static 'Scanner', new class ScannerRenderer
       v = $v.mult $v.normalize(v), l
       lb[s.id].position.set v[0]+W2R, v[1]+H2R if lb[s.id]
       if s.state.S is $orbit and Scanner.orbits
-        o = s.state.orbit / @scale
+        o = s.state.orb / @scale
         ol = min W2-5, ( $v.mag ov = [ s.state.relto.x - px, s.state.relto.y - py ] ) / @scale
         ov = $v.mult $v.normalize(ov), ol
         if o + ol < W2

@@ -217,18 +217,18 @@ State.register class State.turn extends State
     null
   toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
 
-State.register class State.turnTo extends State
-  constructor:(s,@td)->
-    @turn = s.o.turn || 1
-    super
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    dt = ( time - @t ) * TICKi
-    @o.x = @x + @m[0] * dt
-    @o.y = @y + @m[1] * dt
-    @o.d = $v.umod360 @d + @turn * dt
-    null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,td:@td
+# State.register class State.turnTo extends State
+#   constructor:(s,@td)->
+#     @turn = s.o.turn || 1
+#     super
+#   update:(time)->
+#     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+#     dt = ( time - @t ) * TICKi
+#     @o.x = @x + @m[0] * dt
+#     @o.y = @y + @m[1] * dt
+#     @o.d = $v.umod360 @d + @turn * dt
+#     null
+#   toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,td:@td
 
 State.register class State.orbit extends State
   json: yes

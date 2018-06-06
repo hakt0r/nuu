@@ -86,7 +86,7 @@ class NET.Connection
     NUU.emit 'disconnect', @
 
   connect: (@addr) =>
-    @close()
+    try @close()
     vt.status 'Connecting', '[<i style="color:yellow">'+ @addr + '</i>]'
     console.log ':net', 'connect', @addr
     try s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
