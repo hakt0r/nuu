@@ -96,7 +96,7 @@ rules.client = ->
     notice 5000, stat.name + " K: #{stat.k} D: #{stat.d}"
 
 rules.stars = [
-  [ 0,   Star,    'Sol',                 'yellow02',              0,           $fixed ]
+  [ 0,   Star,    'Sol',                 'orange05',              0,           $fixed ]
   [ 20,  Station, 'Hades Bootcamp',      'station-battlestation', 1000,        $orbit, 0 ]
 
   [ 1,   Planet,  'Mercury',             'A01',                   58000000,    $orbit, 0 ]

@@ -87,7 +87,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
   constructor: (callback)->
     @tick = 0
     @stage    = stage    = new PIXI.Container # 0x000000
-    @pixi = new PIXI.Application 640, 480, antialias: yes, forceFXAA:yes
+    @pixi = new PIXI.Application 640, 480, antialias: yes, forceFXAA:yes, autoResize:true
     @renderer = renderer = @pixi.renderer
 
     @layer 'bg',   new PIXI.Container

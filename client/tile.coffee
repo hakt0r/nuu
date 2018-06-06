@@ -60,7 +60,7 @@ $Tile Ship,
 
   updateSprite: (time)->
     @update time
-    if @state.S isnt 3 then if @spriteMode is 1
+    if @state.S isnt $burn then if @spriteMode is 1
       @changeSprite @spriteNormal
       @spriteMode = 0
     else if @spriteMode is 0
