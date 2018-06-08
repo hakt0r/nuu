@@ -24,8 +24,6 @@ $public class VT100 extends Window
   line: []
   hist: []
   frame: null
-  input: 'nuu console / v ' + $version + '<span class="right">(c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2008 flyc0r</span>' +
-    '<span class="right">GNU General Public License v3 / see license screen (alt-L)</span>'
   cursor: x: 0, y: 0
   inputBuffer: ''
   promptActive: no
@@ -33,24 +31,24 @@ $public class VT100 extends Window
   constructor: (opts={}) ->
     super
     @$.addClass 'vt full'
+    @body.append @input$ = $ """<div class="inputArea"></div>"""
     console.user = @write
+    @write 'nuu console / v ' + $version + '<span class="right">(c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2008 flyc0r</span>' +
+    '<span class="right">GNU General Public License v3 / see license screen (alt-L)</span>'
     null
 
   draw: =>
     c = @cursor.x
-    p = if @promptQuery then "\n" + @promptQuery + ": " else ''
+    p = if @promptQuery then @promptQuery + ": " else ''
     b = @inputBuffer
     b = b.replace /./g, "*" if @stars
     b = b.substr(0,c) + '<i class="vt-cursor"></i>' + b.substr c
-    @body.html @input + p + b
+    @input$.html p + b
     @$[0].scroll top: @body.height()
 
-  stopAnimation: =>
-    clearInterval @animation if @animation
-    @animation = null
-
   write: (lines) =>
-    @draw @input = @input + '\n' + lines
+    @input$.before $ """<div class="outputLines">#{lines}</div>"""
+    do @draw
 
   status: (p,t)->
     do @show

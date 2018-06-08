@@ -49,6 +49,12 @@ rules.server = ->
     src.json unlocks: u.db.unlocks || u.db.unlocks = {}
     null
 
+  ### ███████ ██    ██ ███████ ███    ██ ████████ ███████
+      ██      ██    ██ ██      ████   ██    ██    ██
+      █████   ██    ██ █████   ██ ██  ██    ██    ███████
+      ██       ██  ██  ██      ██  ██ ██    ██         ██
+      ███████   ████   ███████ ██   ████    ██    ███████ ###
+
   NUU.on 'user:joined', (p) ->
     stats[p.db.nick] = name : p.db.nick, k:0, d:0 unless stats[p.db.nick]
     console.log '::dm', 'joined'.green, p.db.nick, stats[p.db.nick].k.toString().green, stats[p.db.nick].d.toString().red
@@ -74,14 +80,22 @@ rules.server = ->
       console.log '::dm', 'kill '.green, user.db.nick.green, '['+perp.name.yellow+']', stats[user.db.nick].k.toString().green, stats[user.db.nick].d.toString().red
     NUU.jsoncast stats: stats
 
-  NUU.on 'asteroid:destroyed', (v, resource)-> v.mount.map (user)-> if user
-    console.log '::dm', 'collect', user.db.nick, t.name
-    i = user.db.inventory; if v = i[t.name] then i[t.name]++ else i[t.name] = 1
+  NUU.on 'asteroid:destroyed', (v, resource)->
+    v.mount.map (user)->
+      return unless user
+      console.log '::dm', 'collect', user.db.nick, resource
+      # i = user.db.inventory
+      # if v = i[t.name] then i[t.name]++ else i[t.name] = 1
+      null
     null
 
-  NUU.on 'ship:collect', (v,t,o)-> v.mount.map (user)-> if user
-    console.log '::dm', 'collect', user.db.nick, t.name
-    i = user.db.unlocks; if v = i[t.name] then i[t.name]++ else i[t.name] = 1
+  NUU.on 'ship:collect', (v,t,o)->
+    v.mount.map (user)->
+      return unless user
+      console.log '::dm', 'collect', user.db.nick, t.name
+      i = user.db.unlocks
+      if v = i[t.name] then i[t.name]++ else i[t.name] = 1
+      null
     null
 
   Asteroid.autospawn max: ROIDS_MAX

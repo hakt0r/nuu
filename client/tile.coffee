@@ -29,7 +29,7 @@ $abstract 'Tile',
     @loadTile ( @assetPrefix + @sprite + '.png' ), 'sprite', (e,s)=>
       @count = @sprite.meta.count
       @loaded = true
-      @show @updateSprite()
+      # @show @updateSprite()
       @sprite.anchor.set 0.5
 
   loadTile: (url,dest='sprite',callback=$void) ->
@@ -55,7 +55,7 @@ $Tile Ship,
     @loadTile p + '.png', 'sprite', (e,s) =>
       { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
       @loaded = true
-      @show @updateSprite()
+      # @show @updateSprite()
     @loadTile p + '_engine.png', 'spriteEngine'
 
   updateSprite: (time)->

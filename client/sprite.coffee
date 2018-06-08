@@ -28,7 +28,8 @@ $obj::loadAssets = ->
   @img = url = @assetPrefix + @sprite + '.png'
   { @size, @radius } = @meta = $meta[ @sprite ]
   @sprite = new PIXI.Sprite new PIXI.Texture.fromImage url
-  @show @loaded = true
+  @loaded = true
+  # @show()
 
 $obj::show = ->
   return if Sprite.visible[@id]
@@ -51,6 +52,7 @@ $obj::hide = ->
 $obj::changeSprite = (newSprite) ->
   return if newSprite is old = Sprite.visible[@id]
   Sprite.visible[@id] = @sprite = newSprite
+  Sprite.visibleList.push @ unless Sprite.visibleList.includes @
   Sprite[@layer].addChild @sprite
   Sprite[@layer].removeChild old
   null

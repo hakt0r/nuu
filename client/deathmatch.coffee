@@ -38,13 +38,13 @@ Window.Ships = class DebugShipWindow extends ModalListWindow
   title: 'Ships'
   subject: Item.byType.ship
   closeKey: 'sKeyS'
-  fetch:(done)->
-    NET.json.write unlocks:''
-    NET.once 'unlocks', (@filter)=>
-      window.UNLOCKS = @filter
-      done @subject
+  # fetch:(done)->
+  #   NET.json.write unlocks:''
+  #   NET.once 'unlocks', (@filter)=>
+  #     window.UNLOCKS = @filter
+  #     done @subject
   render: (key,val)->
-    Render.Ship.call @, key, val, @close.bind @ if @filter[val.name]
+    Render.Ship.call @, key, val, @close.bind @ # if @filter[val.name]
     null
 
 Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
@@ -77,6 +77,8 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
 Window.Equipment = class EquipmentWindow extends ModalListWindow
   constructor: (@vehicle=VEHICLE)->
     super name:'equip', title:'Equipment'
+    if typeof @vehicle is 'string'
+      @vehicle = Item.byType.ship[@vehicle]
     for type, slots of @vehicle.slots
       for id, slot of slots
         @mkslot type, slot
@@ -136,7 +138,7 @@ Render =
       </div>
       </div>"""
     bLoadout = entry.find 'button.loadout'
-    bLoadout.click -> new
+    bLoadout.click -> new EquipmentWindow item.name
     bSwitch = entry.find 'button.switch'
     bSwitch.click -> close NET.json.write switchShip: item.name
   Station: (name,item,close)->

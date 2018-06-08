@@ -46,7 +46,7 @@ $public class Autopilot
     clearInterval @interval
     @interval = null
     Mouse.enable()
-    Sprite.hud.widget 'autopilot', null
+    HUD.widget 'autopilot', null
 
   tick: -> =>
     @last = v = NavCom.steer @ship, @target, 'pursue'
@@ -72,7 +72,7 @@ $public class Autopilot
     s += '▶' if v.right
     s += '◉' if v.setdir
     s += ']\nFm:' + hdist v.maxSpeed
-    Sprite.hud.widget 'autopilot', s, yes
+    HUD.widget 'autopilot', s, yes
     v
 
   @instance: null

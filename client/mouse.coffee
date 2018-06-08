@@ -117,9 +117,17 @@ $static 'Mouse', new class MouseInput
 
   onwheel: (evt) ->
     down = evt.wheelDeltaY >= 0
-    return Target.prev() if evt.shiftKey and down
-    return Target.next() if evt.shiftKey
-    if down then Scanner.zoomOut() else Scanner.zoomIn()
+    if evt.ctrlKey
+      if down
+           Sprite.scale = max 0.1, Sprite.scale - 0.05
+      else Sprite.scale = min   1, Sprite.scale + 0.05
+    if evt.shiftKey
+      if down
+           Target.prev()
+      else Target.next()
+    if down
+         Scanner.zoomOut()
+    else Scanner.zoomIn()
     do evt.stopPropagation
     false
 

@@ -85,9 +85,10 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
   nextSelect: 0
 
   constructor: (callback)->
+    @scale = 1
     @tick = 0
     @stage    = stage    = new PIXI.Container # 0x000000
-    @pixi = new PIXI.Application 640, 480, antialias: yes, forceFXAA:yes, autoResize:true
+    @pixi = new PIXI.Application 640, 480, antialias: no, forceFXAA:yes, autoResize:no
     @renderer = renderer = @pixi.renderer
 
     @layer 'bg',   new PIXI.Container
@@ -101,7 +102,7 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     @layer 'fg',   new PIXI.Container
 
     @bg.addChild @starfield = makeStarfield [1,0.3,2000],[1.5,0.7,20]
-    @bg.addChild @parallax  = makeStarfield [1,0.3,2000]
+    @bg.addChild @parallax  = makeStarfield [1,0.3,4000]
     @bg.addChild @parallax2 = makeStarfield [1,0.3,2000]
 
     NUU.on 'runtime:ready', =>
@@ -141,26 +142,31 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     v.sprite.position.set hw - r, hh - r
 
   select: ->
-    W = WIDTH  * 10 # TODO: EventHorizon
-    H = HEIGHT * 10 # TODO: EventHorizon
+    Horizon = 10 * max WIDTH, HEIGHT
     VEHICLE.update time = NUU.time()
     { x,y } = VEHICLE
-    # destructor-aware loop
-    i = -1; s = null; list = $obj.list; length = list.length
+    i = -1
+    s = null
+    list   = $obj.list
+    length = list.length
     while ++i < length
       s = list[i]
-      s.update()
+      s.update time
       if s.ttl and s.ttl < time
         s.hide()
         if s.ttlFinal
-          s.destructor(); length--; i--
+          s.destructor()
+          length--
+          i--
         continue
-      if -W<(s.x-x)<W and -H<(s.y-y)<H
+      if Horizon > sqrt (s.x-x)**2 + (s.y-y)**2
         continue if SHORTRANGE[s.id]
+        console.log 'inRange', s.name, s.id
         SHORTRANGE[s.id] = s
         NUU.emit '$obj:inRange', s
       else
         continue unless SHORTRANGE[s.id]
+        console.log 'outRange', s.name, s.id
         delete SHORTRANGE[s.id]
         NUU.emit '$obj:outRange', s
 
@@ -173,12 +179,15 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     window.OX = -VEHICLE.x + WDB2
     window.OY = -VEHICLE.y + HGB2
 
-    # # SPEEDSCALE (REVIVAL)
     # if NUU.settings.gfx.speedScale
-    #   sc = 1 / ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
-    #   @bg.scale.x = @bg.scale.y = @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
-    #   @bg.position.x = @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
-    #   @bg.position.y = @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
+    sc = min 1, Sprite.scale
+    # ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
+    @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
+    @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
+    @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
+    # @bg.scale.x = @bg.scale.y =
+    # @bg.position.x =
+    # @bg.position.y =
 
     # STARS
     [ mx, my ] = vectors.normalize Array::slice.call VEHICLE.m;

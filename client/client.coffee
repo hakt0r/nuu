@@ -120,26 +120,14 @@ NUU.on 'gfx:ready', ->
     vt.write NUU.intro = """
 ------------------------------------------------------------------------------------------------
 <center style="white-space: nowrap;">
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="500" height="180" viewBox="0 0 63.970978 20" version="1.1" id="nuulogo">
-<defs id="defs912">
-  <clipPath clipPathUnits="userSpaceOnUse" id="clipPath881"><rect id="rect883" width="20" height="20" x="40" y="97" rx="5" ry="5" style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:6.01288509;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></clipPath>
-  <clipPath clipPathUnits="userSpaceOnUse" id="clipPath905"><rect id="rect903" width="20" height="20" x="40" y="97" rx="5" ry="5" style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:6.01288509;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></clipPath>
-  <clipPath clipPathUnits="userSpaceOnUse" id="clipPath877"><rect ry="5" rx="5" y="97" x="40" height="20" width="20" id="rect879" style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:6.01288509;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></clipPath>
-</defs>
-<g id="layer1" transform="translate(-184.21689,-303.63095)">
-  <path style="fill:#333333;fill-rule:evenodd;stroke:none;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="m 46.5,107 v 10 H 39.999999 V 97 L 46.5,97.000001 53.5,107 V 97.000001 L 60.000001,97 v 20 H 53.5 Z" id="path839" clip-path="url(#clipPath877)" transform="translate(144.21689,206.63095)" />
-  <path id="path875" d="M 39.999999,117 V 97 L 46.5,97.000001 V 107 h 7 V 97.000001 L 60.000001,97 v 20 z" style="fill:#333333;fill-rule:evenodd;stroke:none;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" clip-path="url(#clipPath881)" transform="translate(166.18788,206.63095)" />
-  <path transform="translate(188.18787,206.63095)" clip-path="url(#clipPath881)" style="fill:#333333;fill-rule:evenodd;stroke:none;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M 39.999999,117 V 97 L 46.5,97.000001 V 107 h 7 V 97.000001 L 60.000001,97 v 20 z" id="path891" />
-</g>
-</svg>
+<svg viewBox="0 0 62 20"><defs><path id="U" d="M5 0C2.25 0 0 2.25 0 5v10c0 2.75 2.25 5 5 5h10c2.75 0 5-2.25 5-5V5c0-2.75-2.25-5-5-5h-1.5v10h-7V0H5z" style="fill:#333;border:solid red 1px"/></defs><use href="#U" transform="rotate(180 10 10)"/><use href="#U" transform="translate(21)"/><use href="#U" transform="translate(42)"/></svg>
 </center>\
 --- [ FakeNN ] BREAKING ------------------------------------------------------------------------\
 <span class="center news">Earth and Luna have been overrun by the drones our own creation, and now,</span>\
 <span class="center news">her Majesty the Kernel is scheming to take Mars and the Jupiter-system!</span>\
 ------------------------------------------------------------------------------------------------
 
-  ➜ Press alt-R to register
+  ➜ Press alt-R to register (we only store <a href="https://en.wikipedia.org/wiki/Salt_(cryptography)">salted</a> <a href="https://en.wikipedia.org/wiki/Hash_function">hashes</a>)
   ➜ Press alt-L to show license screen
 
     """

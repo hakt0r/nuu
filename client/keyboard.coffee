@@ -55,6 +55,12 @@ $static 'Kbd', new class KeyboardInput extends EventEmitter
 
   constructor:->
     Kbd = @
+    $ =>
+      $('body').prepend @input$ = $ """<input type="text" id="nKeyboardInput">"""
+      @input$.on 'blur', (e)-> e.preventDefault(); false
+      @input$.on 'keydown', (e)-> console.log ':kbd','dn',e.key,e.char; e.preventDefault(); false
+      @input$.on 'keyup',   (e)-> console.log ':kbd','up',e.key,e.char; e.preventDefault(); false
+      @input$.focus()
     @cmap[v] = k for k,v of @kmap
     for a in ["accel","retro","steerRight","steerLeft","boost"]
       @macro a, @defaultMap[a], @d10[a], up: @setState(a,false), dn: @setState(a,true)

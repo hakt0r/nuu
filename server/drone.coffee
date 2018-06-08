@@ -160,6 +160,14 @@ AI.randomStellar = ->
   stel.update()
   stel
 
+$public class Miner extends AI
+  aiType: 'Miner'
+  constructor:(opts={})->
+    opts.strategy = opts.strategy || 'approach'
+    opts.tpl = opts.tpl || Array.random Miner.ships
+    super opts
+    return
+
 $public class Trader extends AI
   aiType: 'Trader'
   constructor:(opts={})->
@@ -177,7 +185,14 @@ $public class Escort extends AI
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
 
-Trader.ships = []; NUU.on 'init:items:done', ->
+Miner.ships = [];
+Trader.ships = [];
+
+NUU.on 'init:items:done', ->
+  Miner.ships = [
+    Item.byName.Mule.itemId
+    Item.byName.Llama.itemId
+  ]
   Trader.ships = [
     Item.byName.Kestrel.itemId
     Item.byName.Byakko.itemId
