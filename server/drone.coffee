@@ -152,11 +152,21 @@ AI.autospawn = (opts={})-> $worker.push =>
   if drones < opts.max
     dt = opts.max - drones
     new Trader for i in [0...dt/2]
-    new AI     for i in [0...dt/2]
+    new Drone  for i in [0...dt/2]
   1000
 
 AI.randomStellar = ->
   stel = $obj.byId[ Array.random Object.keys Stellar.byId ]
+  stel.update()
+  stel
+
+$public class Drone extends AI
+  constructor:(opts={})->
+    opts.stel = Drone.randomStellar() unless opts.stel
+    super opts
+
+Drone.randomStellar = ->
+  stel = $obj.byId[ Array.random [3,30] ]
   stel.update()
   stel
 
