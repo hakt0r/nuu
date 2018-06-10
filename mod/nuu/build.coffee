@@ -5,5 +5,5 @@ module.exports = (c)-> depend(contrib,sources)( ->
     linkFilesIn 'client/gfx',      'build/imag'
     linkFilesIn 'mod/nuu/ship',    'build/imag'
     linkDirsIn  'mod/nuu/ship',    'build/ship'
-    linkDirsIn  'mod/nuu/artwork', 'build/imag'
+    linkFilesIn 'mod/nuu/artwork', 'build/imag'
   ], c )

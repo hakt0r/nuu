@@ -118,7 +118,7 @@ Window.About = class AboutWindow extends Window
         <a class="close"  href="#">Close</a>
       </div>
       <div class="tab" id="game">
-        <img src="/build/imag/nuulogo.png">
+        <img src="/build/imag/logo_2018_2.svg">
         <p><ul class="copyrights">
           <li>c) 2007-2018 Sebastian Glaser <anx@ulzq.de></li>
           <li>c) 2007-2008 flyc0r</li>
