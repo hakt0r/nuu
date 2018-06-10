@@ -42,6 +42,7 @@ NUU.on 'enterVehicle', shpHandler = (t) ->
   s.width  = 100
   s.height = r * 100
   s.alpha  = 0.8
+  HUD.energy.visible = HUD.energy.bg.visible = HUD.armour.visible = HUD.armour.bg.visible = HUD.shield.visible = HUD.shield.bg.visible = HUD.fuel.visible = HUD.fuel.bg.visible = yes
   clearTimeout shpHandler.timer # SWITCH ANIMATION
   shpHandler.timer = setTimeout ( -> s.tint = 0xFFFFFF ), 100
   do uiArrow.createTurrets # TURRET INDICATORS
@@ -134,7 +135,7 @@ class uiBar extends PIXI.Sprite
     super @tex = Sprite.renderer.generateTexture gfx
     @HUD.layer.addChild @
     @HUD.layer.addChild @bg = new PIXI.Sprite @tex
-    @visible = @bg.visible = no if @name.match /target/
+    @visible = @bg.visible = no
     @bg.alpha = 0.3
     @HUD[@name] = @
     gfx.destroy()
@@ -315,13 +316,14 @@ new class uiHUD
     t = ''
     cid = Target.class
     list = Target.typeNames
+    @targetShield.visible = @targetArmour.visible = @targetShield.bg.visible = @targetArmour.bg.visible = @targetDir.visible = @approach.visible = @pursuit.visible = TARGET?
     unless TARGET
       m = VEHICLE.m.slice()
       l = 50 / Speed.max * $v.mag(m)
       m = $v.mult $v.normalize(m), l
       @speed.width = l
       @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
-    else if @approach.visible = @pursuit.visible = TARGET?
+    else if TARGET
       # MY-SPEED relto
       m = $v.sub VEHICLE.m.slice(), TARGET.m
       l = 50 / Speed.max * $v.mag(m)
@@ -341,7 +343,6 @@ new class uiHUD
         m = $v.mult $v.normalize(m), l
         @approach.width = l
         @approach.rotation =( PI +  $v.heading $v.zero, m ) % TAU
-      @targetShield.visible = @targetArmour.visible = @targetDir.visible = true
       @targetShield.width = TARGET.shield / TARGET.shieldMax * 100
       @targetArmour.width = TARGET.armour / TARGET.armourMax * 100
       # DIRECTION
