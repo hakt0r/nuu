@@ -81,19 +81,19 @@ $public class VT100 extends Window
     @draw()
     true
 
-  keyHandler: (e) =>
-    # allow some browser-wide shortcuts that would otherwise not work
-    return if e.ctrlKey and e.code is 'KeyR' if isClient
-    return if e.ctrlKey and e.code is 'KeyL' if isClient
-    return if true is @overrideKeys e if @overrideKeys
-    key = e.code
-    key = 'c' + key if e.ctrlKey
-    key = 'a' + key if e.altKey
-    key = 's' + key if e.shiftKey
-    code = e.keyCode
+  pasteHandler: (e) =>
     c = @cursor.x
-    console.log Kbd.cmap[code], code, e.code, e.ctrlKey, e, e.char
-    if key is 'Enter'
+    d = e.clipboardData
+      .getData('text')
+      .replace(/\n/g,'; ')
+    @inputBuffer = @inputBuffer.substr(0,c) + d + @inputBuffer.substr(c)
+    @cursor.x += d.length
+    do @draw
+
+  keyHandler: (e,code) =>
+    return if true is @overrideKeys e if @overrideKeys
+    c = @cursor.x
+    if code is 'Enter'
       if (fnc = @onReturn)?
         i = @inputBuffer
         delete @onReturn
@@ -104,37 +104,37 @@ $public class VT100 extends Window
         @inputBuffer  = ''
         res = fnc i unless e.shiftKey
         @hide() unless res is true
-    else if key is 'Escape' or key is 'sEscape' or key is 'Backquote'
+    else if code is 'Escape' or code is 'sEscape' or code is 'Backquote'
       res = fnc null if not e.shiftKey and ( fnc = @onReturn )?
       @hide() unless res is true
-    else if key is 'ArrowLeft'
+    else if code is 'ArrowLeft'
       @cursor.x = max(0,--@cursor.x)
-    else if key is 'ArrowRight'
+    else if code is 'ArrowRight'
       @cursor.x = min(@inputBuffer.length,++@cursor.x)
-    else if key is 'ArrowUp'
+    else if code is 'ArrowUp'
       @hist.cursor = max(0,--@hist.cursor)
       @inputBuffer = @hist[@hist.cursor]
       @cursor.x =  @inputBuffer.length
-    else if key is 'ArrowDown'
+    else if code is 'ArrowDown'
       @hist.cursor = min(@hist.length-1,++@hist.cursor)
       @inputBuffer = @hist[@hist.cursor]
       @cursor.x = @inputBuffer.length
-    else if key is 'Delete'
+    else if code is 'Delete'
       @inputBuffer = @inputBuffer.substr(0,c) + @inputBuffer.substr(c+1)
-    else if key is 'aDelete'
+    else if code is 'aDelete'
       @inputBuffer = @inputBuffer.substr(0,c)
       @cursor.x = @inputBuffer.length
-    else if key is 'Backspace'
+    else if code is 'Backspace'
       @inputBuffer = @inputBuffer.substr(0,c-1) + @inputBuffer.substr(c)
       @cursor.x = max(0,--@cursor.x)
-    else if key is 'aBackspace'
+    else if code is 'aBackspace'
       @inputBuffer = @inputBuffer.substr(c)
       @cursor.x = 0
-    else if Kbd.cmap[code]
-      k = Kbd.cmap[code]
-      k = k.toUpperCase() if e.shiftKey
-      @inputBuffer = @inputBuffer.substr(0,c) + k + @inputBuffer.substr(c)
-      @cursor.x++
+    else
+      k = e.char || e.key || String.fromCharCode e.charCode
+      if k.length is 1
+        @inputBuffer = @inputBuffer.substr(0,c) + k + @inputBuffer.substr(c)
+        @cursor.x++
     @draw()
     false
 

@@ -85,23 +85,18 @@ $public class Window
     @focus()
     @
   close:->
-    if @parent then @parent.focus() else Kbd.focus()
+    do @unfocus
     @$.remove()
     delete window[@name] if @name
     @
   hide:->
-    if @parent then @parent.focus() else Kbd.focus()
+    do @unfocus
     @$.css "display", "none"; @visible = no; @
-  toggle:->               do @[if @visible then 'hide' else 'show']; @
-  focus:-> Kbd.unfocus window.addEventListener 'keyup', @keyHandler; @
-  unfocus:->        window.removeEventListener 'keyup', @keyHandler; @
-  keyHandler: (evt)=>
-    key = evt.code
-    key = 'c' + key if evt.ctrlKey
-    key = 'a' + key if evt.altKey
-    key = 's' + key if evt.shiftKey
-    console.log key, @closeKey
-    switch key
+  toggle:-> do @[if @visible then 'hide' else 'show']; @
+  focus:-> Kbd.grab @name, @keyHandler, @keyDownHandler, @pasteHandler; @
+  unfocus:-> Kbd.release @name; @
+  keyHandler: (evt,code)=>
+    switch code
       when @closeKey, 'Escape'
         @close();
         evt.preventDefault()
@@ -180,18 +175,14 @@ $public class ModalListWindow extends Window
       @render key,val for key, val of @subject
     @$.find("*").addClass 'noselect'
     null
-  keyHandler: (evt)=>
-    key = evt.code
-    key += 'c' if evt.ctrlKey
-    key += 'a' if evt.altKey
-    key += 's' if evt.shiftKey
+  keyHandler: (evt,code)=>
     list = @$.find('.list-item')
     cur = @$.find('.list-item.active').first()
     if cur.length is 0
       cur.addClass 'active'
       cur = $ list.first()
     top = cur.parent().offset().top + 10
-    switch key
+    switch code
       when @closeKey, 'Escape'
         @close(); p = @
         p.close() while p = p.parent
@@ -236,23 +227,17 @@ Window.KeyBinder = class KeyBinder extends ModalListWindow
     @$.css 'bottom', 'initial'
     @body.addClass 'big_fat'
     @body.html @default
-  confirm: (evt)->
-    key = evt.code
-    if key is "Enter"
+  confirm: (evt,code)->
+    if code is "Enter"
       return unless @value
       do @close
       return @callback null, @value
-    else if key is "Escape"
+    else if code is "Escape"
       do @close
       return @callback null, @default
-  capture: (evt)->
-    key = evt.code
-    key = 'c' + key if evt.controlKey
-    key = 'a' + key if evt.altKey
-    key = 's' + key if evt.shiftKey
-    key = 'm' + key if evt.metaKey
-    return do @close if key is 'Escape'
-    @body.html @value = key + '<br/>Escape | Enter'
+  capture: (evt,code)->
+    return do @close if code is 'Escape'
+    @body.html @value = code + '<br/>Escape | Enter'
     @unfocus(); @keyHandler = @confirm.bind @; @focus()
 
 Window.Help = class HelpWindow extends ModalListWindow
