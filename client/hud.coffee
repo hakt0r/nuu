@@ -20,6 +20,14 @@
 
 ###
 
+###
+  ███████ ██    ██ ███████ ███    ██ ████████ ███████
+  ██      ██    ██ ██      ████   ██    ██    ██
+  █████   ██    ██ █████   ██ ██  ██    ██    ███████
+  ██       ██  ██  ██      ██  ██ ██    ██         ██
+  ███████   ████   ███████ ██   ████    ██    ███████
+###
+
 NUU.on 'enterVehicle', shpHandler = (t) ->
   HUD[k].visible = HUD[k+'bg'].visible = true for k,v of HUD.healhBars
   console.log 'ship', t if debug
@@ -116,30 +124,32 @@ ntime = ->
    ██████  ██   ██████  ██   ██ ██   ██
 ###
 
-class uiBar
+class uiBar extends PIXI.Sprite
   constructor:(@HUD,@name,@color)->
     gfx = new PIXI.Graphics
     gfx.clear()
     gfx.beginFill @color
     gfx.drawRect 0,0,100,9
     gfx.endFill()
-    tex = uiBar[@name+'Texture'] = Sprite.renderer.generateTexture gfx
-    @HUD.layer.addChild @HUD[@name+"bg"] = bg = new PIXI.Sprite tex
-    @HUD.layer.addChild @HUD[@name     ] = fg = new PIXI.Sprite tex
-    bg.alpha = 0.3
-    fg.visible = bg.visible = no
-    @HUD[@name] = fg
+    super @tex = Sprite.renderer.generateTexture gfx
+    @HUD.layer.addChild @
+    @HUD.layer.addChild @bg = new PIXI.Sprite @tex
+    @visible = @bg.visible = no if @name.match /target/
+    @bg.alpha = 0.3
+    @HUD[@name] = @
     gfx.destroy()
 
+uiBar::setPosition = (x,y)->
+  @bg.position.set x,y
+  @position.set x,y
+
 uiBar::remove = ->
-  @HUD.layer.removeChild uiBar[@name]
-  @HUD.layer.removeChild uiBar[@name+"bg"]
-  @HUD[@name].destroy()
-  @HUD[@name+"bg"].destroy()
-  uiBar[@name+'Texture'].destroy()
+  @HUD.layer.removeChild @
+  @HUD.layer.removeChild @bg
+  @tex.destroy()
+  @bg.destroy()
+  @destroy()
   delete @HUD[@name]
-  delete @HUD[@name+"bg"]
-  delete uiBar[@name+'Texture']
 
 uiBar.init = -> new uiBar HUD,k,v for k,v of @healhBars
 uiBar.healhBars =
@@ -201,6 +211,34 @@ uiText.init = -> new uiText HUD, name, opts for name,opts of {
   debug:{}}
 
 ###
+  ██    ██ ██ ██    ██ ███████  ██████ ████████  ██████  ██████
+  ██    ██ ██ ██    ██ ██      ██         ██    ██    ██ ██   ██
+  ██    ██ ██ ██    ██ █████   ██         ██    ██    ██ ██████
+  ██    ██ ██  ██  ██  ██      ██         ██    ██    ██ ██   ██
+   ██████  ██   ████   ███████  ██████    ██     ██████  ██   ██
+###
+
+class uiVector extends PIXI.Sprite
+  constructor:(@HUD, @name, @color)->
+    gfx = new PIXI.Graphics
+    gfx.clear()
+    gfx.beginFill @color
+    gfx.drawRect 0,0,50,2
+    gfx.endFill()
+    super @tex = Sprite.renderer.generateTexture gfx
+    @HUD.layer.addChild @
+    @HUD[@name] = @
+    @position.set 100,100
+    @anchor.set 0,0.5
+    gfx.destroy()
+
+uiVector::remove = ->
+  @HUD.layer.removeChild @
+  @tex.destroy()
+  @destroy()
+  delete @HUD[@name]
+
+###
   ██    ██ ██ ██   ██ ██    ██ ██████
   ██    ██    ██   ██ ██    ██ ██   ██
   ██    ██ ██ ███████ ██    ██ ██   ██
@@ -218,16 +256,19 @@ new class uiHUD
     Sprite.stage.addChild @layer = new PIXI.Container
     Sprite.on 'resize', @resize.bind @
     @startTime = NUU.time()
-    new uiArrow @, 'dir',    'yellow'
-    new uiArrow @, 'targetDir', 'red'
+    new uiArrow  @, 'dir',      'yellow'
+    new uiArrow  @, 'targetDir',   'red'
+    new uiVector @, 'speed',    0x00FF00
+    new uiVector @, 'approach', 0xFFFF00
+    new uiVector @, 'pursuit',  0xFF0000
     do uiBar.init # HEALTH BARS
     do uiText.init # TEXT NODES
     @topLeft.position.set 10, 10
     do @resize # UPDATE DYNAMIC POSITIONS
 
   resize: ->
-    LeftAlign  = (o,x,y)-> o.position.set WDB2 - x - 5, HEIGHT - y
-    RightAlign = (o,x,y)-> o.position.set WDB2 + x + 5, HEIGHT - y
+    LeftAlign  = (o,x,y)-> x = WDB2 - x - 5; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
+    RightAlign = (o,x,y)-> x = WDB2 + x + 5; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
     @system.fontSize = @text.fontSize = @notice.fontSize = @debug.fontSize = @fontSize + 'px'
     @notice.position.set        WIDTH - 20 - @notice.width, 10
     @debug.position.set         10,  26
@@ -236,17 +277,14 @@ new class uiHUD
     LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
     LeftAlign  @primary,        110 + @primary.width,   10 + @secondary.height + @primary.height
     LeftAlign  @fuel,           100, 40
-    LeftAlign  @fuelbg,         100, 40
     LeftAlign  @energy,         100, 30
-    LeftAlign  @energybg,       100, 30
     LeftAlign  @shield,         100, 20
-    LeftAlign  @shieldbg,       100, 20
     LeftAlign  @armour,         100, 10
-    LeftAlign  @armourbg,       100, 10
+    RightAlign @speed       ,   -5,  200
+    RightAlign @pursuit     ,   -5,  200
+    RightAlign @approach    ,   -5,  200
     RightAlign @targetShield,   5,   20
-    RightAlign @targetShieldbg, 5,   20
     RightAlign @targetArmour,   5,   10
-    RightAlign @targetArmourbg, 5,   10
     RightAlign @text,           115, 10 + @text.height
     RightAlign @targetSprite,   5,   @targetSprite.height + 35 if @targetSprite
 
@@ -277,7 +315,32 @@ new class uiHUD
     t = ''
     cid = Target.class
     list = Target.typeNames
-    if TARGET
+    unless TARGET
+      m = VEHICLE.m.slice()
+      l = 50 / Speed.max * $v.mag(m)
+      m = $v.mult $v.normalize(m), l
+      @speed.width = l
+      @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
+    else if @approach.visible = @pursuit.visible = TARGET?
+      # MY-SPEED relto
+      m = $v.sub VEHICLE.m.slice(), TARGET.m
+      l = 50 / Speed.max * $v.mag(m)
+      m = $v.mult $v.normalize(m), l
+      @speed.width = l
+      @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
+      # - GUIDE - pursuit
+      vec = NavCom.steer(VEHICLE,TARGET,'pursue')
+      m = vec.force.slice()
+      l = 25 / Speed.max * $v.mag(m)
+      m = $v.mult $v.normalize(m), l
+      @pursuit.width = l
+      @pursuit.rotation = ( PI + $v.heading $v.zero, m ) % TAU
+      if @approach.visible = vec.approach_force?
+        m = vec.approach_force.slice()
+        l = 25 / Speed.max * $v.mag(m)
+        m = $v.mult $v.normalize(m), l
+        @approach.width = l
+        @approach.rotation =( PI +  $v.heading $v.zero, m ) % TAU
       @targetShield.visible = @targetArmour.visible = @targetDir.visible = true
       @targetShield.width = TARGET.shield / TARGET.shieldMax * 100
       @targetArmour.width = TARGET.armour / TARGET.armourMax * 100
@@ -318,62 +381,6 @@ new class uiHUD
       "hostiles:#{if Target.hostile then Object.keys(Target.hostile).length else 0}" else ''
     @resize()
 
-    ###
-    unless t
-      # MY-SPEED relto $obj[0]
-      m = VEHICLE.m.slice()
-      l = 50 / Speed.max * $v.mag(m)
-      m = $v.mult $v.normalize(m), l
-      g.beginFill 0, 0
-      g.lineStyle 1.5, 0xFF0000, 1
-      g.moveTo fox, foy
-      g.lineTo fox + m[0], foy + m[1]
-      g.endFill()
-    else # HAVE TARGET
-      # MY-SPEED relto
-      m = $v.sub VEHICLE.m.slice(), t.m
-      l = 50 / Speed.max * $v.mag(m)
-      m = $v.mult $v.normalize(m), l
-      g.beginFill 0, 0
-      g.lineStyle 1.5, 0xFF0000, 1
-      g.moveTo fox, foy
-      g.lineTo fox + m[0], foy + m[1]
-      g.endFill()
-      # - FORCE
-      vec = NavCom.steer(VEHICLE,t,'pursue')
-      m = $v.sub t.m.slice(), VEHICLE.m
-      l = 50 / Speed.max * $v.mag(m)
-      m = $v.mult $v.normalize(m), l
-      g.beginFill 0, 0
-      g.lineStyle 1.5, 0xFFFF00, 1
-      g.moveTo fox,        foy
-      g.lineTo fox + m[0], foy + m[1]
-      g.endFill()
-      # - GUIDE - pursuit
-      vec = NavCom.steer(VEHICLE,t,'pursue')
-      m = vec.force.slice()
-      l = 25 / Speed.max * $v.mag(m)
-      m = $v.mult $v.normalize(m), l
-      g.beginFill 0, 0
-      g.lineStyle 1, 0xaaaaFF, 0.8
-      g.moveTo fox, foy
-      g.lineTo (bsx = fox + m[0]), (bsy = foy + m[1])
-      g.endFill()
-      if vec.approach_force
-        m = vec.approach_force.slice()
-        l = 25 / Speed.max * $v.mag(m)
-        m = $v.mult $v.normalize(m), l
-        g.beginFill 0, 0
-        g.lineStyle 1, 0x0000FF, 0.8
-        g.moveTo bsx, bsy
-        g.lineTo bsx + m[0], bsy + m[1]
-        g.endFill()
-      # ???
-      g.beginFill 0, 0
-      g.moveTo fox - cos(vec.rad) * radius,       foy - sin(vec.rad) * radius
-      g.lineStyle 1, 0x0000FF, 1
-      g.lineTo fox - cos(vec.rad) * radius * 1.1, foy - sin(vec.rad) * radius * 1.1
-    ###
   widgetList: []
 
   widget: (name,v,nokey=false)->
