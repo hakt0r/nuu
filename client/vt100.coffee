@@ -1,7 +1,7 @@
 ###
 
   * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -33,7 +33,7 @@ $public class VT100 extends Window
     @$.addClass 'vt full'
     @body.append @input$ = $ """<div class="inputArea"></div>"""
     console.user = @write
-    @write 'nuu console / v ' + $version + '<span class="right">(c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2008 flyc0r</span>' +
+    @write 'nuu console / v ' + $version + '<span class="right">(c) 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2018 flyc0r</span>' +
     '<span class="right">GNU General Public License v3 / see license screen (alt-L)</span>'
     null
 

@@ -4,7 +4,7 @@
     https://github.com/HenningM/express-ws
 
   * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 flyc0r
 
   Port for NUU:
     Sebastian Glaser <anx@ulzq.de>
@@ -327,7 +327,7 @@ audio {width: 100px;border-radius: 4px;position: absolute;top: 50%;left: 10px;z-
 <p class="copyrights fixBottom">
   <span class="nobreak">You are seeing this page because JavaScript should be <b>off by default</b>.</span><br/>
   <span class="nobreak">If you consent to using JavaScript, please click <a href="/start">here</a>. Play intro with <a href="/intro">sound</a>.</span>
-  &copy; 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; | &copy; 2007-2008 flyc0r
+  &copy; 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; | &copy; 2007-2018 flyc0r
 </p></div>
 #{audioTag}
 <div class='debug'></div>

@@ -1,7 +1,7 @@
 ###
 
   * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2008 flyc0r
+  * c) 2007-2018 flyc0r
 
   This file is part of NUU.
 
@@ -121,7 +121,7 @@ Window.About = class AboutWindow extends Window
         <img src="/build/imag/logo_2018_2.svg">
         <p><ul class="copyrights">
           <li>c) 2007-2018 Sebastian Glaser <anx@ulzq.de></li>
-          <li>c) 2007-2008 flyc0r</li>
+          <li>c) 2007-2018 flyc0r</li>
         </ul></p>
 
         <p class="desc">The nuu project intends to use all the asset files
