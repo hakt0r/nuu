@@ -21,28 +21,33 @@
 ###
 
 functions =
+  saveMeta:-> @set '$meta', id: @id
   create: (name,data) ->
     if @fields then for k,v of @fields when not data[k]
       data[k] = (
         if typeof v is 'function' then v.apply @
         else v )
-    data.id = @keys().length
-    @put name, data
+    data.id = @id++
+    @set name, data
+    do @saveMeta
 
-Db = (name,obj={}) ->
+process.on 'exit',    $tag.closeAll
+process.on 'SIGINT',  $tag.closeAll
+process.on 'SIGUSR1', $tag.closeAll
+process.on 'SIGUSR2', $tag.closeAll
+
+$tag.db = (name,obj={}) ->
   obj.ready = ( -> ) unless obj.ready
   obj.path = path.join 'db', ( obj.name = name ) + '.db'
-  obj.init = fs.existsSync obj.path
-  $static name, Db[name] = db = flatfile obj.path
-  _.defaults db, functions
-  _.defaults db, obj
-  db.on 'open', ->
-    if obj.init
-      db.put k,v for k,v of db.bootstrap if db.bootstrap?
-      db.put 'db.init', true, -> obj.ready null
-    else do obj.ready
-    null
+  obj.needsInit = not fs.existsSync obj.path
+  $static name, $tag[name] = db = new $tag.XScale obj.path
+  Object.assign db, functions, obj
+  if obj.needsInit and db.bootstrap?
+    db.set '$meta', id:1
+    db.create k,v for k,v of db.bootstrap
+  else
+    db.id = ( db.get '$meta' ).id
+    throw new Error 'db.id is Nan', db if isNaN db.id
+  do obj.ready
   console.log '::db', 'register', name, util.inspect db if debug
   db
-
-$static 'Db', Db

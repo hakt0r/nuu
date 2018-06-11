@@ -102,9 +102,9 @@ Kbd.onKeyDown = (e) ->
   return if e.ctrlKey and e.shiftKey and e.code is 'KeyI' if debug
   e.preventDefault()
   code = e.code
-  code = 'c'+code if e.ctrlKey
-  code = 'a'+code if e.altKey
-  code = 's'+code if e.shiftKey
+  code = 'c' + code if e.ctrlKey
+  code = 'a' + code if e.altKey
+  code = 's' + code if e.shiftKey
   return @onkeydown e, code if @onkeydown
   return true if @onkeyup
   macro = @rmap[code]
@@ -116,9 +116,9 @@ Kbd.onKeyDown = (e) ->
 Kbd.onKeyUp = (e) ->
   e.preventDefault()
   code = e.code
-  code = 'c'+code if e.ctrlKey
-  code = 'a'+code if e.altKey
-  code = 's'+code if e.shiftKey
+  code = 'c' + code if e.ctrlKey
+  code = 'a' + code if e.altKey
+  code = 's' + code if e.shiftKey
   return @onkeyup e, code if @onkeyup
   macro = @rmap[code]
   notice 500, "u[#{code}]:#{macro}" if debug

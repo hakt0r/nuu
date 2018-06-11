@@ -11,7 +11,8 @@
     ["Crypto","crypto"],
     ["EventEmitter","events","EventEmitter"],
     ["flatfile","flat-file-db"],
-    ["$v","vectors"]
+    ["$v","vectors"],
+    ["$tag","tagscale"]
   ],
   "sources": [
     "objects",

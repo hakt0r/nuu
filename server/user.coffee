@@ -80,7 +80,7 @@ NET.on 'jump', (target,src) ->
 
 NUU.users = []
 
-UserDB = Db 'UserDb',
+UserDB = $tag.db 'UserDb',
   fields:
     online: no
     nick: ''
