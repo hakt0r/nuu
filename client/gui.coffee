@@ -93,8 +93,13 @@ $public class Window
     do @unfocus
     @$.css "display", "none"; @visible = no; @
   toggle:-> do @[if @visible then 'hide' else 'show']; @
-  focus:-> Kbd.grab @name, @keyHandler, @keyDownHandler, @pasteHandler; @
-  unfocus:-> Kbd.release @name; @
+  focus:->
+    Kbd.grab @,
+      onkeyup:   @keyHandler
+      onkeydown: @keyDownHandler
+      onpaste:   @pasteHandler
+    return @
+  unfocus:-> Kbd.release @; @
   keyHandler: (evt,code)=>
     switch code
       when @closeKey, 'Escape'

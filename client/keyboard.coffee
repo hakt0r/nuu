@@ -20,121 +20,148 @@
 
 ###
 
-$static 'Kbd', new class KeyboardInput extends EventEmitter
+$static 'Kbd', new EventEmitter
 
-  # source: mdn these keycodes should be available on all major platforms
-  workingKeycodes2018:["AltLeft","AltRight","ArrowDown","ArrowLeft","ArrowRight","ArrowUp","Backquote","Backslash","Backspace","BracketLeft","BracketRight","CapsLock","Comma","ContextMenu","ControlLeft","ControlRight","Convert","Copy","Cut","Delete","Digit0","Digit1","Digit2","Digit3","Digit4","Digit5","Digit6","Digit7","Digit8","Digit9","End","Enter","Equal","Escape","F1","F10","F11","F12","F13","F14","F15","F16","F17","F18","F19","F2","F20","F3","F4","F5","F6","F7","F8","F9","Find","Help","Home","Insert","IntlBackslash","KeyA","KeyB","KeyC","KeyD","KeyE","KeyF","KeyG","KeyH","KeyI","KeyJ","KeyK","KeyL","KeyM","KeyN","KeyO","KeyP","KeyQ","KeyR","KeyS","KeyT","KeyU","KeyV","KeyW","KeyX","KeyY","KeyZ","Minus","NonConvert","NumLock","Numpad0","Numpad1","Numpad2","Numpad3","Numpad4","Numpad5","Numpad6","Numpad7","Numpad8","Numpad9","NumpadAdd","NumpadDecimal","NumpadDivide","NumpadEnter","NumpadEqual","NumpadMultiply","NumpadSubtract","Open","OSLeft","OSRight","PageDown","PageUp","Paste","Pause","Period","PrintScreen","Props","Quote","ScrollLock","Select","Semicolon","ShiftLeft","ShiftRight","Slash","Space","Tab","Undo"]
+Kbd.init = ->
+  Kbd    = @
+  @help  = {}
+  @state = {}
+  @mmap  = {}
+  @rmap  = {}
+  @up    = {}
+  @dn    = {}
+  window.addEventListener 'keyup',   @onKeyUp.bind @
+  window.addEventListener 'keydown', @onKeyDown.bind @
+  for a in ["accel","retro","steerRight","steerLeft","boost"]
+    @macro a, @defaultMap[a], @d10[a], up: @setState(a,false), dn: @setState(a,true)
+  null
 
-  defaultMap:
-    boost:      'sArrowUp'
-    accel:      'ArrowUp'
-    retro:      'ArrowDown'
-    steerLeft:  'ArrowLeft'
-    steerRight: 'ArrowRight'
+# source: mdn these keycodes should be available on all major platforms
+Kbd.workingKeycodes2018 = ["AltLeft","AltRight","ArrowDown","ArrowLeft","ArrowRight","ArrowUp","Backquote","Backslash","Backspace","BracketLeft","BracketRight","CapsLock","Comma","ContextMenu","ControlLeft","ControlRight","Convert","Copy","Cut","Delete","Digit0","Digit1","Digit2","Digit3","Digit4","Digit5","Digit6","Digit7","Digit8","Digit9","End","Enter","Equal","Escape","F1","F10","F11","F12","F13","F14","F15","F16","F17","F18","F19","F2","F20","F3","F4","F5","F6","F7","F8","F9","Find","Help","Home","Insert","IntlBackslash","KeyA","KeyB","KeyC","KeyD","KeyE","KeyF","KeyG","KeyH","KeyI","KeyJ","KeyK","KeyL","KeyM","KeyN","KeyO","KeyP","KeyQ","KeyR","KeyS","KeyT","KeyU","KeyV","KeyW","KeyX","KeyY","KeyZ","Minus","NonConvert","NumLock","Numpad0","Numpad1","Numpad2","Numpad3","Numpad4","Numpad5","Numpad6","Numpad7","Numpad8","Numpad9","NumpadAdd","NumpadDecimal","NumpadDivide","NumpadEnter","NumpadEqual","NumpadMultiply","NumpadSubtract","Open","OSLeft","OSRight","PageDown","PageUp","Paste","Pause","Period","PrintScreen","Props","Quote","ScrollLock","Select","Semicolon","ShiftLeft","ShiftRight","Slash","Space","Tab","Undo"]
 
-  d10:
-    execute:          "Execute something"
-    accel:            "Accelerate"
-    retro:            "Decelerate"
-    steerLeft:        "Turn left"
-    steerRight:       "Turn right"
-    autopilot:        "Turn to target"
-    escape:           "Exit something"
-    boost:            "Boost"
+Kbd.defaultMap =
+  boost:      'sArrowUp'
+  accel:      'ArrowUp'
+  retro:      'ArrowDown'
+  steerLeft:  'ArrowLeft'
+  steerRight: 'ArrowRight'
 
-  help:  {}
-  state: {}
-  mmap:  {}
-  rmap:  {}
-  _up:   {}
-  _dn:   {}
+Kbd.d10 =
+  execute:    "Execute something"
+  accel:      "Accelerate"
+  retro:      "Decelerate"
+  steerLeft:  "Turn left"
+  steerRight: "Turn right"
+  autopilot:  "Turn to target"
+  escape:     "Exit something"
+  boost:      "Boost"
 
-  constructor:->
-    Kbd = @
-    $ =>
-      $('body').prepend @input$ = $ """<input type="text" id="nKeyboardInput">"""
-      window.addEventListener 'keydown', @onKeyDown
-      window.addEventListener 'keyup',   @onKeyUp
-      @input$.focus()
-    for a in ["accel","retro","steerRight","steerLeft","boost"]
-      @macro a, @defaultMap[a], @d10[a], up: @setState(a,false), dn: @setState(a,true)
-    null
-  grab:(name,@callbackHandler,@callbackHandlerUp,@callbackHandlerPaste)->
-    document.addEventListener 'paste', @callbackHandlerPaste if @callbackHandlerPaste
-  release:->
-    document.removeEventListener 'paste', @callbackHandlerPaste if @callbackHandlerPaste
-    delete @callbackHandlerPaste
-    delete @callbackHandlerUp
-    delete @callbackHandler
+Kbd.setState = (key,value)-> =>
+  @state[@mmap[key]] = value
+  rid = 0
+  rid = VEHICLE.relto.id if VEHICLE.relto
+  NET.state.write(VEHICLE,[
+    @state[@mmap["accel"]],
+    @state[@mmap["retro"]],
+    @state[@mmap["steerRight"]],
+    @state[@mmap["steerLeft"]],
+    @state[@mmap["boost"]],
+    0,0,rid])
 
-  setState: (key,value)-> =>
-    @state[@mmap[key]] = value
-    rid = 0
-    rid = VEHICLE.relto.id if VEHICLE.relto
-    NET.state.write(VEHICLE,[
-      @state[@mmap["accel"]],
-      @state[@mmap["retro"]],
-      @state[@mmap["steerRight"]],
-      @state[@mmap["steerLeft"]],
-      @state[@mmap["boost"]],
-      0,0,rid])
+Kbd.macro = (name,key,d10,func)->
+  NUU.settings.bind = {} unless NUU.settings.bind?
+  key = NUU.settings.bind[name] || key
+  console.log key, name, NUU.settings.bind[name]? if debug
+  @macro[name] = func
+  @bind key, name
+  @d10[name] = d10
 
-  macro:(name,key,d10,func)->
-    NUU.settings.bind = {} unless NUU.settings.bind?
-    key = NUU.settings.bind[name] || key
-    console.log key, name, NUU.settings.bind[name]? if debug
-    @macro[name] = func
-    @bind key, name
-    @d10[name] = d10
+Kbd.bind = (combo,macro,opt) ->
+  opt = @macro[macro] unless opt?
+  delete @rmap[combo]
+  delete @help[combo]
+  return console.log ':kbd', 'bind:opt:undefined', macro, key, combo, opt unless opt?
+  opt = up: opt if typeof opt is 'function'
+  key = combo.replace /^[cas]+/,''
+  return console.log ':kbd', 'bind:key:unknown', macro, key, combo, opt if -1 is @workingKeycodes2018.indexOf key
+  console.log ':kbd', 'bind', combo, opt if debug
+  @up[macro] = opt.up if opt.up?
+  @dn[macro] = opt.dn if opt.dn?
+  @mmap[macro] = combo
+  @rmap[combo] = macro
+  @help[combo] = macro
+  @state[key] = off
 
-  bind: (combo,macro,opt) =>
-    opt = @macro[macro] unless opt?
-    delete @rmap[combo]
-    delete @help[combo]
-    return console.log ':kbd', 'bind:opt:undefined', macro, key, combo, opt unless opt?
-    opt = up: opt if typeof opt is 'function'
-    key = combo.replace /^[cas]+/,''
-    return console.log ':kbd', 'bind:key:unknown', macro, key, combo, opt if -1 is @workingKeycodes2018.indexOf key
-    console.log ':kbd', 'bind', combo, opt if debug
-    @_up[macro] = opt.up if opt.up?
-    @_dn[macro] = opt.dn if opt.dn?
-    @mmap[macro] = combo
-    @rmap[combo] = macro
-    @help[combo] = macro
-    @state[key] = off
+Kbd.onKeyDown = (e) ->
+  # allow some browser-wide shortcuts that would otherwise not work
+  return if e.ctrlKey and e.code is 'KeyC'                if isClient
+  return if e.ctrlKey and e.code is 'KeyV'                if isClient
+  return if e.ctrlKey and e.code is 'KeyR'                if isClient
+  return if e.ctrlKey and e.code is 'KeyL'                if isClient
+  # allow the inspector; but only in debug mode ;)
+  return if e.ctrlKey and e.shiftKey and e.code is 'KeyI' if debug
+  e.preventDefault()
+  code = e.code
+  code = 'c'+code if e.ctrlKey
+  code = 'a'+code if e.altKey
+  code = 's'+code if e.shiftKey
+  return @onkeydown e, code if @onkeydown
+  return true if @onkeyup
+  macro = @rmap[code]
+  notice 500, "d[#{code}]:#{macro} #{e.code}" if debug
+  return if @state[code] is true
+  @state[code] = true
+  @dn[macro](e) if @dn[macro]?
 
-  onKeyDown: (e) =>
-    # allow some browser-wide shortcuts that would otherwise not work
-    return if e.ctrlKey and e.code is 'KeyC'                if isClient
-    return if e.ctrlKey and e.code is 'KeyV'                if isClient
-    return if e.ctrlKey and e.code is 'KeyR'                if isClient
-    return if e.ctrlKey and e.code is 'KeyL'                if isClient
-    # allow the inspector; but only in debug mode ;)
-    return if e.ctrlKey and e.shiftKey and e.code is 'KeyI' if debug
-    e.preventDefault()
-    code = e.code
-    code = 'c'+code if e.ctrlKey
-    code = 'a'+code if e.altKey
-    code = 's'+code if e.shiftKey
-    return @callbackHandler e, code if @callbackHandler
-    macro = @rmap[code]
-    notice 500, "d[#{code}]:#{macro} #{e.code}" if debug
-    return if @state[code] is true
-    @state[code] = true
-    @_dn[macro](e) if @_dn[macro]?
+Kbd.onKeyUp = (e) ->
+  e.preventDefault()
+  code = e.code
+  code = 'c'+code if e.ctrlKey
+  code = 'a'+code if e.altKey
+  code = 's'+code if e.shiftKey
+  return @onkeyup e, code if @onkeyup
+  macro = @rmap[code]
+  notice 500, "u[#{code}]:#{macro}" if debug
+  return if @state[code] is false
+  @state[code] = false
+  @up[macro](e) if @up[macro]?
 
-  onKeyUp: (e) =>
-    e.preventDefault()
-    code = e.code
-    code = 'c'+code if e.ctrlKey
-    code = 'a'+code if e.altKey
-    code = 's'+code if e.shiftKey
-    return if @callbackHandler
-    macro = @rmap[code]
-    notice 500, "u[#{code}]:#{macro}" if debug
-    return if @state[code] is false
-    @state[code] = false
-    @_up[macro](e) if @_up[macro]?
+Kbd.stackOrder = []
+Kbd.stackItem  = []
+
+Kbd.clearHooks = (key)->
+  document.removeEventListener 'paste', @onpaste if @onpaste
+  delete @onpaste
+  delete @onkeyup
+  delete @onkeydown
+  true
+
+Kbd.grab = (focus,opts)->
+  if @focus
+    @stackOrder.push @stackItem[@focus.name] =
+      focus:@focus
+      onkeydown:@onkeydown
+      onkeyup:@onkeyup
+      onpaste:@onpaste
+    do @clearHooks
+  @focus = focus; Object.assign @, opts
+  document.addEventListener 'paste', @onpaste if @onpaste
+  true
+
+Kbd.release = (focus)->
+  if @focus is focus
+    do @clearHooks
+    return true if @stackOrder.length is 0
+    item = @stackOrder.pop()
+    @grab item.focus, item
+    true
+  else if item = @stackItem[focus.name]
+    Array.splice idx, 0 if idx = @stackOrder.indexOf item
+    delete @stackItem[focus.name]
+    true
+  else false
+
+do Kbd.init
 
 Kbd.macro 'debug', 'sBackquote', 'Debug', ->
   window.debug = not debug
@@ -152,10 +179,10 @@ Kbd.macro 'weapPri6', 'Digit6', 'Set primary #6', -> VEHICLE.setWeap 5
 Kbd.macro 'weapPri7', 'Digit7', 'Set primary #7', -> VEHICLE.setWeap 6
 Kbd.macro 'weapPri8', 'Digit8', 'Set primary #8', -> VEHICLE.setWeap 7
 
-Kbd.macro 'weapNext',    'F1', 'Next weapon (primary)',       -> VEHICLE.nextWeap(NUU.player)
-Kbd.macro 'weapPrev',    'F2', 'Previous weapon (primary)',   -> VEHICLE.prevWeap(NUU.player)
-Kbd.macro 'weapNextSec', 'F3', 'Next weapon (secondary)',     -> VEHICLE.nextWeap(NUU.player,'secondary')
-Kbd.macro 'weapPrevSec', 'F4', 'Previous weapon (secondary)', -> VEHICLE.prevWeap(NUU.player,'secondary')
+Kbd.macro 'weapNext',    'F1', 'Next weapon (primary)',       -> VEHICLE.nextWeap NUU.player
+Kbd.macro 'weapPrev',    'F2', 'Previous weapon (primary)',   -> VEHICLE.prevWeap NUU.player
+Kbd.macro 'weapNextSec', 'F3', 'Next weapon (secondary)',     -> VEHICLE.nextWeap NUU.player, 'secondary'
+Kbd.macro 'weapPrevSec', 'F4', 'Previous weapon (secondary)', -> VEHICLE.prevWeap NUU.player, 'secondary'
 
 Kbd.macro 'primaryTrigger', 'Space', 'Primary trigger',
   dn:-> if f = NUU.player.primary.trigger then do f
