@@ -51,7 +51,30 @@ console.log """\n###############################################################
 
 #######################################################################################"""
 
-fs = require 'fs'
+# ██       ██████   ██████ ██   ██ ███████ ██ ██      ███████
+# ██      ██    ██ ██      ██  ██  ██      ██ ██      ██
+# ██      ██    ██ ██      █████   █████   ██ ██      █████
+# ██      ██    ██ ██      ██  ██  ██      ██ ██      ██
+# ███████  ██████   ██████ ██   ██ ██      ██ ███████ ███████
+
+fs = require 'fs'; require 'colors'
+lockPath = '/tmp/nuu.lock.' + ( process.env.CHGID || process.getuid() )
+if fs.existsSync lockPath
+  pid = parseInt fs.readFileSync lockPath, 'utf8'
+  cp = require 'child_process'
+  try
+    cp.execSync "while fuser -k #{lockPath}; do :; done >/dev/null 2>&1"
+    console.log 'lock', 'killed'.green, pid.toString().red
+  catch
+    console.log ':nuu', 'stale lockfile', pid
+fs.writeFileSync lockPath, process.pid
+fs.open lockPath, 0, ->
+
+# ███████ ███    ██ ██    ██ ██ ██████   ██████  ███    ██ ███    ███ ███████ ███    ██ ████████
+# ██      ████   ██ ██    ██ ██ ██   ██ ██    ██ ████   ██ ████  ████ ██      ████   ██    ██
+# █████   ██ ██  ██ ██    ██ ██ ██████  ██    ██ ██ ██  ██ ██ ████ ██ █████   ██ ██  ██    ██
+# ██      ██  ██ ██  ██  ██  ██ ██   ██ ██    ██ ██  ██ ██ ██  ██  ██ ██      ██  ██ ██    ██
+# ███████ ██   ████   ████   ██ ██   ██  ██████  ██   ████ ██      ██ ███████ ██   ████    ██
 
 global.$static   = (name,value) -> global[name] = value
 $static.list     = global
@@ -67,7 +90,12 @@ $static 'isServer', yes
 $static 'NET', {}
 $static 'NUU', {}
 
-## Load sources
+# ██       ██████   █████  ██████      ███████  ██████  ██    ██ ██████   ██████ ███████ ███████
+# ██      ██    ██ ██   ██ ██   ██     ██      ██    ██ ██    ██ ██   ██ ██      ██      ██
+# ██      ██    ██ ███████ ██   ██     ███████ ██    ██ ██    ██ ██████  ██      █████   ███████
+# ██      ██    ██ ██   ██ ██   ██          ██ ██    ██ ██    ██ ██   ██ ██      ██           ██
+# ███████  ██████  ██   ██ ██████      ███████  ██████   ██████  ██   ██  ██████ ███████ ███████
+
 deps =
   common : JSON.parse fs.readFileSync './common/build.json'
   client : JSON.parse fs.readFileSync './client/build.json'
@@ -88,6 +116,12 @@ NUU.deps = deps
 for lib in deps.server.sources
   require '../build/server/' + lib + '.js' if lib isnt 'server'
 
+# ██     ██ ███████ ██████  ███████ ███████ ██████  ██    ██ ███████ ██████
+# ██     ██ ██      ██   ██ ██      ██      ██   ██ ██    ██ ██      ██   ██
+# ██  █  ██ █████   ██████  ███████ █████   ██████  ██    ██ █████   ██████
+# ██ ███ ██ ██      ██   ██      ██ ██      ██   ██  ██  ██  ██      ██   ██
+#  ███ ███  ███████ ██████  ███████ ███████ ██   ██   ████   ███████ ██   ██
+
 ## Initialize express / setup WebSockets
 $websocket NUU.web = express()
 ## Setup Webserver
@@ -102,29 +136,21 @@ NUU.web.get '/',      NUU.splashPage false
 NUU.web.get '/intro', NUU.splashPage true
 NUU.web.get '/start', NUU.startPage()
 
-## Initialize Engine
-console.log ':nuu', 'initializing'.yellow
-NUU.init()
+# ███████ ███    ██  ██████  ██ ███    ██ ███████
+# ██      ████   ██ ██       ██ ████   ██ ██
+# █████   ██ ██  ██ ██   ███ ██ ██ ██  ██ █████
+# ██      ██  ██ ██ ██    ██ ██ ██  ██ ██ ██
+# ███████ ██   ████  ██████  ██ ██   ████ ███████
+
+$static '$release', JSON.parse fs.readFileSync './build/release.json'
+$release.banner = $release.v.green + $release.git.red
 
 NUU.chgid  = process.env.CHGID || false
 NUU.port   = process.env.PORT  || 9999
 NUU.addr   = process.env.ADDR  || '127.0.0.1'
 
-NUU.lockPath = '/tmp/nuu.lock.' + ( NUU.chgid || process.getuid() )
-
-if fs.existsSync NUU.lockPath
-  pid = parseInt fs.readFileSync NUU.lockPath, 'utf8'
-  cp = require 'child_process'
-  try
-    cp.execSync "while fuser -k #{NUU.lockPath}; do :; done >/dev/null 2>&1"
-    console.log 'lock', 'killed'.green, pid.toString().red
-  catch
-    console.log ':nuu', 'stale lockfile', pid
-fs.writeFileSync NUU.lockPath, process.pid
-fs.open NUU.lockPath, 0, ->
-
-$static '$release', JSON.parse fs.readFileSync './build/release.json'
-$release.banner = $release.v.green + $release.git.red
+console.log ':nuu', 'initializing'.yellow
+NUU.init()
 
 console.log 'http', 'listen'.yellow, NUU.addr.red + ':' + NUU.port.toString().magenta
 NUU.web.listen NUU.port, NUU.addr, ->
