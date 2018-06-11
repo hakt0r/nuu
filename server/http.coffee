@@ -137,7 +137,7 @@ NUU.jsoncastTo = (v,data) ->
 
 NUU.splashPage = (audio=no) ->
   audioTag = ""
-  audioTag = """<audio id="theme" controls autoplay><source src="data:audio/ogg;base64,#{fs.readFileSync('mod/nuu/soundtrack/nuutheme_mk4.ogg').toString 'base64'}" type="audio/ogg"</audio>""" if audio
+  audioTag = """<audio id="theme" controls autoplay><source src="data:audio/opus;base64,#{fs.readFileSync('mod/nuu/soundtrack/nuutheme_mk5.opus').toString 'base64'}" type="audio/ogg"</audio>""" if audio
   page = """
 <html><head>
   <title>nuu (v#{$version} - Gordon Cooper)</title>
