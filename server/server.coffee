@@ -131,10 +131,11 @@ NUU.web.use require('compression')()
 NUU.web.use require('cookie-parser')()
 NUU.web.use require('express-session') secret: 'what-da-nuu', saveUninitialized:no, resave:no
 NUU.web.use '/build', require('serve-static')('build',etag:no)
-NUU.web.use '/build', require('serve-index' )('build',etag:no)
-NUU.web.get '/',      NUU.splashPage false
-NUU.web.get '/intro', NUU.splashPage true
-NUU.web.get '/start', NUU.startPage()
+NUU.web.use '/build', require('serve-index' )('build',etag:no) if debug
+NUU.web.get '/excuse', NUU.splashPage false, true
+NUU.web.get '/',       NUU.splashPage false, false
+NUU.web.get '/intro',  NUU.splashPage true,  false
+NUU.web.get '/start',  NUU.startPage()
 
 # ███████ ███    ██  ██████  ██ ███    ██ ███████
 # ██      ████   ██ ██       ██ ████   ██ ██

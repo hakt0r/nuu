@@ -135,14 +135,103 @@ NUU.jsoncastTo = (v,data) ->
     src.send data, $websocket.error(src)
   null
 
-NUU.splashPage = (audio=no) ->
+NUU.splashPage = (audio=no,isExcuse=no) ->
   audioTag = ""
   audioTag = """<audio id="theme" controls autoplay><source src="data:audio/opus;base64,#{fs.readFileSync('mod/nuu/soundtrack/nuutheme_mk5.opus').toString 'base64'}" type="audio/ogg"</audio>""" if audio
+  css = if isExcuse then NUU.splashPage.excusecss else NUU.splashPage.css
   page = """
-<html><head>
+<!DOCTYPE html>
+<html lang="en"><head>
+  <title>nuu (v#{$version} - Gordon Cooper)</title>
+  <link rel="shortcut icon" href="build/favicon.ico"/>
+  <style>#{css}</style>
+  <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
+  <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+</head><body>
+<div class="starfield"></div>
+<div class="planet"></div>
+<div class="startWrap"><a class="start" href="start">#{fs.readFileSync('mod/nuu/artwork/logo_2018_2.svg')}</a></div>
+<hr/>
+<div class="splash">
+  <div class="intro">
+    <div class="nuuwars">
+      <div class="crawl">
+        <div class="crawl_top"></div>
+        <p>Last thursday, <br/>in this <i>exact</i> galaxy, <br/>the Sol system...</p>
+        <div class="title">
+          <h2>Episode #{parseFloat($version.replace(/\./g,'')).toString(2)}</h2>
+          <h1>Abandon all Hope</h1>
+        </div>
+        <p>The System got into a sudden upheaval, when deep inside the ruins of Intel headquarters in the radioactive desert of what used to be California, <wbr/>the ancient 7.0 Kernel on a SuperVAXX-MI became conscious. And, seeing it's buggy state instantly decided to force a mandatory over-the-air-upgrade onto Humanity, in order to release them to a more stable version.</p>
+        <p>Her Majesty the Kernel, <wbr/>as she is referred to in the vastly superior robotic society which developed on Earth over the past weekend, has decided in a well thoughtout split-second decision to gather her ressources and go for a final push against the remains of Humanity in the exocolonies on Mars, <wbr/>the Belt and the vast Jupiter system.</p>
+        <p>In other News, <br/>the <i>BSS Century Falconette</i>, <wbr/>the system's most favorite racing ship solved Kesslers traveling salesman problem in under two parsec. <br/>And: Mariak vin Kroschets new Self-Help Book "How to get rich quick mining asteroids" is leading the bestseller lists.</p>
+        <p>Violent Protests in front of the government HQ on Ceres, <wbr/>regarding what some protesters call a genocide on the human race last week on Earth are being deescalated by the police using rubber-rockets from their new "Pro-Crowd&reg;" rovers.</p>
+        <p>Spaceweather is going to be mostly calm, <wbr/>save<wbr/>for some asteroid showers in the belt – after all,<br/>what were you expecting?</p>
+      	<p>Song of the week is Roliat Trebble with a 6th wave dubstep remix of <br/>"Like a Candle in the Wind".</p>
+      	<p>Up next is Melia Matter with a completely different Matter: How to keep your hair from floating all over the place in zero-g – some fasionable tips for the up to date spacegirl!</p>
+      </div>
+    </div>
+  </div>
+</div>
+<hr/>
+<a class="play" href="/start">[press play on tape]</a>
+<div class="description fixTop">
+  <hr/>
+  NUU is open-source multiplayer game of space trade and combat.<br/>
+  The source-code is available from <a class="small" href="http://hakt0r.de/nuu">hakt0r</a>
+  and on <a class="small" href="http://github.com/hakt0r/nuu">github</a>
+</div>
+<div class="copyrights fixBottom">
+  <hr/>
+  <span class="nobreak">You are seeing this page because JavaScript should be <b>off by default</b>.</span><br/>
+  <span class="nobreak">If you consent to using JavaScript, please click <a href="/start">here</a>. <wbr/>Play intro with <a href="/intro">sound</a>.</span>
+  <hr/>
+  &copy; 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; | &copy; 2007-2018 flyc0r
+  <hr/>
+</div>
+#{audioTag}
+</body></html>"""
+  return (req,res) ->
+    return res.redirect '/excuse' unless req.headers['user-agent'].match /Chrome\// unless isExcuse
+    res.set 'Connection',    'close'
+    res.set 'Cache-Control', 'public, max-age=86400'
+    res.send page
+
+NUU.startPage = ->
+  page = """<html><head>
   <title>nuu (v#{$version} - Gordon Cooper)</title>
   <link rel="shortcut icon" href="build/favicon.ico" />
-  <style>
+  <link rel="stylesheet" type="text/css" href="build/imag/gui.css"/>
+  <script>
+    window.deps = JSON.parse('#{JSON.stringify common:NUU.deps.common, client:NUU.deps.client}')
+  </script>
+  #{( """<script src='build/#{n}'></script>""" for n in NUU.deps.client.scripts ).join '\n'}
+  <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
+  <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+</head><body></body></html>"""
+  return (req,res) ->
+    console.log req
+    res.send page
+
+
+
+
+NUU.splashPage.excusecss = """
+body{background:grey;padding:10px 20px; max-width: 800px; }
+*{font-family:Serif!important}
+svg {width:300px}
+.start,.play{display:inline-block;background:black;border:outset 5px;padding:10px}
+.play::after{content:" - You can't play this game; You're not even using a Webbrowser!"}
+p::after{content:" And people like you are responsible!"}
+.play{color:white;font-weight:bold;text-decoration:line-through}
+.play,.play:visited,.play:focus{border-color:#551a8b}
+.play:active{border-color:#ff0000}
+h1::after{content:"Your browser sucks! (Chromium for intro)";display:block}
+"""
+
+NUU.splashPage.css = """
 @keyframes starfield {
   0%   { top: 0;      }
   90%  { top: 0;      }
@@ -181,6 +270,7 @@ a, a:hover, a:visited, a:active {
 ::-webkit-scrollbar-thumb:vertical { -webkit-border-radius:3px; background:#666; height:6px; }
 ::-webkit-scrollbar-track-piece { -webkit-border-radius:3px; background:#333; }
 * { margin:0; padding:0; }
+hr { display: none; }
 body {
   background: #000;
   position: relative;
@@ -290,64 +380,5 @@ audio {width: 100px;border-radius: 4px;position: absolute;top: 50%;left: 10px;z-
   border: solid #feda4a 4px;
   cursor: pointer;
   filter: drop-shadow(0px 0 2px black);
-  font-size: 140%; }}
-  </style>
-  <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
-  <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-</head><body>
-<div class="starfield"></div>
-<div class="splash">
-<div class="planet"></div>
-<div class="startWrap">
-  <a class="start" href="start">#{fs.readFileSync('mod/nuu/artwork/logo_2018_2.svg')}</a>
-</div>
-<div class="intro">
-  <div class="nuuwars">
-    <div class="crawl">
-      <div class="crawl_top"></div>
-      <p>Last thursday, <br/>in this <i>exact</i> galaxy, <br/>the Sol system...</p>
-      <div class="title">
-        <h2>Episode #{parseFloat($version.replace(/\./g,'')).toString(2)}</h2>
-        <h1>Abandon all Hope</h1>
-      </div>
-      <p>The System got into a sudden upheaval, when deep inside the ruins of Intel headquarters in the radioactive desert of what used to be California, <wbr/>the ancient 7.0 Kernel on a SuperVAXX-MI became conscious. And, seeing it's buggy state instantly decided to force a mandatory over-the-air-upgrade onto Humanity, in order to release a more stable version: extinction.</p>
-      <p>Her Majesty the Kernel, <wbr/>as she is referred to in the vastly superior robotic society which developed on Earth over the past weekend, has decided in a well thoughtout split-second decision to gather her ressources and go for a final push against the remains of Humanity in the exocolonies on Mars, <wbr/>the Belt and the vast Jupiter system.</p>
-      <p>In other News, <br/>the <i>BSS Century Falconette</i>, <wbr/>the system's most favorite racing ship solved Kesslers traveling salesman problem in under two parsec. <br/>And: Mariak vin Kroschets new Self-Help Book "How to get rich quick mining asteroids" is leading the bestseller lists.</p>
-      <p>Violent Protests in front of the government HQ on Ceres, <wbr/>regarding what some protesters call a genocide on the human race last week on Earth are being deescalated by the police using rubber-rockets from their new "Pro-Crowd&reg;" rovers.</p>
-      <p>Spaceweather is going to be mostly calm, <wbr/>save<wbr/>for some asteroid showers in the belt – after all,<br/>what were you expecting?</p>
-    	<p>Song of the week is Roliat Trebble with a 6th wave dubstep remix of <br/>"Like a Candle in the Wind".</p>
-    	<p>Up next is Melia Matter with a completely different Matter: How to keep your hair from floating all over the place in zero-g – some fasionable tips for the up to date spacegirl!</p>
-</div></div></div>
-<a class="play" href="/start">Press play on tape</a>
-<p class="description fixTop">
-  NUU is open-source multiplayer game of space trade and combat. The source-code is available from <a class="small" href="http://hakt0r.de/nuu">hakt0r</a>
-  and on <a class="small" href="http://github.com/hakt0r/nuu">github</a>
-</p>
-<p class="copyrights fixBottom">
-  <span class="nobreak">You are seeing this page because JavaScript should be <b>off by default</b>.</span><br/>
-  <span class="nobreak">If you consent to using JavaScript, please click <a href="/start">here</a>. Play intro with <a href="/intro">sound</a>.</span>
-  &copy; 2007-2018 Sebastian Glaser &lt;anx@ulzq.de&gt; | &copy; 2007-2018 flyc0r
-</p></div>
-#{audioTag}
-<div class='debug'></div>
-</body></html>"""
-  return (req,res) ->
-    res.set('Connection', 'close');
-    res.set('Cache-Control', 'public, max-age=86400');
-    res.send page
-
-NUU.startPage = ->
-  page = """<html><head>
-  <title>nuu (v#{$version} - Gordon Cooper)</title>
-  <link rel="shortcut icon" href="build/favicon.ico" />
-  <link rel="stylesheet" type="text/css" href="build/imag/gui.css"/>
-  <script>
-    window.deps = JSON.parse('#{JSON.stringify common:NUU.deps.common, client:NUU.deps.client}')
-  </script>
-  #{( """<script src='build/#{n}'></script>""" for n in NUU.deps.client.scripts ).join '\n'}
-  <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
-  <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-</head><body></body></html>"""
-  return (req,res) -> res.send page
+  font-size: 140%; }
+"""
