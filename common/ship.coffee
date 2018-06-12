@@ -64,9 +64,9 @@ $obj.register class Ship extends $obj
   constructor: (opts) ->
     @hostile = []
     super opts
-    @slots = _.clone @slots
+    @slots = JSON.parse JSON.stringify @slots # FIXME :>
     @tplName = @name
-    @mockSystems() # fixme
+    @mockSystems() # FIXME :>
     @updateMods()
     @mount     = [false,false]; idx = 0
     @mountSlot = [false,false]
@@ -175,7 +175,7 @@ Ship::mockSystems = -> # equip fake weapons for development
   for k,slt of @slots.weapon when not slt.equip?
     continue if MockWeap.length is 0
     # slt.equip = new Outfit slt.default if slt.default
-    slt.equip = new Weapon MockWeap.shift()
+    slt.equip = new Weapon @, MockWeap.shift()
   for k,slt of @slots.structure when not slt.equip?
     slt.equip = new Outfit slt.default if slt.default
     #else slt.equip = new Outfit(Mock.structure[slt.size].shift())

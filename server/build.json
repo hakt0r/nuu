@@ -16,8 +16,6 @@
   ],
   "sources": [
     "objects",
-    "missile",
-    "drone",
     "db",
     "user",
     "engine",

@@ -52,3 +52,37 @@ class Worker
     @timer = setInterval callback, interval
 
 $static '$worker', new Worker TICK
+
+$worker.List = (worker)->
+  list = c = n = count = null
+  listWorker = (time)->
+    c = 0; n = 0
+    count = listWorker.count
+    list  = listWorker.list
+    worker.call at, time while ( at = list[c++] )?
+    null
+  listWorker.list  = []
+  listWorker.count = 0
+  listWorker.remove = (item)-> Array.remove @list, item
+  listWorker.add = (item)->
+    @list[@count++] = item
+    listWorker.remove = (item)-> @count--; Array.remove @list, item
+  $worker.push listWorker
+
+$worker.ReduceList = (worker)->
+  swap = []; list = c = n = count = null
+  listWorker = (time)->
+    c = 0; n = 0
+    count = listWorker.count
+    list  = listWorker.list
+    while ( at = list[c++] )?
+      swap[n++] = at if worker.call at, time
+    listWorker.list = swap;swap = list
+    listWorker.count = n
+    null
+  listWorker.list  = []
+  listWorker.count = 0
+  listWorker.add = (item)->
+    @list[@count++] = item
+    listWorker.remove = (item)-> @count--; Array.remove @list, item
+  $worker.push listWorker

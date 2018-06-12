@@ -40,12 +40,16 @@ $public class AI extends Ship
     @primarySlot = @slots.weapon[0]
     @primaryWeap = @slots.weapon[0].equip
     AI.list.push @
-    @changeStrategy()
+    @changeStrategy @strategy
+
+AI.worker = {}
 
 AI::changeStrategy = (strategy)->
-  @strategy = strategy   if strategy?
-  $worker.remove @worker if @worker
-  $worker.push   @worker = @[@strategy].bind @
+  AI.worker[@strategy].remove @ if @strategy
+  if strategy? and worker = AI.worker[strategy]
+    @strategy = strategy
+    worker.add @
+  return @
 
 AI::destructor = ->
   $worker.remove @worker if @worker
@@ -63,21 +67,23 @@ AI::primaryWeap  = null
 AI::autopilot    = null
 AI::escortTarget = null
 
-AI::attackPlayers = ->
-  do @update
+AI.worker.attackPlayers = $worker.List (time)->
+  @update time
   @attackPlayersTarget() if not @target or @target.destructing
   return 1000            unless @target
   if @inRange = 500 > abs distance = $dist @, @target
     v = NavCom.aim @, @target
     if v.fire and not @fire
+      @fire = true
       NET.weap.write('ai',0,@primarySlot,@,@target)
     else if @fire and not v.fire
+      @fire = false
       NET.weap.write('ai',1,@primarySlot,@,@target)
   else v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
   if v.setDir
     NET.steer.write @, 0, v.dir
     return null
-  { turn, turnLeft, @accel, @boost, @retro, @fire } = v
+  { turn, turnLeft, @accel, @boost, @retro } = v
   @left = turnLeft
   @right = turn and not turnLeft
   do @applyControlFlags if ( @flags isnt v.flags ) or v.setDir
@@ -97,8 +103,8 @@ AI::attackPlayersTarget = ->
   @target = closest
   null
 
-AI::approach = ->
-  do @update
+AI.worker.approach = $worker.List (time)->
+  @update time
   do @approachTarget unless @target
   return 1000        unless @target
   if @inRange = abs(distance = $dist(@,@target)) < 150
@@ -120,8 +126,8 @@ AI::approachTarget = ->
   @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
   console.log '::ai', "#{@name} to", @target.name if @target if debug
 
-AI::escort = ->
-  do @update
+AI.worker.escort = $worker.List (time)->
+  @update time
   @escortTarget() if not @target or @target.destructing or ( @target.hostile and @target.hostile.length > 0 )
   return 1000     unless @target
   if @inRange = abs(distance = $dist(@,@target)) < 150

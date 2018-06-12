@@ -162,7 +162,7 @@ NET.define 3,'WEAP',
       return console.log 'weap', 'missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
       action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
       console.log '$net', action, vehicle.id if debug
-      slot.equip[action](null,vehicle,slot,target)
+      slot.equip[action](null,target)
     server: (msg,src)->
       mode = msg[1]
       return unless vehicle = src.handle.vehicle
@@ -180,7 +180,7 @@ NET.define 3,'WEAP',
     server: (src,mode,slot,vehicle,target)->
       return console.log 'weap', 'nothing equipped'   unless equipped = slot.equip
       return console.log 'weap', 'no trigger/release' unless modeCall = equipped[if mode is 0 then 'trigger' else 'release']
-      modeCall src, vehicle, slot, target
+      modeCall src, target
       msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
       msg.writeUInt16LE target.id,  5

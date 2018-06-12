@@ -35,7 +35,7 @@ $public class Weapon extends Outfit
   color  : 'red'
   sprite : null
 
-  constructor: (name,opts={}) ->
+  constructor: (@ship,name,opts={}) ->
     tpl = Item.byName[name]
     @[k] = v for k,v of tpl
     @id = Weapon.count++
@@ -57,18 +57,19 @@ Weapon.hostility = (vehicle,target)->
        ██    ██   ██ ██   ██ ██      ██  ██  ██      ██   ██
        ██    ██   ██ ██   ██  ██████ ██   ██ ███████ ██   ██ ###
 
-Weapon.tracker = -> =>
-  return 3000 if not @ship? or @ship.DESTROYED
+Track = $worker.List (time)->
+  if not @ship? or @ship.DESTROYED
+    return
   unless @target
     @dir = 0
-    return null
+    return
   if not isNaN @target
     @dir = @target
-    return null
+    return
   else if @target.destructing
     @dir = 0
     @target = null
-    return null
+    return
   else
     td  = $v.heading(@target.p,@ship.p) * RAD
     tdd = -180 + $v.umod360 @ship.d + @dir - td
@@ -99,33 +100,23 @@ lineCircleCollide = (a, b, c, r) ->
 Weapon.Beam = ->
   @lock = false
   @dir = 0
-  @ship = d:0, DESTROYED: no # FIXME
   @release  = $void
   @duration = @stats.duration.$t * 100
   @range    = @stats.range || 300
-  $worker.push @tracker = Weapon.tracker.call @ if @turret
+  Track.add @ if @turret
   @release = =>
     @stop = true; @lock = false
     do @hide if isClient
     delete Weapon.beam[@ship.id]
     off
-  @trigger = (src,@ship,slot,@target) =>
+  @trigger = (src,@target) =>
     return if @lock; @lock = true; @stop = false
     Weapon.hostility @ship, @target
     do @show if isClient
     Weapon.beam[@ship.id] = @
     @ms = NUU.time()
     @tt = @ms + @duration
-    $worker.push (time)=>
-      return @release() if @stop or @tt < time
-      return null if isClient
-      @ship.update time
-      dir = NavCom.unfixAngle( @ship.d + @dir ) / RAD
-      bend = [ @ship.x + sin(dir) * @range, @ship.y - cos(dir) * @range ]
-      for @target in @ship.hostile
-        @target.update time
-        @target.hit @ship, @ if lineCircleCollide @ship.p, bend, @target.p, @target.size/2
-      null
+    BeamWorker.add @
     NUU.emit 'shot', @
     null
   Weapon.Beam.loadAssets.call @ if isClient
@@ -133,6 +124,19 @@ Weapon.Beam = ->
   @hide = Weapon.Beam.hide      if isClient
   null
 
+BeamWorker = $worker.ReduceList (time)->
+  if @stop or @tt < time
+    do @release
+    return false
+  return true if isClient
+  ship = @ship
+  ship.update time
+  dir = NavCom.unfixAngle( ship.d + @dir ) / RAD
+  bend = [ ship.x + sin(dir) * @range, ship.y - cos(dir) * @range ]
+  for target in ship.hostile
+    target.update time
+    target.hit ship, @ if lineCircleCollide ship.p, bend, target.p, target.size/2
+  true
 
 ### ██████  ██████   ██████       ██ ███████  ██████ ████████ ██ ██      ███████
     ██   ██ ██   ██ ██    ██      ██ ██      ██         ██    ██ ██      ██
@@ -140,16 +144,8 @@ Weapon.Beam = ->
     ██      ██   ██ ██    ██ ██   ██ ██      ██         ██    ██ ██      ██
     ██      ██   ██  ██████   █████  ███████  ██████    ██    ██ ███████ ███████ ###
 
-detector = (perp,weap,ms,tt,sx,sy,mx,my) -> (time)->
-  return off if tt < time
-  for target in perp.hostile
-    ticks = ( time - ms ) * TICKi
-    x = floor sx + mx * ticks
-    y = floor sy + my * ticks
-    continue if target.size < $dist (x:x,y:y), target
-    target.hit perp, weap if isServer
-    return off
-  return null
+class ProjectileVector
+  constructor:(@perp,@weap,@ms,@tt,@sx,@sy,@mx,@my)->
 
 Weapon.Projectile = ->
   Weapon.Projectile.loadAssets.call @  if isClient
@@ -158,27 +154,41 @@ Weapon.Projectile = ->
   @ppt    = @stats.speed * TICKi
   @dir    = 0
   @lock = @stop = false
-  $worker.push @tracker = Weapon.tracker.call @ if @turret
-  @emitter = (time)=>
-    @release() if not @target or @target.destructing
-    if @stop then ( @stop = @lock = false; return off )
-    @ship.update time
-    cs = cos d = (( @ship.d + @dir ) % 360 ) / RAD
-    sn = sin d
-    m = [ @ship.m[0] + cs * @ppt, @ship.m[1] + sn * @ppt ]
-    x = @ship.x # + slot.x * cs
-    y = @ship.y # + slot.y * sn
-    $worker.push detector   @ship, @, time, time + @ttl, x, y, m[0], m[1]    if isServer
-    new ProjectileAnimation @ship, @, time, time + @ttl, x, y, m[0], m[1], d if isClient
-    NUU.emit 'shot', @
-    @delay
-  @trigger = (src,@ship,slot,@target)=>
+  Track.add @ if @turret
+  @trigger = (src,@target)=>
     return if @lock; @lock = true; @stop = false
     Weapon.hostility @ship, @target
-    $worker.push @emitter
+    ProjectileEmitter.add @
     null
   @release = => @stop = true
   null
+
+ProjectileEmitter = $worker.ReduceList (time)->
+  @release() if not @target or @target.destructing
+  return stop = @lock = false if @stop
+  return true if @next > time
+  @next = time + @delay
+  ship = @ship
+  ship.update time
+  cs = cos d = (( ship.d + @dir ) % 360 ) / RAD
+  sn = sin d
+  m = [ ship.m[0] + cs * @ppt, ship.m[1] + sn * @ppt ]
+  x = ship.x # + slot.x * cs
+  y = ship.y # + slot.y * sn
+  ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, m[0], m[1] if isServer
+  new ProjectileAnimation ship, @, time, time + @ttl, x, y, m[0], m[1], d if isClient
+  NUU.emit 'shot', @
+
+ProjectileDetector = $worker.ReduceList (time)->
+  return false if @tt < time
+  for target in @perp.hostile
+    ticks = ( time - @ms ) * TICKi
+    x = floor @sx + @mx * ticks
+    y = floor @sy + @my * ticks
+    continue if target.size < $dist (x:x,y:y), target
+    target.hit @perp, @weap if isServer
+    return false
+  true
 
 ### ███    ███ ██ ███████ ███████ ██ ██      ███████
     ████  ████ ██ ██      ██      ██ ██      ██
@@ -196,13 +206,84 @@ $abstract 'Missile',
   init: $void
   toJSON: -> id:@id,key:@key,state:@state,target:@target.id,ttl:@ttl
 
-# client implements the simple case
-return unless isClient
+if isClient # client implements the simple case
 
-Weapon.Launcher =->
+  Weapon.Launcher =->
+    @release = $void
+    @trigger = $void
+
+  $obj.register class Missile extends $obj
+    @implements: [$Missile]
+    @interfaces: [$obj,Debris]
+
+  return
+
+Weapon.Launcher = ->
+  ammo = Item.byName[@stats.ammo.replace(/ /g,'')]
+  @trigger = switch ammo.type
+    when 'fighter'
+      ship = Item.byName[ammo.stats.ship.replace(/ /g,'')]
+      (src,target)=>
+        Weapon.hostility @ship, target
+        new Escort escortFor:@ship.id, tpl:ship.itemId, state:@ship.state.toJSON()
+    else (src,target)=>
+      Weapon.hostility @ship, target
+      new Missile source:@ship, target:target
+      setTimeout (=> new Missile source:@ship, target:target), 100
+      setTimeout (=> new Missile source:@ship, target:target), 200
+      setTimeout (=> new Missile source:@ship, target:target), 300
   @release = $void
-  @trigger = $void
 
 $obj.register class Missile extends $obj
   @implements: [$Missile]
-  @interfaces: [$obj,Debris]
+  @interfaces: [$obj]
+
+  constructor: (opts={})->
+    Object.assign @, opts
+    @turn = 6.0
+    @thrust = 1.4
+    sm = @source.m.slice()
+    sd = @source.d / RAD
+    @source.update time = NUU.time()
+    opts.state =
+      S: $moving
+      t: time
+      d: @source.d
+      x: @source.x
+      y: @source.y
+      m: [ sm[0] + cos(sd) * @thrust * 10, sm[1] + sin(sd) * @thrust * 10 ]
+    super opts
+    @ttl = NUU.time() + 10000
+    @needState = 0
+    @prevState = 0
+    @hitDist   = pow ( @size + @target.size ) / 2, 2
+    @prototype = Item.tpl[@tpl]
+    MissilePilot.add @
+
+MissilePilot = $worker.ReduceList (time)->
+  if time > @ttl
+    @destructor()
+    return false
+  @update @target.update()
+  dx = parseInt @target.x - @x
+  dy = parseInt @target.y - @y
+  dst = dx * dx + dy * dy
+  if @hitDist > dst
+    @target.hit @source, @prototype
+    NET.operation.write(@,'remove')
+    @destructor()
+    return false
+  dir = parseInt NavCom.fixAngle( atan2( dx, -dy ) * RAD )
+  dif = $v.smod( dir - @d + 180 ) - 180
+  if abs( dif ) > 10
+    @left  = -180 < dif < 0
+    @right = not @left
+    @needState = if @left then 1 else 2
+  else if @turn < abs(dif) < 2 * @turn
+    @left = @right = no
+    NET.steer.write @, 0, dir # steer sets @d
+    @needState = 3
+  else @needState = 4
+  @applyControlFlags() if @needState isnt @prevState
+  @prevState = @needState
+  true
