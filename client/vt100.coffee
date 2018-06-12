@@ -29,7 +29,7 @@ $public class VT100 extends Window
   promptActive: no
 
   constructor: (opts={}) ->
-    super
+    super name:'VT100'
     @$.addClass 'vt full'
     @body.append @input$ = $ """<div class="inputArea"></div>"""
     console.user = @write

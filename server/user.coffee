@@ -21,7 +21,9 @@
 ###
 
 NET.on 'login', NET.loginFunction = (msg,src) ->
+  console.log "__", msg
   if msg.match
+    console.log "__", UserDB.get msg
     unless user = UserDB.get msg
       console.log ':dbg', 'nx:user', msg if debug
       return src.json 'user.login.nx': true
@@ -80,7 +82,7 @@ NET.on 'jump', (target,src) ->
 
 NUU.users = []
 
-UserDB = $tag.db 'UserDb',
+$tag.db 'UserDB',
   fields:
     online: no
     nick: ''
@@ -100,11 +102,14 @@ UserDB = $tag.db 'UserDb',
 $public class User
   @byId: {}
   constructor: (src, user, pass) ->
-    console.log 'user', user, pass if debug
+    console.log 'user', user, pass # if debug
     unless user? and pass?
+      console.log 'user:nopw', user, UserDB.get user
       return @deny src, pass
+    console.log 'user', user, UserDB.get user
     unless @db = UserDB.get user
       return @register src, user, pass
+    console.log @db
     unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
       return @deny src, pass
     do @upgradeDb
@@ -117,7 +122,6 @@ $public class User
     @name = @db.nick
     @user = @db.user
     @ping = {}
-    @db = @db
     User.byId[@db.id] = src.handle = @
     id = NUU.users.push @; @id = --id
     vehicleType = 'Kestrel'
@@ -147,7 +151,7 @@ User::deny = (src, pass)->
   false
 
 User::register = (src, user, pass)->
-  @db = UserDb.create user, nick: user, pass: pass.pass, salt:pass.salt
+  @db = UserDB.create user, nick: user, pass: pass.pass, salt:pass.salt
   rec = UserDB.get user
   src.json 'user.login.register': user
   console.log 'user', 'register'.red, util.inspect rec if debug
