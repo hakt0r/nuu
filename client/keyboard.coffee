@@ -130,6 +130,7 @@ Kbd.stackOrder = []
 Kbd.stackItem  = []
 
 Kbd.clearHooks = (key)->
+  @focus = null
   document.removeEventListener 'paste', @onpaste if @onpaste
   delete @onpaste
   delete @onkeyup
@@ -137,38 +138,39 @@ Kbd.clearHooks = (key)->
   true
 
 Kbd.grab = (focus,opts)->
+  console.log ':kbd', 'grab', focus.name if debug
   if @focus
     unless @focus is focus and opts.onkeydown is @onkeydown and opts.onkeyup is @onkeyup and opts.onpaste is @onpaste
-      console.log ':kbd', 'obscure', @focus.name
+      console.log ':kbd', 'obscure', @focus.name if debug
       @stackOrder.push @stackItem[@focus.name] =
         focus:@focus
         onkeydown:@onkeydown
         onkeyup:@onkeyup
         onpaste:@onpaste
     else
-      console.log ':kbd', 'same', @focus.name
+      console.log ':kbd', 'same', @focus.name if debug
     do @clearHooks
   @focus = focus; Object.assign @, opts
   document.addEventListener 'paste', @onpaste if @onpaste
-  console.log ':kbd', 'grab', @focus.name
+  console.log ':kbd', 'grabbed', @focus.name if debug
   true
 
 Kbd.release = (focus)->
   if @focus is focus
-    console.log ':kbd', 'release_current', focus.name
+    console.log ':kbd', 'release_current', focus.name if debug
     do @clearHooks
     if @stackOrder.length is 0
-      console.log ':kbd', 'main-focus'
+      console.log ':kbd', 'main-focus' if debug
       return true
     item = @stackOrder.pop()
     @grab item.focus, item
-    console.log ':kbd', 'main' unless @onkeyup || @onkeydown || @onpaste
+    console.log ':kbd', 'main' unless @focus if debug
     true
   else if item = @stackItem[focus.name]
-    console.log ':kbd', 'release_obscured', focus.name
+    console.log ':kbd', 'release_obscured', focus.name if debug
     Array.splice idx, 0 if idx = @stackOrder.indexOf item
     delete @stackItem[focus.name]
-    console.log ':kbd', 'main' unless @onkeyup || @onkeydown || @onpaste
+    console.log ':kbd', 'main' unless @focus if debug
     true
   else false
 

@@ -74,7 +74,6 @@ window.notice = (timeout,msg) ->
 $public class Window
   constructor : (opts={}) ->
     Object.assign @, opts
-    console.log @, opts
     window[@name] = @ if @name
     $('body').append @$ = $ "<div class='window'></div>"
     @$.append @head = $ "<header>#{@title}</header>" if @title
