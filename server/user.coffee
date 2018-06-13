@@ -227,60 +227,64 @@ User::action = (t,mode) ->
   o.state.update time = NUU.time()
   t.state.update time
   dist  = $dist o, t
-  dists = $dist o, t.state
   zone  = o.size + t.size / 2
-  switch mode
-    when 'eva' then if o.name isnt 'Exosuit'
-      @enterVehicle @createVehicle('Exosuit'), 0, no
-    when 'launch'
-      if o.state.S is $orbit and @mountId is 0
-        @save @db.orbit = o.locked = no
-        o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
-      else if o.landedAt and @mountId is 0
-        NUU.emit 'ship:launch', o, o.landedAt
-        @save @db.landed = o.landedAt = o.locked = no
-        o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
-      else if @equip? and @equip.type is 'fighter bay'
-        @save @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
-      else if o.name isnt 'Exosuit'
-        @save @enterVehicle @createVehicle('Exosuit'), 0, no
-    when 'capture'
-      unless t.constructor.is.Collectable
-        console.log t.constructor.name, 'isnt Collectable'
-        return
-      if dist < max 200, zone
-        NUU.emit 'ship:collect', o, t
-        console.log 'user', o.id, 'collected', t.id, dist, t.size if debug
-        t.destructor()
-      else console.log 'user', 'capture', 'too far out', dist, o.size, t.size
-    when 'dock' then if dist < zone
-      return unless t.mount
-      console.log 'user', 'dock', t.id if debug
-      # TODO:hook: re-add ammo if fighter
-      # else add to inventory
-      o.destructor()
-      @enterVehicle t, 0, no
-    when 'land'
-      return if t.mount # cant attach to vehicles
-      if dist < zone
-        console.log 'user', 'land'.green, t.name if debug
-        o.setState S:$fixedTo,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
-        o.locked = yes
-        o.fuel = o.fuelMax
-        @db.landed = o.landedAt = t.name
-        @save()
-        NUU.emit 'ship:land', o.vehicle, t, o
-      else console.log 'user', 'land', 'too far', dist, dists, zone, t.state.toJSON()
-    when 'orbit'
-      if dist < t.size
-        console.log 'user', 'orbit', t.id if debug
-        o.locked = yes
-        o.setState S:$orbit,orb:dist,relto:t
-        @db.orbit = [t.name,o.state.toJSON()]
-        @save()
-      else console.log 'user', 'orbit', 'too far', dist, dists, zone, t.state.toJSON()
-    else console.log 'user', 'orbit/dock/land/enter', 'failed', mode, o.name, t.name
+  @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit'].includes mode
   null
+
+User::eva = (t,o,zone,dist)->
+  @enterVehicle @createVehicle('Exosuit'), 0, no if o.name isnt 'Exosuit'
+  null
+
+User::launch = (t,o,zone,dist)->
+  if o.state.S is $orbit and @mountId is 0
+    @save @db.orbit = o.locked = no
+    o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
+  else if o.landedAt and @mountId is 0
+    NUU.emit 'ship:launch', o, o.landedAt
+    @save @db.landed = o.landedAt = o.locked = no
+    o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
+  else if @equip? and @equip.type is 'fighter bay'
+    @save @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
+  else if o.name isnt 'Exosuit'
+    @save @enterVehicle @createVehicle('Exosuit'), 0, no
+  null
+
+User::capture = (t,o,zone,dist)->
+  unless t.constructor.is.Collectable
+    console.log t.constructor.name, 'isnt Collectable'
+    return
+  if dist < max 200, zone
+    NUU.emit 'ship:collect', o, t
+    console.log 'user', o.id, 'collected', t.id, dist, t.size if debug
+    t.destructor()
+  else console.log 'user', 'capture', 'too far out', dist, o.size, t.size
+
+User::dock = (t,o,zone,dist)->
+  return unless t.mount # needs to be mountable
+  return if dist < zone # too far
+  console.log 'user', 'dock', t.id if debug
+  # TODO:hook: re-add ammo if fighter
+  # else add to inventory
+  o.destructor()
+  @enterVehicle t, 0, no
+
+User::land = (t,o,zone,dist)->
+  return false if t.mount # cant attach to vehicles
+  return false unless dist < zone # too far
+  console.log 'user', 'land'.green, t.name if debug
+  o.setState S:$fixedTo,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
+  o.fuel = o.fuelMax
+  @db.landed = o.landedAt = t.name
+  @save()
+  NUU.emit 'ship:land', o.vehicle, t, o
+  true
+
+User::orbit = (t,o,zone,dist)->
+  return unless dist < t.size
+  console.log 'user', 'orbit', t.id if debug
+  o.setState S:$orbit,orb:dist,relto:t
+  @db.orbit = [t.name,o.state.toJSON()]
+  @save()
 
 Ship::setMount = (user,mountId,only=false)->
   @mount[user.mountId] = false if @mount[user.mountId] is user
