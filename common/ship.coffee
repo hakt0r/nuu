@@ -171,8 +171,8 @@ Ship::save = ->
   loadout.utility[k]   = ( slt.equip || name:false ).name for k,slt of @slots.utility
   @user.db.loadout[@tplName] = loadout
   @user.db.vehicle = @tplName
-  # console.log 'ship', 'saveFor', @user.db.nick, @tplName, util.inspect loadout
   @user.save()
+  console.log 'ship', 'saveFor', @user.db.nick, @tplName, util.inspect loadout
   null
 
 Ship::modSlot = (type,slot,item)->

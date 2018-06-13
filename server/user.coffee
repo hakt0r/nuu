@@ -195,9 +195,10 @@ User::createVehicle = (id,opts={})->
 User::enterVehicle = (vehicle,mountId,spawn)->
   @leaveVehicle @vehicle if @vehicle
   @mountId = ( @vehicle = vehicle ).setMount @, mountId, true
-  unless @vehicle.user
+  if not @vehicle.user or @vehicle.user.db.id is @db.id
     @vehicle.user = @
-    @vehicle.save() # sve loadout and ship
+    @vehicle.save() # save loadout and ship
+  else console.log 'owned-by', @vehicle.user.db.nick
   @sock.json
     switchShip: i:vehicle.id, m:@vehicle.mount.map (i)-> if i then i.db.nick else false
     hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
