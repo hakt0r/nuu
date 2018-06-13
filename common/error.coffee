@@ -24,6 +24,11 @@ Error.register
   _not_the_owner: "You don't own this ship."
   _nx_jump:       "404 - Target not found"
   _nx_target:     "404 - Target not found"
+  _invalid_msg:   "Invalid message!"
+  _no_mount:      "This is a teapot!"
+  _no_mounts:     "That seat is made up!"
+  _not_mounted:   "Your're not mounted. Don't ask me why..."
+  _no_steer:      "You can't steer this mount."
 
 Error.i18.de =
   _invalid_item:  "Gibbet nich!"
@@ -38,3 +43,8 @@ Error.i18.de =
   _not_the_owner: "Das is' nich' dein Schiff o0"
   _nx_jump:       "Wohin denn bitte?"
   _nx_target:     "Wen denn bitte?"
+  _invalid_msg:   "Kannst du kein Deutsch? Deine Zeichenkette ist keine!"
+  _no_mount:      "Der Stuhl ist kaputt... oder ausgedacht :P"
+  _no_mounts:     "Das ist ne Pulle Bier oder so und kein Raumschiff; da kann man jdf. nicht einsteigen!"
+  _not_mounted:   "Da brat' mir einer einen Storch, du stehst zwischen den Welten."
+  _no_steer:      "Das kann man nicht lenken."

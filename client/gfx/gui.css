@@ -33,33 +33,6 @@
   margin-left:37px;
   text-align:left; }
 
-.slot {
-  display:inline-block;
-  min-height:100px;
-  position:relative;
-  vertical-align:top;
-  width:115px; }
-
-.slot > span {
-  background:rgba(0,0,0,0.8);
-  border-radius:2px;
-  display:inline-block;
-  margin:2px;
-  max-width:106px;
-  overflow:hidden; }
-
-.slot button {
-  position:absolute;
-  right:2px;
-  top:2px; }
-
-.slot img {
-  height:inherit;
-  position:absolute;
-  top:19px;
-  width:100%;
-  z-index:-1; }
-
 .tooltip {
   background:#444;
   border:2px groove silver;
@@ -292,9 +265,6 @@
 .window.modal_list .list-item.active > label {
   background:#FF0; }
 
-.window.modal_list .list-item.slot > label {
-  width:115px; }
-
 .window.modal_list .red {
   color:red; }
 
@@ -428,3 +398,56 @@ canvas {
 h1,h2 {
   font-size:12px;
   font-weight:bold; }
+
+/*
+███████ ██       ██████  ████████ ███████
+██      ██      ██    ██    ██    ██
+███████ ██      ██    ██    ██    ███████
+     ██ ██      ██    ██    ██         ██
+███████ ███████  ██████     ██    ███████
+*/
+
+.slot {
+  position: relative;
+  vertical-align: top;
+  min-height: 64px;
+  border-top: green 1px dotted;
+  width: 235px; }
+
+.slot > span {
+  background:rgba(0,0,0,0.8);
+  border-radius:2px;
+  display:inline-block;
+  margin:2px;
+  max-width:106px;
+  overflow:hidden; }
+
+.slot button {
+  position:absolute;
+  right:2px;
+  top:2px; }
+
+.window.modal_list .list-item.slot > label {
+  width: unset;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: #00000099;
+  color: white;
+  text-align: left;
+  border-radius: 2px; }
+
+.window.modal_list .list-item.slot.active > label {
+  color: black;
+  background: #ffff00b0; }
+
+.slot img {
+  height:inherit;
+  max-width:64px;
+  z-index:-1; }
+
+.slot.list-header {
+  padding: 2px; background: green; min-height: 1em; }
+
+.slot.list-header label {
+  color:black; font-weight: bold; }

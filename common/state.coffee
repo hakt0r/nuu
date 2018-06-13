@@ -27,6 +27,7 @@ if isClient then $public class State
     time = NUU.time()
     Object.assign @, opts
     @o = if @o.id? then @o else $obj.byId[@o]
+    @o.locked = @lock?
     @o.state = @
     @o.update = @update.bind @
     @relto.update time if @relto? and @relto = $obj.byId[@relto]
@@ -35,6 +36,7 @@ if isClient then $public class State
 if isServer then $public class State
   constructor:(opts) ->
     @o = if ( id = opts.o ).id? then id else $obj.byId[id]
+    @o.locked = @lock?
     @t = time = NUU.time()
     @o.update time if @o.update
     Object.assign @, opts
@@ -168,6 +170,7 @@ State.register class State.fixed extends State
   update: $void
 
 State.register class State.fixedTo extends State
+  lock: yes
   update:(time)->
     @relto.update time || time = NUU.time()
     @o.x = @relto.x + @x
@@ -232,12 +235,14 @@ State.register class State.turn extends State
 
 State.register class State.orbit extends State
   json: yes
+  lock: yes
   constructor:(s) ->
     if s.stp # cloning from JSON
       Object.assign @, s
       @o = if @o.id? then @o else $obj.byId[@o]
       @relto = $obj.byId[@relto] if @relto? and not @relto.id?
       @o.state = @
+      @o.locked = yes
       @o.update = @update.bind @
     else
       @vel = @orb = @off = @stp = null

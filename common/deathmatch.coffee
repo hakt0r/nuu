@@ -24,27 +24,37 @@ DRONES_ACTIVE = yes
 DRONES_MAX    = 100
 ROIDS_MAX     = 100
 
+rules.client = ->
+  NUU.on 'ship:spawn', (ship) ->
+    ship.reset()
+
+  NET.on 'stats', (v) -> for id, stat of v
+    notice 5000, stat.name + " K: #{stat.k} D: #{stat.d}"
+
+
 rules.server = ->
   rules.stats = stats = {}
 
   NET.on 'shipname', (msg,src) ->
-    return unless typeof msg is 'string'
+    return src.error '_invalid_msg'   unless typeof msg is 'string'
     return src.error '_no_handle'     unless u = src.handle
     return src.error '_no_vehicle'    unless o = u.vehicle
+    return src.error '_not_the_owner' unless o.user is u
     s = u.db.loadout[v.tplName] || s = u.db.loadout[v.tplName] = {}
     s.name = o.name = msg
 
   NET.on 'inventory', (msg,src) ->
-    return unless typeof msg is 'string'
+    return src.error '_invalid_msg'   unless typeof msg is 'string'
     return src.error '_no_handle'     unless u = src.handle
     return src.error '_no_vehicle'    unless o = u.vehicle
+    return src.error '_not_the_owner' if msg is 'ship' and o.user isnt u
     src.json inventory: switch msg
       when 'ship' then o.inventory || o.inventory = {}
       else u.db.inventory || u.db.inventory = {}
     null
 
   NET.on 'unlocks', (msg,src) ->
-    return unless typeof msg is 'string'
+    return src.error '_invalid_msg'   unless typeof msg is 'string'
     return src.error '_no_handle'     unless u = src.handle
     src.json unlocks: u.db.unlocks || u.db.unlocks = {}
     null
@@ -76,7 +86,7 @@ rules.server = ->
         victim.respawn()
     if perp.inhabited then perp.mount.map (user)-> if user
       stats[user.db.nick].k++
-      i = user.db.unlocks; if v = i[victim.tplName] then i[victim.tplName]++ else i[victim.tplName] = 1
+      i = user.db.unlocks; if v = i[victim.tplName] then i[victim.tplName]++ else i[victim.tplName] = 1; user.save()
       console.log '::dm', 'kill '.green, user.db.nick.green, '['+perp.name.yellow+']', stats[user.db.nick].k.toString().green, stats[user.db.nick].d.toString().red
     NUU.jsoncast stats: stats
 
@@ -90,24 +100,16 @@ rules.server = ->
     null
 
   NUU.on 'ship:collect', (v,t,o)->
+    name = t.name.replace /[\[\]]/g, ''
     v.mount.map (user)->
       return unless user
-      console.log '::dm', 'collect', user.db.nick, t.name
-      i = user.db.unlocks
-      if v = i[t.name] then i[t.name]++ else i[t.name] = 1
+      console.log '::dm', 'collect', user.db.nick, name
+      i = user.db.unlocks; if v = i[name] then i[name]++ else i[name] = 1; user.save()
       null
     null
 
   Asteroid.autospawn max: ROIDS_MAX
   AI.autospawn max: DRONES_MAX if DRONES_ACTIVE
-
-rules.client = ->
-
-  NUU.on 'ship:spawn', (ship) ->
-    ship.reset()
-
-  NET.on 'stats', (v) -> for id, stat of v
-    notice 5000, stat.name + " K: #{stat.k} D: #{stat.d}"
 
 rules.stars = [
   [ 0,   Star,    'Sol',                 'orange05',              0,           $fixed ]

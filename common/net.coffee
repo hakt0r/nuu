@@ -116,7 +116,9 @@ NET.define 7,'STEER',
       msg.writeUInt16LE value, 1
       NET.send msg.toString 'binary'
     server:(o,idx,value)->
-      if idx is 0 then o.d = value
+      if idx is 0
+        return console.log '::st','dir','locked' if o.locked
+        o.d = value
       else if s = o.mountSlot[idx]
            if e = s.equip then e.target = value = ( 360 + value - o.d ) % 360
       else return false
@@ -140,9 +142,9 @@ NET.define 7,'STEER',
     server:(msg,src)->
       return src.error '_no_handle'     unless u = src.handle
       return src.error '_no_vehicle'    unless o = u.vehicle
-      return unless m = o.mount
-      return if -1 is idx = m.indexOf u
-      return if -1 is ['helm','weap'].indexOf t = o.mountType[idx] # FIXME:cache
+      return src.error '_no_mounts'     unless m = o.mount
+      return src.error '_not_mounted' if -1 is idx = m.indexOf u
+      return src.error '_no_steer'    if -1 is ['helm','weap'].indexOf t = o.mountType[idx] # FIXME:cache
       NET.steer.write o, idx, ( msg.readUInt16LE 1 ) % 360
 
 NET.steer.setDir = 0

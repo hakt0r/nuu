@@ -23,7 +23,7 @@
 NUU.symbol = Launcher:'➜➤', Beam:'⌇', Projectile:'•', turret: '⦿', helm:'☸', passenger:'♿'
 
 Weapon.guiSymbol = (e,u)->
-  s = NUU.symbol[e.extends||e]
+  s = NUU.symbol[e.extends||e] || ''
   s = if s.length is 1 then s else if e.type is 'fighter bay' then s[1] else s[0]
   s += NUU.symbol.turret if e.turret
   s = s + '☢' if e.name and e.name.match 'Cheaters'
@@ -40,7 +40,7 @@ Weapon.guiName = (e)->
   n = n.replace 'Cannon', ''
   n = n.replace 'Cheaters', '' if n.match 'Cheaters'
   n = n.replace /.*Systems/, ''
-  while m = n.match /([^ ])([A-Z])/
+  while m = n.match /([^ ])([A-Z][a-z])/
     n = n.replace m[0], m[1] + ' ' + m[2]
   return n.trim() + s
 
@@ -183,32 +183,28 @@ $public class ModalListWindow extends Window
     @$.find("*").addClass 'noselect'
     null
   keyHandler: (evt,code)=>
-    list = @$.find('.list-item')
+    list = @$.find('.list-item').toArray()
     cur = @$.find('.list-item.active').first()
     if cur.length is 0
       cur.addClass 'active'
       cur = $ list.first()
-    top = cur.parent().offset().top + 10
+    index = list.indexOf cur[0]
+    count = list.length
     switch code
       when @closeKey, 'Escape'
         @close(); p = @
         p.close() while p = p.parent
       when 'Enter'
         do cur[0].action if cur[0].action
-      when 'PageUp'
-        next = list.first(); list.removeClass 'active'; next.addClass 'active'
-        next.parent()[0].scroll top: next.offset().top - top
-      when 'PageDown'
-        next = list.last();  list.removeClass 'active'; next.addClass 'active'
-        next.parent()[0].scroll top: next.offset().top - top
-      when 'ArrowUp'
-        next = if cur[0] is list.first()[0] then list.last() else cur.prev()
-        list.removeClass 'active'; next.addClass 'active'; cur = next
-        next.parent()[0].scroll top: next.offset().top - top
-      when 'ArrowDown'
-        next = if cur[0] is list.last()[0] then list.first() else cur.next()
-        list.removeClass 'active'; next.addClass 'active'; cur = next
-        next.parent()[0].scroll top: next.offset().top - top
+      when 'PageUp'    then next = $ list.shift()
+      when 'PageDown'  then next = $ list.pop()
+      when 'ArrowUp'   then next = $ list[( count + index - 1 ) % count]
+      when 'ArrowDown' then next = $ list[( index + 1 ) % count]
+    return unless next
+    $(list).removeClass 'active'
+    next.addClass 'active'
+    next.parent()[0].scrollTo top:next.position().top
+    return
 
 class Object.editor extends ModalListWindow
   render:(key,val) => switch typeof val

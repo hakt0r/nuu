@@ -98,12 +98,14 @@ Production.attach = (stellar)->
   Production.all.add stellar
   stellar.zone = zone
 
+$obj.byName = {}
 $obj.register class Stellar extends $obj
   @interfaces: [$obj,Stellar]
   constructor:(opts)->
     super opts
     @lastCycle = @nextCyle = 0
     @name = "#{@constructor.name} [#{@id}]" unless @name
+    $obj.byName[@name] = @
     Production.attach @
   destructor:->
     @zone.detach @ if @zone

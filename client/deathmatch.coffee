@@ -47,67 +47,93 @@ Window.Ships = class DebugShipWindow extends ModalListWindow
     Render.Ship.call @, key, val, @close.bind @ # if @filter[val.name]
     null
 
+NET.queryJSON = (opts,callback)->
+  p = new Promise (resolve,reject)->
+    key = Object.keys(opts)[0]
+    clear = =>
+      NET.removeListener 'e', onerror
+      NET.removeListener key, ondone
+    NET.json.write opts
+    NET.on key, ondone  = (data)-> do clear; resolve data
+    NET.on 'e', onerror =    (e)-> do clear; if reject then reject e else resolve null
+  p.then callback
+  return p
+
 Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
   constructor: (@parent,@type,@slot) ->
-    @title = "Select: #{@type} (#{@slot.size})"
-    super name:'slots', title:'Slot selection'
+    super name:'slots', title:"Select: #{@type} (#{@slot.size})"
+  fetch: (done)->
     collect = (list,size) =>
       r = []
-      switch size
-        when 'large'  then map = [list.large,list.medium,list.small]
-        when 'medium' then map = [list.medium,list.small]
-        when 'small'  then map = [list.small]
-      for l in map
-        r = r.concat Object.keys l
-      return r
-    list = collect(Item.byType[@type],@slot.size)
-    @addItem name for name in list
-    @$.find('.list-item').first().addClass 'active'
+      r = r.concat Object.keys l for l in switch size
+        when 'large'  then [list.large,list.medium,list.small]
+        when 'medium' then [list.medium,list.small]
+        when 'small'  then [list.small]
+      return r.filter (i)=> @unlocks[i]?
+    NET.queryJSON unlocks:'', (@unlocks)=>
+      done collect Item.byType[@type], @slot.size if @unlocks
+      @close() unless @unlocks
+    null
 
-  addItem:(name)->
+  render:(idx,name)->
+    @body.append x = $ """
+      <div class="list-item slot"><label>#{name}</label><span></span></div>
+    """
     tpl = Item.byName[name]
-    @body.append x = $ """<div class="list-item slot"><label>#{name}</label><span></span></div>"""
     l = x.find("span")
     l.append "#{k}: #{v}<br/>" for k,v of tpl.stats
     x.prepend img = new Image
     x.on 'click', x[0].action = =>
-      NET.json.write modSlot: item:tpl.itemId, type:@type, slot:@slot.idx
-      clear = => NET.removeListener 'modSlot', onsuccess; NET.removeListener 'e', onerror
-      NET.on 'e',       onerror   = => clear(); @close()
-      NET.on 'modSlot', onsuccess = => clear(); @close()
+      NET.queryJSON modSlot: item:tpl.itemId, type:@type, slot:@slot.idx, (data)=>
+        do @close
+        @parent.changeSlot data if data
+      null
     img.width = 32; img.height = 32
     img.src = '/build/imag/loading.png'
     Cache.get '/build/outfit/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)=> img.src = url
 
 Window.Equipment = class EquipmentWindow extends ModalListWindow
   constructor: (@vehicle=VEHICLE)->
-    super name:'equip', title:'Equipment'
-    if typeof @vehicle is 'string'
-      @vehicle = Item.byType.ship[@vehicle]
-    for type, slots of @vehicle.slots
-      for id, slot of slots
-        @mkslot type, slot
-    @$.find('.list-item').first().addClass 'active'
-
-  mkslotsel: (type,slot) -> =>
-    new Window.SlotSelection @, type, slot
-
-  mkslot: (type,slot) ->
-    x = $ """
-    <div class="list-item slot">
-      <label>#{type} (#{slot.size})</label>
+    @vehicle = Item.byType.ship[@vehicle] if typeof @vehicle is 'string'
+    @subject = @vehicle.slots
+    super name:'equip', title:'Equipment for ' + @vehicle.name
+  render: (type,slots) ->
+    @body.append """
+    <div class="list-header slot">
+      <label>#{type} (#{slots.length + 1})</label>
+    </div>"""
+    for id, slot of slots
+      @renderSlot type, id, slot
+    null
+  renderSlot: (type,id,slot) ->
+    readableType = (type,size)->
+      readableType.icon[size] + readableType.icon[type]
+    readableType.icon = weapon:"✛", utility:"⚒", structure: "⛨", small:"S", medium:"M", large:"L"
+    @body.append x = $ """
+    <div id="slot_#{type}_#{id}" class="list-item slot">
+      <label>#{readableType type, slot.size}: </label>
       <span class='equip'></span>
     </div>"""
-    x.on 'click', x[0].action = @mkslotsel type, slot
-    if e = slot.equip
-      x.find('.equip').append "
-        #{e.name}<br/>
-        size: #{e.size}<br/>
-        mass: #{e.stats.mass}"
-      x.prepend img = new Image
-      img.src = '/build/imag/loading.png'
-      Cache.get '/build/outfit/store/' + ( e.info.gfx_store || e.sprite ) + '.png', (url)=> img.src = url
-    x.appendTo @body
+    x.on 'click', x[0].action = @slotSelection type, slot
+    return unless e = slot.equip
+    x.find('label').append ' ' + Weapon.guiName e
+    x.find('.equip').append "
+      size: #{e.size}<br/>
+      mass: #{e.stats.mass}"
+    x.prepend img = new Image
+    img.src = '/build/imag/loading.png'
+    Cache.get '/build/outfit/store/' + ( e.info.gfx_store || e.sprite ) + '.png', (url)=> img.src = url
+    return x
+  slotSelection: (type,slot) -> =>
+    new Window.SlotSelection @, type, slot
+  changeSlot: (data) ->
+    console.log 'changeSlot', data
+    type = data.type; id = data.slot
+    slot = @subject[type][id]
+    @vehicle.modSlot type, slot, data.item
+    old = $ "#slot_#{type}_#{id}"
+    old.replaceWith @renderSlot type, id, slot
+    true
 
 Window.Station = class DebugBuildWindow extends ModalListWindow
   name: 'dbg_build'
