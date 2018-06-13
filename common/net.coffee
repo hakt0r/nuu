@@ -138,8 +138,8 @@ NET.define 7,'STEER',
         return unless e = s.equip
         e.target = value
     server:(msg,src)->
-      return unless u = src.handle
-      return unless o = u.vehicle
+      return src.error '_no_handle'     unless u = src.handle
+      return src.error '_no_vehicle'    unless o = u.vehicle
       return unless m = o.mount
       return if -1 is idx = m.indexOf u
       return if -1 is ['helm','weap'].indexOf t = o.mountType[idx] # FIXME:cache

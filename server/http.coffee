@@ -89,6 +89,7 @@ $static '$websocket', (app,options={}) ->
     null
   app.ws "/nuu", (src, req) ->
     src.json = (msg) -> src.send (NET.JSON + JSON.stringify msg), $websocket.error(src)
+    src.error = (key) -> src.send (NET.JSON + JSON.stringify e:Error.byKey[key]), $websocket.error(src)
     src.on "message", src.router = NET.awaitLogin(src)
     src.on "error", $websocket.error(src)
     # lag and jitter emulation # src.on "message", (msg) -> setTimeout (-> NET.route(src)(msg)), 100 # + Math.floor Math.random() * 40
@@ -211,9 +212,7 @@ NUU.startPage = ->
   <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 </head><body></body></html>"""
-  return (req,res) ->
-    console.log req
-    res.send page
+  return (req,res) -> res.send page
 
 
 

@@ -64,11 +64,14 @@ $obj.register class Ship extends $obj
   constructor: (opts) ->
     @hostile = []
     super opts
-    @slots = JSON.parse JSON.stringify @slots # FIXME :>
     @tplName = @name
-    @mockSystems() # FIXME :>
+    @slots = JSON.parse JSON.stringify @slots # FIXME :>
+    idx = 0; ( slot.idx = idx++ for slot in @slots.structure )
+    idx = 0; ( slot.idx = idx++ for slot in @slots.utility   )
+    idx = 0
+    @loadSytems opts.loadout
     @updateMods()
-    @mount     = [false,false]; idx = 0
+    @mount     = [false,false]
     @mountSlot = [false,false]
     @mountWeap = [false,false]
     @mountType = ['helm','passenger']
@@ -99,7 +102,7 @@ $obj.register class Ship extends $obj
     @armour = @armourMax
     @fuel   = @fuelMax
 
-  toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl,name:@name
+  toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl,name:@name,loadout:@loadout
 
 ###
 Object.defineProperty Ship::, 'd',
@@ -161,6 +164,35 @@ Ship::updateMods = -> # calculate mods
     return
   null
 
+Ship::save = ->
+  loadout = weapon:[], structure:[], utility:[]
+  loadout.weapon[k]    = ( slt.equip || name:false ).name for k,slt of @slots.weapon
+  loadout.structure[k] = ( slt.equip || name:false ).name for k,slt of @slots.structure
+  loadout.utility[k]   = ( slt.equip || name:false ).name for k,slt of @slots.utility
+  @user.db.loadout[@tplName] = loadout
+  @user.db.vehicle = @tplName
+  # console.log 'ship', 'saveFor', @user.db.nick, @tplName, util.inspect loadout
+  @user.save()
+  null
+
+Ship::loadSytems = (loadout)->
+  # console.log 'loadSytems', util.inspect loadout
+  return do @mockSystems unless loadout
+  for k,slt of @slots.weapon
+    equip = loadout.weapon[k]
+    continue unless slt.default or equip
+    try slt.equip = new Weapon @, if equip then equip else slt.default
+    catch e then console.error 'weap', e, equip
+  for k,slt of @slots.structure
+    equip = loadout.structure[k]
+    continue unless slt.default or equip
+    slt.equip = new Outfit if equip then equip else slt.default
+  for k,slt of @slots.utility
+    equip = loadout.utility[k]
+    continue unless slt.default or equip
+    slt.equip = new Outfit if equip then equip else slt.default
+  null
+
 Ship::mockSystems = -> # equip fake weapons for development
   MockWeap = ["CheatersLaserCannon","CheatersRagnarokBeam","EnygmaSystemsSpearheadLauncher","HeavyRipperTurret","CheatersDroneFighterBay"]
   Mock =
@@ -182,3 +214,4 @@ Ship::mockSystems = -> # equip fake weapons for development
   for k,slt of @slots.utility when not slt.equip?
     slt.equip = new Outfit slt.default if slt.default
     #else slt.equip = new Outfit(Mock.utility[slt.size].shift())
+  null

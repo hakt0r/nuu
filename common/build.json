@@ -1,6 +1,7 @@
 [
   "buffer",
   "engine",
+  "error",
   "worker",
   "objects",
   "stellar",

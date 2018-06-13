@@ -29,15 +29,15 @@ rules.server = ->
 
   NET.on 'shipname', (msg,src) ->
     return unless typeof msg is 'string'
-    return unless u = src.handle
-    return unless o = u.vehicle
+    return src.error '_no_handle'     unless u = src.handle
+    return src.error '_no_vehicle'    unless o = u.vehicle
     s = u.db.loadout[v.tplName] || s = u.db.loadout[v.tplName] = {}
     s.name = o.name = msg
 
   NET.on 'inventory', (msg,src) ->
     return unless typeof msg is 'string'
-    return unless u = src.handle
-    return unless o = u.vehicle
+    return src.error '_no_handle'     unless u = src.handle
+    return src.error '_no_vehicle'    unless o = u.vehicle
     src.json inventory: switch msg
       when 'ship' then o.inventory || o.inventory = {}
       else u.db.inventory || u.db.inventory = {}
@@ -45,7 +45,7 @@ rules.server = ->
 
   NET.on 'unlocks', (msg,src) ->
     return unless typeof msg is 'string'
-    return unless u = src.handle
+    return src.error '_no_handle'     unless u = src.handle
     src.json unlocks: u.db.unlocks || u.db.unlocks = {}
     null
 

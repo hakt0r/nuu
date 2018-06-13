@@ -25,6 +25,7 @@ NET.login = (name, pass, callback, register=no) ->
   new NET.Connection name, pass, callback, register
 NET.register = (name, pass, callback) -> NET.login name, pass, callback, yes
 
+NET.on 'e', (message) -> notice 1000, Error.byId[message]
 NET.on 'sync', (opts) -> NUU.sync opts
 
 NUU.sync = (list,callback) ->

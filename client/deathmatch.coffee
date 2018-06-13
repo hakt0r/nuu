@@ -48,8 +48,8 @@ Window.Ships = class DebugShipWindow extends ModalListWindow
     null
 
 Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
-  constructor: (@parent,type,slot) ->
-    @title = "Select: #{type} (#{slot.size})"
+  constructor: (@parent,@type,@slot) ->
+    @title = "Select: #{@type} (#{@slot.size})"
     super name:'slots', title:'Slot selection'
     collect = (list,size) =>
       r = []
@@ -60,7 +60,7 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
       for l in map
         r = r.concat Object.keys l
       return r
-    list = collect(Item.byType[type],slot.size)
+    list = collect(Item.byType[@type],@slot.size)
     @addItem name for name in list
     @$.find('.list-item').first().addClass 'active'
 
@@ -70,6 +70,11 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
     l = x.find("span")
     l.append "#{k}: #{v}<br/>" for k,v of tpl.stats
     x.prepend img = new Image
+    x.on 'click', x[0].action = =>
+      NET.json.write modSlot: item:tpl.itemId, type:@type, slot:@slot.idx
+      clear = => NET.removeListener 'modSlot', onsuccess; NET.removeListener 'e', onerror
+      NET.on 'e',       onerror   = => clear(); @close()
+      NET.on 'modSlot', onsuccess = => clear(); @close()
     img.width = 32; img.height = 32
     img.src = '/build/imag/loading.png'
     Cache.get '/build/outfit/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)=> img.src = url

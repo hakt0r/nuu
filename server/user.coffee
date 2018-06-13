@@ -21,9 +21,7 @@
 ###
 
 NET.on 'login', NET.loginFunction = (msg,src) ->
-  console.log "__", msg
   if msg.match
-    console.log "__", UserDB.get msg
     unless user = UserDB.get msg
       console.log ':dbg', 'nx:user', msg if debug
       return src.json 'user.login.nx': true
@@ -32,44 +30,57 @@ NET.on 'login', NET.loginFunction = (msg,src) ->
   null
 
 NET.on 'switchMount', (msg,src) ->
-  return unless u = src.handle
-  return unless o = u.vehicle
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
   o.setMount u, parseInt msg
   null
 
+# TODO: mark old ship for autodestruction or sth
+# anyways it's cool if it floats around for a bit
+# but if it isn't used it will have to go eventually right?
+# maybe when the user spawns his next ship up to the (imaginary) ship limit?
+# o.destructor() if o.mount[0] is u.db.id
+
 NET.on 'switchShip', (msg,src) ->
-  return unless u = src.handle
-  return unless o = u.vehicle
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
   vehicle = u.createVehicle msg
-  # o.destructor() if o.mount[0] is u.db.id
   u.enterVehicle vehicle, 0, no
   null
 
+NET.on 'modSlot', (msg,src) ->
+  console.log 'modSlot', msg
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_not_the_owner' unless o.user = u
+  return src.error '_not_landed'    unless o.landedAt
+  return src.error '_no_slot_type'  unless t = o.slots[msg.type]
+  return src.error '_no_slot'       unless s = t[msg.slot]
+  old = s.equip # old.remove() TODO
+  if msg.type is 'weapon'
+    i = new Weapon @, Item.tpl[msg.item].name
+  else i = new Outfit Item.tpl[msg.item].name
+  s.equip = i
+  o.save()
+  NUU.jsoncastTo o, 'modSlot'
+  null
+
 NET.on 'build', (msg,src) ->
-  return unless u = src.handle
-  return unless v = u.vehicle
-  unless s = v.state.S is $orbit
-    console.log ':bld', 'not in orbit'
-    return
-  unless b = Item.byType.station[msg]
-    console.log ':bld', 'not a valid Station:', msg
-    return
-  unless p = v.state.relto.buildRoot
-    console.log ':bld', 'no buildRoot: not here!'
-    return
-  e =
-  # checks
-  $ = new b state:v.state.toJSON()
-  console.log ':bld', b.name, p
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_not_in_orbit'  unless s = o.state.S is $orbit
+  return src.error '_invalid_item'  unless b = Item.byType.station[msg]
+  return src.error '_not_here'      unless p = o.state.relto.buildRoot
+  # Create Item and inherit the creator's state
+  $ = new b state:o.state.toJSON()
+  console.log ':bld', b.name, p     if debug
 
 NET.on 'jump', (target,src) ->
-  return unless o = src.handle.vehicle
-  return unless target = $obj.byId[parseInt target]
-  # fuel cost
-  console.log o.fuel, $dist o, target
-  return unless o.fuel > 500
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_nx_target'     unless target = $obj.byId[parseInt target]
+  return src.error '_no_fuel'       unless o.fuel > 500
   o.fuel -= 500; NET.health.write o
-  # the jump
   o.accel = o.boost = o.retro = o.left = o.right = no
   target.update()
   o.setState
@@ -132,6 +143,10 @@ $public class User
     console.log 'user', @db.nick.green, 'joined'.green, @db.id, vehicleType
     true
 
+User::save = ->
+  UserDB.set @db.nick, @db
+  console.log 'save', @db.nick, @db
+
 User::upgradeDb = (src)->
   @db.inventory = {} unless @db.inventory
   @db.unlocks = {} unless @db.unlocks
@@ -162,12 +177,10 @@ User::part = (user) ->
   NUU.emit 'user:left', @ unless spawn
 
 User::createVehicle = (id,state)->
-  tpl = Ship.byName[id] || Ship.byId[id]
+  tpl = Ship.byName[id]
   return console.error 'noship$', id unless tpl?
-  if @vehicle
-    state = @vehicle.state.toJSON()
-  vehicle = new Ship tpl:tpl, state:state, iff:[Math.random()],
-    loadout:@db.loadout
+  state = @vehicle.state.toJSON() if @vehicle
+  vehicle = new Ship tpl:tpl, state:state, iff:[Math.random()], loadout:@db.loadout[Ship.byTpl[tpl]], user:@
   @sock.json sync:add:[vehicle.toJSON()]
   console.log 'user', 'ship', @db.nick.green, vehicle.id
   vehicle
@@ -175,6 +188,9 @@ User::createVehicle = (id,state)->
 User::enterVehicle = (vehicle,mountId,spawn)->
   @leaveVehicle @vehicle if @vehicle
   @mountId = ( @vehicle = vehicle ).setMount @, mountId, true
+  unless @vehicle.user
+    @vehicle.user = @
+    @vehicle.save() # sve loadout and ship
   @sock.json
     switchShip: i:vehicle.id, m:@vehicle.mount.map (i)-> if i then i.db.nick else false
     hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile

@@ -69,6 +69,7 @@ setInterval ( =>
 window.notice = (timeout,msg) ->
   msg = [msg] if typeof msg is 'string'
   Notice.queue.push new Notice line, timeout for line in msg
+  null
 
 $public class Window
   constructor : (opts={}) ->
