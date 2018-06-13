@@ -44,8 +44,11 @@ NET.on 'switchMount', (msg,src) ->
 NET.on 'switchShip', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
   return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_not_landed'    unless o.landedAt
   vehicle = u.createVehicle msg
+  vehicle.landedAt = o.landedAt
   u.enterVehicle vehicle, 0, no
+  o.destructor()
   null
 
 NET.on 'modSlot', (msg,src) ->
@@ -239,10 +242,12 @@ User::launch = (t,o,zone,dist)->
   if o.state.S is $orbit and @mountId is 0
     @save @db.orbit = o.locked = no
     o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
+    NUU.jsoncastTo o, launch:yes
   else if o.landedAt and @mountId is 0
     NUU.emit 'ship:launch', o, o.landedAt
     @save @db.landed = o.landedAt = o.locked = no
     o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
+    NUU.jsoncastTo o, launch:yes
   else if @equip? and @equip.type is 'fighter bay'
     @save @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
   else if o.name isnt 'Exosuit'
@@ -276,7 +281,8 @@ User::land = (t,o,zone,dist)->
   o.fuel = o.fuelMax
   @db.landed = o.landedAt = t.name
   @save()
-  NUU.emit 'ship:land', o.vehicle, t, o
+  @sock.json landed: t.id
+  NUU.emit 'ship:land', @db.nick, o.name, t.name
   true
 
 User::orbit = (t,o,zone,dist)->

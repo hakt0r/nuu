@@ -31,7 +31,33 @@ Window.MainMenu = class MainMenu extends ModalListWindow
       <label>#{val.name}</label>
       <span>#{val.description}</span>
       </div>"""
+    entry[0].action = val
     null
+
+NET.on 'launch', -> VEHICLE.landedAt = VEHICLE.orbit = null
+NET.on 'landed', (id)-> new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
+
+Window.DockingMenu = class DockingMenu extends ModalListWindow
+  name: 'dock'
+  closeKey: 'KeyQ'
+  constructor:(@stel)->
+    super title: 'Docked to ' + @stel.name
+  fetch: (done)-> done DockingMenu.root
+  render: (key,val)->
+    @body.append entry = $ """
+      <div class="list-item menu-item noselect">
+      <label>#{val.name}</label>
+      <span>#{val.description}</span>
+      </div>"""
+    entry[0].action = val
+    null
+
+DockingMenu.root =
+  shipyard: -> do Kbd.macro.ships
+  loadout:  -> do Kbd.macro.equip
+  undock:   ->
+    do Kbd.macro.launch
+    @close()
 
 Window.Ships = class DebugShipWindow extends ModalListWindow
   name: 'dbg_ship'
@@ -144,10 +170,11 @@ Window.Station = class DebugBuildWindow extends ModalListWindow
     Render.Station.call @,key, val, @close.bind @
     null
 
-Kbd.macro 'main',   'KeyO',  'Show main menu',      -> new Window.MainMenu
-Kbd.macro 'ships',  'cKeyS', 'Show ship menu',      -> new Window.Ships
-Kbd.macro 'equip',  'aKeyS', 'Show equipment menu', -> new Window.Equipment
-Kbd.macro 'build',  'sKeyS', 'Show build menu',     -> new Window.Station
+Kbd.macro 'main',      'KeyO', 'Show main menu',      -> new Window.MainMenu
+Kbd.macro 'dockMenu', 'aKeyO', 'Show dock menu',      -> new Window.DockingMenu o if o = VEHICLE.landedAt
+Kbd.macro 'build',     'KeyB', 'Show build menu',     -> new Window.Station
+Kbd.macro 'ships',       null, 'Show ship menu',      -> new Window.Ships
+Kbd.macro 'equip',       null, 'Show equipment menu', -> new Window.Equipment
 
 Kbd.macro 'rename', 'F11',  'Rename ship', ->
   vt.prompt 'Shipname', (name) -> NET.json.write set:ship_name:name
@@ -186,8 +213,6 @@ Render =
     bBuild.click -> close NET.json.write build: item.name
 
 MainMenu.root =
-  build:    -> Kbd.macro.build
-  shipyard: -> Kbd.macro.ships
-  loadout:  -> Kbd.macro.equip
-  help:     -> Kbd.macro.help
-  settings: -> Kbd.macro.settings
+  help:     -> do Kbd.macro.help
+  license:  -> do Kbd.macro.license
+  settings: -> do Kbd.macro.settings

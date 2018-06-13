@@ -73,7 +73,7 @@ Kbd.macro = (name,key,d10,func)->
   key = NUU.settings.bind[name] || key
   console.log key, name, NUU.settings.bind[name]? if debug
   @macro[name] = func
-  @bind key, name
+  @bind key, name if key
   @d10[name] = d10
 
 Kbd.bind = (combo,macro,opt) ->
@@ -137,14 +137,16 @@ Kbd.clearHooks = (key)->
   true
 
 Kbd.grab = (focus,opts)->
-  if @focus is focus
-    unless opts.onkeydown is @onkeydown and opts.onkeyup is @onkeyup and opts.onpaste is @onpaste
+  if @focus
+    unless @focus is focus and opts.onkeydown is @onkeydown and opts.onkeyup is @onkeyup and opts.onpaste is @onpaste
       console.log ':kbd', 'obscure', @focus.name
       @stackOrder.push @stackItem[@focus.name] =
         focus:@focus
         onkeydown:@onkeydown
         onkeyup:@onkeyup
         onpaste:@onpaste
+    else
+      console.log ':kbd', 'same', @focus.name
     do @clearHooks
   @focus = focus; Object.assign @, opts
   document.addEventListener 'paste', @onpaste if @onpaste
@@ -155,7 +157,9 @@ Kbd.release = (focus)->
   if @focus is focus
     console.log ':kbd', 'release_current', focus.name
     do @clearHooks
-    return true if @stackOrder.length is 0
+    if @stackOrder.length is 0
+      console.log ':kbd', 'main-focus'
+      return true
     item = @stackOrder.pop()
     @grab item.focus, item
     console.log ':kbd', 'main' unless @onkeyup || @onkeydown || @onpaste

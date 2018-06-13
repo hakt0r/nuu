@@ -194,8 +194,7 @@ $public class ModalListWindow extends Window
       when @closeKey, 'Escape'
         @close(); p = @
         p.close() while p = p.parent
-      when 'Enter'
-        do cur[0].action if cur[0].action
+      when 'Enter'     then cur[0].action.call @ if cur[0].action
       when 'PageUp'    then next = $ list.shift()
       when 'PageDown'  then next = $ list.pop()
       when 'ArrowUp'   then next = $ list[( count + index - 1 ) % count]
