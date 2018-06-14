@@ -115,6 +115,7 @@ module.exports = (destinationFile,callback)->
     delete d.mission if d.mission
 
     for t,slots of d.slots
+      d.slots[t] = [slots] unless Array.isArray slots
       for k,v of slots when v.$t
         v.default = v.$t.replace(/[^a-zA-Z]/g,'')
         delete v.$t
