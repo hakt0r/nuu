@@ -219,10 +219,10 @@ if isClient # client implements the simple case
   return
 
 Weapon.Launcher = ->
-  ammo = Item.byName[@stats.ammo.replace(/ /g,'')]
+  ammo = Item.byName[@stats.ammo]
   @trigger = switch ammo.type
     when 'fighter'
-      ship = Item.byName[ammo.stats.ship.replace(/ /g,'')]
+      ship = Item.byName[ammo.stats.ship]
       (src,target)=>
         Weapon.hostility @ship, target
         new Escort escortFor:@ship.id, tpl:ship.itemId, state:@ship.state.toJSON()
