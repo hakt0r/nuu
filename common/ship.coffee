@@ -142,27 +142,29 @@ Ship::updateMods = -> # calculate mods
   @thrust    = @thrust  / 100
 
   # add/exchange model-worker
-  add = null
   $worker.remove @model if @model
-  lastUpdate = 0
-  $worker.push @model = (time)=>
-    return 1000 if @destructing
-    # return 1000 if @fuel <= 0
-    @fuel += @fuelRegen || 0.5
-    @fuel -= max 0, @state.a if @state.acceleration
-    unless @shield is @shieldMax and @energy is @energyMax
-      @energy = min @energyMax, @energy + @reactorOut
-      @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
-      @energy -= add
-    @fuel = @fuelMax if @fuel > @fuelMax
-    @fuel = 0        if @fuel <= 0
-    return unless isServer
-    @setState S:$moving if @fuel is 0 and @state.acceleration
-    return unless @mount[0] and lastUpdate + 3000 < time
-    NET.health.write @
-    lastUpdate = time
-    return
+  @lastUpdate = 0
+  ShipModel.add @
   null
+
+ShipModel = $worker.ReduceList (time)->
+  return if @destructing
+  # return 1000 if @fuel <= 0
+  add = null
+  @fuel += @fuelRegen || 0.5
+  @fuel -= max 0, @state.a if @state.acceleration
+  unless @shield is @shieldMax and @energy is @energyMax
+    @energy = min @energyMax, @energy + @reactorOut
+    @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
+    @energy -= add
+  @fuel = @fuelMax if @fuel > @fuelMax
+  @fuel = 0        if @fuel <= 0
+  return unless isServer
+  @setState S:$moving if @fuel is 0 and @state.acceleration
+  return unless @mount[0] and @lastUpdate + 3000 < time
+  NET.health.write @
+  @lastUpdate = time
+  true
 
 Ship::save = ->
   loadout = weapon:[], structure:[], utility:[]
