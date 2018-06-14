@@ -27,6 +27,8 @@ NET.register = (name, pass, callback) -> NET.login name, pass, callback, yes
 
 NET.on 'e', (message) -> notice 1000, Error.byId[message]
 NET.on 'sync', (opts) -> NUU.sync opts
+NET.on 'launch',      -> VEHICLE.landedAt = VEHICLE.orbit = null
+NET.on 'landed',  (id)-> new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
 
 NUU.sync = (list,callback) ->
   if list.del
@@ -41,6 +43,18 @@ NUU.sync = (list,callback) ->
 NUU.firstSync = (opts,callback)->
   @player = new User opts
   Sprite.start => @start callback
+
+NET.queryJSON = (opts,callback)->
+  p = new Promise (resolve,reject)->
+    key = Object.keys(opts)[0]
+    clear = =>
+      NET.removeListener 'e', onerror
+      NET.removeListener key, ondone
+    NET.json.write opts
+    NET.on key, ondone  = (data)-> do clear; resolve data
+    NET.on 'e', onerror =    (e)-> do clear; if reject then reject e else resolve null
+  p.then callback
+  return p
 
 class NET.Connection
   constructor: (@name,@pass,callback,@register)->

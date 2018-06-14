@@ -29,13 +29,14 @@ Window.MainMenu = class MainMenu extends ModalListWindow
     @body.append entry = $ """
       <div class="list-item menu-item noselect">
       <label>#{val.name}</label>
-      <span>#{val.description}</span>
+      <span>#{val.description||''}</span>
       </div>"""
     entry[0].action = val
     null
-
-NET.on 'launch', -> VEHICLE.landedAt = VEHICLE.orbit = null
-NET.on 'landed', (id)-> new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
+MainMenu.root =
+  help:     -> do Kbd.macro.help
+  license:  -> do Kbd.macro.license
+  settings: -> do Kbd.macro.settings
 
 Window.DockingMenu = class DockingMenu extends ModalListWindow
   name: 'dock'
@@ -47,43 +48,31 @@ Window.DockingMenu = class DockingMenu extends ModalListWindow
     @body.append entry = $ """
       <div class="list-item menu-item noselect">
       <label>#{val.name}</label>
-      <span>#{val.description}</span>
+      <span>#{val.description||''}</span>
       </div>"""
     entry[0].action = val
     null
-
 DockingMenu.root =
   shipyard: -> do Kbd.macro.ships
   loadout:  -> do Kbd.macro.equip
   undock:   ->
     do Kbd.macro.launch
     @close()
+    null
 
-Window.Ships = class DebugShipWindow extends ModalListWindow
-  name: 'dbg_ship'
+Window.Ships = class Shipyard extends ModalListWindow
+  name: 'ship'
   title: 'Ships'
   subject: Item.byType.ship
   closeKey: 'sKeyS'
-  # fetch:(done)->
-  #   NET.json.write unlocks:''
-  #   NET.once 'unlocks', (@filter)=>
-  #     window.UNLOCKS = @filter
-  #     done @subject
-  render: (key,val)->
-    Render.Ship.call @, key, val, @close.bind @ # if @filter[val.name]
+  fetch:(done)->
+    NET.queryJSON unlocks:'', (@filter)=>
+      window.UNLOCKS = @filter
+      done @subject
     null
-
-NET.queryJSON = (opts,callback)->
-  p = new Promise (resolve,reject)->
-    key = Object.keys(opts)[0]
-    clear = =>
-      NET.removeListener 'e', onerror
-      NET.removeListener key, ondone
-    NET.json.write opts
-    NET.on key, ondone  = (data)-> do clear; resolve data
-    NET.on 'e', onerror =    (e)-> do clear; if reject then reject e else resolve null
-  p.then callback
-  return p
+  render: (key,val)->
+    Render.Ship.call @, key, val, @close.bind @ if @filter[val.name]
+    null
 
 Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
   constructor: (@parent,@type,@slot) ->
@@ -118,18 +107,15 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
     img.src = '/build/imag/loading.png'
     Cache.get '/build/outfit/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)=> img.src = url
 
-Window.Equipment = class EquipmentWindow extends ModalListWindow
+Window.Loadout = class Loadout extends ModalListWindow
   constructor: (@vehicle=VEHICLE)->
     @vehicle = Item.byType.ship[@vehicle] if typeof @vehicle is 'string'
     @subject = @vehicle.slots
-    super name:'equip', title:'Equipment for ' + @vehicle.name
+    super name:'equip', title:'Loadout for ' + @vehicle.name
   render: (type,slots) ->
     @body.append """
-    <div class="list-header slot">
-      <label>#{type} (#{slots.length + 1})</label>
-    </div>"""
-    for id, slot of slots
-      @renderSlot type, id, slot
+      <div class="list-header">#{type} (#{slots.length + 1})</div>"""
+    @renderSlot type, id, slot for id, slot of slots
     null
   renderSlot: (type,id,slot) ->
     readableType = (type,size)->
@@ -161,20 +147,10 @@ Window.Equipment = class EquipmentWindow extends ModalListWindow
     old.replaceWith @renderSlot type, id, slot
     true
 
-Window.Station = class DebugBuildWindow extends ModalListWindow
-  name: 'dbg_build'
-  title: 'Station'
-  subject: Item.byType.station
-  closeKey: 'aKeyS'
-  render: (key,val)->
-    Render.Station.call @,key, val, @close.bind @
-    null
-
-Kbd.macro 'main',      'KeyO', 'Show main menu',      -> new Window.MainMenu
-Kbd.macro 'dockMenu', 'aKeyO', 'Show dock menu',      -> new Window.DockingMenu o if o = VEHICLE.landedAt
-Kbd.macro 'build',     'KeyB', 'Show build menu',     -> new Window.Station
-Kbd.macro 'ships',       null, 'Show ship menu',      -> new Window.Ships
-Kbd.macro 'equip',       null, 'Show equipment menu', -> new Window.Equipment
+Kbd.macro 'main',      'KeyO', 'Main Menu',     -> new Window.MainMenu
+Kbd.macro 'dockMenu', 'aKeyO', 'Facility Menu', -> new Window.DockingMenu o if o = VEHICLE.landedAt
+Kbd.macro 'ships',       null, 'Shipyard',      -> new Window.Ships VEHICLE.landedAt?
+Kbd.macro 'equip',       null, 'Loadout',       -> new Window.Loadout VEHICLE,
 
 Kbd.macro 'rename', 'F11',  'Rename ship', ->
   vt.prompt 'Shipname', (name) -> NET.json.write set:ship_name:name
@@ -187,16 +163,14 @@ Render =
     sprite = item.sprite
     sprite = parent.sprite if item.extends and item.extends.match and ( item.extends isnt item.name ) and parent = Item.byName[item.extends]
     @body.append entry = $ """
-      <div class="list-item select-ship">
+      <div id="ship_select_#{name}" class="list-item ship-select noselect">
       <label>#{item.name}</label>
-      <div id="ship_select_#{name}" class="ship-select noselect">
         <img class="ship_comm" src="build/ship/#{sprite}/#{sprite}_comm.png"></img>
         <button class="switch">Switch</button>
         <button class="loadout">Loadout</button>
-      </div>
       </div>"""
     bLoadout = entry.find 'button.loadout'
-    bLoadout.click -> new EquipmentWindow item.name
+    bLoadout.click -> new Loadout item.name
     bSwitch = entry.find 'button.switch'
     bSwitch.click -> close NET.json.write switchShip: item.name
   Station: (name,item,close)->
@@ -211,8 +185,3 @@ Render =
       </div>"""
     bBuild = entry.find 'button.build'
     bBuild.click -> close NET.json.write build: item.name
-
-MainMenu.root =
-  help:     -> do Kbd.macro.help
-  license:  -> do Kbd.macro.license
-  settings: -> do Kbd.macro.settings

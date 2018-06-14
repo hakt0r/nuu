@@ -24,20 +24,21 @@
   font-family:monospace;
   white-space:pre; }
 
-.ship-select {
-  height:32px;
-  margin-top:1px;
-  padding:5px; }
-
-.ship-select h2,.ship-select p {
-  margin-left:37px;
-  text-align:left; }
+.red { color:red; }
 
 .tooltip {
   background:#444;
   border:2px groove silver;
   position:relative;
   visibility:hidden; }
+
+/*
+██     ██ ██ ███    ██ ██████   ██████  ██     ██
+██     ██ ██ ████   ██ ██   ██ ██    ██ ██     ██
+██  █  ██ ██ ██ ██  ██ ██   ██ ██    ██ ██  █  ██
+██ ███ ██ ██ ██  ██ ██ ██   ██ ██    ██ ██ ███ ██
+ ███ ███  ██ ██   ████ ██████   ██████   ███ ███
+*/
 
 .window {
   background:rgba(0,0,0,0.9);
@@ -54,7 +55,8 @@
   position:fixed;
   right:10%;
   text-align:center;
-  top:10%; }
+  top:10%;
+  }
 
 .window #game img {
   display:block;
@@ -123,7 +125,7 @@
 
 .window button {
   border:solid #ccc;
-  border-radius:5px;
+  border-radius: 4px;
   color:#000;
   float:right;
   font-size:11px;
@@ -131,7 +133,8 @@
   line-height:10px;
   margin-left:2px;
   outline:none;
-  padding:3px; }
+  padding: 2px;
+  }
 
 .window button.disabled {
   background:grey; }
@@ -167,7 +170,8 @@
 
 .window img.ship_comm {
   float:left;
-  width:32px; }
+  z-index: -1;
+  }
 
 .window p {
   font-size:12px;
@@ -230,15 +234,32 @@
   transform:translate(-50%,-50%);
   width:fit-content; }
 
-.window.modal_list {
-  background:rgba(0,0,0,0.9);
-  border:rgba(0,255,0,0.9) solid 1px;
-  left:7px;
-  max-width:260px;
-  text-align:left; }
+/*
+███    ███  ██████  ██████   █████  ██          ██      ██ ███████ ████████
+████  ████ ██    ██ ██   ██ ██   ██ ██          ██      ██ ██         ██
+██ ████ ██ ██    ██ ██   ██ ███████ ██          ██      ██ ███████    ██
+██  ██  ██ ██    ██ ██   ██ ██   ██ ██          ██      ██      ██    ██
+██      ██  ██████  ██████  ██   ██ ███████     ███████ ██ ███████    ██
+*/
 
-.window.modal_list * {
-  color:green; }
+.window.modal_list {
+  background: rgba(0, 0, 0, 0.95);
+  border: none; /* rgba(0,255,0,0.9) solid 1px; */
+  left:7px;
+  max-width: 280px;
+  text-align:left;
+  }
+
+.window.modal_list button {
+  background: #31313117;
+  border: solid 1px;
+  height: 15px;
+  color: white;
+  }
+
+.window.modal_list button.active,
+.window.modal_list button:hover{
+  color:yellow }
 
 .window.modal_list .big_fat {
   display:block;
@@ -247,33 +268,60 @@
   line-height:24px;
   text-align:center; }
 
-.window.modal_list .list-item > label {
-  background:green;
-  color:#000;
+.list-header{
+  border: solid 1px;
+  border-radius: 4px;
+  padding: 2px 8px;
+  text-align:right;
+  min-height:10px;
+  margin-top: 2px;
+  margin-bottom: 3px;
+}
+
+.list-item > label {
+  /* background:green; */
+  color: green;
   display:inline-block;
   font-weight:bold;
   margin-right:2px;
   text-align:right;
-  width:140px; }
+  width: 130px;
+  border: solid 1px;
+  border-radius: 4px;
+  line-height: 9.9999px;
+  padding: 2px 8px;
+  }
 
-.window.modal_list .list-item > span {
+.list-item {
+  width: 260px;
+  margin: 0;
+  min-height: 10px;
+  margin-top: 2px;
+}
+
+.list-header {
+  color: white;
+  width: 240px;
+  height: 15px;
+  }
+
+.list-item > span {
   font-weight:bold; }
 
-.window.modal_list .list-item,.window.modal_list .list-item > * {
-  padding:2px; }
-
-.window.modal_list .list-item.active > label {
-  background:#FF0; }
-
-.window.modal_list .red {
-  color:red; }
+.list-item.active > label {
+  background:#FF0;
+  color: black!important;
+  border: yellow 1px solid !important;
+  }
 
 .window.modal_list > header {
   background:green;
-  border-radius:2px;
+  border-radius: 4px;
   color:#000;
   margin:2px;
-  padding:1px 4px; }
+  padding:1px 4px;
+  text-align: center;
+  }
 
 .window.modal_list > div {
   bottom:7px;
@@ -364,17 +412,18 @@
   text-align:right; }
 
 ::-webkit-scrollbar {
-  height:10px;
-  width:10px; }
+  opacity:0.8;
+  height:12px;
+  width:12px; }
 
 ::-webkit-scrollbar-thumb:horizontal {
   -webkit-border-radius:3px;
-  background:#666;
+  background:#6666669e;
   width:6px; }
 
 ::-webkit-scrollbar-thumb:vertical {
   -webkit-border-radius:3px;
-  background:#666;
+  background:#6666669e;
   height:6px; }
 
 ::-webkit-scrollbar-track-piece {
@@ -400,6 +449,37 @@ h1,h2 {
   font-weight:bold; }
 
 /*
+███████ ██   ██ ██ ██████  ███████
+██      ██   ██ ██ ██   ██ ██
+███████ ███████ ██ ██████  ███████
+     ██ ██   ██ ██ ██           ██
+███████ ██   ██ ██ ██      ███████
+*/
+
+.ship-select {
+  height: 280px;
+  margin-top: 1px;
+  position: relative;
+  }
+
+.ship-select h2, .ship-select p {
+  margin-left:37px;
+  text-align:left; }
+
+.ship-select label {
+  border-radius: 4px;
+}
+
+.ship-select img.ship_comm {
+  width: 260px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  opacity: 0.65;
+  }
+
+/*
 ███████ ██       ██████  ████████ ███████
 ██      ██      ██    ██    ██    ██
 ███████ ██      ██    ██    ██    ███████
@@ -410,17 +490,19 @@ h1,h2 {
 .slot {
   position: relative;
   vertical-align: top;
-  min-height: 64px;
-  border-top: green 1px dotted;
-  width: 235px; }
+  min-height: 128px;
+  }
 
 .slot > span {
-  background:rgba(0,0,0,0.8);
+  /* background:rgba(0,0,0,0.8); */
   border-radius:2px;
-  display:inline-block;
-  margin:2px;
-  max-width:106px;
-  overflow:hidden; }
+  display: block;
+  /* margin:2px; */
+  /* max-width: 146px; */
+  overflow:hidden;
+  padding-top: 23px;
+  padding-left: 5px;
+  }
 
 .slot button {
   position:absolute;
@@ -430,24 +512,36 @@ h1,h2 {
 .window.modal_list .list-item.slot > label {
   width: unset;
   position: absolute;
-  top: 2px;
-  left: 2px;
-  background: #00000099;
-  color: white;
-  text-align: left;
-  border-radius: 2px; }
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  /* color: black; */
+  text-align: right;
+  padding: 2px 4px;
+  border: solid 1px;
+  /* background: green; */
+  }
 
 .window.modal_list .list-item.slot.active > label {
   color: black;
-  background: #ffff00b0; }
+  background: #ffff00b0;
+  }
 
 .slot img {
-  height:inherit;
-  max-width:64px;
-  z-index:-1; }
+  position: absolute;
+  top: 10px;
+  z-index:-1;
+  opacity: 0.65;
+  right: 10px;
+  bottom: 100px;
+  height: 100%;
+  width: auto;
+  max-width: 128px;
+  max-height: 128px;
+  }
 
 .slot.list-header {
-  padding: 2px; background: green; min-height: 1em; }
+  padding: 2px; min-height: 1em; }
 
 .slot.list-header label {
   color:black; font-weight: bold; }

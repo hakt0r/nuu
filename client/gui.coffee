@@ -197,13 +197,26 @@ $public class ModalListWindow extends Window
       when 'PageDown'  then next = $ list.pop()
       when 'ArrowUp'   then next = $ list[( count + index - 1 ) % count]
       when 'ArrowDown' then next = $ list[( index + 1 ) % count]
+      when 'ArrowLeft','ArrowRight'
+        cb = cur.find 'button.active'
+        return 'nocur' if cb.length is 0
+        lb = cur.find('button').toArray()
+        ix = lb.indexOf cb[0]
+        ct = lb.length
+        ad = if code is 'ArrowLeft' then -1 else 1
+        nx = $ lb[( ct + ix + ad ) % ct]
+        cur.find('button').removeClass 'active'
+        nx.addClass 'active'; cur[0].action = => nx.first().click()
     return unless next
     $(list).removeClass 'active'
     next.addClass 'active'
     nt = next.position().top
     pt = next.parent().scrollTop()
     next.parent()[0].scrollTo top: pt + nt
-    return
+    return if 0 is ( btns = next.find 'button' ).length
+    next.parent().find('button').removeClass 'active'
+    btns.first().addClass 'active'; next[0].action = => btns.first().click()
+
 
 class Object.editor extends ModalListWindow
   render:(key,val) => switch typeof val

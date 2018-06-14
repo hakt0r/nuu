@@ -176,31 +176,41 @@ Kbd.release = (focus)->
 
 do Kbd.init
 
-Kbd.macro 'debug', 'sBackquote', 'Debug', ->
-  window.debug = not debug
+Kbd.macro 'primaryTrigger', 'Space', 'Primary trigger',
+  dn:-> if f = NUU.player.primary.trigger then do f
+  up:-> if f = NUU.player.primary.release then do f
+
+Kbd.macro 'weapNext',         'F1', 'Next primary',       -> VEHICLE.nextWeap NUU.player
+Kbd.macro 'weapPrev',         'F2', 'Previous primary',   -> VEHICLE.prevWeap NUU.player
+Kbd.macro 'weapLock',     'Digit0', 'Primary lock',       -> VEHICLE.setWeap -1
+Kbd.macro 'weapPri1',     'Digit1', 'Primary #1',         -> VEHICLE.setWeap  0
+Kbd.macro 'weapPri2',     'Digit2', 'Primary #2',         -> VEHICLE.setWeap  1
+Kbd.macro 'weapPri3',     'Digit3', 'Primary #3',         -> VEHICLE.setWeap  2
+Kbd.macro 'weapPri4',     'Digit4', 'Primary #4',         -> VEHICLE.setWeap  3
+Kbd.macro 'weapPri5',     'Digit5', 'Primary #5',         -> VEHICLE.setWeap  4
+Kbd.macro 'weapPri6',     'Digit6', 'Primary #6',         -> VEHICLE.setWeap  5
+Kbd.macro 'weapPri7',     'Digit7', 'Primary #7',         -> VEHICLE.setWeap  6
+Kbd.macro 'weapPri8',     'Digit8', 'Primary #8',         -> VEHICLE.setWeap  7
+
+Kbd.macro 'secondaryTrigger', 'KeyX', 'Secondary trigger',
+  dn:-> if f = NUU.player.secondary.trigger then do f
+  up:-> if f = NUU.player.secondary.release then do f
+
+Kbd.macro 'weapNextSec',      'F3', 'Next secondary',     -> VEHICLE.nextWeap NUU.player, 'secondary'
+Kbd.macro 'weapPrevSec',      'F4', 'Previous secondary', -> VEHICLE.prevWeap NUU.player, 'secondary'
+Kbd.macro 'weapLockSec', 'sDigit0', 'Secondary lock',     -> VEHICLE.setWeap -1,          'secondary'
+Kbd.macro 'weapSec1',    'sDigit1', 'Secondary #1',       -> VEHICLE.setWeap  0,          'secondary'
+Kbd.macro 'weapSec2',    'sDigit2', 'Secondary #2',       -> VEHICLE.setWeap  1,          'secondary'
+Kbd.macro 'weapSec3',    'sDigit3', 'Secondary #3',       -> VEHICLE.setWeap  2,          'secondary'
+Kbd.macro 'weapSec4',    'sDigit4', 'Secondary #4',       -> VEHICLE.setWeap  3,          'secondary'
+Kbd.macro 'weapSec5',    'sDigit5', 'Secondary #5',       -> VEHICLE.setWeap  4,          'secondary'
+Kbd.macro 'weapSec6',    'sDigit6', 'Secondary #6',       -> VEHICLE.setWeap  5,          'secondary'
+Kbd.macro 'weapSec7',    'sDigit7', 'Secondary #7',       -> VEHICLE.setWeap  6,          'secondary'
+Kbd.macro 'weapSec8',    'sDigit8', 'Secondary #8',       -> VEHICLE.setWeap  7,          'secondary'
 
 Kbd.macro 'mountNext',   'KeyM', 'Next mount', ->
   m = ++NUU.player.mountId % VEHICLE.mount.length
   NET.json.write switchMount: m
 
-Kbd.macro 'weapPri1', 'Digit1', 'Set primary #1', -> VEHICLE.setWeap 0
-Kbd.macro 'weapPri2', 'Digit2', 'Set primary #2', -> VEHICLE.setWeap 1
-Kbd.macro 'weapPri3', 'Digit3', 'Set primary #3', -> VEHICLE.setWeap 2
-Kbd.macro 'weapPri4', 'Digit4', 'Set primary #4', -> VEHICLE.setWeap 3
-Kbd.macro 'weapPri5', 'Digit5', 'Set primary #5', -> VEHICLE.setWeap 4
-Kbd.macro 'weapPri6', 'Digit6', 'Set primary #6', -> VEHICLE.setWeap 5
-Kbd.macro 'weapPri7', 'Digit7', 'Set primary #7', -> VEHICLE.setWeap 6
-Kbd.macro 'weapPri8', 'Digit8', 'Set primary #8', -> VEHICLE.setWeap 7
-
-Kbd.macro 'weapNext',    'F1', 'Next weapon (primary)',       -> VEHICLE.nextWeap NUU.player
-Kbd.macro 'weapPrev',    'F2', 'Previous weapon (primary)',   -> VEHICLE.prevWeap NUU.player
-Kbd.macro 'weapNextSec', 'F3', 'Next weapon (secondary)',     -> VEHICLE.nextWeap NUU.player, 'secondary'
-Kbd.macro 'weapPrevSec', 'F4', 'Previous weapon (secondary)', -> VEHICLE.prevWeap NUU.player, 'secondary'
-
-Kbd.macro 'primaryTrigger', 'Space', 'Primary trigger',
-  dn:-> if f = NUU.player.primary.trigger then do f
-  up:-> if f = NUU.player.primary.release then do f
-
-Kbd.macro 'secondaryTrigger', 'KeyX', 'Secondary trigger',
-  dn:-> if f = NUU.player.secondary.trigger then do f
-  up:-> if f = NUU.player.secondary.release then do f
+Kbd.macro 'debug', 'sBackquote', 'Debug', ->
+  window.debug = not debug
