@@ -82,7 +82,6 @@ $public class Window
   show:->
     @$.css "display", "initial"
     @visible = yes
-    @parent.unfocus() if @parent
     @focus()
     @
   close:->
