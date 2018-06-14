@@ -147,6 +147,7 @@ $public class User
     else opts.state = S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
     v = @createVehicle vehicleType, opts
     @enterVehicle v, 0, yes
+    @sock.json landed: opts.landedAt.id if opts.landedAt
     console.log 'user', @db.nick.green, 'joined'.green, @db.id, vehicleType
     true
 
