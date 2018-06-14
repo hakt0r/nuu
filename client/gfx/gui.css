@@ -290,6 +290,7 @@
   border-radius: 4px;
   line-height: 9.9999px;
   padding: 2px 8px;
+  /* overflow: hidden; */
   }
 
 .list-item {
@@ -545,3 +546,15 @@ h1,h2 {
 
 .slot.list-header label {
   color:black; font-weight: bold; }
+
+/*
+██    ██ ███    ██ ██       ██████   ██████ ██   ██ ███████
+██    ██ ████   ██ ██      ██    ██ ██      ██  ██  ██
+██    ██ ██ ██  ██ ██      ██    ██ ██      █████   ███████
+██    ██ ██  ██ ██ ██      ██    ██ ██      ██  ██       ██
+ ██████  ██   ████ ███████  ██████   ██████ ██   ██ ███████
+*/
+
+.unlocks .list-item label {
+  width: 200px;
+}

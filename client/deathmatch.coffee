@@ -20,6 +20,7 @@
 
 ###
 
+
 Window.MainMenu = class MainMenu extends ModalListWindow
   name: 'dbg_main'
   title: 'Main Menu'
@@ -34,6 +35,7 @@ Window.MainMenu = class MainMenu extends ModalListWindow
     entry[0].action = val
     null
 MainMenu.root =
+  unlocks:  -> do Kbd.macro.unlocks
   help:     -> do Kbd.macro.help
   license:  -> do Kbd.macro.license
   settings: -> do Kbd.macro.settings
@@ -58,6 +60,24 @@ DockingMenu.root =
   undock:   ->
     do Kbd.macro.launch
     @close()
+    null
+
+Kbd.macro 'unlocks', 'KeyU', 'Unlocked items', -> new Window.Unlocks
+Window.Unlocks = class Unlocks extends ModalListWindow
+  name: 'unlocks'
+  title: 'Unlocks'
+  closeKey: 'KeyU'
+  fetch:(done)->
+    NET.queryJSON unlocks:'', (unlocks)=>
+      window.UNLOCKS = unlocks
+      done unlocks
+    null
+  render: (key,val)->
+    @body.append entry = $ """
+    <div class="list-item menu-item noselect">
+      <label>#{key}</label>
+      <span>#{val||0}</span>
+    </div>"""
     null
 
 Window.Ships = class Shipyard extends ModalListWindow

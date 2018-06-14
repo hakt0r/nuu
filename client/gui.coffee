@@ -75,7 +75,7 @@ $public class Window
   constructor : (opts={}) ->
     Object.assign @, opts
     window[@name] = @ if @name
-    $('body').append @$ = $ "<div class='window'></div>"
+    $('body').append @$ = $ "<div class='window #{@name}'></div>"
     @$.append @head = $ "<header>#{@title}</header>" if @title
     @$.append @body = $ "<div></div>"
     $cue @show()
@@ -168,14 +168,14 @@ $public class ModalListWindow extends Window
     super opts
     @$.addClass 'modal_list'
     if @fetch
-      @body.append i = $ """<div class="list-item active"><label>..</label><span>[up one level]</span></div>"""
+      @body.append i = $ """<div class="list-item active"><label>..</label><span></span></div>"""
       i.on 'click', i[0].action = => @close()
-      @body.append l = $ """<div class="list-item active"><label>..</label><span>[loading...]</span></div>"""
+      @body.append l = $ """<div class="list-item active"><label>..</label><span>[...]</span></div>"""
       @fetch (@subject)=>
         l.remove()
         @render key,val for key, val of @subject
     else if @subject
-      @body.append i = $ """<div class="list-item active"><label>..</label><span>[up one level]</span></div>"""
+      @body.append i = $ """<div class="list-item active"><label>..</label><span></span></div>"""
       i.on 'click', i[0].action = => @close()
       @render key,val for key, val of @subject
     @$.find("*").addClass 'noselect'
