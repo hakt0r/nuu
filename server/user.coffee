@@ -164,6 +164,7 @@ User::rejoin = (src)->
   @sock = src
   src.handle = @
   @enterVehicle @vehicle, @mountId, no
+  @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
   console.log 'user', @db.nick.green, 'rejoined'.yellow, @vehicle?
   true
 
