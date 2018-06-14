@@ -62,7 +62,7 @@ switchWeap = (mutate)-> (player,trigger='primary') ->
   NUU.emit 'switchWeapon', trigger, weap
 Ship::setWeap  = (idx,trigger='primary')-> switchWeap( -> idx )(NUU.player,'primary')
 Ship::nextWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ++id % (ct + 1 )
-Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --tg.id + ct ) % (ct + 1 )
+Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --id + ct ) % (ct + 1 )
 
 NUU.on '$obj:add', (o)->
   # console.log 'yolo', o.id, NUU.player.vehicleId
