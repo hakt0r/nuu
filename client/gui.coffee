@@ -200,7 +200,9 @@ $public class ModalListWindow extends Window
     return unless next
     $(list).removeClass 'active'
     next.addClass 'active'
-    next.parent()[0].scrollTo top:next.position().top
+    nt = next.position().top
+    pt = next.parent().scrollTop()
+    next.parent()[0].scrollTo top: pt + nt
     return
 
 class Object.editor extends ModalListWindow
