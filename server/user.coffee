@@ -114,10 +114,8 @@ $public class User
     unless user? and pass?
       console.log 'user:nopw', user, UserDB.get user
       return @deny src, pass
-    console.log 'user', user, UserDB.get user
     unless @db = UserDB.get user
       return @register src, user, pass
-    console.log @db
     unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
       return @deny src, pass
     # Login successful #
@@ -153,7 +151,7 @@ $public class User
 
 User::save = ->
   UserDB.set @db.nick, @db
-  console.log 'save', @db.nick, @db
+  # console.log 'save', @db.nick, @db
 
 User::upgradeDb = (src)->
   @db.inventory = {} unless @db.inventory
@@ -181,8 +179,8 @@ User::register = (src, user, pass)->
   console.log 'user', 'register'.red, util.inspect rec if debug
   true
 
-User::part = (user) ->
-  console.log 'PART'.red, user
+User::part = (spawn) ->
+  console.log 'PART'.red, @db.nick
   NUU.emit 'user:left', @ unless spawn
 
 User::createVehicle = (id,opts={})->
@@ -229,10 +227,10 @@ User::action = (t,mode) ->
     console.log ':act', 'cannot', mode.red
     return
   console.log 'user', 'action', o.name, mode, t.name if debug
-  o.state.update time = NUU.time()
-  t.state.update time
+  o.update time = NUU.time()
+  t.update time
   dist  = $dist o, t
-  zone  = o.size + t.size / 2
+  zone  = ( o.size + t.size ) * .5
   @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit'].includes mode
   null
 
@@ -267,8 +265,8 @@ User::capture = (t,o,zone,dist)->
   else console.log 'user', 'capture', 'too far out', dist, o.size, t.size
 
 User::dock = (t,o,zone,dist)->
-  return unless t.mount # needs to be mountable
-  return if dist < zone # too far
+  return false unless t.mount # needs to be mountable
+  return false unless dist < zone # too far
   console.log 'user', 'dock', t.id if debug
   # TODO:hook: re-add ammo if fighter
   # else add to inventory
