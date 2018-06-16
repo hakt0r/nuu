@@ -61,12 +61,18 @@ $worker.List = (worker)->
     list  = listWorker.list
     worker.call at, time while ( at = list[c++] )?
     null
+  listWorker.worker = worker
   listWorker.list  = []
   listWorker.count = 0
   listWorker.remove = (item)-> Array.remove @list, item
   listWorker.add = (item)->
     @list[@count++] = item
-    listWorker.remove = (item)-> @count--; Array.remove @list, item
+    @count
+  listWorker.remove = (item)->
+    return false unless @list.includes item
+    Array.remove @list, item
+    --@count
+  listWorker.worker = worker
   $worker.push listWorker
 
 $worker.ReduceList = (worker)->
@@ -80,9 +86,14 @@ $worker.ReduceList = (worker)->
     listWorker.list = swap;swap = list
     listWorker.count = n
     null
+  listWorker.worker = worker
   listWorker.list  = []
   listWorker.count = 0
   listWorker.add = (item)->
     @list[@count++] = item
-    listWorker.remove = (item)-> @count--; Array.remove @list, item
+    @count
+  listWorker.remove = (item)->
+    return false unless @list.includes item
+    Array.remove @list, item
+    --@count
   $worker.push listWorker
