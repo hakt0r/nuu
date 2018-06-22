@@ -82,8 +82,8 @@ SyncPing::add = (id,remote)->
     @avrgPing = @bestPing[0]
     @avrgDel = @bestDelta[0]
   else
-    @avrgDelta = ( @bestPing[0]  + @bestPing[1]  + @bestPing[2]  ) / 3
-    @avrgPing  = ( @bestDelta[0] + @bestDelta[1] + @bestDelta[2] ) / 3
+    @avrgPing  = ( @bestPing[0]  + @bestPing[1]  + @bestPing[2]  ) / 3
+    @avrgDelta = ( @bestDelta[0] + @bestDelta[1] + @bestDelta[2] ) / 3
   return true unless 20 < ++@pings and 1.33 > @avrgDelta
   # assume that system clocks are sync; TODO: track clock-skew again
   NUU.time = Date.now
