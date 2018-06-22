@@ -37,6 +37,8 @@ $abstract 'Animated',
     @sprite.position.set @x + OX - @radius, @y + OY - @radius
     true
 
+$Animated.id = 0
+
 $Animated Debris, sprite: 'debris0'
 $Animated Cargo,  sprite: 'cargo', loop: yes
 

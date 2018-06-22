@@ -60,7 +60,7 @@ Weapon.hostility = (vehicle,target)->
 Track = $worker.List (time)->
   if not @ship? or @ship.DESTROYED
     return
-  unless @target
+  unless @target?
     @dir = 0
     return
   if not isNaN @target
@@ -83,19 +83,6 @@ Track = $worker.List (time)->
     ██████  █████   ███████ ██ ████ ██
     ██   ██ ██      ██   ██ ██  ██  ██
     ██████  ███████ ██   ██ ██      ██ ###
-
-lineCircleCollide = (a, b, c, r) ->
-  closest = a.slice()
-  seg     = b.slice()
-  ptr     = c.slice()
-  $v.sub seg, a
-  $v.sub ptr, a
-  segu = $v.normalize seg
-  prl  = $v.dot ptr, segu
-  if prl > $v.dist a, b then closest = b.slice()
-  else if prl > 0 then $v.add closest, $v.mult(segu,prl)
-  dist = $v.dist c, closest
-  dist < r
 
 Weapon.Beam = ->
   @lock = false
@@ -135,7 +122,7 @@ BeamWorker = $worker.ReduceList (time)->
   bend = [ ship.x + sin(dir) * @range, ship.y - cos(dir) * @range ]
   for target in ship.hostile
     target.update time
-    target.hit ship, @ if lineCircleCollide ship.p, bend, target.p, target.size/2
+    target.hit ship, @ if Math.lineCircleCollide ship.p, bend, target.p, target.size/2
   true
 
 ### ██████  ██████   ██████       ██ ███████  ██████ ████████ ██ ██      ███████

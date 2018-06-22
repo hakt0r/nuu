@@ -60,72 +60,46 @@ KWW0.  .kNNk cO;  ;NWN,  xWWW00X::NxkXNo.0XNOOXX' ,;dO:  OWWWWNd. dKXN0.   lk0lo
                                    designer of NTP, inernet pioneer, hero of man
 ###
 
-$public class RTPing extends Mean
-  INTERVAL : 500
-  lag    : new Mean
-  trip   : new Mean
-  skew   : new Mean
-  delta  : new Mean
-  error  : new Mean
-  jitter : new Mean
-  ringId : 0
-  ringBf : [null,null,null,null,null,null,null,null,null,null]
+$static class SyncPing
+  constructor:->
+    @timer     = null
+    @ringId    = -1
+    @ringBf    = []
+    @bestPing  = [0,0,0]
+    @bestDelta = [0,0,0]
+    @avrgDelta = @avrgPing = @pings = 0
 
-  lastLocalTime : Date.now()
-  lastRemoteTime : Date.now()
+SyncPing::add = (id,remote)->
+  local  = Date.now()
+  prediction = local - @avrgDelta
+  error  = remote - prediction
+  ping   = .5 * ( local - @ringBf[id] ) # this assumption is ofc wrong :D
+  delta  = local - ping - remote
+  return false if @bestPing[0] < ping if 1 is ++@pings
+  @bestPing[2]  = @bestPing[1];  @bestPing[1]  = @bestPing[0];  @bestPing[0]  = ping
+  @bestDelta[2] = @bestDelta[1]; @bestDelta[1] = @bestDelta[0]; @bestDelta[0] = delta
+  if 2 < @pings
+    @avrgPing = @bestPing[0]
+    @avrgDel = @bestDelta[0]
+  else
+    @avrgDelta = ( @bestPing[0]  + @bestPing[1]  + @bestPing[2]  ) / 3
+    @avrgPing  = ( @bestDelta[0] + @bestDelta[1] + @bestDelta[2] ) / 3
+  return true unless 20 < ++@pings and 1.33 > @avrgDelta
+  # assume that system clocks are sync; TODO: track clock-skew again
+  NUU.time = Date.now
+  SyncPing::add = ->
+  true
 
-  constructor : ->
-    super
-    NET.define 1,'PING', read:
-      client: (msg,src) =>
-        prediction = NUU.time() - @avrg
-        remote = @lastRemoteTime = msg.readDoubleLE 2
-        local  = @lastLocalTime  = Date.now()
-        return console.log ':net', 'ping-error', msg[1], 'is not a ping id'     unless @ringBf[msg[1]]
-        @trip  .add trip  = local - @ringBf[msg[1]]                             # time it took from ping to response
-        @delta .add delta = local - (trip/2) - remote                           # raw current time delta to remote
-        @add trip / 2
-        @lastError = remote - prediction
-        return unless @trip.count > 10
-        @error.add @lastError
-        if abs(@error.avrg) / abs(@avrg) > 0.3
-          console.log "resetting ping due to", @lastError, @error.avrg, @avrg, abs(@error.avrg) / abs(@avrg)
-          @reset()
-          @error.reset()
-        null
-      server: (msg,src) =>
-        b = Buffer.from [NET.pingCode,msg[1],0,0,0,0,0,0,0,0]
-        b.writeDoubleLE Date.now(), 2
-        src.send b.toString('binary')
-        null
-    return if isServer
-    @ringId = 0
-    @ringBf = []
-    timer = null
-    NUU.on 'connect', => timer = $interval @INTERVAL, =>
-      @ringBf[id = ++@ringId % 32] = Date.now()
-      msg = Buffer.from [NET.pingCode,id]
-      NET.send msg.toString 'binary'
-    NUU.on 'disconnect', -> clearInterval timer
-    null
+SyncPing::engage = -> => @timer = $interval 1000, =>
+  @ringBf[id = ++@ringId % 32] = Date.now()
+  msg = Buffer.from [NET.pingCode,id]
+  NET.send msg.toString 'binary'
 
-  reset : ->
-    super
-    @lag.reset()
-    @trip.reset()
-    @skew.reset()
-    @delta.reset()
-    @jitter.reset()
-    @error.reset()
-
-$static 'Ping', new RTPing
+SyncPing::disengage = -> => clearInterval @timer
 
 return if isServer
 
-NUU.time = ->
-  now = Date.now()
-  # skew = (now - Ping.lastLocalTime) / Ping.INTERVAL * Ping.skew.avrg # total skew since last sync
-  return now - Ping.delta.avrg # + skew                        # now - delta to server + clock skew
-
-NUU.on 'start', ->
-  NUU.thread 'ping', 500, Ping.send
+$static 'Ping', new SyncPing
+NUU.time = -> Date.now() - Ping.avrgDelta
+NUU.on 'connect',    do Ping.engage
+NUU.on 'disconnect', do Ping.disengage

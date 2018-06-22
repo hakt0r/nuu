@@ -60,12 +60,12 @@ $Tile Ship,
 
   updateSprite: (time)->
     @update time
-    if @state.S isnt $burn then if @spriteMode is 1
-      @changeSprite @spriteNormal
-      @spriteMode = 0
-    else if @spriteMode is 0
+    if @state.acceleration then if @spriteMode is 0
       @changeSprite @spriteEngine
       @spriteMode = 1
+    else if @spriteMode is 1
+      @changeSprite @spriteNormal
+      @spriteMode = 0
     @sprite.anchor.set 0.5
     p = @sprite.position.set @x + OX, @y + OY
     if @count is 1 then @sprite.rotation = ( @d + 90 % 360 ) / 360 * TAU

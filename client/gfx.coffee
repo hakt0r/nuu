@@ -147,28 +147,26 @@ $static 'Sprite', new class SpriteSurface extends EventEmitter
     { x,y } = VEHICLE
     i = -1
     s = null
-    list   = $obj.list
+    list   = $obj.list.slice()
     length = list.length
     while ++i < length
       s = list[i]
       s.update time
       if s.ttl and s.ttl < time
         s.hide()
-        if s.ttlFinal
-          s.destructor()
-          length--
-          i--
+        s.destructor() if s.ttlFinal
         continue
       if Horizon > sqrt (s.x-x)**2 + (s.y-y)**2
         continue if SHORTRANGE[s.id]
-        console.log 'inRange', s.name, s.id
         SHORTRANGE[s.id] = s
         NUU.emit '$obj:inRange', s
+        console.log 'inRange', s.name, s.id
       else
+        debugger if VEHICLE is s # INVESTIGATE
         continue unless SHORTRANGE[s.id]
-        console.log 'outRange', s.name, s.id
         delete SHORTRANGE[s.id]
         NUU.emit '$obj:outRange', s
+        console.log 'outRange', s.name, s.id
 
     null
 

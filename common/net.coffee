@@ -24,8 +24,28 @@ NET.resolve = {}
 NET.VERSION =    $version
 NET.COMPATIBLE = "0.4.70"
 
-NET.bind = (name,fnc)->
-  @resolve[@[name]] = fnc
+###
+  ████████  ██████   ██████  ██      ███████
+     ██    ██    ██ ██    ██ ██      ██
+     ██    ██    ██ ██    ██ ██      ███████
+     ██    ██    ██ ██    ██ ██           ██
+     ██     ██████   ██████  ███████ ███████
+
+  NETWORK PRECISION METHODS / BITMASKS
+
+###
+
+# OPTIMIZE: this does not need to go through a buffer
+_floatLE_buffer_  = Buffer.from [0,0,0,0]
+_doubleLE_buffer_ = Buffer.from [0,0,0,0,0,0,0,0]
+
+NET.floatLE = (value)->
+  _floatLE_buffer_.writeFloatLE value, 0
+  _floatLE_buffer_.readFloatLE 0
+
+NET.doubleLE = (value)->
+  _doubleLE_buffer_.writeDoubleLE value, 0
+  _doubleLE_buffer_.readDoubleLE 0
 
 NET.setFlags = (a) ->
   c = 0
@@ -36,6 +56,17 @@ NET.getFlags = (c) ->
   a = []
   a.push(if c >> i is 1 then (c -= Math.pow(2,i); true) else false) for i in [7..0]
   a.reverse()
+
+###
+  ██████  ███████ ███████ ██ ███    ██ ███████
+  ██   ██ ██      ██      ██ ████   ██ ██
+  ██   ██ █████   █████   ██ ██ ██  ██ █████
+  ██   ██ ██      ██      ██ ██  ██ ██ ██
+  ██████  ███████ ██      ██ ██   ████ ███████
+###
+
+NET.bind = (name,fnc)->
+  @resolve[@[name]] = fnc
 
 NET.define = (c,name,opts={}) ->
   console.log ':net', 'define', c, name if debug
@@ -53,6 +84,13 @@ NET.define = (c,name,opts={}) ->
   @resolve[@[lower+'Code']] = @[lower].read if @[lower].read?
 NET.define.index = 1
 
+###
+  ██████   ██████  ██    ██ ████████ ███████
+  ██   ██ ██    ██ ██    ██    ██    ██
+  ██████  ██    ██ ██    ██    ██    █████
+  ██   ██ ██    ██ ██    ██    ██    ██
+  ██   ██  ██████   ██████     ██    ███████
+###
 
 if isClient then NET.route = (src,msg)->
   NET.RX++
@@ -67,10 +105,12 @@ else if isServer then NET.route = (src) ->
     fnc = res[msg[0]]
     fnc.call NET, msg, src if fnc?
 
-
 ###
-  JSON messages
-  TODO: binary json / maybe adaptive key/value compression?
+       ██ ███████  ██████  ███    ██
+       ██ ██      ██    ██ ████   ██
+       ██ ███████ ██    ██ ██ ██  ██
+  ██   ██      ██ ██    ██ ██  ██ ██
+   █████  ███████  ██████  ██   ████
 ###
 
 NET.define 0,'JSON',
@@ -87,7 +127,28 @@ NET.define 0,'JSON',
     NET.send NET.JSON + JSON.stringify msg
 
 ###
-  STATE: Change ships motion and attachment
+  ██████  ██ ███    ██  ██████
+  ██   ██ ██ ████   ██ ██
+  ██████  ██ ██ ██  ██ ██   ███
+  ██      ██ ██  ██ ██ ██    ██
+  ██      ██ ██   ████  ██████
+###
+
+NET.define 1,'PING', read:
+  client: (msg,src) =>
+    Ping.add msg[1], msg.readDoubleLE 2
+  server: (msg,src) =>
+    b = Buffer.from [NET.pingCode,msg[1],0,0,0,0,0,0,0,0]
+    b.writeDoubleLE Date.now(), 2
+    src.send b.toString('binary')
+    null
+
+###
+  ███████ ████████  █████  ████████ ███████
+  ██         ██    ██   ██    ██    ██
+  ███████    ██    ███████    ██    █████
+       ██    ██    ██   ██    ██    ██
+  ███████    ██    ██   ██    ██    ███████
 ###
 
 NET.define 2,'STATE',
@@ -109,16 +170,27 @@ NET.define 2,'STATE',
       o.applyControlFlags()
       src
 
-NET.define 7,'STEER',
+###
+  ███████ ████████ ███████ ███████ ██████
+  ██         ██    ██      ██      ██   ██
+  ███████    ██    █████   █████   ██████
+       ██    ██    ██      ██      ██   ██
+  ███████    ██    ███████ ███████ ██   ██
+###
+
+NET.define 10,'STEER',
   write:
-    client:(value)->
+    client:(value,x,fromap)->
+      value = fromap || value
       msg = Buffer.from [NET.steerCode,0,0]
       msg.writeUInt16LE value, 1
       NET.send msg.toString 'binary'
     server:(o,idx,value)->
       if idx is 0
         return console.log '::st','dir','locked' if o.locked
-        o.d = value
+        o.update()
+        o.setState S:$turnTo unless o.state.S is $turnTo
+        o.state.changeDir value
       else if s = o.mountSlot[idx]
            if e = s.equip then e.target = value = ( 360 + value - o.d ) % 360
       else return false
@@ -133,8 +205,7 @@ NET.define 7,'STEER',
       idx = msg[5]
       value = msg.readUInt16LE 3
       if idx is 0
-        o.d = value
-        o.updateSprite()
+        o.state.changeDir value
       else if o.mountType[idx] is 'weap'
         return unless s = o.mountSlot[idx]
         return unless e = s.equip
@@ -147,12 +218,28 @@ NET.define 7,'STEER',
       return src.error '_no_steer'    if -1 is ['helm','weap'].indexOf t = o.mountType[idx] # FIXME:cache
       NET.steer.write o, idx, ( msg.readUInt16LE 1 ) % 360
 
-NET.steer.setDir = 0
+NET.define 11,'BURN',
+  read:server:(msg,src)->
+    return src.error '_no_handle'  unless u = src.handle
+    return src.error '_no_vehicle' unless o = u.vehicle
+    return src.error '_no_mounts'  unless m = o.mount
+    return src.error '_not_helm'   unless 0 is idx = m.indexOf u
+    NET.burn.write o,  msg.readUInt16LE 1
+  write:
+    server:(o,value)->
+      o.setState S:$burn, a:o.thrustToAccel value
+    client:(o,value)->
+      value = max 0, min 255, value || THROTTLE || 255
+      msg = Buffer.from [NET.burnCode,0,0]
+      msg.writeUInt16LE value, 1
+      NET.send msg.toString 'binary'
 
 ###
-  WEAPON: trigger / release slots on actors
-  mode  slotid vehicleid targetid
-  UInt8 UInt8  UInt16    UInt16
+  ██     ██ ███████  █████  ██████   ██████  ███    ██
+  ██     ██ ██      ██   ██ ██   ██ ██    ██ ████   ██
+  ██  █  ██ █████   ███████ ██████  ██    ██ ██ ██  ██
+  ██ ███ ██ ██      ██   ██ ██      ██    ██ ██  ██ ██
+   ███ ███  ███████ ██   ██ ██       ██████  ██   ████
 ###
 
 weaponActionKey = ['trigger','release','reload']
@@ -189,9 +276,11 @@ NET.define 3,'WEAP',
       NUU.bincast ( msg.toString 'binary' ), vehicle
 
 ###
-  ACTION: launch, land, orbit, capture
-  mode, source, target
-  UInt8 UInt16  UInt16
+   █████   ██████ ████████ ██  ██████  ███    ██
+  ██   ██ ██         ██    ██ ██    ██ ████   ██
+  ███████ ██         ██    ██ ██    ██ ██ ██  ██
+  ██   ██ ██         ██    ██ ██    ██ ██  ██ ██
+  ██   ██  ██████    ██    ██  ██████  ██   ████
 ###
 
 action_key = ['eva','launch','land','orbit','dock','capture']
@@ -206,9 +295,11 @@ NET.define 4,'ACTION',
     NET.send msg.toString 'binary'
 
 ###
-  MODS: spawn, destroyed, hit, stats
-  source, mod, target, valA, valB
-                (UInt16) ^---^
+  ███    ███  ██████  ██████  ███████
+  ████  ████ ██    ██ ██   ██ ██
+  ██ ████ ██ ██    ██ ██   ██ ███████
+  ██  ██  ██ ██    ██ ██   ██      ██
+  ██      ██  ██████  ██████  ███████
 ###
 
 modsKey = ['spawn','destroyed','hit','stats']
@@ -228,8 +319,11 @@ NET.define 5,'MODS',
     NUU.bincast ( msg.toString 'binary' ), ship
 
 ###
-  REMOVE or RESET actors
-  target, operation
+   █████  ██████  ███    ███ ██ ███    ██      ██████  ██████
+  ██   ██ ██   ██ ████  ████ ██ ████   ██     ██    ██ ██   ██
+  ███████ ██   ██ ██ ████ ██ ██ ██ ██  ██     ██    ██ ██████
+  ██   ██ ██   ██ ██  ██  ██ ██ ██  ██ ██     ██    ██ ██
+  ██   ██ ██████  ██      ██ ██ ██   ████      ██████  ██
 ###
 
 operationKey = ['remove','reset']
@@ -247,8 +341,11 @@ NET.define 6,'OPERATION',
       when 'reset'  then t.reset()
 
 ###
-  Object Health and Flags
-  target, health, armour, fuel
+  ██   ██ ███████  █████  ██   ████████ ██   ██
+  ██   ██ ██      ██   ██ ██      ██    ██   ██
+  ███████ █████   ███████ ██      ██    ███████
+  ██   ██ ██      ██   ██ ██      ██    ██   ██
+  ██   ██ ███████ ██   ██ ███████ ██    ██   ██
 ###
 
 NET.define 8,'HEALTH',

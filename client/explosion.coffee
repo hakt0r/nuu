@@ -30,6 +30,7 @@ $obj.register class Explosion extends $obj
     qs = @parent.size/4
     hs = @parent.size/2
     super
+      id:'animation' + $Animated.id++
       sprite: Array.random Explosion.sizes
       state:
         S: $fixedTo

@@ -32,8 +32,12 @@ $obj::loadAssets = ->
   # @show()
 
 $obj::show = ->
-  return if Sprite.visible[@id]
-  return unless @loaded
+  if Sprite.visible[@id]
+    console.log @name, @id, 'already visible' if debug
+    return
+  unless @loaded
+    console.log @name, @id, 'not loaded' if debug
+    return
   console.log ':gfx', 'show$', @id, @name, @sprite if debug
   @updateSprite() # PROVEME
   Sprite.visible[@id] = @sprite
@@ -42,7 +46,9 @@ $obj::show = ->
   null
 
 $obj::hide = ->
-  return unless old = Sprite.visible[@id]
+  unless old = Sprite.visible[@id]
+    console.log @name, @id, 'already hidden' if debug
+    return
   console.log ':gfx', 'hide$', @id, @name if debug
   delete Sprite.visible[@id]
   Array.remove Sprite.visibleList, @
@@ -50,7 +56,9 @@ $obj::hide = ->
   null
 
 $obj::changeSprite = (newSprite) ->
-  return if newSprite is old = Sprite.visible[@id]
+  if newSprite is old = Sprite.visible[@id]
+    console.log @name, @id, 'already selected' if debug
+    return
   Sprite.visible[@id] = @sprite = newSprite
   Sprite.visibleList.push @ unless Sprite.visibleList.includes @
   Sprite[@layer].addChild @sprite

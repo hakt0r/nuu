@@ -97,3 +97,34 @@ $worker.ReduceList = (worker)->
     Array.remove @list, item
     --@count
   $worker.push listWorker
+
+$worker.PauseList = (worker)->
+  listKey = "pause" + $worker.PauseList.key++
+  listWorker = (time)->
+    list = c = n = count = null
+    count = listWorker.count
+    list  = listWorker.list
+    c = -1; n = 0
+    while count > ++c
+      at = list[c]
+      if -1 is delay = at[listKey]
+        delete at[listKey]
+        continue
+      if time < delay
+        list[n++] = at
+        continue
+      res = worker.call at, time
+      if -1 is res or -1 is at[listKey]
+        delete at[listKey]
+        continue
+      at[listKey] = time + res
+      list[n++] = at
+    listWorker.count = n
+    null
+  listWorker.worker = worker
+  listWorker.list   = []
+  listWorker.count  = 0
+  listWorker.add    = (at)-> at[listKey] = 0; @list[@count++] = at
+  listWorker.remove = (at)-> at[listKey] = -1
+  $worker.push listWorker
+$worker.PauseList.key = 0

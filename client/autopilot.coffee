@@ -21,70 +21,57 @@
 ###
 
 $public class Autopilot
+  @active: no
+  @plan:   'land'
 
-  active:   no
-  plan:     'land'
-  strategy: 'seek'
-  ship:      null
-  target:    null
-  interval:  null
+Autopilot.commit = (@ship, @target, @plan='land')->
+  VEHICLE.target = @target
 
-  constructor: (ship, target, plan='land')->
-    @commit.apply @, arguments
-    @start()
+Autopilot.widget = (v) ->
+  s = ''
+  s += VEHICLE.target.name + '\n'
+  s += v.message + '\n'
+  s += v.recommend + '\n'
+  s += 'm: ' + parseInt(VEHICLE.target.m[0]) + ':' + parseInt(VEHICLE.target.m[1]) + '\n'
+  s += 't: ' + parseInt(v.throttle) + '\n'
+  s += 'e/t: ' + parseInt(v.error) + "/" + parseInt(v.error_threshold) + '\n'
+  s += 'z: ' + parseInt(v.target_zone) + '\n'
+  s += '\n⚑['
+  s += '▲' if v.recommend is 'boost'
+  s += '△' if v.recommend is 'burn'
+  s += '▽' if v.recommend is 'retro'
+  s += '◉' if v.recommend is 'setdir'
+  s += '☕' if v.recommend is 'wait'
+  s += '⌘' if v.recommend is 'execute'
+  s += ']\nFm:' + hdist v.maxSpeed
+  HUD.widget 'autopilot', s, yes
+  v
 
-  commit: (@ship, @target, @plan='land')->
+Autopilot.start = ->
+  Autopilot.stop() if Autopilot.active
+  HUD.widget 'autopilot', 'ap:booting', yes
+  VEHICLE.target = TARGET
+  VEHICLE.changeStrategy 'approach'
+  Autopilot.active = yes
+  Mouse.disable()
 
-  start: ->
-    @stop() if @active
-    Mouse.disable()
-    @active = yes
-    @interval = setInterval @tick(), 20
+Autopilot.stop = ->
+  HUD.widget 'autopilot', 'ap:off', yes
+  VEHICLE.changeStrategy()
+  Autopilot.active = no
+  Mouse.enable()
 
-  stop: -> if @active
-    @active = no
-    clearInterval @interval
-    @interval = null
-    Mouse.enable()
-    HUD.widget 'autopilot', null
-
-  tick: -> =>
-    @last = v = NavCom.steer @ship, @target, 'pursue'
-    v = NavCom.approach @ship, v
-    @widget v
-    return @stop(Target.orbit()) if v.distance < @target.size / 1.8
-    if v.setdir or @ship.flags isnt v.flags
-      NET.state.write @ship, [ v.accel, v.retro, v.turn and not v.turnLeft, v.turnLeft, v.boost, no, no, no ]
-
-  widget: (v) ->
-    s = ''
-    s += @target.name + '\n'
-    s += v.message + '\n'
-    s += 'm: ' + parseInt(@target.m[0]) + ':' + parseInt(@target.m[1]) + '\n'
-    s += 'vdiff:' + (rdec3 v.error) + '\n'
-    s += 'rad:' + (round v.rad) + ' dir: ' + (rdec3 v.dir) + '\n'
-    s += 'ddiff: ' + (rdec3 v.dir_diff) + '\n'
-    s += '\n⚑['
-    s += '▲' if v.boost
-    s += '△' if v.accel
-    s += '▽' if v.retro
-    s += '◀' if v.left
-    s += '▶' if v.right
-    s += '◉' if v.setdir
-    s += ']\nFm:' + hdist v.maxSpeed
-    HUD.widget 'autopilot', s, yes
-    v
-
-  @instance: null
-  @macro: =>
-    unless ap = Autopilot.instance
-      Autopilot.instance = new Autopilot VEHICLE, TARGET
-    else if not ap.active
-      console.log '::ap', 'start'
-      ap.commit(VEHICLE, TARGET, Target.mode)
-      ap.start()
-    else
-      console.log '::ap', 'stop'
-      ap.stop()
+Autopilot.macro = ->
+  unless VEHICLE.hasAP
+    VEHICLE.hasAP = yes
+    VEHICLE.approachTarget = -> @target = TARGET
+    VEHICLE.changeStrategy = AI.prototype.changeStrategy
+    VEHICLE.onDecision = Autopilot.widget.bind Autopilot
+    VEHICLE.onTargetReached = (v)->
+      Autopilot.stop()
+      Target.orbit()
+  unless  Autopilot.active
+       do Autopilot.start
+  else do Autopilot.stop
 
 Kbd.macro 'autopilot', 'sKeyZ', 'Autopilot', Autopilot.macro

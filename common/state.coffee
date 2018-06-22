@@ -31,6 +31,7 @@ if isClient then $public class State
     @o.state = @
     @o.update = @update.bind @
     @relto.update time if @relto? and @relto = $obj.byId[@relto]
+    do @cache if @cache
     @update time
 
 if isServer then $public class State
@@ -41,10 +42,10 @@ if isServer then $public class State
     @o.update time if @o.update
     Object.assign @, opts
     @o.m = @m = @m || @o.m
-    @o.a = @a = @a || @o.a
     @o.x = @x = @x || @o.x
     @o.y = @y = @y || @o.y
     @o.d = @d = @d || @o.d
+    @o.a = @a = @a || @o.thrust
     @o.m = @m.slice()
     @m   = @m.slice()
     @o.state  = @
@@ -54,6 +55,7 @@ if isServer then $public class State
     else @relto = null
     @toBuffer()
     do @translate if @translate
+    do @cache     if @cache
     @update time
     NET.state.write @
     # console.log '::st', 'w', @toJSON() if @o.name is 'Kestrel'
@@ -152,7 +154,6 @@ $obj::setState = (
     @locked = false if @locked
     s.o = @
     new byKey[s.S] s
-    # console.log '::st:set', s.S, @m if @name is 'Kestrel'
     @ )
 
 
@@ -189,22 +190,43 @@ State.register class State.moving extends State
     null
   toJSON:-> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m
 
+
 State.register class State.burn extends State
   acceleration: true
-  update:(time) ->
-    #  tmaxX = ( Speed.max - @m[0] ) / @a * cos(@d/RAD)
-    #  tmaxY = ( Speed.max - @m[1] ) / @a * sin(@d/RAD)
-    # debugger
-    @dir = @d / RAD
+  cache:->
+    @peak = r = Speed.max
+    @cosd = cos @dir = @d / RAD
+    @sind = sin @dir
+    $v.mult $v.normalize(@m), r*.99 if r < $v.mag @m # reset to speed limit
+    a = @m.slice()
+    b = $v.add @m.slice(), $v.mult [@cosd,@sind], r * 2.5
+    d = $v.sub  b.slice(), a
+    D = a[0]*b[1] - a[1]*b[0]
+    dr = sqrt dr_squared = d[0]**2 + d[1]**2
+    sqrt_discr = sqrt discr = r**2 * dr**2 - D**2
+    sgn_dx = d[0] * if d[1] < 0 then -1 else 1
+    sgn_dy = abs d[1]
+    p = if @sind >= 0 then [
+      (  D * d[1] + sgn_dx * sqrt_discr ) / dr_squared
+      ( -D * d[0] + sgn_dy * sqrt_discr ) / dr_squared
+    ] else [
+      (  D * d[1] - sgn_dx * sqrt_discr ) / dr_squared
+      ( -D * d[0] - sgn_dy * sqrt_discr ) / dr_squared ]
+    @dtmax = TICK * $v.dist(p,@m) / @a
+  update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    hdt = .5 * ( dt = ( time - @t ) * TICKi )
-    adt = @a * dt
-    @o.m[0] = @m[0] + cosadt = adt * cos @dir
-    @o.m[1] = @m[1] + sinadt = adt * sin @dir
-    @o.x = @x + @m[0] * dt + hdt * cosadt
-    @o.y = @y + @m[1] * dt + hdt * sinadt
+    dtrise = min @dtmax, dtreal = time - @t
+    dtpeak = max 0,      dtreal - @dtmax
+    dtreal *= TICKi
+    dtrise *= TICKi
+    dtpeak *= TICKi
+    @acceleration = dtpeak is 0
+    @o.m[0] = @m[0] + @cosd*@a*dtrise
+    @o.m[1] = @m[1] + @sind*@a*dtrise
+    @o.x = @x + @m[0]*dtreal + .5*dtrise*@cosd*@a*dtrise + @cosd*@peak*dtpeak
+    @o.y = @y + @m[1]*dtreal + .5*dtrise*@sind*@a*dtrise + @sind*@peak*dtpeak
     null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 State.register class State.turn extends State
   constructor:(s)->
@@ -220,18 +242,28 @@ State.register class State.turn extends State
     null
   toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
 
-# State.register class State.turnTo extends State
-#   constructor:(s,@td)->
-#     @turn = s.o.turn || 1
-#     super
-#   update:(time)->
-#     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-#     dt = ( time - @t ) * TICKi
-#     @o.x = @x + @m[0] * dt
-#     @o.y = @y + @m[1] * dt
-#     @o.d = $v.umod360 @d + @turn * dt
-#     null
-#   toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,td:@td
+State.register class State.turnTo extends State
+  constructor:(s)->
+    @turn = s.o.turn || 1
+    @turnTime = @tt = 0
+    super
+  changeDir:(dir)->
+    @update tt = NUU.time()
+    @d = @o.d; @tt = tt
+    ddiff = -180 + $v.umod360 -180 + dir - @d
+    adiff = abs ddiff
+    @turn = @o.turn || 1
+    @turnTime = adiff / @turn
+    @turn = -@turn if ddiff < 0
+  update:(time)->
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+    dt  = ( time - @t  ) * TICKi
+    tdt = ( time - @tt ) * TICKi
+    @o.x = @x + @m[0] * dt
+    @o.y = @y + @m[1] * dt
+    @o.d = $v.umod360 360 + @d + @turn * min @turnTime, tdt
+    null
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
 
 State.register class State.orbit extends State
   json: yes
@@ -301,6 +333,20 @@ State.register class State.travel extends State
 
 
 ###  The mighty collection of Stae debug mocks and tests  ##
+
+if isClient and @o is VEHICLE
+@gfx = Sprite.debug || Sprite.layer 'debug', new PIXI.Graphics
+@gfx.position.set 100, 100
+@gfx.clear()
+@gfx.width = @gfx.height = r * 3; h = r * 1.5
+ox = h+@m[0]
+oy = h+@m[1]
+@gfx.lineStyle 1, 0xFFFFFF; @gfx.drawCircle h,h,r
+@gfx.lineStyle 1, 0xFF00FF; @gfx.moveTo h,  h;  @gfx.lineTo ox,     oy
+@gfx.lineStyle 1, 0x00FF00; @gfx.moveTo ox, oy; @gfx.lineTo ox+d[0],oy+d[1]
+@gfx.lineStyle 1, 0xFF0000; @gfx.moveTo ox, oy; @gfx.lineTo h+p[0], h+p[1]
+@gfx.lineStyle 1, 0xFF0000; @gfx.drawCircle h+p[0],h+p[1],3
+console.log 'this can\'t be happening!', dist1, p, @m
 
 Object.defineProperty $obj::, 'm', get:( -> @_m ), set:(v)->
   debugger if v[1] is -1206

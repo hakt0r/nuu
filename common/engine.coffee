@@ -69,8 +69,9 @@ $static '$fixedTo',      1
 $static '$moving',       2
 $static '$burn',         3
 $static '$turn',         4
-$static '$orbit',        5
-$static '$travel',       6
+$static '$turnTo',       5
+$static '$orbit',        6
+$static '$travel',       7
 
 # MATH-CONSTANTS
 $static 'PI',            Math.PI
@@ -96,8 +97,35 @@ $static 'sin',           Math.sin
 $static 'cos',           Math.cos
 $static 'random',        Math.random
 $static 'round',         Math.round
+$static 'sec',           Math.sec = (v)-> 1 / cos v
+$static 'csc',           Math.csc = (v)-> 1 / sin v
 
-$static 'scaleLog', (val,minp=0,maxp=Speed.max,minv=0,maxv=50)->
+Math.lineCircleCollideInf = (a, b, c, r) ->
+  # @FUNCTION Math.lineCircleCollideInf
+  # @SOURCE   Mathematics Stack Exchange
+  # @AUTHOR   qwr (https://math.stackexchange.com/users/122489/qwr)
+  # @TITLE    Check if line intersects with circles perimeter
+  # @URL      https://math.stackexchange.com/q/2035466 (version: 2016-11-29)
+  x1 = a[0]-c[0]; y1 = a[1]-c[1]
+  x2 = b[0]-c[0]; y2 = b[1]-c[1]
+  dr_squared = (x2 - x1)**2 + (y2 - y1)**2
+  D = x1*y2 - x2*y1
+  return r**2 * dr_squared > D**2
+
+Math.lineCircleCollide = (a, b, c, r) ->
+  closest = a.slice()
+  seg     = b.slice()
+  ptr     = c.slice()
+  $v.sub seg, a
+  $v.sub ptr, a
+  segu = $v.normalize seg
+  prl  = $v.dot ptr, segu
+  if prl > $v.dist a, b then closest = b.slice()
+  else if prl > 0 then $v.add closest, $v.mult(segu,prl)
+  dist = $v.dist c, closest
+  dist < r
+
+$static 'scaleLog', Math.scaleLog = (val,minp=0,maxp=Speed.max,minv=0,maxv=50)->
   minv = Math.log minv; maxv = Math.log maxv
   return Math.exp minv + ((maxv-minv)/(maxp-minp)) * ( abs(val) - minp )
 

@@ -88,6 +88,8 @@ $obj.register class Ship extends $obj
         @mountType.push 'weap'
         null
       else @mountType.push 'weaX'
+    @fuel = @fuelMax = 200000
+    null
   destructor: ->
     $worker.remove @model
     for slot in @slots.weapon when slot and slot.equip
@@ -112,7 +114,18 @@ Object.defineProperty Ship::, 'd',
     @_d = v
 ###
 
-Ship::updateMods = -> # calculate mods
+Ship::thrustToAccel = (value)->
+  # TODO: boost / frameshift / warp / slipstream
+  value = max 0, min 255, value
+  value = (
+    if      value < 100 then .3 * -@thrust * .01 * ( 100 - value )
+    else if value < 200 then       @thrust * .01 * ( value - 99  )
+    else                           @thrust * .03 * ( value - 199 ) )
+  NET.floatLE value
+
+Ship::updateMods = ->
+
+  # gather / calculate mods
   @mods = {}
   @mass = 0
   for type of @slots
@@ -142,8 +155,8 @@ Ship::updateMods = -> # calculate mods
   @thrust    = @thrust  / 100
 
   # add/exchange model-worker
-  $worker.remove @model if @model
   @lastUpdate = 0
+  ShipModel.remove @
   ShipModel.add @
   null
 

@@ -103,24 +103,38 @@ AI::attackPlayersTarget = ->
   @target = closest
   null
 
-AI.worker.approach = $worker.List (time)->
+AI.worker.approach = $worker.PauseList (time)->
   @update time
   do @approachTarget unless @target
   return 1000        unless @target
-  if @inRange = abs(distance = $dist(@,@target)) < 150
-    console.log '::ai', "#{@name} at", @target.name if debug
-    @target = null
-    return 10000
-  # else if @state.S isnt $travel
-  #   @setState S:$travel, from:@state, to:@target
-  v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
-  { turn, turnLeft, @accel, @boost, @retro, @fire } = v
-  @left = turnLeft
-  @right = turn and not turnLeft
-  if ( @flags isnt v.flags ) or v.setDir
-    do @applyControlFlags
-    return 0
-  return 1000
+  v = NavCom.approach @, NavCom.steer @, @target, 'pursue'
+  switch v.recommend
+    when "setdir"
+      return 1000 if @lastRecommend is 'setDir' and 2 < (abs(@lastDir)-abs(v.dir))
+      @lastThrottle = -1; @lastDir = v.dir
+      NET.steer.write @, 0, round v.dir
+    when "burn"
+      return 1000 if @lastRecommend is 'burn' and @lastThrottle is v.throttle
+      @lastDir = -1; @lastThrottle = v.throttle
+      NET.burn.write @, v.throttle
+    when "boost"
+      return 1000 if @lastRecommend is 'boost' and @lastThrottle is v.throttle
+      @lastDir = -1; @lastThrottle = v.throttle
+      NET.burn.write @, 254
+    when "retro"
+      return 1000 if @lastRecommend is 'retro' and @lastThrottle is v.throttle
+      @lastDir = -1; @lastThrottle = v.throttle
+      NET.burn.write @, v.throttle
+    when "wait"
+      @onDecision v if isClient and @onDecision
+      return 100
+    when "execute"
+      # console.log '::ai', "#{@name} at", @target.name if debug
+      @onTargetReached v if @onTargetReached
+      @lastDir = -1; @lastThrottle = -1; @target = null; return 1000
+  @lastRecommend = v.recommend
+  @onDecision v if @onDecision
+  return 0
 
 AI::approachTarget = ->
   @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]

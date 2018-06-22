@@ -107,7 +107,31 @@ NUU.on 'newTarget', tgtHandler = (t) ->
   null
 null
 
-$static '$palette', red:0xe6194b,green:0x3cb44b,yellow:0xffe119,blue:0x0082c8,orange:0xf58231,purple:0x911eb4,cyan:0x46f0f0,magenta:0xf032e6,lime:0xd2f53c,pink:0xfabebe,teal:0x008080,lavender:0xe6beff,brown:0xaa6e28,beige:0xfffac8,maroon:0x800000,mint:0xaaffc3,olive:0x808000,coral:0xffd8b1,navy:0x000080,grey:0x808080,white:0xFFFFFF,black:0x000000
+$static '$palette',
+  red:0xe6194b
+  green:0x3cb44b
+  yellow:0xffe119
+  blue:0x0082c8
+  orange:0xf58231
+  purple:0x911eb4
+  cyan:0x46f0f0
+  magenta:0xf032e6
+  lime:0xd2f53c
+  pink:0xfabebe
+  teal:0x008080
+  lavender:0xe6beff
+  brown:0xaa6e28
+  beige:0xfffac8
+  maroon:0x800000
+  mint:0xaaffc3
+  olive:0x808000
+  coral:0xffd8b1
+  navy:0x000080
+  grey:0x808080
+  white:0xFFFFFF
+  black:0x000000
+$static '$paletteKey', {}
+$paletteKey[v] = k for k,v of $palette
 
 ntime = ->
   d = new Date NUU.time()
@@ -171,12 +195,14 @@ uiBar.healhBars =
 
 class uiArrow extends PIXI.Text
   constructor:(@HUD,@name,@color,@sign='▲',@weap)->
-    super @sign, fontFamily: 'monospace', fontSize:@HUD.fontSize+'px', fill: @color
+    console.log 'ARROW', name, @color, @sign, @weap if debug
+    c = if @color.match then @color else $paletteKey[@color]
+    super @sign, fontFamily: 'monospace', fontSize:@HUD.fontSize+'px', fill: c
     @anchor.set 0.5, 1
-    if @weap = @weap
-      @weap.color = @color
-      uiArrow.turret.push @
     @HUD.layer.addChild @HUD[@name] = @
+    return unless @weap
+    @weap.color = @color
+    null
 uiArrow::remove = -> @HUD.layer.removeChild @
 
 uiArrow.turret = []
@@ -375,10 +401,8 @@ new class uiHUD
       "sc[#{Scanner.scale}] "+
       "rx[#{NET.PPS.in}(#{parseInt NET.PPS.inAvg.avrg})]"+
       "tx[#{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg})]"+
-      "ping[#{round Ping.trip.avrg}] "+
-      "dt[#{round Ping.delta.avrg}]"+
-      "er[#{round Ping.error.avrg}]"+
-      "skew[#{round Ping.skew.avrg}]\n"+
+      "ping[#{round Ping.avrgPing}] "+
+      "dt[#{round Ping.avrgDelta}]\n"+
       "hostiles:#{if Target.hostile then Object.keys(Target.hostile).length else 0}" else ''
     @resize()
 

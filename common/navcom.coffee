@@ -59,35 +59,36 @@ class NavCom
     slowingRadius = 0.5 * a * t * t
 
   @vectorAddDir : (v,force)->
-    angle = atan2 force[0], force[1]
-    v.rad = rad = @absRad( @FIX + angle )
-    angle = $v.heading([0,0],force) * RAD
-    v.dir = dir = $v.umod360 v.current_dir - angle
-    v.dir_diff_abs = abs v.dir_diff = -180 + dir
+    angle = PI + $v.heading $v.zero, force
+    v.dir = round angle * RAD
+    v.dir_diff = $v.reldeg v.current_dir, v.dir
+    v.dir_diff_abs = abs v.dir_diff
     v
 
-  @steer: ( ship, target, strategy='seek' ) ->
+  @steer: ( ship, target, context='pursue' ) ->
     time = NUU.time()
     ship.update time
     target.update time
-    v = @[strategy] ship, target, ( maxSpeed = @maxSpeed ship, target )
+    v = @[context] ship, target, ( maxSpeed = @maxSpeed ship, target )
     v.approach_force = v.force
     v.force = force = $v.sub v.force.slice(), ship.m
     v.error = $v.mag force
+    v.error_threshold = max 3,   min 10,  v.distance / 1000
+    v.throttle        = max 100, min 254, 101 + v.error/2
     @vectorAddDir v, force
     v.maxSpeed = maxSpeed
     return v
 
   @pursue: (s,t,max_relative_speed,R)->
-    local_position     = s.p.slice()
-    local_inertia      = s.m.slice()
-    local_speed        = $v.mag local_inertia
-    target_position    = t.p.slice()
-    target_inertia     = t.m.slice()
-    target_speed       = $v.mag target_inertia
-    shooting_vector    = $v.sub local_position.slice(), target_position
-    distance           = $v.mag shooting_vector
-    approximate_time   = distance / max_relative_speed
+    local_position   = s.p.slice()
+    local_inertia    = s.m.slice()
+    local_speed      = $v.mag local_inertia
+    target_position  = t.p.slice()
+    target_inertia   = t.m.slice()
+    target_speed     = $v.mag target_inertia
+    shooting_vector  = $v.sub local_position.slice(), target_position
+    distance         = $v.mag shooting_vector
+    approximate_time = distance / max_relative_speed
 
     if target_speed > 0
       target_future = $v.add( target_position.slice(), $v.mult( target_inertia.slice(), approximate_time ) )
@@ -106,6 +107,7 @@ class NavCom
     approach_force = $v.add approach_force, target_inertia
 
     return @vectorAddDir (
+      target_zone: ( t.size + s.size ) * .5
       current_dir: s.d
       eta: approximate_time
       distance: distance
@@ -117,37 +119,21 @@ class NavCom
   @approach : (s,v,d=-1,callback=->) ->
     { force, error, distance, dir, dir_diff, dir_diff_abs } = v
     message = 'active'
-    if ( -1 isnt d ) and ( v.dist < d )
-      return callback
-    v.turn = v.turnLeft = v.accel = v.retro = v.boost = no
-    if v.error > 2
-      if dir_diff_abs > 15
-        v.turn = yes
-        v.turnLeft = not ( -180 < dir_diff < 0 )
-        message += ':bear(' +
-          (rdec3 dir_diff) + '/' +
-          (rdec3 dir_diff_abs) + '>' +
-          (rdec3 s.d) + '/' +
-          (rdec3 v.dir) + ')'
-      else if 5 > dir_diff_abs > 2
-        v.setdir = yes
-        message += ':setd(' +
-          rdec3(v.dir) + ')'
-      else if 2 < v.error
-        v.accel = yes
-        # v.boost = 100 < v.error
-        message += ':accl(f' +
-          (rdec3 v.error) + '/d' +
-          (rdec3 dir_diff) + ' > ' +
-          (rdec3 s.d) + '/' +
-          (rdec3 v.dir) + ')'
-      # else TODO:
-      #   v.retro = yes
-      #   message += ':decl('+(rdec3 v.error)+')'
-    else message += ':wait(dF:'+(rdec3 v.error)+')'
+    if round(v.error) <= round(v.error_threshold) and v.distance < v.target_zone
+      v.recommend = 'execute'
+      message += ':exec(' + rdec3(v.dist) + ')'
+    else if v.error > v.error_threshold
+      if dir_diff_abs > 2
+        message += ':setd(' + rdec3(v.dir) + ')'
+        v.recommend = 'setdir'
+      else if v.error_threshold < v.error
+        v.recommend = 'burn'
+        v.recommend = 'boost' if 100 < v.error
+        message += ':' + v.recommend + '(f' + (rdec3 v.error) + ')'
+    else
+      v.recommend = 'wait'
+      message += ':wait(dF:'+(rdec3 v.error)+' dD:'+(rdec3 v.dir_diff)+')'
     v.message = message
-    # s.d = v.dir if v.setdir # FIXME
-    v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.turn and not v.turnLeft, v.turnLeft, v.boost, no, no, no ]
     v
 
   @aim: (s,target)->
