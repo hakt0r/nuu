@@ -93,7 +93,7 @@ State.register = (constructor) ->
 State::toBuffer = ->
   return @_buffer if @_buffer
   o = @o
-  msg =  @_buffer = Buffer.alloc 90
+  msg =  @_buffer = Buffer.allocUnsafe 90
   msg[0] = NET.stateCode
   msg.writeUInt16LE o.id, 1
   msg[3] = o.flags = NET.setFlags [o.accel,o.retro,o.right,o.left,o.boost,0,0,1]
@@ -194,8 +194,9 @@ State.register class State.moving extends State
 State.register class State.burn extends State
   acceleration: true
   cache:->
+    @dir = @d / RAD
     @peak = r = Speed.max
-    @cosd = cos @dir = @d / RAD
+    @cosd = cos @dir
     @sind = sin @dir
     $v.mult $v.normalize(@m), r*.99 if r < $v.mag @m # reset to speed limit
     a = @m.slice()
@@ -227,6 +228,15 @@ State.register class State.burn extends State
     @o.y = @y + @m[1]*dtreal + .5*dtrise*@sind*@a*dtrise + @sind*@peak*dtpeak
     null
   toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
+
+## updateUnlimited:(time)->
+##   time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+##   hdt = .5 * ( dt = ( time - @t ) * TICKi )
+##   adt = @a * dt
+##   @o.m[0] = @m[0] + cosadt = adt * cos @dir
+##   @o.m[1] = @m[1] + sinadt = adt * sin @dir
+##   @o.x = @x + @m[0] * dt + hdt * cosadt
+##   @o.y = @y + @m[1] * dt + hdt * sinadt
 
 State.register class State.turn extends State
   constructor:(s)->

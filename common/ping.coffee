@@ -65,7 +65,7 @@ $static class SyncPing
     @timer     = null
     @ringId    = -1
     @ringBf    = []
-    @bestPing  = [0,0,0]
+    @bestPing  = [Infinity,Infinity,Infinity]
     @bestDelta = [0,0,0]
     @avrgDelta = @avrgPing = @pings = 0
 
@@ -75,17 +75,19 @@ SyncPing::add = (id,remote)->
   error  = remote - prediction
   ping   = .5 * ( local - @ringBf[id] ) # this assumption is ofc wrong :D
   delta  = local - ping - remote
-  return false if @bestPing[0] < ping if 1 is ++@pings
+  return false if @bestPing[0] < ping
   @bestPing[2]  = @bestPing[1];  @bestPing[1]  = @bestPing[0];  @bestPing[0]  = ping
   @bestDelta[2] = @bestDelta[1]; @bestDelta[1] = @bestDelta[0]; @bestDelta[0] = delta
-  if 2 < @pings
-    @avrgPing = @bestPing[0]
-    @avrgDel = @bestDelta[0]
-  else
-    @avrgPing  = ( @bestPing[0]  + @bestPing[1]  + @bestPing[2]  ) / 3
-    @avrgDelta = ( @bestDelta[0] + @bestDelta[1] + @bestDelta[2] ) / 3
+  @avrgPing = @avrgDelta = 0
+  count = 1 + min 3, @pings
+  for i in [0...count]
+    @avrgPing  += @bestPing[0]
+    @avrgDelta += @bestDelta[0]
+  @avrgPing  /= count
+  @avrgDelta /= count
   return true unless 20 < ++@pings and 1.33 > @avrgDelta
   # assume that system clocks are sync; TODO: track clock-skew again
+  console.log 'ASSUMING HOSTS ARE SYNC', @avrgDelta, 'ms delta'
   NUU.time = Date.now
   SyncPing::add = ->
   true

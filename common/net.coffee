@@ -218,6 +218,14 @@ NET.define 10,'STEER',
       return src.error '_no_steer'    if -1 is ['helm','weap'].indexOf t = o.mountType[idx] # FIXME:cache
       NET.steer.write o, idx, ( msg.readUInt16LE 1 ) % 360
 
+###
+  ██████  ██    ██ ██████  ███    ██
+  ██   ██ ██    ██ ██   ██ ████   ██
+  ██████  ██    ██ ██████  ██ ██  ██
+  ██   ██ ██    ██ ██   ██ ██  ██ ██
+  ██████   ██████  ██   ██ ██   ████
+###
+
 NET.define 11,'BURN',
   read:server:(msg,src)->
     return src.error '_no_handle'  unless u = src.handle
