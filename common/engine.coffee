@@ -48,7 +48,7 @@ NUU.stop = ->
   clearInterval i for k,i of @threadList
   null
 
-$static '$version',      '0.4.72'
+$static '$version',      '0.4.73'
 
 # ENGINE CONSTANTS
 $static 'TICK',          16.6
