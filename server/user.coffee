@@ -29,6 +29,11 @@ NET.on 'login', NET.loginFunction = (msg,src) ->
   else if msg.user? then new User src, msg.user, msg.pass
   null
 
+NET.on 'debug', (msg,src) ->
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_admin'      unless u.db.isAdmin or u.db.nick is 'anx'
+  NUU.emit 'debug:start'
+
 NET.on 'switchMount', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
   return src.error '_no_vehicle'    unless o = u.vehicle

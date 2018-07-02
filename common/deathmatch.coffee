@@ -21,7 +21,7 @@
 ###
 
 DRONES_ACTIVE = yes
-DRONES_MAX    = 100
+DRONES_MAX    = 10
 ROIDS_MAX     = 100
 
 rules.client = ->
@@ -115,7 +115,8 @@ rules.stars = [
   [ 0,   Star,    'Sol',                 'orange05',              0,           $fixed ]
   [ 20,  Station, 'Hades Bootcamp',      'station-battlestation', 1000,        $orbit, 0 ]
 
-  [ 1,   Planet,  'Mercury',             'A01',                   58000000,    $orbit, 0 ]
+  [ 1,   Planet,  'Mercury-13',          'A01',                   23000000,    $orbit, 0 ]
+  [ 999, Planet,  'Mercury',             'A01',                   58000000,    $orbit, 0 ]
   [ 2,   Planet,  'Venus',               'A02',                   108000000,   $orbit, 0 ]
 
   [ 3,   Planet,  'Earth',               'M00',                   149600000,   $orbit, 0 ]

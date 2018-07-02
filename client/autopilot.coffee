@@ -36,6 +36,7 @@ Autopilot.widget = (v) ->
   s += 't: ' + parseInt(v.throttle) + '\n'
   s += 'e/t: ' + parseInt(v.error) + "/" + parseInt(v.error_threshold) + '\n'
   s += 'z: ' + parseInt(v.target_zone) + '\n'
+  s += 'dd:' + parseInt(v.maxSpeed) + '\n'
   s += '\n⚑['
   s += '▲' if v.recommend is 'boost'
   s += '△' if v.recommend is 'burn'
@@ -67,7 +68,7 @@ Autopilot.macro = ->
     VEHICLE.approachTarget = -> @target = TARGET
     VEHICLE.changeStrategy = AI.prototype.changeStrategy
     VEHICLE.onDecision = Autopilot.widget.bind Autopilot
-    VEHICLE.onTargetReached = (v)->
+    VEHICLE.onTarget = (v)->
       Autopilot.stop()
       Target.orbit()
   unless  Autopilot.active

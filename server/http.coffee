@@ -116,7 +116,7 @@ NUU.bincast = (data,o) ->  wsServer.clients.forEach (src) ->
   src.send data, $websocket.error(src)
   null
 
-NUU.nearcast = NUU.bincast = (data,o) -> wsServer.clients.forEach (src) ->
+NUU.nearcast = (data,o) -> wsServer.clients.forEach (src) ->
   if o? and src.handle? and src.handle.vehicle? and o isnt src.handle.vehicle
     v = src.handle.vehicle
     return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000

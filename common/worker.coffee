@@ -98,7 +98,10 @@ $worker.ReduceList = (worker)->
     --@count
   $worker.push listWorker
 
-$worker.PauseList = (worker)->
+$worker.PauseList = (opts,worker)->
+  unless worker
+    opts = {}
+    worker = opts
   listKey = "pause" + $worker.PauseList.key++
   listWorker = (time)->
     list = c = n = count = null
@@ -122,9 +125,46 @@ $worker.PauseList = (worker)->
     listWorker.count = n
     null
   listWorker.worker = worker
-  listWorker.list   = []
-  listWorker.count  = 0
-  listWorker.add    = (at)-> at[listKey] = 0; @list[@count++] = at
+  listWorker.list = []
+  listWorker.count = 0
+  listWorker.add = (at)-> at[listKey] = 0; @list[@count++] = at; Object.assign at, opts
   listWorker.remove = (at)-> at[listKey] = -1
   $worker.push listWorker
 $worker.PauseList.key = 0
+
+$worker.DeadLine = (waitFor,deadline,worker)->
+  listKey     = "deadline"     + $worker.DeadLine.key
+  listKeyLast = "deadlineLast" + $worker.DeadLine.key++
+  listWorker = (time)->
+    list = c = n = count = null
+    count = listWorker.count
+    list  = listWorker.list
+    c = -1; n = 0
+    while count > ++c
+      at      = list[c]
+      delay   = at[listKey]
+      deadlay = at[listKeyLast]
+      if delay is false
+        delete at[listKey]
+        delete at[listKeyLast]
+        continue
+      if time < delay and time < deadlay
+        list[n++] = at
+        continue
+      worker.call at, time
+      at[listKey] = 0
+      at[listKeyLast] = time + deadline
+    listWorker.count = n
+    null
+  listWorker.worker = worker
+  listWorker.list   = []
+  listWorker.count  = 0
+  listWorker.add    = (at)->
+    at[listKey] = ( time = NUU.time() ) + waitFor
+    unless at[listKeyLast]
+      at[listKeyLast] = time + deadline
+      @list[@count++] = at
+  listWorker.remove = (at)->
+    at[listKey] = false
+  $worker.push listWorker
+$worker.DeadLine.key = 0

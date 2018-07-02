@@ -123,6 +123,19 @@ Ship::thrustToAccel = (value)->
     else                           @thrust * .03 * ( value - 199 ) )
   NET.floatLE value
 
+Ship::burnTime = (v,thurst,origin)->
+  a = ship.thrustToAccel thrust
+  unless origin
+    do @update
+    origin = @m
+  $v.mag( $v.sub origin.slice(), v ) / a
+
+Ship::turnTime = (dir,origin)->
+  origin = @d unless origin
+  ddiff = -180 + $v.umod360 -180 + dir - origin
+  adiff = abs ddiff
+  turnTime = adiff / ( @turn || 1 )
+
 Ship::updateMods = ->
 
   # gather / calculate mods

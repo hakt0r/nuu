@@ -396,12 +396,12 @@ new class uiHUD
       "o#{$obj.list.length}|"+
       "v#{Sprite.visibleList.length}]\n"+
       "co[#{parseInt VEHICLE.d}|#{VEHICLE.x.toFixed 0}|#{VEHICLE.y.toFixed 0}|" +
-      "m[#{round VEHICLE.m[0]}|#{round VEHICLE.m[1]}|#{round $v.dist $v.zero, VEHICLE.m}]\n" +
+      "m[#{round VEHICLE.m[0]}|#{round VEHICLE.m[1]}|#{round $v.dist $v.zero, VEHICLE.m}]" +
       "s[#{VEHICLE.state.S}]]\n"+
-      "sc[#{Scanner.scale}] "+
-      "rx[#{NET.PPS.in}(#{parseInt NET.PPS.inAvg.avrg})]"+
-      "tx[#{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg})]"+
-      "ping[#{round Ping.avrgPing}] "+
+      "scanner[#{Scanner.scale}]\n"+
+      "net[rx:#{NET.PPS.in}(#{parseInt NET.PPS.inAvg.avrg})|"+
+      "tx:#{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg}|"+
+      "ping:#{round Ping.avrgPing}]\n"+
       "dt[#{round Ping.avrgDelta}]\n"+
       "hostiles:#{if Target.hostile then Object.keys(Target.hostile).length else 0}" else ''
     @resize()

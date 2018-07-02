@@ -33,6 +33,7 @@ if isClient then $public class State
     @relto.update time if @relto? and @relto = $obj.byId[@relto]
     do @cache if @cache
     @update time
+    # debugger if @S is $orbit and isClient and @stp is null
 
 if isServer then $public class State
   constructor:(opts) ->
@@ -85,6 +86,12 @@ State.register = (constructor) ->
   byKey.push @[name] = constructor
   constructor
 
+State.future = (state,time)->
+  o = state.o
+  state.update time
+  result = p:[o.x,o.y], v:o.m.slice()
+  do state.update # let's not confuse anyone
+  return result
 
 
 

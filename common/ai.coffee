@@ -42,11 +42,11 @@ $public class AI extends Ship
     AI.list.push @
     @changeStrategy @strategy
 
-AI.worker = {}
-
 AI::changeStrategy = (strategy)->
+  console.log 'strategy', strategy
   AI.worker[@strategy].remove @ if @strategy
-  if strategy? and worker = AI.worker[strategy]
+  if strategy?
+    worker = AI.worker[strategy]
     @strategy = strategy
     worker.add @
   return @
@@ -67,52 +67,32 @@ AI::primaryWeap  = null
 AI::autopilot    = null
 AI::escortTarget = null
 
-AI.worker.attackPlayers = $worker.List (time)->
-  @update time
-  @attackPlayersTarget() if not @target or @target.destructing
-  return 1000            unless @target
-  if @inRange = 500 > abs distance = $dist @, @target
-    v = NavCom.aim @, @target
-    if v.fire and not @fire
-      @fire = true
-      NET.weap.write('ai',0,@primarySlot,@,@target)
-    else if @fire and not v.fire
-      @fire = false
-      NET.weap.write('ai',1,@primarySlot,@,@target)
-  else v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
-  if v.setDir
-    NET.steer.write @, 0, v.dir
-    return null
-  { turn, turnLeft, @accel, @boost, @retro } = v
-  @left = turnLeft
-  @right = turn and not turnLeft
-  do @applyControlFlags if ( @flags isnt v.flags ) or v.setDir
-  null
+AI.worker = {}
+AI.list = []
+AI.autospawn = (opts={})-> $worker.push =>
+  drones = @list.length
+  if drones < opts.max
+    dt = opts.max - drones
+    new Trader for i in [0...dt/2]
+    new Drone  for i in [0...dt/2]
+  1000
 
-AI::attackPlayersTarget = ->
-  @target = null
-  return unless NUU.users.length > 0
-  closest = null
-  closestDist = Infinity
-  for p in NUU.users
-    if ( closestDist > d = $dist(@,p.vehicle) ) and ( not p.vehicle.destructing ) and ( abs(d) < 1000000 )
-      closestDist = d
-      closest =  p.vehicle
-  return @target = null if closestDist > 5000
-  console.log '::ai', 'Drone SELECTED', closestDist if debug
-  @target = closest
-  null
+AI.randomStellar = ->
+  stel = $obj.byId[ Array.random Object.keys Stellar.byId ]
+  stel.update()
+  stel
 
-AI.worker.approach = $worker.PauseList (time)->
+AI.register = (opts)-> AI.worker[opts.strategy] = $worker.PauseList opts, (time)->
   @update time
-  do @approachTarget unless @target
-  return 1000        unless @target
+  @getTarget() unless @target
+  return 1000  unless @target
   v = NavCom.approach @, NavCom.steer @, @target, 'pursue'
   switch v.recommend
     when "setdir"
       return 1000 if @lastRecommend is 'setDir' and 2 < (abs(@lastDir)-abs(v.dir))
       @lastThrottle = -1; @lastDir = v.dir
       NET.steer.write @, 0, round v.dir
+      return TICKi * @turnTime v.dir
     when "burn"
       return 1000 if @lastRecommend is 'burn' and @lastThrottle is v.throttle
       @lastDir = -1; @lastThrottle = v.throttle
@@ -130,31 +110,47 @@ AI.worker.approach = $worker.PauseList (time)->
       return 100
     when "execute"
       # console.log '::ai', "#{@name} at", @target.name if debug
-      @onTargetReached v if @onTargetReached
+      @onTarget v if @onTarget
       @lastDir = -1; @lastThrottle = -1; @target = null; return 1000
   @lastRecommend = v.recommend
   @onDecision v if @onDecision
   return 0
 
-AI::approachTarget = ->
-  @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
-  console.log '::ai', "#{@name} to", @target.name if @target if debug
+AI.register
+  strategy: 'approach'
+  getTarget: ->
+    @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
+    console.log '::ai', "#{@name} to", @target.name if @target if debug
+  onTarget: ->
+    console.log '::ai', "#{@name} at", @target.name if @target if debug
+    @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
+    console.log '::ai', "#{@name} to", @target.name if @target if debug
 
-AI.worker.escort = $worker.List (time)->
-  @update time
-  @escortTarget() if not @target or @target.destructing or ( @target.hostile and @target.hostile.length > 0 )
-  return 1000     unless @target
-  if @inRange = abs(distance = $dist(@,@target)) < 150
-    console.log '::ai', "#{@name} reached", @target.name if debug
-    return 250
-  v = NavCom.approach @, ( NavCom.steer @, @target, 'pursue' )
-  { turn, turnLeft, @accel, @boost, @retro, @fire } = v
-  @left = turnLeft
-  @right = turn and not turnLeft
-  do @applyControlFlags if ( @flags isnt v.flags ) or v.setDir
-  null
+AI.register
+  strategy: 'attackPlayers'
+  onTarget: ->
+    v = NavCom.aim @, @target
+    if v.fire and not @fire
+      @fire = true
+      NET.weap.write 'ai', 0, @primarySlot, @, @target
+    else if @fire and not v.fire
+      @fire = false
+      NET.weap.write 'ai', 1, @primarySlot, @, @target
+  getTarget: ->
+    @target = null
+    return unless NUU.users.length > 0
+    closest = null
+    closestDist = Infinity
+    for p in NUU.users
+      if ( closestDist > d = $dist(@,p.vehicle) ) and ( not p.vehicle.destructing ) and ( abs(d) < 1000000 )
+        closestDist = d
+        closest =  p.vehicle
+    return @target = null if closestDist > 5000
+    console.log '::ai', 'Drone SELECTED', closestDist if debug
+    @target = closest
+    null
 
-AI::escortTarget = ->
+AI.register strategy: 'escort', getTarget: ->
   if target = $obj.byId[@escortFor]
     console.log '::ai', "#{@name} Escorting", target.name if debug
     return @target = target unless target.hostile.length > 0 or target.destructing
@@ -166,29 +162,14 @@ AI::escortTarget = ->
   console.log '::ai', "#{@name} going berserk" if debug
   false
 
-AI.list = []
-AI.autospawn = (opts={})-> $worker.push =>
-  drones = @list.length
-  if drones < opts.max
-    dt = opts.max - drones
-    new Trader for i in [0...dt/2]
-    new Drone  for i in [0...dt/2]
-  1000
-
-AI.randomStellar = ->
-  stel = $obj.byId[ Array.random Object.keys Stellar.byId ]
-  stel.update()
-  stel
-
 $public class Drone extends AI
   constructor:(opts={})->
     opts.stel = Drone.randomStellar() unless opts.stel
     super opts
-
-Drone.randomStellar = ->
-  stel = $obj.byId[ Array.random [3,30] ]
-  stel.update()
-  stel
+  @randomStellar:->
+    stel = $obj.byId[ Array.random [3,30] ]
+    stel.update()
+    stel
 
 $public class Miner extends AI
   aiType: 'Miner'
@@ -204,8 +185,8 @@ $public class Trader extends AI
     opts.strategy = opts.strategy || 'approach'
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
-    @escort = ( for i in [0..floor random()*3]
-      new Escort escortFor:@id, state:@state.toJSON() )
+    # @escort = ( for i in [0..floor random()*3]
+    #   new Escort escortFor:@id, state:@state.toJSON() )
     return
 
 $public class Escort extends AI

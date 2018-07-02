@@ -154,8 +154,9 @@ NET.define 1,'PING', read:
 NET.define 2,'STATE',
   write:
     server: (s) ->
+      NET.stateSync.add s.o
       if s.json then NUU.jsoncast state:[s.toJSON()]
-      else NUU.bincast ( s.toBuffer().toString 'binary' ), s.o
+      else NUU.nearcast ( s.toBuffer().toString 'binary' ), s.o
     client:(o,flags) ->
       msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0]
       msg.writeUInt16LE parseInt(o.d), 2
@@ -169,6 +170,9 @@ NET.define 2,'STATE',
       o.d = msg.readUInt16LE 2
       o.applyControlFlags()
       src
+
+if isServer then NET.stateSync = $worker.DeadLine 5000, 60000, ->
+  NUU.bincast ( @state.toBuffer().toString 'binary' ), @
 
 ###
   ███████ ████████ ███████ ███████ ██████
@@ -198,7 +202,7 @@ NET.define 10,'STEER',
       cast.writeUInt16LE o.id,  1
       cast.writeUInt16LE value, 3
       cast[5] = idx
-      NUU.bincast ( cast.toString 'binary' ), o
+      NUU.nearcast ( cast.toString 'binary' ), o
   read:
     client:(msg,src)->
       return unless o = $obj.byId[id = msg.readUInt16LE 1]
@@ -281,7 +285,7 @@ NET.define 3,'WEAP',
       msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
       msg.writeUInt16LE target.id,  5
-      NUU.bincast ( msg.toString 'binary' ), vehicle
+      NUU.nearcast ( msg.toString 'binary' ), vehicle
 
 ###
    █████   ██████ ████████ ██  ██████  ███    ██
@@ -324,7 +328,7 @@ NET.define 5,'MODS',
     msg.writeUInt16LE ship.id, 2
     msg.writeUInt16LE parseInt(a), 4
     msg.writeUInt16LE parseInt(b), 6
-    NUU.bincast ( msg.toString 'binary' ), ship
+    NUU.nearcast ( msg.toString 'binary' ), ship
 
 ###
    █████  ██████  ███    ███ ██ ███    ██      ██████  ██████
@@ -339,7 +343,7 @@ NET.define 6,'OPERATION',
   write:server: (t,mode) ->
     msg = Buffer.from [NET.operationCode,operationKey.indexOf(mode),0,0]
     msg.writeUInt16LE t.id, 2
-    NUU.bincast ( msg.toString 'binary' ), t
+    NUU.nearcast ( msg.toString 'binary' ), t
   read:client: (msg) ->
     return unless ( t = $obj.byId[id = msg.readUInt16LE 2] )
     mode = operationKey[msg[1]]
@@ -367,7 +371,7 @@ NET.define 8,'HEALTH',
       t.armour * ( 255 / t.armourMax )
       t.fuel   * ( 255 / t.fuelMax   ) ]
     msg.writeUInt16LE t.id, 1
-    NUU.bincast ( msg.toString 'binary' ), t
+    NUU.nearcast ( msg.toString 'binary' ), t
   read:client: (msg) ->
     return unless ( t = $obj.byId[id = msg.readUInt16LE 1] )
     t.shield = msg[3] * ( t.shieldMax / 255 )
