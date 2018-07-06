@@ -20,16 +20,55 @@
 
 ###
 
+require('./csmake.coffee')( global.STAGES =
 
-require('./csmake.coffee')(
+  init: (done) ->
+    home = require('os').userInfo().homedir
+    global.GAME_DIR  = path.join path.dirname __dirname
+    global.MODS_AVAILABLE = fs.readdirSync('mod').sort()
 
-  init: (c) ->
-    global.NUUWD = path.join path.dirname __dirname
-    global.targets =
-      common : JSON.parse fs.readFileSync './common/build.json'
-      server : JSON.parse fs.readFileSync './server/build.json'
-      client : JSON.parse fs.readFileSync './client/build.json'
-    c null
+    global.CONF_FILE = (
+      if      fs.existsSync p = '/etc/nuu.json'                       then p
+      else if fs.existsSync p = path.join home, '.config', 'nuu.json' then p
+      else                      path.join GAME_DIR, 'nuu.json' )
+
+    global.CONFIG = JSON.parse fs.readFileSync CONF_FILE
+    CONFIG.mod.unshift 'core'
+    CONFIG.mod.map (m)-> unless fs.existsSync path.join GAME_DIR, 'mod', m
+      console.log m, 'does not exist.'
+      process.exit 1
+
+    global.SCRIPTS = {}
+    for m in CONFIG.mod when fs.existsSync f = path.join GAME_DIR, 'mod', m, 'build.coffee'
+      SCRIPTS[m] = require f
+
+    global.TARGETS = common:{}, server:{}, client:{}, compile:[]
+
+    merge_recursive = (o,merge)-> for k,v of merge
+      if ( a = Array.isArray v ) and o[k]? then o[k] = o[k].concat v
+      else if not a and typeof v is 'object' and o[k]? then merge_recursive o[k], v
+      else o[k] = v
+    CONFIG.mod.map (m)->
+      return unless fs.existsSync p = path.join GAME_DIR, 'mod', m, 'build.json'
+      merge_recursive TARGETS, v = JSON.parse fs.readFileSync p
+      for tgt, step of v when step.sources
+        for src in step.sources
+          TARGETS.compile.push [ path.join(GAME_DIR,'mod',m,tgt,src), tgt ]
+      null
+
+    console.log " builds ".yellow.inverse, CONFIG.mod.map( (i)-> i.green ).join ' '
+    for tgt, step of TARGETS
+      continue if tgt is 'compile'
+      for name, values of step
+        if Array.isArray values
+          console.log " #{tgt} ".yellow.bold, "#{name}".bold, values.map(
+            (i)-> if Array.isArray i then i[1].yellow + ":" + i[0].green else i.green
+          ).join ' '
+        else if name is 'contrib' then for lib, opts of values
+             console.log " #{tgt} ".yellow.bold, "#{name}".bold+'/'+lib.bold, opts.name.green, opts.homepage.bold, opts.url
+        else console.log " #{tgt} ".yellow.bold, "#{name}".bold, values
+
+    done null
 
   clean: (c)-> $s [
     rmdir 'build'
@@ -49,48 +88,43 @@ require('./csmake.coffee')(
    )(c)
 
   assets: (c)->
-    dirs = fs.readdirSync('mod')
     series = []
-    # fetch 'contrib/fontawesome.zip', 'https://use.fontawesome.com/releases/v5.0.13/fontawesome-free-5.0.13.zip'
-    # unzip 'contrib/fontawesome.zip', 'contrib/fontawesome'
-    # link  'contrib/fontawesome/web-fonts-with-css',     'build/fontawesome'
-    series.push require f for d in dirs when fs.existsSync f = path.join NUUWD, 'mod', d, 'build.coffee'
-    $s series, ->
-      console.log 'done'
-      c null
+    for name,script of SCRIPTS when script.build
+      await new Promise script.build
+    $s series, -> c null
 
   node: (c)-> depend(dirs)( ->
-    generate('build/release.json',       path.join NUUWD,'tools','import_git.coffee')(->)
-    generate('build/node_packages.html', path.join NUUWD,'tools','import_npm.coffee')(c)
+    generate('build/release.json',       path.join GAME_DIR,'tools','import_git.coffee')(->)
+    generate('build/node_packages.html', path.join GAME_DIR,'tools','import_npm.coffee')(c)
    )
 
   contrib: (c)-> depend(node)( -> $p (
-    fetch 'build/'+lib, data.url for lib, data of targets.client.contrib
+    fetch 'build/'+lib, data.url for lib, data of TARGETS.client.contrib
    ), c )
 
   libs: (c)-> depend(dirs)( ->
     if exists 'build/lib.js'
-      console.log ':bld', 'build/lib.js'.green
+      console.log ' exists '.green.bold, 'build/lib.js'.green
       return c null
     browserify = require('browserify')()
     bundle  = (module) -> browserify.require module, expose : module
-    bundle lib for lib in targets.client.libs
-    browserify.bundle().pipe(fs.createWriteStream('build/lib.js')).on 'close', ->
-      c null )
+    bundle lib for lib in TARGETS.client.libs
+    browserify.bundle().pipe(fs.createWriteStream('build/lib.js')).on 'close', -> c null )
 
   sources: (c)-> depend(libs)( ->
     $s [
       (c) ->
-        list = []
-        list.push compile 'common/'+lib+'.coffee', 'build/common/'+lib+'.js' for lib in targets.common
-        list.push compile 'client/'+lib+'.coffee', 'build/client/'+lib+'.js' for lib in targets.client.sources
-        list.push compile 'server/'+lib+'.coffee', 'build/server/'+lib+'.js' for lib in targets.server.sources
-        $p list, c
+        fs.writeFileSync path.join('build','build.json'), JSON.stringify TARGETS
+        $p ( TARGETS.compile.map (directive)->
+          [ source, scope ] = directive
+          compile source+'.coffee', path.join('build', scope, path.basename source + '.js' )
+        ), c
       (c) ->
         list = []
-        targets.common.filter (i) -> list.push 'build/common/' + i + '.js'
-        targets.client.sources.filter (i) -> list.push 'build/client/' + i + '.js'
-        list.unshift list.pop()
+        # prepend client.js
+        TARGETS.common.sources.filter (i) -> list.push 'build/common/' + i + '.js'
+        TARGETS.client.sources.filter (i) -> list.push 'build/client/' + i + '.js' if i isnt 'client'
+        list.unshift 'build/client/client.js'
         exec("""
           cat #{list.join(' ')} > build/client.js;
           sha512sum build/client.js > build/hashsums
@@ -101,9 +135,7 @@ require('./csmake.coffee')(
           ' build/hashsums >> build/client.js
         """)(c)
     ], c )
-
-  sysgen: (c)-> depend(assets)(-> exec("coffee mod/nuu/sysgen.coffee")(c))
-  debug:  (c)-> depend(assets)(-> exec("coffee --nodejs debug server/server.coffee")(c))
-  run:    (c)-> depend(assets)(-> exec("coffee server/server.coffee &")(c))
+  debug:  (c)-> depend(assets)(-> exec("node --debug .")(c))
+  run:    (c)-> depend(assets)(-> exec("node . &")(c))
   all:    (c)-> run c
 )

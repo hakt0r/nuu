@@ -24,7 +24,7 @@ module.exports = (destinationFile,callback)->
   fs = require 'fs'
   o = '<ul class="libs">'
   d = JSON.parse fs.readFileSync 'package.json', 'utf8'
-  for lib, data of targets.client.contrib
+  for lib, data of TARGETS.client.contrib
     o += """
       <li><a target="_new" href="#{data.homepage}">#{data.name} (build/#{lib})</a><span class="version">master/git<span></li>
     """

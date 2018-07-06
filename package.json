@@ -1,10 +1,14 @@
 {
   "name": "nuu",
   "version": "0.4.73",
-  "description": "escape velocity clone space sim browser game",
-  "main": "index.js",
+  "description": "escape velocity inspired space sim browser game",
+  "main": "./build/server/server.js",
+  "bin": {
+    "nuu": "./build/server/server.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "coffee tools/build.coffee assets",
+    "tests": "coffee tools/build.coffee test"
   },
   "repository": {
     "type": "git",
@@ -46,7 +50,7 @@
   "gitHead": "86252dbc933a7215583393968322ce92c24c903d",
   "devDependencies": {
     "browserify": "^16.2.2",
-    "coffeescript": "^1.12.7",
+    "coffeescript": "^2.3.1",
     "marked": "^0.4.0",
     "request": "^2.87.0",
     "xml2json": "^0.11.2"

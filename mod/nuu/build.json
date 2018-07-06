@@ -1,0 +1,19 @@
+{ "client": {
+    "contrib": {
+      "sm2.js": {
+        "name": "SoundManager 2",
+        "homepage": "http://www.schillmania.com/projects/soundmanager2/",
+        "url":  "https://raw.github.com/scottschiller/SoundManager2/master/script/soundmanager2-nodebug-jsmin.js"}},
+    "sources":[
+      "controls",
+      "autopilot",
+      "gui_nuu",
+      "hud",
+      "scanner",
+      "target",
+      "sound"],
+    "scripts":[
+      "sm2.js"]},
+  "server":{
+    "sources": [
+      "objects"]}}

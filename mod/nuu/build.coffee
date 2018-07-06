@@ -1,9 +1,10 @@
 
-module.exports = (c)-> depend(contrib,sources)( ->
+module.exports.build = (c)-> depend(contrib,sources)( ->
   $s [
-    mkdir 'build/imag'
-    linkFilesIn 'client/gfx',      'build/imag'
-    linkFilesIn 'mod/nuu/ship',    'build/imag'
-    linkDirsIn  'mod/nuu/ship',    'build/ship'
-    linkFilesIn 'mod/nuu/artwork', 'build/imag'
+    mkdir       'build/imag'
+    link        'mod/nuu/sprites/objects_nuu.json', 'build/objects_nuu.json'
+    link        'mod/nuu/sprites/sprites_nuu.json', 'build/imag/sprites_nuu.json'
+    link        'mod/nuu/client/gui.css',           'build/gui.css'
+    linkFilesIn 'mod/nuu/artwork',                  'build/imag'
+    linkDirsIn  'mod/nuu/sprites',                  'build/ship'
   ], c )
