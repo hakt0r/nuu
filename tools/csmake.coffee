@@ -59,11 +59,10 @@ module.exports = (__targets) ->
     $p ( mk a for a in args ), -> c null
 
   global.link = (src,dst)-> (c)->
-    unless fs.existsSync(dst)
-      fs.symlink ( a = path.relative(path.dirname(dst),src) ), dst, -> c null
-    else
+    if await new Promise (resolve)-> fs.exists dst, resolve
       console.log dst.green
       c null
+    else fs.symlink ( a = path.relative(path.dirname(dst),src) ), dst, c
 
   global.linkFilesIn = (src,dst)-> (c)->
     fs.readdir src, (err,files)->
