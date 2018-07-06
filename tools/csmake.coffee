@@ -59,7 +59,6 @@ module.exports = (__targets) ->
     $p ( mk a for a in args ), -> c null
 
   global.link = (src,dst)-> (c)->
-    console.log dst.yellow
     if await new Promise (resolve)-> fs.exists dst, resolve
       console.log dst.green
       c null
