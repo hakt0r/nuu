@@ -88,10 +88,9 @@ require('./csmake.coffee')( global.STAGES =
    )(c)
 
   assets: (c)->
-    series = []
     for name,script of SCRIPTS when script.build
       await new Promise script.build
-    $s series, -> c null
+    c null
 
   node: (c)-> depend(dirs)( ->
     generate('build/release.json',       path.join GAME_DIR,'tools','import_git.coffee')(->)
@@ -112,6 +111,7 @@ require('./csmake.coffee')( global.STAGES =
     browserify.bundle().pipe(fs.createWriteStream('build/lib.js')).on 'close', -> c null )
 
   sources: (c)-> depend(libs)( ->
+    console.log TARGETS.compile
     $s [
       (c) ->
         fs.writeFileSync path.join('build','build.json'), JSON.stringify TARGETS

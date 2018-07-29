@@ -144,13 +144,13 @@ module.exports = (__targets) ->
         process.exit 1
     null
 
-  target.exec = (name,c) -> global[name](c||->)
+  target.exec = (name,c) -> if global[name]? then global[name](c||->)
 
   process.argv.shift()
   process.argv.shift()
 
   target __targets
-  $s [
-    (c)-> target.exec 'init', c
-    (c)-> target.exec (process.argv[0] || 'all'), c
-  ]
+  TARGET = process.argv[0] || 'all'
+  await new Promise (resolve)-> target.exec 'init', resolve
+  await new Promise (resolve)-> target.exec TARGET, resolve
+  await new Promise (resolve)-> target.exec 'post', resolve

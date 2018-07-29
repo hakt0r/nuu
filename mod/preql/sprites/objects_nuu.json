@@ -1,0 +1,67 @@
+{ "ship": [
+
+{ "name":"Human","sprite":"suit",
+  "slots":{
+    "structure":[{"size":"suit","default":"Human Skin"}],
+    "utility":[{"size":"suit","default":"Human Heart"}],
+    "weapon":[{"size":"suit","default":"Stock Multitool"}]},
+  "stats":{
+    "crew":1,
+    "mass":1,
+    "fuel_consumption":0} },
+
+{ "name":"Exosuit","sprite":"suit",
+  "slots":{
+    "structure":[
+      {"size":"suit","default":"Stock Fabric"},
+      {"size":"suit","default":"Stock ExoThrusters"}
+    ],
+    "utility":[],
+    "weapon":[{"size":"suit","default":"StockMultitool"}]},
+  "stats":{
+    "crew":1,
+    "mass":1,
+    "fuel_consumption":0} }
+
+], "outf": [
+
+{  "name" : "Stock ExoThrusters",
+   "size" : "suit",
+   "itemId": 500,
+   "stats" : {
+      "mass" : 15,
+      "price" : 0,
+      "thrust" : 100,
+      "turn" : 85,
+      "engine_limit" : 300,
+      "energy_usage" : 5,
+      "fuel" : 200,
+      "speed" : 175
+   },
+   "type" : "modification",
+   "info" : {
+      "description" : "Clogged, corroded and cracked in every way possible while still remaining in functional condition, this engine really belongs on the scrap heap.",
+      "name" : "Stock ExoThrusters",
+      "gfx_store" : "engine04"
+   },
+   "slot" : { "prop" : "engines", "$t" : "structure" },
+   "extends" : "Outfit" },
+
+   {  "name" : "Stock Fabric",
+      "size" : "suit",
+      "itemId": 501,
+      "stats" : {
+         "armour": 10,
+         "mass": 1,
+         "cargo": 0
+      },
+      "type" : "modification",
+      "info" : {
+         "description" : "A rag, really.",
+         "name" : "Stock Fabric",
+         "gfx_store" : "engine04"
+      },
+      "slot" : { "prop" : "hull", "$t" : "structure" },
+      "extends" : "Outfit" }
+
+] }
