@@ -204,14 +204,15 @@ NUU.startPage = ->
   <title>nuu (v#{$version} - Gordon Cooper)</title>
   <link rel="shortcut icon" href="build/favicon.ico" />
   <link rel="stylesheet" type="text/css" href="build/gui.css"/>
-  <script>
-    window.deps = JSON.parse('#{JSON.stringify common:NUU.deps.common, client:NUU.deps.client}')
-  </script>
-  #{( """<script src='build/#{n}'></script>""" for n in NUU.deps.client.scripts ).join '\n'}
   <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
   <meta name="keywords" lang="en-us" content="NUU, Sci-Fi, Space, MMORPG, Game, Online, Browsergame, Trade, Economy Simulation"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-</head><body></body></html>"""
+</head><body></body>
+<script>
+window.deps = JSON.parse('#{JSON.stringify common:NUU.deps.common, client:NUU.deps.client}')
+</script>
+#{( """<script src='build/#{n}'></script>""" for n in NUU.deps.client.scripts ).join '\n'}
+</html>"""
   return (req,res) -> res.send page
 
 

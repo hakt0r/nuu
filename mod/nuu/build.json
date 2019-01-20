@@ -8,6 +8,7 @@
       "controls",
       "autopilot",
       "gui_nuu",
+      "gfx_nuu",
       "hud",
       "scanner",
       "target",

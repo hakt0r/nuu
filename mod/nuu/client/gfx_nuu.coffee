@@ -1,5 +1,18 @@
 
-Sprite.on "init", ->
+makeStarfield = (mod...)->
+  field = (rmax,smax)->
+    [ rx, ry, rr, rb ] = [ random()*1024, random()*1024, random()*smax, random()*rmax ]
+    g.fillStyle = 'rgba(255,255,255,'+rb+')'
+    g.beginPath()
+    g.arc rx,ry,rr,0,TAU
+    g.fill()
+    null
+  c = $ '<canvas class="offscreen" width=1024 height=1024>'
+  g = c[0].getContext '2d'
+  field.apply null, x for i in [0..x[2]] while x = mod.shift()
+  return new PIXI.TilingSprite PIXI.Texture.fromCanvas c[0]
+
+Sprite.initSpace = ->
   @layer 'bg',   new PIXI.Container
   @layer 'stel', new PIXI.Container
   @layer 'debr', new PIXI.Container
@@ -14,13 +27,14 @@ Sprite.on "init", ->
   @bg.addChild @parallax  = makeStarfield [1,0.3,4000]
   @bg.addChild @parallax2 = makeStarfield [1,0.3,2000]
 
+do Sprite.initSpace
 
-Sprite::repositionPlayer = (w=WIDTH,h=HEIGHT,hw=WDB2,hh=HGB2)->
+Sprite.repositionPlayer = (w=WIDTH,h=HEIGHT,hw=WDB2,hh=HGB2)->
   return unless ( v = VEHICLE ) and v.loaded
   r = v.radius
   v.sprite.position.set hw - r, hh - r
 
-Sprite::select = ->
+Sprite.select = ->
   Horizon = 10 * max WIDTH, HEIGHT
   VEHICLE.update time = NUU.time()
   { x,y } = VEHICLE
@@ -48,7 +62,7 @@ Sprite::select = ->
       console.log 'outRange', s.name, s.id
   null
 
-Sprite::animate = (timestamp) ->
+Sprite.animate = (timestamp) ->
   return unless VEHICLE
   time = NUU.time()
   VEHICLE.update time

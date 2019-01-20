@@ -31,8 +31,6 @@
 
 ###
 
-NUU.on 'runtime:ready', -> $static 'Sprite', new SpriteSurface
-
 PIXI.bringToFront = (sprite, parent) ->
   sprite = if typeof sprite != 'undefined' then sprite.target or sprite else this
   parent = parent or sprite.parent or 'children': false
@@ -68,19 +66,6 @@ $static 'movieFactory', (sprite, url, _loop) ->
       c
   c(_loop)
 
-makeStarfield = (mod...)->
-  field = (rmax,smax)->
-    [ rx, ry, rr, rb ] = [ random()*1024, random()*1024, random()*smax, random()*rmax ]
-    g.fillStyle = 'rgba(255,255,255,'+rb+')'
-    g.beginPath()
-    g.arc rx,ry,rr,0,TAU
-    g.fill()
-    null
-  c = $ '<canvas class="offscreen" width=1024 height=1024>'
-  g = c[0].getContext '2d'
-  field.apply null, x for i in [0..x[2]] while x = mod.shift()
-  return new PIXI.TilingSprite PIXI.Texture.fromCanvas c[0]
-
 $static 'SpriteSurface', class SpriteSurface extends EventEmitter
   visible: {}
   visibleList: []
@@ -113,14 +98,13 @@ $static 'SpriteSurface', class SpriteSurface extends EventEmitter
     @ticker = new PIXI.Ticker
     @ticker.add => do @animate
     @ticker.start()
-    $interval 500, @select.bind @
+    $interval 500, => do @select
     $.ajax '/build/images.json', success: (result) =>
       $static '$meta', result
       # preload animations
       for k in ['exps','expm','expl','expl2','cargo','debris0','debris1','debris2','debris3','debris4','debris5']
         movieFactory k, '/build/spfx/' + k + '.png'
       NUU.emit 'gfx:ready'
-
     @on 'resize', @repositionPlayer.bind @
     @on 'resize', (wd,hg,hw,hh) =>
       @starfield.width  = @parallax2.width  = @parallax.width  = wd
@@ -140,3 +124,10 @@ $static 'SpriteSurface', class SpriteSurface extends EventEmitter
 
   stop: ->
     @bg.removeChildren()
+
+  select:->
+  animate:->
+  repositionPlayer:->
+
+$static 'Sprite', new SpriteSurface
+console.log Sprite
