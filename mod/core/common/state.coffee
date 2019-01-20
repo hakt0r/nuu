@@ -75,6 +75,7 @@ State::relto = null
 State::lastUpdate = 0
 State::update = $void
 State::translate = false
+State::changeDir = ->
 
 Object.defineProperty State::, 'p',
   get: -> return [ @x, @y ]
