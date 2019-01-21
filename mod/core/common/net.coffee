@@ -172,7 +172,8 @@ NET.define 2,'STATE',
       src
 
 if isServer then NET.stateSync = $worker.DeadLine 5000, 60000, ->
-  NUU.bincast ( @state.toBuffer().toString 'binary' ), @
+  if @state.json then NUU.jsoncast state:[@state.toJSON()]
+  else NUU.nearcast ( @state.toBuffer().toString 'binary' ), @
 
 ###
   ███████ ████████ ███████ ███████ ██████
