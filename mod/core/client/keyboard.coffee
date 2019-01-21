@@ -69,13 +69,14 @@ Kbd.onKeyDown = (e) ->
   return if e.ctrlKey and e.code is 'KeyL'                if isClient
   # allow the inspector; but only in debug mode ;)
   return if e.ctrlKey and e.shiftKey and e.code is 'KeyI' if debug
-  e.preventDefault()
   code = e.code
   code = 'c' + code if e.ctrlKey
   code = 'a' + code if e.altKey
   code = 's' + code if e.shiftKey
-  return @onkeydown e, code if @onkeydown
+  if @onkeydown
+    return @onkeydown e, code
   return true if @onkeyup
+  e.preventDefault() unless e.allowDefault
   macro = @rmap[code]
   notice 500, "d[#{code}]:#{macro} #{e.code}" if debug
   return if @state[code] is true

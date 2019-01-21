@@ -47,6 +47,12 @@ window.notice = (timeout,msg) ->
   Notice.queue.push new Notice line, timeout for line in msg
   null
 
+# ██     ██ ██ ███    ██ ██████   ██████  ██     ██
+# ██     ██ ██ ████   ██ ██   ██ ██    ██ ██     ██
+# ██  █  ██ ██ ██ ██  ██ ██   ██ ██    ██ ██  █  ██
+# ██ ███ ██ ██ ██  ██ ██ ██   ██ ██    ██ ██ ███ ██
+#  ███ ███  ██ ██   ████ ██████   ██████   ███ ███
+
 $public class Window
   constructor : (opts={}) ->
     Object.assign @, opts
@@ -84,6 +90,12 @@ $public class Window
         return false
     true
 
+# ██      ██ ███████ ████████
+# ██      ██ ██         ██
+# ██      ██ ███████    ██
+# ██      ██      ██    ██
+# ███████ ██ ███████    ██
+
 $public class ModalListWindow extends Window
   constructor:(opts)->
     super opts
@@ -101,18 +113,20 @@ $public class ModalListWindow extends Window
       @render key,val for key, val of @subject
     @$.find("*").addClass 'noselect'
     null
+  getActive:-> @$.find('.list-item.active').first()[0] || false
   keyHandler: (evt,code)=>
     list = @$.find('.list-item').toArray()
     cur = @$.find('.list-item.active').first()
     if cur.length is 0
+      return unless cur = list[0]
+      cur = $ cur
       cur.addClass 'active'
-      cur = $ list.first()
     index = list.indexOf cur[0]
     count = list.length
     switch code
-      when @closeKey, 'Escape'
+      when @closeKey, 'Escape', 'aEscape'
         @close(); p = @
-        p.close() while p = p.parent
+        p.close() while p = p.parent if code is 'aEscape'
       when 'Enter'     then cur[0].action.call @ if cur[0].action
       when 'PageUp'    then next = $ list.shift()
       when 'PageDown'  then next = $ list.pop()
@@ -138,22 +152,209 @@ $public class ModalListWindow extends Window
     next.parent().find('button').removeClass 'active'
     btns.first().addClass 'active'; next[0].action = => btns.first().click()
 
+# ███████ ██████  ██ ████████  ██████  ██████
+# ██      ██   ██ ██    ██    ██    ██ ██   ██
+# █████   ██   ██ ██    ██    ██    ██ ██████
+# ██      ██   ██ ██    ██    ██    ██ ██   ██
+# ███████ ██████  ██    ██     ██████  ██   ██
 
-class Object.editor extends ModalListWindow
+$obj.classes =
+  ship: default:[],template:
+    name: 'Human'
+    sprite: 'suit'
+    slots:
+      structure: [ size: 'suit', default: 'Human Skin'  ]
+      utility:   [ size: 'suit', default: 'Human Heart' ]
+      weapon:    [ size: 'suit', default: 'Stock Multitool' ]
+    stats: crew:1, mass:1, fuel_consumption:0
+  outf: default:[],template:{}
+  govt: default:[],template:
+    name:'UntitledGovernment'
+    diplomacy:[]
+    info:
+      name:'Untitled Government'
+      description:'This is fresh new Government'
+  comp: default:[],template:
+    name:'UntitledCompany'
+    diplomacy:[]
+    info:
+      name:'Untitled Company'
+      description:'This is fresh new Company'
+  skil: default:[],template:
+    name:'UntitledSkill'
+    level:1
+    enables:{}
+    stats:{}
+    requiredItem:false
+    info:
+      name:'Untitled Skill'
+      description:'This is fresh new Skill'
+  dipl: default:[],template:{}
+
+$obj.getName = (key,val)->
+  name = key
+  name = val.name      if val.name?
+  name = val.info.name if val.info? and val.info.name?
+  name
+
+class $obj.tree extends ModalListWindow
+  constructor:(opts={})->
+    opts.name = 'editor'
+    opts.title = 'Editor'
+    opts.subject = Item.db
+    for key, blueprint of $obj.classes when not Item.db[key]?
+      Item.db[key] = blueprint.default
+    super opts
+    @body.prepend $ "<button>"
   render:(key,val) => switch typeof val
     when 'object'
       @body.append i = $ """<div class="list-item"><label>#{key}</label><span>[directory]</span></div>"""
-      i.on 'click', i[0].action = => w = new Object.editor name:@name+'.'+key, title:'Settings:'+key, subject: val, parent: @, closeKey: @closeKey
+      i[0].editorKey = key
+      i[0].editorValue = val
+      i.on 'click', i[0].action = => w = new $obj.BlueprintList
+        blueprint:$obj.classes[key]
+        name:@name+' '+key
+        title:@title+':'+key
+        subject:val
+        parent:@
+        closeKey:@closeKey
+
+class $obj.BlueprintList extends ModalListWindow
+  constructor:(opts={})->
+    super opts
+    @head.append @buttons = $ '<div class="buttons"></div>'
+    @buttons.append add = $ "<button>n</button>"
+    @buttons.append dup = $ "<button>c</button>"
+    @buttons.append del = $ "<button>x</button>"
+    add.click => do @add
+    dup.click => do @duplicate
+    del.click => do @remove
+  add:->
+    o = JSON.parse JSON.stringify @blueprint.template
+    k = -1 + @subject.push o
+    @render k,o
+    @open k, o
+  duplicate:->
+    return unless c = @getActive()
+    return if c.textContent is '..'
+    o = JSON.parse JSON.stringify c.editorValue
+    o.name =      o.name      + ' copy' if o.name
+    o.info.name = o.info.name + ' copy' if o.info.name
+    k = -1 + @subject.push o
+    @render k,o
+    @open o
+  remove:->
+    return unless c = @getActive()
+    return if c.textContent is '..'
+    delete @subject[c.editorKey]
+    c.remove()
+  open:(key,val)->
+    name = $obj.getName key, val
+    new $obj.editor
+      parent:    @
+      subject:   val
+      name:      @name+'.'+key
+      title:     @title+':'+name
+      closeKey:  @closeKey
+      blueprint: @blueprint
+  render:(key,val)->
+    return unless typeof val is 'object'
+    name = $obj.getName key, val
+    @body.append i = $ """<div class="list-item"><label>#{name}</label><span>[directory]</span></div>"""
+    i.on 'click', i[0].action = => @open key, val
+  keyHandler:(evt,code)->
+    switch code
+      when "KeyN" then @add()
+      when "KeyC" then @duplicate()
+      when "KeyX" then @remove()
+      else ModalListWindow::keyHandler.call @,evt,code
+
+class $obj.editor extends ModalListWindow
+  constructor:(opts)->
+    super opts
+  render:(key,val) => switch typeof val
+    when 'object'
+      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>[directory]</span></div>"""
+      i.on 'click', i[0].action = => w = new $obj.editor
+        name:@name+'_'+key
+        title:@title+':'+name
+        subject: val
+        parent:@
+        closeKey:@closeKey
+    when 'number'
+      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
+      i.on 'click', i[0].action = =>
+        return if @editor
+        new Number.editor parent:@, item$:i, title:key, default:val, callback:(error,value)=>
+          i.find('span').html if @subject[key] = val = value
+          NUU.saveSettings()
     when 'string'
       @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
-      i.on 'click', i[0].action = => new String.editor parent:@ title:key, default:val, callback:(error,value)=>
-        i.find('span').html if @subject[key] = val = value
-        NUU.saveSettings()
+      i.on 'click', i[0].action = =>
+        return if @editor
+        new String.editor parent:@, item$:i, title:key, default:val, callback:(error,value)=>
+          i.find('span').html if @subject[key] = val = value
+          NUU.saveSettings()
     when 'boolean'
       @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{if val then 'true' else '<span class="red">false</div>'}</span></div>"""
       i.on 'click', i[0].action = =>
         i.find('span').html if @subject[key] = val = not val then 'true' else '<span class="red">false</div>'
         NUU.saveSettings()
+
+class String.editor
+  constructor:(opts)->
+    Object.assign @, opts
+    value$ = @item$.find 'span'
+    value$.css 'display','none'
+    @item$.append @input$ = $ '<input>'
+    @input$.val value$.text()
+    @input$.focus()
+    @parent.editor = @
+    Kbd.grab @,
+      onkeyup:(e)=>
+        switch e.key
+          when "Escape"
+            value$.css 'display', 'unset'
+            @input$.remove(); delete @parent.editor; Kbd.release @
+          when "Enter"
+            value$.css 'display', 'unset'
+            value$.text @input$.val()
+            @parent.subject[@title] = @input$.val()
+            @input$.remove(); delete @parent.editor; Kbd.release @
+          else e.allowDefault = true
+      onpaste:(e)-> console.log 'paste', e
+      onkeydown:->
+
+class Number.editor
+  constructor:(opts)->
+    Object.assign @, opts
+    value$ = @item$.find 'span'
+    value$.css 'display','none'
+    @item$.append @input$ = $ '<input>'
+    @input$.val parseFloat value$.text()
+    @input$.focus()
+    @parent.editor = @
+    Kbd.grab @,
+      onkeyup:(e)=>
+        switch e.key
+          when "Escape"
+            value$.css 'display', 'unset'
+            @input$.remove(); delete @parent.editor; Kbd.release @
+          when "Enter"
+            value$.css 'display', 'unset'
+            value$.text @input$.val()
+            @parent.subject[@title] = @input$.val()
+            @input$.remove(); delete @parent.editor; Kbd.release @
+          else e.allowDefault = true
+      onpaste:(e)-> console.log 'paste', e
+      onkeydown:->
+
+
+# ██   ██ ███████ ██    ██ ██████  ██ ███    ██ ██████
+# ██  ██  ██       ██  ██  ██   ██ ██ ████   ██ ██   ██
+# █████   █████     ████   ██████  ██ ██ ██  ██ ██   ██
+# ██  ██  ██         ██    ██   ██ ██ ██  ██ ██ ██   ██
+# ██   ██ ███████    ██    ██████  ██ ██   ████ ██████
 
 Window.KeyBinder = class KeyBinder extends ModalListWindow
   constructor: (opts)->
@@ -176,6 +377,12 @@ Window.KeyBinder = class KeyBinder extends ModalListWindow
     @body.html @value = code + '<br/>Escape | Enter'
     @unfocus(); @keyHandler = @confirm.bind @; @focus()
 
+# ██   ██ ███████ ██      ██████
+# ██   ██ ██      ██      ██   ██
+# ███████ █████   ██      ██████
+# ██   ██ ██      ██      ██
+# ██   ██ ███████ ███████ ██
+
 Window.Help = class HelpWindow extends ModalListWindow
   name: 'help'
   title: 'Help'
@@ -197,9 +404,13 @@ Window.Help = class HelpWindow extends ModalListWindow
 Kbd.macro 'help',     'KeyH', 'Show help',             -> new Window.Help
 Kbd.macro 'settings', 'KeyL', 'Open Settings dialog',  ->
   return window.settings.close() if window.settings
-  new Object.editor name:'settings', title:'Settings', subject: NUU.settings, closeKey: 'KeyL'
+  new $obj.editor name:'settings', title:'Settings', subject: NUU.settings, closeKey: 'KeyL'
 
-
+#  █████  ██    ██ ████████ ██   ██
+# ██   ██ ██    ██    ██    ██   ██
+# ███████ ██    ██    ██    ███████
+# ██   ██ ██    ██    ██    ██   ██
+# ██   ██  ██████     ██    ██   ██
 
 NUU.passPrompt = (prompt,callback)->
   onpass = (pass) =>

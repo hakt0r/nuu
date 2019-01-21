@@ -32,9 +32,9 @@ $public class Item
   @byType: ship:{}, station:{}
   @byProp: {}
   @init: (items) ->
+    Item.db = items
     id = 0
     for k,o of Station when o? and o::? and o::consumes?
-      # o.name = o.constructor.name
       Item.byType.station[o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
       console.log 'item', 'Station', id, o.name, o::sprite if debug
       id++

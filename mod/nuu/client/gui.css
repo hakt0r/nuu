@@ -234,6 +234,17 @@
   transform:translate(-50%,-50%);
   width:fit-content; }
 
+.window header .buttons button {
+  width:16px;
+  height:16px;
+}
+.window header .buttons {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: black;
+}
+
 /*
 ███    ███  ██████  ██████   █████  ██          ██      ██ ███████ ████████
 ████  ████ ██    ██ ██   ██ ██   ██ ██          ██      ██ ██         ██
@@ -249,6 +260,22 @@
   max-width: 280px;
   text-align:left;
   }
+
+  .window.modal_list.editor {
+    background: rgba(0, 0, 0, 0.95);
+    border: none; /* rgba(0,255,0,0.9) solid 1px; */
+    left:7px;
+    max-width: 350px;
+    text-align:left;
+    }
+
+.window.modal_list.editor .list-item {
+  width: unset;
+}
+.window.modal_list.editor input {
+  background: black;
+  border: none;
+}
 
 .window.modal_list button {
   background: #31313117;

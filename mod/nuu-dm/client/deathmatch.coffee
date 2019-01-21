@@ -37,8 +37,9 @@ Window.MainMenu = class MainMenu extends ModalListWindow
 MainMenu.root =
   unlocks:  -> do Kbd.macro.unlocks
   help:     -> do Kbd.macro.help
-  license:  -> do Kbd.macro.license
+  about:    -> do Kbd.macro.about
   settings: -> do Kbd.macro.settings
+  editor:   -> new $obj.tree
 
 Window.DockingMenu = class DockingMenu extends ModalListWindow
   name: 'dock'
