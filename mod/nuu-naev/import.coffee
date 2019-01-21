@@ -110,9 +110,10 @@ module.exports = (destinationFile,callback)->
   readShip = (f,d) ->
     d = d.ship
     className = d.name.clearItemName()
-    d.extends = if d.base_type isnt d.name then d.base_type else 'Ship'; delete d.base_type
+    d.extends = if d.base_type isnt d.name then d.base_type else 'Ship'
     src[className] = d
 
+    delete d.base_type
     delete d.GUI     if d.GUI
     delete d.mission if d.mission
 
