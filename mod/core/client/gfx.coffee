@@ -106,9 +106,6 @@ $static 'SpriteSurface', class SpriteSurface extends EventEmitter
         movieFactory k, '/build/spfx/' + k + '.png'
       NUU.emit 'gfx:ready'
     @on 'resize', @repositionPlayer.bind @
-    @on 'resize', (wd,hg,hw,hh) =>
-      @starfield.width  = @parallax2.width  = @parallax.width  = wd
-      @starfield.height = @parallax2.height = @parallax.height = hg
     null
 
   layer: (name,container)->

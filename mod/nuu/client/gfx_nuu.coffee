@@ -27,6 +27,11 @@ Sprite.initSpace = ->
   @bg.addChild @parallax  = makeStarfield [1,0.3,4000]
   @bg.addChild @parallax2 = makeStarfield [1,0.3,2000]
 
+  @on 'resize', @resizeStars = (wd,hg,hw,hh) =>
+    @starfield.width  = @parallax2.width  = @parallax.width  = wd
+    @starfield.height = @parallax2.height = @parallax.height = hg
+  @resizeStars window.innerWidth,window.innerHeight,window.innerWidth/2,window.innerHeight/2
+
 do Sprite.initSpace
 
 Sprite.repositionPlayer = (w=WIDTH,h=HEIGHT,hw=WDB2,hh=HGB2)->
