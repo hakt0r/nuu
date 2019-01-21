@@ -439,6 +439,13 @@
   padding:0;
   text-align:right; }
 
+.window.vt button {
+  border: solid 1px;
+  background: black;
+  line-height: 15px;
+  height: 20px;
+  padding: 2px 7px; }
+
 ::-webkit-scrollbar {
   opacity:0.8;
   height:12px;

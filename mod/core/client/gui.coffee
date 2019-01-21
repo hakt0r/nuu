@@ -458,6 +458,13 @@ NUU.loginPrompt = ->
   user = pass = null
   p_user = '<i style="color:green">    User</i>'
   p_pass = '<i style="color:green">Password</i>'
+  NUU.testButton.remove() if NUU.testButton
+  vt.$.prepend NUU.testButton = $ """<button>Demo</button>"""
+  NUU.testButton.click ->
+    user = 'test'
+    pass = 'test'
+    NUU.testButton.remove() if NUU.testButton
+    dologin()
   onkey = (e)->
     return true if e.altKey and e.code is 'KeyL' and new Window.About
     return true if e.altKey and e.code is 'KeyR' and NUU.registerPrompt()
@@ -480,7 +487,7 @@ NUU.loginPrompt = ->
     setTimeout ( ->
       vt.status 'NUU', 'ready'
       vt.hide()
-    ), 500
+    ), 0
   vt.prompt override:yes, key:onkey, then:onuser, p:p_user
 
   true

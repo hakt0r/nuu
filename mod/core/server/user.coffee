@@ -22,7 +22,9 @@
 
 NET.on 'login', NET.loginFunction = (msg,src) ->
   if msg.match
-    unless user = UserDB.get msg
+    if msg is 'test'
+      user = User.testUser
+    else unless user = UserDB.get msg
       console.log ':dbg', 'nx:user', msg if debug
       return src.json 'user.login.nx': true
     src.json 'user.login.challenge': salt:user.salt
@@ -116,13 +118,19 @@ $public class User
   @byId: {}
   constructor: (src, user, pass) ->
     console.log 'user', user, pass # if debug
-    unless user? and pass?
-      console.log 'user:nopw', user, UserDB.get user
-      return @deny src, pass
-    unless @db = UserDB.get user
-      return @register src, user, pass
-    unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
-      return @deny src, pass
+    if user? and user is 'test'
+      @db = JSON.parse JSON.stringify User.testUser
+      @db.nick += Date.now()
+      @db.id = Date.now()
+    else
+      unless user? and pass?
+        console.log 'user:nopw', user, UserDB.get user
+        return @deny src, pass
+      unless @db = UserDB.get user
+        return @register src, user, pass
+      unless @db? and pass.pass is salted_pass = sha512 [ pass.salt, @db.pass ].join ':'
+        console.log salted_pass.red
+        return @deny src, pass
     # Login successful #
     @sock = src
     src.authenticated = yes
@@ -154,7 +162,19 @@ $public class User
     console.log 'user', @db.nick.green, 'joined'.green, @db.id, vehicleType
     true
 
+User.testUser =
+  id:0
+  salt:'notRly'
+  mountId:0
+  nick:'test'
+  mail:'anx@ulzq.de'
+  regtime:'2009-11-07'
+  online:false
+  credits:1000
+  inventory:{}
+
 User::save = ->
+  return if @db.nick.match /^test[0-9]+$/
   UserDB.set @db.nick, @db
   # console.log 'save', @db.nick, @db
 

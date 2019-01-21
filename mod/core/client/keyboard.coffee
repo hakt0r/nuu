@@ -129,6 +129,8 @@ Kbd.release = (focus)->
   if @focus is focus
     console.log ':kbd', 'release_current', focus.name if debug
     do @clearHooks
+    @stackOrder.pop()
+    delete @stackItem[focus.name]
     if @stackOrder.length is 0
       console.log ':kbd', 'main-focus' if debug
       return true
