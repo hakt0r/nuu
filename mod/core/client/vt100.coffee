@@ -81,7 +81,7 @@ $public class VT100 extends Window
     @draw()
     true
 
-  pasteHandler: (e) =>
+  pasteHandler: (e)->
     c = @cursor.x
     d = e.clipboardData
       .getData('text')
@@ -90,7 +90,7 @@ $public class VT100 extends Window
     @cursor.x += d.length
     do @draw
 
-  keyHandler: (e,code) =>
+  keyHandler: (e,code)->
     return if true is @overrideKeys e if @overrideKeys
     c = @cursor.x
     if code is 'Enter'

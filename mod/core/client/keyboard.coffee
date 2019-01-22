@@ -96,8 +96,7 @@ Kbd.onKeyUp = (e) ->
   @state[code] = false
   @up[macro](e) if @up[macro]?
 
-Kbd.stackOrder = []
-Kbd.stackItem  = []
+Kbd.stack = []
 
 Kbd.clearHooks = (key)->
   @focus = null
@@ -108,40 +107,36 @@ Kbd.clearHooks = (key)->
   true
 
 Kbd.grab = (focus,opts)->
-  console.log ':kbd', 'grab', focus.name if debug
+  # console.log ':kbd', 'grab', focus.name if debug
   if @focus
-    unless @focus is focus and opts.onkeydown is @onkeydown and opts.onkeyup is @onkeyup and opts.onpaste is @onpaste
-      console.log ':kbd', 'obscure', @focus.name if debug
-      @stackOrder.push @stackItem[@focus.name] =
-        focus:@focus
-        onkeydown:@onkeydown
-        onkeyup:@onkeyup
-        onpaste:@onpaste
-    else
+    if @focus is focus and opts.onkeydown is @onkeydown and opts.onkeyup is @onkeyup and opts.onpaste is @onpaste
       console.log ':kbd', 'same', @focus.name if debug
-    do @clearHooks
-  @focus = focus; Object.assign @, opts
+    else
+      console.log ':kbd', 'obscure', @focus.name # if debug
+      @stack.push focus:@focus, onkeydown:@onkeydown, onkeyup:@onkeyup, onpaste:@onpaste
+      do @clearHooks
+  else
+    console.log ':kbd', 'grab', focus.name if debug
+  @focus = focus
+  Object.assign @, opts
   document.addEventListener 'paste', @onpaste if @onpaste
-  console.log ':kbd', 'grabbed', @focus.name if debug
+  # console.log ':kbd', 'grabbed', @focus.name  if debug
   true
 
 Kbd.release = (focus)->
   if @focus is focus
     console.log ':kbd', 'release_current', focus.name if debug
     do @clearHooks
-    @stackOrder.pop()
-    delete @stackItem[focus.name]
-    if @stackOrder.length is 0
+    if @stack.length is 0
       console.log ':kbd', 'main-focus' if debug
       return true
-    item = @stackOrder.pop()
+    item = @stack.pop()
     @grab item.focus, item
     console.log ':kbd', 'main' unless @focus if debug
     true
-  else if item = @stackItem[focus.name]
+  else if @stack.length > 0 and item = @stack.reverse().reduce( (v,c=no)-> if v.focus is focus then v else c )
     console.log ':kbd', 'release_obscured', focus.name if debug
-    Array.splice idx, 0 if idx = @stackOrder.indexOf item
-    delete @stackItem[focus.name]
+    Array.splice idx, 0 if idx = @stack.indexOf item
     console.log ':kbd', 'main' unless @focus if debug
     true
   else false

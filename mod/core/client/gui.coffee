@@ -114,7 +114,7 @@ $public class ModalListWindow extends Window
     @$.find("*").addClass 'noselect'
     null
   getActive:-> @$.find('.list-item.active').first()[0] || false
-  keyHandler: (evt,code)=>
+  keyHandler:(evt,code)->
     list = @$.find('.list-item').toArray()
     cur = @$.find('.list-item.active').first()
     if cur.length is 0
