@@ -10,9 +10,9 @@ It's excellent open-source cousin [naev](http://blog.naev.org/) currently lends 
 
 A tip of the hat should also be extended to [Endless Sky](https://github.com/endless-sky/endless-sky) another excellent EV-esque open-source project.
 
-| **Screenshots** | |
-| :--------: | :--------: |
-| ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot0.png "NUU in action - screenshot") | ![screenshot](https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot1.png "NUU in action - screenshot") |
+## **Screenshots**
+
+| <img src="https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot0.png" height="200"/> | <img src="https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot1.png" height="200"/> |
 
 ## Intro
 
