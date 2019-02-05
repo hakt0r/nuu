@@ -94,7 +94,10 @@ module.exports = (destinationFile,callback)->
     if d.fx.gfx
       d.sprite = d.fx.gfx
       delete d.fx.gfx
-    delete d.fx unless Object.keys(d.fx).length > 0
+
+    delete d.fx.sound if d.fx? and not d.fx.sound
+    unless Object.keys(d.fx).length > 0
+      delete d.fx
 
     if not d.sprite and ( p = d ).type is 'ship'
       while p = src[p.extends]
@@ -116,7 +119,6 @@ module.exports = (destinationFile,callback)->
     delete d.base_type
     delete d.GUI     if d.GUI
     delete d.mission if d.mission
-
     for t,slots of d.slots
       d.slots[t] = [slots] unless Array.isArray slots
       for k,v of slots when v.$t
@@ -135,8 +137,9 @@ module.exports = (destinationFile,callback)->
     d.sprite = sprite
     d.stats[k] = v for k,v of d.characteristics; delete d.characteristics
     d.stats[k] = v for k,v of d.health;          delete d.health
-
     d.name = className
+
+    d.class = 'ship'
     ship.push d
 
   ###
@@ -159,13 +162,14 @@ module.exports = (destinationFile,callback)->
     d.stats.ship = d.stats.ship.clearItemName() if d.stats and d.stats.ship
     d.stats.ammo = d.stats.ammo.clearItemName() if d.stats and d.stats.ammo
     d.name = className
+    d.class = 'outfit'
     outf.push d
 
   parseDir np + '/ships/', readShip
   readDir np + '/outfits/', (folder) ->
     parseDir np + '/outfits/'+folder+'/', readOutfit
 
-  fs.writeFileSync destinationFile, JSON.stringify ship : ship, outf : outf
+  fs.writeFileSync destinationFile, JSON.stringify ship.concat outf
 
   ###
     update metadata

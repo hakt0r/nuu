@@ -47,9 +47,7 @@ NUU.init =->
   console.log ':nuu', 'init:items' if debug
   # Load objects
   items = JSON.parse fs.readFileSync 'build/objects_naev.json'
-  nuu_i = JSON.parse fs.readFileSync 'build/objects_nuu.json'
-  items.ship = items.ship.concat nuu_i.ship
-  items.outf = items.outf.concat nuu_i.outf
+  items = items.concat JSON.parse fs.readFileSync 'build/objects_nuu.json'
   Item.init items
   fs.writeFileSync 'build/objects.json', JSON.stringify items
   # Load metadata for sprites for each object

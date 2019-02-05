@@ -167,20 +167,20 @@ $obj.classes =
       utility:   [ size: 'suit', default: 'Human Heart' ]
       weapon:    [ size: 'suit', default: 'Stock Multitool' ]
     stats: crew:1, mass:1, fuel_consumption:0
-  outf: default:[],template:{}
-  govt: default:[],template:
+  outfit: default:[],template:{}
+  gov: default:[],template:
     name:'UntitledGovernment'
     diplomacy:[]
     info:
       name:'Untitled Government'
       description:'This is fresh new Government'
-  comp: default:[],template:
+  com: default:[],template:
     name:'UntitledCompany'
     diplomacy:[]
     info:
       name:'Untitled Company'
       description:'This is fresh new Company'
-  skil: default:[],template:
+  skill: default:[],template:
     name:'UntitledSkill'
     level:1
     enables:{}
@@ -201,7 +201,7 @@ class $obj.tree extends ModalListWindow
   constructor:(opts={})->
     opts.name = 'editor'
     opts.title = 'Editor'
-    opts.subject = Item.db
+    opts.subject = Item.byClass
     for key, blueprint of $obj.classes when not Item.db[key]?
       Item.db[key] = blueprint.default
     super opts

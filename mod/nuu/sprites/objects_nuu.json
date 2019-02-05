@@ -1,6 +1,7 @@
-{ "ship": [
-
-{ "name":"Human","sprite":"suit",
+[
+{ "class": "ship",
+  "name": "Human",
+  "sprite": "suit",
   "slots":{
     "structure":[{"size":"suit","default":"Human Skin"}],
     "utility":[{"size":"suit","default":"Human Heart"}],
@@ -10,7 +11,9 @@
     "mass":1,
     "fuel_consumption":0} },
 
-{ "name":"Exosuit","sprite":"suit",
+{ "class": "ship",
+  "name": "Exosuit",
+  "sprite": "suit",
   "slots":{
     "structure":[
       {"size":"suit","default":"Stock Fabric"},
@@ -21,11 +24,10 @@
   "stats":{
     "crew":1,
     "mass":1,
-    "fuel_consumption":0} }
+    "fuel_consumption":0} },
 
-], "outf": [
-
-{  "name" : "Stock ExoThrusters",
+{  "class": "outfit",
+   "name" : "Stock ExoThrusters",
    "size" : "suit",
    "itemId": 500,
    "stats" : {
@@ -47,21 +49,21 @@
    "slot" : { "prop" : "engines", "$t" : "structure" },
    "extends" : "Outfit" },
 
-   {  "name" : "Stock Fabric",
-      "size" : "suit",
-      "itemId": 501,
-      "stats" : {
-         "armour": 10,
-         "mass": 1,
-         "cargo": 0
-      },
-      "type" : "modification",
-      "info" : {
-         "description" : "A rag, really.",
-         "name" : "Stock Fabric",
-         "gfx_store" : "engine04"
-      },
-      "slot" : { "prop" : "hull", "$t" : "structure" },
-      "extends" : "Outfit" }
-
-] }
+ {  "class": "outfit",
+    "name" : "Stock Fabric",
+    "size" : "suit",
+    "itemId": 501,
+    "stats" : {
+       "armour": 10,
+       "mass": 1,
+       "cargo": 0
+    },
+    "type" : "modification",
+    "info" : {
+       "description" : "A rag, really.",
+       "name" : "Stock Fabric",
+       "gfx_store" : "engine04"
+    },
+    "slot" : { "prop" : "hull", "$t" : "structure" },
+    "extends" : "Outfit" }
+]

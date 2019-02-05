@@ -31,36 +31,41 @@ $public class Item
   @byName: {}
   @byType: ship:{}, station:{}
   @byProp: {}
+  @byClass: ship:[],outfit:[],gov:[],skill:[],com:[],stellar:[],station:[]
   @init: (items) ->
     Item.db = items
     id = 0
     for k,o of Station when o? and o::? and o::consumes?
+      o.class = "station"
       Item.byType.station[o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
       console.log 'item', 'Station', id, o.name, o::sprite if debug
       id++
-    for o in items.ship
-      Item.byType['ship'][o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
-      Ship.byTpl[id] = o.name
-      Ship.byName[o.name] = id
-      id++
-    for o in items.outf
-      Item.tpl[o.itemId = id] = Item.byName[o.name] = o
-      size = o.size || 'small'
-      t = (
-        if (s = o.slot) then (if s.$t then s.$t else s)
-        else if o.extends is 'Ammo' then 'ammo'
-        else 'cargo' )
-      Item.byType[t] = {}       unless Item.byType[t]
-      Item.byType[t][size] = {} unless Item.byType[t][size]
-      Item.byType[t][size][o.name] = o
-      if o.type
-        t = o.type.split(' ').pop()
-        Item.byType[t] = {} unless Item.byType[t]
-        Item.byType[t][o.name] = o
-      if s and (t = s.prop)
-        Item.byProp[t] = {} unless Item.byProp[t]
-        Item.byProp[t][o.name] = o
-      id++
+    for o in items
+      Item.byClass[o.class].push o
+      if o.class is 'ship'
+        Item.byType['ship'][o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
+        Ship.byTpl[id] = o.name
+        Ship.byName[o.name] = id
+        id++
+      else if o.class is 'outfit'
+        Item.tpl[o.itemId = id] = Item.byName[o.name] = o
+        size = o.size || 'small'
+        t = (
+          if (s = o.slot) then (if s.$t then s.$t else s)
+          else if o.extends is 'Ammo' then 'ammo'
+          else 'cargo' )
+        Item.byType[t] = {}       unless Item.byType[t]
+        Item.byType[t][size] = {} unless Item.byType[t][size]
+        Item.byType[t][size][o.name] = o
+        if o.type
+          t = o.type.split(' ').pop()
+          Item.byType[t] = {} unless Item.byType[t]
+          Item.byType[t][o.name] = o
+        if s and (t = s.prop)
+          Item.byProp[t] = {} unless Item.byProp[t]
+          Item.byProp[t][o.name] = o
+        id++
+      else console.log o
 
     for type, items of Item.byType when items.medium?
       if Object.keys(items.medium).length is 0 and Object.keys(items.large).length is 0
