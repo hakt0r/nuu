@@ -119,6 +119,7 @@ Kbd.grab = (focus,opts)->
     console.log ':kbd', 'grab', focus.name if debug
   @focus = focus
   Object.assign @, opts
+  @focus.raise()
   document.addEventListener 'paste', @onpaste if @onpaste
   # console.log ':kbd', 'grabbed', @focus.name  if debug
   true

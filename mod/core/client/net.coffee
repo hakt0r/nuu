@@ -28,7 +28,9 @@ NET.register = (name, pass, callback) -> NET.login name, pass, callback, yes
 NET.on 'e', (message) -> notice 1000, Error.byId[message]
 NET.on 'sync', (opts) -> NUU.sync opts
 NET.on 'launch',      -> VEHICLE.landedAt = VEHICLE.orbit = null
-NET.on 'landed',  (id)-> new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
+NET.on 'landed',  (id)->
+  vt.hide()
+  new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
 
 NUU.sync = (list,callback) ->
   if list.del

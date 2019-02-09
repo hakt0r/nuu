@@ -61,9 +61,11 @@ $public class Window
     @$.append @head = $ "<header>#{@title}</header>" if @title
     @$.append @body = $ "<div></div>"
     $cue @show()
-  show:->
+  raise:->
     @$.css "display", "initial"
     @visible = yes
+  show:->
+    @raise()
     @focus()
     @
   close:->
