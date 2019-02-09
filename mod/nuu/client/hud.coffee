@@ -337,9 +337,9 @@ new class uiHUD
     LeftAlign  @energy,         100, 25
     LeftAlign  @shield,         100, 125
     LeftAlign  @armour,         100, 120
-    RightAlign @speed       ,   50,  170
-    RightAlign @pursuit     ,   50,  170
-    RightAlign @approach    ,   50,  170
+    RightAlign @speed       ,   60,  75
+    RightAlign @pursuit     ,   60,  75
+    RightAlign @approach    ,   60,  75
     RightAlign @targetShield,   5,   125
     RightAlign @targetArmour,   5,   120
     RightAlign @text,           115, 10 + @text.height
@@ -376,27 +376,27 @@ new class uiHUD
     @targetShield.visible = @targetArmour.visible = @targetShield.bg.visible = @targetArmour.bg.visible = @targetDir.visible = @approach.visible = @pursuit.visible = TARGET?
     unless TARGET
       m = VEHICLE.m.slice()
-      l = 50 / Speed.max * $v.mag(m)
+      l = Math.min 50, 50 / Speed.max * $v.mag(m)
       m = $v.mult $v.normalize(m), l
       @speed.width = l
       @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
     else if TARGET
       # MY-SPEED relto
       m = $v.sub VEHICLE.m.slice(), TARGET.m
-      l = 50 / Speed.max * $v.mag(m)
+      l = Math.min 50, 50 / Speed.max * $v.mag(m)
       m = $v.mult $v.normalize(m), l
       @speed.width = l
       @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
       # - GUIDE - pursuit
       vec = NavCom.steer(VEHICLE,TARGET,'pursue')
       m = vec.force.slice()
-      l = 25 / Speed.max * $v.mag(m)
+      l = Math.min 50, 50 / Speed.max * $v.mag(m)
       m = $v.mult $v.normalize(m), l
       @pursuit.width = l
       @pursuit.rotation = ( PI + $v.heading $v.zero, m ) % TAU
       if @approach.visible = vec.approach_force?
         m = vec.approach_force.slice()
-        l = 25 / Speed.max * $v.mag(m)
+        l = Math.min 50, 50 / Speed.max * $v.mag(m)
         m = $v.mult $v.normalize(m), l
         @approach.width = l
         @approach.rotation =( PI +  $v.heading $v.zero, m ) % TAU
