@@ -83,7 +83,7 @@ $static 'Scanner', new class ScannerRenderer
     return unless s.name
     @removeLabel s if @label[s.id]
     [name,fill] = @labelStyle s
-    @gfx.addChild l = @label[s.id] = new PIXI.Text name, fontFamily: 'monospace', fontSize:'10px', fill: fill
+    @gfx.addChild l = @label[s.id] = new PIXI.Text name, fontFamily: 'monospace', fontSize:'8px', fill: fill
     l.$obj = s
     null
 
@@ -104,7 +104,7 @@ $static 'Scanner', new class ScannerRenderer
       @gfx.position.set 0,0 unless @gfx.position[0] is 0
     else
       W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 100
-      @gfx.position.set WDB2 - 100, HEIGHT - 335
+      @gfx.position.set WDB2 - 100, HEIGHT - 210
     lb = @label
     px = pl.x; py = pl.y
     ( g = @gfx ).clear()
@@ -117,7 +117,7 @@ $static 'Scanner', new class ScannerRenderer
       w = max 1, min 2, s.size * 100 / @scale
       l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
       v = $v.mult $v.normalize(v), l
-      lb[s.id].position.set v[0]+W2R, v[1]+H2R if lb[s.id]
+      lb[s.id].position.set v[0]+W2R-2, v[1]+H2R-10 if lb[s.id]
       if s.state.S is $orbit and Scanner.orbits
         o = s.state.orb / @scale
         ol = min W2-5, ( $v.mag ov = [ s.state.relto.x - px, s.state.relto.y - py ] ) / @scale
@@ -133,7 +133,7 @@ $static 'Scanner', new class ScannerRenderer
       w = max 1, min 2, s.size * 100 / @scale
       l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
       v = $v.mult $v.normalize(v), l
-      lb[s.id].position.set v[0]+W2R, v[1]+H2R if lb[s.id]
+      lb[s.id].position.set v[0]+W2R-2, v[1]+H2R-10 if lb[s.id]
     null
 
   toggleFS: ->

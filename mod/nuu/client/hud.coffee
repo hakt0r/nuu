@@ -178,14 +178,15 @@ class uiBar extends PIXI.Sprite
     gfx = new PIXI.Graphics
     gfx.clear()
     gfx.beginFill color
-    gfx.drawRect 0,0,100,9
+    gfx.drawRect 0,0,100,3
     gfx.endFill()
     super tex = Sprite.renderer.generateTexture gfx
     Object.assign @, tex:tex, HUD:HUD, name:name, color:color
     @HUD.layer.addChild @
     @HUD.layer.addChild @bg = new PIXI.Sprite @tex
     @visible = @bg.visible = no
-    @bg.alpha = 0.3
+    @alpha = 0.9
+    @bg.alpha = 0.2
     @HUD[@name] = @
     gfx.destroy()
 
@@ -203,13 +204,13 @@ uiBar::remove = ->
 
 uiBar.init = -> new uiBar HUD,k,v for k,v of @healhBars
 uiBar.healhBars =
-  throttle:0xFFFFFF
-  fuel:0x00FF00
-  energy:0xFF0000
-  shield:0x0000FF
-  armour:0xFFFF00
-  targetShield:0x0000FF
-  targetArmour:0xFFFF00
+  throttle:0x777777
+  fuel:0x007700
+  energy:0x770077
+  shield:0x777700
+  armour:0x770000
+  targetShield:0x777700
+  targetArmour:0x770000
 
 ###
   ██    ██ ██    █████  ██████  ██████   ██████  ██     ██
@@ -302,7 +303,7 @@ uiVector::remove = ->
 ###
 
 new class uiHUD
-  fontSize:12
+  fontSize:10
   frame: 0
   label: {}
   constructor: ->
@@ -322,8 +323,8 @@ new class uiHUD
     do @resize # UPDATE DYNAMIC POSITIONS
 
   resize: ->
-    LeftAlign  = (o,x,y)-> x = WDB2 - x - 5; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
-    RightAlign = (o,x,y)-> x = WDB2 + x + 5; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
+    LeftAlign  = (o,x,y)-> x = WDB2 - x - 125; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
+    RightAlign = (o,x,y)-> x = WDB2 + x + 125; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
     @system.fontSize = @text.fontSize = @notice.fontSize = @debug.fontSize = @fontSize + 'px'
     @notice.position.set        WIDTH - 20 - @notice.width, 10
     @debug.position.set         10,  26
@@ -331,16 +332,16 @@ new class uiHUD
     LeftAlign  @playerSprite,   100, @playerSprite.height + 35 if @playerSprite
     LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
     LeftAlign  @primary,        110 + @primary.width,   10 + @secondary.height + @primary.height
-    LeftAlign  @throttle,       100, 50
-    LeftAlign  @fuel,           100, 40
-    LeftAlign  @energy,         100, 30
-    LeftAlign  @shield,         100, 20
-    LeftAlign  @armour,         100, 10
-    RightAlign @speed       ,   -5,  200
-    RightAlign @pursuit     ,   -5,  200
-    RightAlign @approach    ,   -5,  200
-    RightAlign @targetShield,   5,   20
-    RightAlign @targetArmour,   5,   10
+    LeftAlign  @throttle,       100, 40
+    LeftAlign  @fuel,           100, 35
+    LeftAlign  @energy,         100, 25
+    LeftAlign  @shield,         100, 125
+    LeftAlign  @armour,         100, 120
+    RightAlign @speed       ,   50,  170
+    RightAlign @pursuit     ,   50,  170
+    RightAlign @approach    ,   50,  170
+    RightAlign @targetShield,   5,   125
+    RightAlign @targetArmour,   5,   120
     RightAlign @text,           115, 10 + @text.height
     RightAlign @targetSprite,   5,   @targetSprite.height + 35 if @targetSprite
 
