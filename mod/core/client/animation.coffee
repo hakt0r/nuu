@@ -25,7 +25,7 @@ $abstract 'Animated',
   loop: no
 
   loadAssets: ->
-    @sprite = movieFactory @sprite, '/build/spfx/' + @sprite + '.png', (
+    @sprite = movieFactory @sprite, '/build/gfx/' + @sprite + '.png', (
       if @loop is on then on else => @destructor() )
     { @radius, @size } = @sprite.meta
     @updateSprite()
@@ -44,7 +44,7 @@ $Animated Cargo,  sprite: 'cargo', loop: yes
 
 Weapon.Beam.loadAssets = ->
   @meta = $meta[@sprite]
-  @sprite = new PIXI.TilingSprite PIXI.Texture.fromImage '/build/outfit/space/' + @sprite + '.png'
+  @sprite = new PIXI.TilingSprite PIXI.Texture.fromImage '/build/gfx/' + @sprite + '.png'
   @sprite.height = @meta.height
   @sprite.width  = @range
   @sprite.anchor.set 0, 0.5
@@ -61,7 +61,7 @@ Weapon.Beam.hide = ->
 Weapon.Projectile.loadAssets = ->
   @meta = $meta[@sprite]
   w = @meta.width / @meta.cols
-  @base = PIXI.Texture.fromImage '/build/outfit/space/' + @sprite + '.png'
+  @base = PIXI.Texture.fromImage '/build/gfx/' + @sprite + '.png'
   @base = new PIXI.Texture @base.baseTexture, new PIXI.Rectangle 0,0,w,w
   null
 

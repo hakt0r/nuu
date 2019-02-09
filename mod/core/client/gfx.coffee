@@ -103,7 +103,7 @@ $static 'SpriteSurface', class SpriteSurface extends EventEmitter
       $static '$meta', result
       # preload animations
       for k in ['exps','expm','expl','expl2','cargo','debris0','debris1','debris2','debris3','debris4','debris5']
-        movieFactory k, '/build/spfx/' + k + '.png'
+        movieFactory k, '/build/gfx/' + k + '.png'
       NUU.emit 'gfx:ready'
     @on 'resize', @repositionPlayer.bind @
     null

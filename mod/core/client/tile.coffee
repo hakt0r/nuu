@@ -21,7 +21,7 @@
 ###
 
 $abstract 'Tile',
-  assetPrefix: '/build/outfit/space/'
+  assetPrefix: '/build/gfx/'
   layer: 'tile'
   count: null
 
@@ -49,7 +49,7 @@ $Tile Ship,
 
   loadAssets: ->
     console.log ':gfx', 'ship$', 'assets', @id, @name if debug
-    p = '/build/ship/' + @sprite.replace(/_.*/,'') + '/' + @sprite
+    p = "/build/gfx/#{@sprite}"
     @imgCom = p + '_comm.png'
     # Cache.get p + '_comm.png', (cached) => @imgCom = cached
     @loadTile p + '.png', 'sprite', (e,s) =>

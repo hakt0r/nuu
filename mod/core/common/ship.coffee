@@ -207,8 +207,8 @@ Ship::modSlot = (type,slot,item)->
   console.log 'modSlot', type, slot, item
   old = slot.equip # old.destroy() TODO
   if type is 'weapon'
-    i = new Weapon @, Item.tpl[item].name
-  else i = new Outfit Item.tpl[item].name
+    i = new Weapon @, Item.byId[item].name
+  else i = new Outfit Item.byId[item].name
   slot.equip = i
   @updateMods()
   @save() if isServer

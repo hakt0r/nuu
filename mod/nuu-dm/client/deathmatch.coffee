@@ -98,8 +98,7 @@ Window.Ships = class Shipyard extends ModalListWindow
 
 Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
   constructor: (parent,type,slot) ->
-    super name:'slots', title:"Select: #{type} (#{slot.size})"
-    Object.assign parent:parent,type:type,slot:slot
+    super parent:parent,type:type,slot:slot,name:'slots', title:"Select: #{type} (#{slot.size})"
   fetch: (done)->
     collect = (list,size) =>
       r = []
@@ -112,7 +111,6 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
       done collect Item.byType[@type], @slot.size if @unlocks
       @close() unless @unlocks
     null
-
   render:(idx,name)->
     @body.append x = $ """
       <div class="list-item slot"><label>#{name}</label><span></span></div>
@@ -128,14 +126,14 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
       null
     img.width = 32; img.height = 32
     img.src = '/build/imag/loading.png'
-    Cache.get '/build/outfit/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)=> img.src = url
+    Cache.get '/build/gfx/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)=> img.src = url
 
 Window.Loadout = class Loadout extends ModalListWindow
   constructor: (vehicle=VEHICLE)->
     super
-      name:'equip'
-      title:'Loadout for ' + vehicle.name
-      vehicle: v = Item.byType.ship[vehicle] if typeof vehicle is 'string'
+      name:   'equip'
+      title:  'Loadout for ' + vehicle.name
+      vehicle: v = if typeof vehicle is 'string' then Item.byType.ship[vehicle] else vehicle
       subject: v.slots
   render: (type,slots) ->
     @body.append """
@@ -159,7 +157,7 @@ Window.Loadout = class Loadout extends ModalListWindow
       mass: #{e.stats.mass}"
     x.prepend img = new Image
     img.src = '/build/imag/loading.png'
-    Cache.get '/build/outfit/store/' + ( e.info.gfx_store || e.sprite ) + '.png', (url)=> img.src = url
+    Cache.get '/build/gfx/store/' + ( e.info.gfx_store || e.sprite ) + '.png', (url)=> img.src = url
     return x
   slotSelection: (type,slot) -> =>
     new Window.SlotSelection @, type, slot
@@ -190,7 +188,7 @@ Render =
     @body.append entry = $ """
       <div id="ship_select_#{name}" class="list-item ship-select noselect">
       <label>#{item.name}</label>
-        <img class="ship_comm" src="build/ship/#{sprite}/#{sprite}_comm.png"></img>
+        <img class="ship_comm" src="build/gfx/#{sprite}_comm.png"></img>
         <button class="switch">Switch</button>
         <button class="loadout">Loadout</button>
       </div>"""
@@ -204,7 +202,7 @@ Render =
       <div class="list-item select-ship">
       <label>#{item.name}</label>
       <div id="ship_select_#{name}" class="ship-select noselect">
-        <img class="ship_comm" src="build/stel/#{sprite}.png"></img>
+        <img class="ship_comm" src="build/gfx/#{sprite}.png"></img>
         <button class="build">Build</button>
       </div>
       </div>"""

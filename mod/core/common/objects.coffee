@@ -34,7 +34,7 @@ $public class $obj
     # read state if specified
     delete opts.state if ( state = opts.state )
     # apply template
-    @[k] = v for k,v of Item.tpl[opts.tpl] if opts.tpl
+    @[k] = v for k,v of Item.byId[opts.tpl] if opts.tpl
     # apply other keys
     @[k] = v for k,v of opts
     # choose id

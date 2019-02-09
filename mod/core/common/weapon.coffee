@@ -245,7 +245,7 @@ $obj.register class Missile extends $obj
     @needState = 0
     @prevState = 0
     @hitDist   = pow ( @size + @target.size ) / 2, 2
-    @prototype = Item.tpl[@tpl]
+    @prototype = Item.byId[@tpl]
     MissilePilot.add @
 
 return if isClient

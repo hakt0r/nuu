@@ -22,7 +22,7 @@
 
 $obj::layer       = 'bg'
 $obj::loaded      = no
-$obj::assetPrefix = '/build/stel/'
+$obj::assetPrefix = '/build/gfx/'
 
 $obj::loadAssets = ->
   @img = url = @assetPrefix + @sprite + '.png'

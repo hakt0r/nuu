@@ -26,7 +26,6 @@
 ###
 
 $public class Item
-  @tpl: {}
   @byId: {}
   @byName: {}
   @byType: ship:{}, station:{}
@@ -37,18 +36,18 @@ $public class Item
     id = 0
     for k,o of Station when o? and o::? and o::consumes?
       o.class = "station"
-      Item.byType.station[o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
+      Item.byType.station[o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
       console.log 'item', 'Station', id, o.name, o::sprite if debug
       id++
     for o in items
       Item.byClass[o.class].push o
       if o.class is 'ship'
-        Item.byType['ship'][o.name] = Item.tpl[o.itemId = id] = Item.byName[o.name] = o
+        Item.byType['ship'][o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
         Ship.byTpl[id] = o.name
         Ship.byName[o.name] = id
         id++
       else if o.class is 'outfit'
-        Item.tpl[o.itemId = id] = Item.byName[o.name] = o
+        Item.byId[o.itemId = id] = Item.byName[o.name] = o
         size = o.size || 'small'
         t = (
           if (s = o.slot) then (if s.$t then s.$t else s)
@@ -76,7 +75,7 @@ $public class Item
     NUU.emit 'init:items:done'
 
 Item.random = ->
-  Array.random Object.values Item.tpl
+  Array.random Object.values Item.byId
 
 $public class Outfit
   constructor: (name) ->

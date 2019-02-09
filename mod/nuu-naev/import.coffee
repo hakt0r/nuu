@@ -185,7 +185,7 @@ module.exports = (destinationFile,callback)->
     n = if p.match('/store/') then f + '_store' else f
     s = fast_image_size p
     r = meta[ k = path.basename(p).replace(/\..*?$/,'') ] || {}
-    d = if null is ( p.match('/stel/') || p.match('/imag/') ) then 6 else 1
+    d = if null is ( p.match('/gfx/') || p.match('/imag/') ) then 6 else 1
     r.cols = r.cols || d
     r.rows = r.rows || d
     unless r.width

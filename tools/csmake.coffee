@@ -84,6 +84,33 @@ module.exports = (__targets) ->
           ln path.join('..','..',s), d
       ), c
 
+  global.relPath = (s,d)->
+    i = -1
+    noop while s[++i] is d[i]
+    c = s.substring 0, i
+    s = s.substring i
+    d = d.substring i
+    path.join path.dirname(d).replace(/[^/]+/g,".."), s
+
+  global.linkFlatten = (src,dst)-> (c)->
+    links = []
+    dirs = await new Promise (resolve,reject)-> fs.readdir src, (error,files)->
+      if error then reject error else resolve files
+    await Promise.all dirs.map (dir)-> new Promise (resolve,reject)->
+      return do resolve unless fs.statSync("#{src}/#{dir}").isDirectory()
+      fs.readdir "#{src}/#{dir}", (error,files)->
+        return reject error if error
+        links = links.concat files.map (file)-> new Promise (resolve,reject)->
+          s = relPath "#{src}/#{dir}/#{file}", d = "#{dst}/#{file}"
+          fs.exists d, (exists)->
+            return do resolve if exists
+            fs.symlink s,d, (error)->
+              return reject error if error
+              console.log 'link'.grey, d.green
+              do resolve
+        do resolve
+    c null
+
   global.generate = (dst,generator)-> (c)->
     unless fs.existsSync dst
       require(generator)(dst,c)

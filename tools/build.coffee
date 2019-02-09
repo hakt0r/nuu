@@ -80,7 +80,7 @@ require('./csmake.coffee')( global.STAGES =
 
   dirs: (c)-> mkdir(
     'contrib',
-    'build/stel',
+    'build/gfx',
     'build/imag'
     'build/client'
     'build/server'
