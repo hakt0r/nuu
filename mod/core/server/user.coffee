@@ -188,7 +188,7 @@ User::rejoin = (src)->
   src.handle = @
   @enterVehicle @vehicle, @mountId, no
   @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
-  console.log 'user', @db.nick.green, 'rejoined'.yellow, @vehicle?
+  console.log 'user', @db.nick.green, 'rejoined'.yellow, @vehicle.landedAt.red || @vehicle.p
   true
 
 User::deny = (src, pass)->
@@ -304,7 +304,7 @@ User::land = (t,o,zone,dist)->
   console.log 'user', 'land'.green, t.name if debug
   o.setState S:$fixedTo,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
   o.fuel = o.fuelMax
-  @db.landed = o.landedAt = t.name
+  o.landedAt = $obj.byName[@db.landed = t.name]
   @save()
   @sock.json landed: t.id
   NUU.emit 'ship:land', @db.nick, o.name, t.name
