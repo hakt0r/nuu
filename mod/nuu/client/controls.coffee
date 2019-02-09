@@ -122,17 +122,23 @@ $static 'Mouse', new class MouseInput
 
   onwheel: (evt) ->
     down = evt.wheelDeltaY >= 0
-    if evt.ctrlKey
+    if evt.altKey # alt: set throttle
+      return unless NUU.player.mountId is 0
+      if down
+           VEHICLE.throttle = max 0.01, VEHICLE.throttle - 0.05
+      else VEHICLE.throttle = min    1, VEHICLE.throttle + 0.05
+    else if evt.ctrlKey # ctrl: zoom screen
       if down
            Sprite.scale = max 0.1, Sprite.scale - 0.05
       else Sprite.scale = min   1, Sprite.scale + 0.05
-    if evt.shiftKey
+    else if evt.shiftKey # shift: select target
       if down
            Target.prev()
       else Target.next()
-    if down
-         Scanner.zoomOut()
-    else Scanner.zoomIn()
+    else # zoom scanne without modifiers
+      if down
+           Scanner.zoomOut()
+      else Scanner.zoomIn()
     do evt.stopPropagation
     false
 

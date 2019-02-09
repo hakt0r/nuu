@@ -66,7 +66,7 @@ NUU.on 'enterVehicle', shpHandler = (t) ->
   s.width  = 100
   s.height = r * 100
   s.alpha  = 0.8
-  HUD.energy.visible = HUD.energy.bg.visible = HUD.armour.visible = HUD.armour.bg.visible = HUD.shield.visible = HUD.shield.bg.visible = HUD.fuel.visible = HUD.fuel.bg.visible = yes
+  HUD.throttle.visible = HUD.throttle.bg.visible = HUD.energy.visible = HUD.energy.bg.visible = HUD.armour.visible = HUD.armour.bg.visible = HUD.shield.visible = HUD.shield.bg.visible = HUD.fuel.visible = HUD.fuel.bg.visible = yes
   clearTimeout shpHandler.timer # SWITCH ANIMATION
   shpHandler.timer = setTimeout ( -> s.tint = 0xFFFFFF ), 100
   do uiArrow.createTurrets # TURRET INDICATORS
@@ -203,6 +203,7 @@ uiBar::remove = ->
 
 uiBar.init = -> new uiBar HUD,k,v for k,v of @healhBars
 uiBar.healhBars =
+  throttle:0xFFFFFF
   fuel:0x00FF00
   energy:0xFF0000
   shield:0x0000FF
@@ -330,6 +331,7 @@ new class uiHUD
     LeftAlign  @playerSprite,   100, @playerSprite.height + 35 if @playerSprite
     LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
     LeftAlign  @primary,        110 + @primary.width,   10 + @secondary.height + @primary.height
+    LeftAlign  @throttle,       100, 50
     LeftAlign  @fuel,           100, 40
     LeftAlign  @energy,         100, 30
     LeftAlign  @shield,         100, 20
@@ -354,6 +356,7 @@ new class uiHUD
       @energy.width = VEHICLE.energy / VEHICLE.energyMax * 100
       @shield.width = VEHICLE.shield / VEHICLE.shieldMax * 100
       @armour.width = VEHICLE.armour / VEHICLE.armourMax * 100
+      @throttle.width = parseInt VEHICLE.throttle * 100
       # DIRECTION
       @dir.position.set WDB2 + cos(dir = VEHICLE.d / RAD) * radius * 1.1, HGB2 + sin(dir) * radius * 1.1
       @dir.rotation = ( ( VEHICLE.d + 90 ) % 360 ) / RAD

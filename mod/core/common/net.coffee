@@ -158,16 +158,17 @@ NET.define 2,'STATE',
       if s.json then NUU.jsoncast state:[s.toJSON()]
       else NUU.nearcast ( s.toBuffer().toString 'binary' ), s.o
     client:(o,flags) ->
-      msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0]
+      msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0,parseInt(o.throttle*255)]
       msg.writeUInt16LE parseInt(o.d), 2
       NET.send msg.toString 'binary'
   read:
     client: State.fromBuffer
     server: (msg,src) ->
       o = src.handle.vehicle
-      return unless o.mount[0] is src.handle
+      return unless o.mount[0] is src.handle # only user on helm mount
       [ o.accel, o.retro, o.right, o.left, o.boost ] = NET.getFlags msg[1]
       o.d = msg.readUInt16LE 2
+      o.throttle = msg[4] * 1/255
       o.applyControlFlags()
       src
 

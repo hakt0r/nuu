@@ -36,6 +36,7 @@ $obj.register class Ship extends $obj
   turn: 10.0
   type: 0
   cargo: 10
+  throttle: 1
 
   reactorOut: 10.0
   energy: 100
