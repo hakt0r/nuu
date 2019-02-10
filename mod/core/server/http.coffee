@@ -88,10 +88,11 @@ $static '$websocket', (app,options={}) ->
     app.handle request, dummyResponse, -> socket.close() unless request.wsHandled
     null
   app.ws "/nuu", (src, req) ->
-    src.json = (msg) -> src.send (NET.JSON + JSON.stringify msg), $websocket.error(src)
+    src.json  = (msg) -> src.send (NET.JSON + JSON.stringify msg), $websocket.error(src)
     src.error = (key) -> src.send (NET.JSON + JSON.stringify e:Error.byKey[key]), $websocket.error(src)
     src.on "message", src.router = NET.awaitLogin(src)
     src.on "error", $websocket.error(src)
+    src.on "close", $websocket.error(src)
     # lag and jitter emulation # src.on "message", (msg) -> setTimeout (-> NET.route(src)(msg)), 100 # + Math.floor Math.random() * 40
     console.log '::ws', 'connection'.yellow
     null
@@ -100,6 +101,7 @@ $static '$websocket', (app,options={}) ->
 $websocket.error = (src)-> (error)-> if error
   console.log '::ws'.red, error
   wsServer.clients.delete src
+  NET.emit 'logout', error, src
 
 NET.awaitLogin = (src)-> (msg)->
   unless typeof msg is 'string' and msg[1] is '{'

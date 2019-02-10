@@ -31,6 +31,15 @@ NET.on 'login', NET.loginFunction = (msg,src) ->
   else if msg.user? then new User src, msg.user, msg.pass
   null
 
+NET.on 'logout', (msg,src) ->
+  return src.error '_no_handle'     unless u = src.handle
+  return src.error '_no_vehicle'    unless o = u.vehicle
+  mounties = o.mount.reduce (v,c=0)-> if v? then ++c else c
+  console.log 'logout', u.name, mounties, o.mount[0] if debug
+  o.destructor() if 1 is mounties
+  # delete User.byId[u.db.id] # onTimeout
+  null
+
 NET.on 'debug', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
   return src.error '_no_admin'      unless u.db.isAdmin or u.db.nick is 'anx'
@@ -46,7 +55,6 @@ NET.on 'switchMount', (msg,src) ->
 # anyways it's cool if it floats around for a bit
 # but if it isn't used it will have to go eventually right?
 # maybe when the user spawns his next ship up to the (imaginary) ship limit?
-# o.destructor() if o.mount[0] is u.db.id
 
 NET.on 'switchShip', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
