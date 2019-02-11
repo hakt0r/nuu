@@ -129,8 +129,8 @@ $static 'Mouse', new class MouseInput
       else VEHICLE.throttle = min    1, VEHICLE.throttle + 0.05
     else if evt.ctrlKey # ctrl: zoom screen
       if down
-           Sprite.scale = max 0.1, Sprite.scale - 0.05
-      else Sprite.scale = min   1, Sprite.scale + 0.05
+           Sprite.scale = max 0.33, Sprite.scale - 0.02
+      else Sprite.scale = min    1, Sprite.scale + 0.02
     else if evt.shiftKey # shift: select target
       if down
            Target.prev()
