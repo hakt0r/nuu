@@ -85,15 +85,17 @@ Sprite.animate = (timestamp) ->
   # @bg.position.y =
 
   # STARS
-  [ mx, my ] = $v.normalize Array::slice.call VEHICLE.m;
-  mx =  1 if mx is 0
-  my = -1 if my is 0
+  [ mx, my ] = $v.mult(
+    $v.normalize(VEHICLE.m.slice()),
+    Math.max 0.1, $v.mag(VEHICLE.m.slice()) * 1/Speed.max * 3 )
+  mx =  0.1 if mx is 0
+  my = -0.1 if my is 0
   @starfield.tilePosition.x -= mx
   @starfield.tilePosition.y -= my
   @parallax. tilePosition.x -= mx * 1.25
   @parallax. tilePosition.y -= my * 1.25
-  @parallax2.tilePosition.x -= mx * 1.5
-  @parallax2.tilePosition.y -= my * 1.5
+  @parallax2.tilePosition.x -= mx * 10
+  @parallax2.tilePosition.y -= my * 10
 
   length = ( list = @visibleList ).length; i = -1
   # time = NUU.time()
