@@ -115,6 +115,9 @@ Object.defineProperty Ship::, 'd',
     @_d = v
 ###
 
+Object.defineProperty Ship::, 'eventHorizon',
+  get:-> $v.mag $v.sub @p, ( State.future @state, Date.now() + t ).p
+
 Ship::thrustToAccel = (value)->
   # TODO: boost / frameshift / warp / slipstream
   value = max 0, min 255, value

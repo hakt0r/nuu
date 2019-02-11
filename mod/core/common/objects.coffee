@@ -70,6 +70,19 @@ Object.defineProperty $obj::, 'p',
   get: -> do @update; return [@x,@y]
   set: (@x,@y)->
 
+Object.defineProperty $obj::, 'eventHorizon',
+  get:-> $v.mag $v.sub @p, ( State.future @state, Date.now() + t ).p
+
+$obj.clusterTime   = 100
+$obj.clusterLength = round Speed.max * $obj.clusterTime
+
+Object.defineProperty $obj::, 'grid',
+  get:->
+    [x,y] = @p
+    x = round x / $obj.clusterLength
+    y = round y / $obj.clusterLength
+    [x,y]
+
 $obj.byId = {}
 $obj.list = []
 $obj.byClass = []
