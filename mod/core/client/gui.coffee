@@ -488,8 +488,8 @@ NUU.loginPrompt = ->
     return NUU.loginPrompt() unless success
     setTimeout ( ->
       vt.status 'NUU', 'ready'
+      VT100.rootPrompt yes
       vt.hide()
     ), 0
   vt.prompt override:yes, key:onkey, then:onuser, p:p_user
-
   true

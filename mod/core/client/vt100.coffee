@@ -140,7 +140,10 @@ $public class VT100 extends Window
 
 VT100.toggle = ->
   vt.show()
-  vt.prompt 'nuu #', p = (text) ->
+  vt.rootPrompt()
+
+VT100::rootPrompt = (force=no)->
+  p = (text) ->
     return false unless text
     try
       v = eval(text)
@@ -150,5 +153,6 @@ VT100.toggle = ->
       true
     setTimeout ( new Function 'VT100.toggle()' ), 0
     true
+  vt.prompt 'nuu #', p, force
 
 Kbd.macro 'console', 'Backquote', 'Show / hide console', VT100.toggle
