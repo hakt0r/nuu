@@ -1,4 +1,25 @@
 
+$public class NonRandom
+  constructor:(@seed)->
+    @callCount = 0
+    @current = Crypto.createHash('sha512').update(@seed).digest()
+  nextDouble:->
+    ++@callCount
+    @current = Crypto.createHash('sha512').update(@current).digest()
+    @current.reduce (i,v=0)-> ( ( v + i * PI ) % PI ) / PI
+
+$public class Nebula
+  @list: [ "02","16","21","25","29","33","04","17","22","26","30","34","10","19","23","27","31","12","20","24","28","32" ]
+  @seed: new NonRandom "sol-nebula"
+  @random:->
+    idx = round Nebula.seed.nextDouble() * ( Nebula.list.length - 1 )
+    img = Nebula.list[idx]
+    n = PIXI.Sprite.fromImage "build/gfx/nebula#{img}.png"
+    n.position.set(
+      Nebula.seed.nextDouble() * 4*WIDTH  - 2*WIDTH
+      Nebula.seed.nextDouble() * 4*HEIGHT - 2*HEIGHT )
+    Sprite.nebulae.addChild n
+
 makeStarfield = (mod...)->
   field = (rmax,smax)->
     [ rx, ry, rr, rb ] = [ random()*1024, random()*1024, random()*smax, random()*rmax ]
@@ -23,9 +44,12 @@ Sprite.initSpace = ->
   @layer 'fx',   new PIXI.Container
   @layer 'fg',   new PIXI.Container
 
-  @bg.addChild @starfield = makeStarfield [1,0.3,2000],[1.5,0.7,20]
-  @bg.addChild @parallax  = makeStarfield [1,0.3,4000]
-  @bg.addChild @parallax2 = makeStarfield [1,0.3,2000]
+  @bg.addChild @starfield = makeStarfield [1,0.3,1000],[1.5,0.7,20]
+  @bg.addChild @parallax  = makeStarfield [1,0.3,2000]
+  @bg.addChild @parallax2 = makeStarfield [1,0.3,1000]
+  @bg.addChild @nebulae   = new PIXI.Container
+  Nebula.random(); Nebula.random(); Nebula.random(); Nebula.random()
+  @nebulae.alpha = .2
 
   @on 'resize', @resizeStars = (wd,hg,hw,hh) =>
     @starfield.width  = @parallax2.width  = @parallax.width  = wd
@@ -87,11 +111,13 @@ Sprite.animate = (timestamp) ->
   # STARS
   [ mx, my ] = $v.mult(
     $v.normalize(VEHICLE.m.slice()),
-    Math.max 0.1, $v.mag(VEHICLE.m.slice()) * 1/Speed.max * 3 )
-  mx =  0.1 if mx is 0
-  my = -0.1 if my is 0
+    Math.max 0.3, $v.mag(VEHICLE.m.slice()) * 1/Speed.max * 3 )
+  mx =  0.3 if mx is 0
+  my = -0.3 if my is 0
   @starfield.tilePosition.x -= mx
   @starfield.tilePosition.y -= my
+  @nebulae.  position.x = VEHICLE.x * -0.0000034
+  @nebulae.  position.y = VEHICLE.y * -0.0000034
   @parallax. tilePosition.x -= mx * 1.25
   @parallax. tilePosition.y -= my * 1.25
   @parallax2.tilePosition.x -= mx * 10
