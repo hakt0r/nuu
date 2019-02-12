@@ -152,7 +152,7 @@ $static 'Scanner', new class ScannerRenderer
     Scanner.scale = max 1, Scanner.scale / 2
 
   zoomOut: ->
-    Scanner.scale = min 33554432, Scanner.scale * 2
+    Scanner.scale = min 134217728, Scanner.scale * 2
 
 Kbd.macro 'scanToggleFS', 'aEnter',  'Toggle Scanner FS',  Scanner.toggleFS.bind Scanner
 Kbd.macro 'scanToggle',   'Enter',   'Toggle Scanner',     Scanner.toggle.bind Scanner
