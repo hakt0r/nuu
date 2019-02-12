@@ -144,8 +144,8 @@ if isServer then $obj::applyControlFlags = (state)->
   @update()
   @a = (
     if @state.S is $orbit then 0
-    else if @boost then @thrust * Speed.boost
-    else if @retro then @thrust * -.5
+    else if @boost then @throttle * @thrust * Speed.boost
+    else if @retro then @throttle * @thrust * -.5
     else @throttle * @thrust )
   ControlState = (
     if @state.S is $orbit then State.orbit
