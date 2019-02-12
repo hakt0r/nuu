@@ -7,8 +7,9 @@
     "nuu": "./build/server/server.js"
   },
   "scripts": {
+    "start": "node .",
     "prepare": "coffee tools/build.coffee assets",
-    "tests": "coffee tools/build.coffee test"
+    "test": "coffee tools/build.coffee test"
   },
   "repository": {
     "type": "git",

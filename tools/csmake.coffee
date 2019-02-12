@@ -154,7 +154,10 @@ module.exports = (__targets) ->
           # console.log 'up-todate:'.green, src.yellow, ( dstat || mtime: null ).mtime
           return c null
     console.log 'compile:'.red, src.yellow, stat.mtime, ( dstat || mtime: null ).mtime
-    fs.writeFileSync dst, coffee.compile fs.readFileSync( src, 'utf8')
+    compiled = coffee.compile fs.readFileSync( src, 'utf8')
+    compiled = '#!/usr/bin/env node\n' + compiled if src.match /server\.coffee$/
+    fs.writeFileSync dst, compiled
+    cp.execSync "chmod a+x #{dst}" if src.match /server\.coffee$/
     touch.sync dst, ref: src
     c null
 
