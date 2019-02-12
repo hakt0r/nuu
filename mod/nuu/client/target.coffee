@@ -158,6 +158,19 @@ Target.captureClosest = ->
   Target.closest (t)-> capture t if t?
   null
 
+Target.prompt = ->
+  vt.prompt "target#", (
+    (seek)->
+      return if seek.trim() is ''
+      seek = seek.toLowerCase()
+      t = Object
+      .keys($obj.byName)
+      .filter (i)-> null != i.toLowerCase().match seek
+      .map    (i)-> $obj.byName[i]
+      Target.set t[0] if t[0]
+  ), yes
+
+Kbd.macro 'targetSearch',    'KeyG', 'Target search',             Target.prompt
 Kbd.macro 'targetNothing',  'sKeyW', 'Target nothing',            Target.nothing
 Kbd.macro 'targetNext',      'KeyD', 'Target next',               Target.next
 Kbd.macro 'targetClassNext', 'KeyW', 'Target next class',         Target.nextClass
