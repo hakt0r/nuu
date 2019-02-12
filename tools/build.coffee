@@ -111,7 +111,6 @@ require('./csmake.coffee')( global.STAGES =
     browserify.bundle().pipe(fs.createWriteStream('build/lib.js')).on 'close', -> c null )
 
   sources: (c)-> depend(libs)( ->
-    console.log TARGETS.compile
     $s [
       (c) ->
         fs.writeFileSync path.join('build','build.json'), JSON.stringify TARGETS
