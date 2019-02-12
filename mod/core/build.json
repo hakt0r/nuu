@@ -1,22 +1,18 @@
 { "client":{
     "require": [
-      "synaptic",
       ["Crypto","crypto"],
       ["EventEmitter","events","EventEmitter"],
       ["Buffer","buffer","Buffer"],
       ["$","jquery"],
-      ["_","underscore"],
       ["PIXI","pixi.js"],
       ["$v","vectors"]],
     "libs": [
-      "synaptic",
       "crypto",
       "events",
       "jquery",
       "pixi.js",
       "buffer",
-      "vectors",
-      "underscore"],
+      "vectors"],
     "sources": [
       "keyboard",
       "cache",
@@ -42,10 +38,8 @@
     "ws",
     "fs",
     "path",
-    ["_","underscore"],
     ["Crypto","crypto"],
     ["EventEmitter","events","EventEmitter"],
-    ["flatfile","flat-file-db"],
     ["$v","vectors"],
     ["$tag","tagscale"]],
   "sources": [
