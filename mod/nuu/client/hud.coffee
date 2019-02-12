@@ -329,21 +329,21 @@ new class uiHUD
     @notice.position.set        WIDTH - 20 - @notice.width, 10
     @debug.position.set         10,  26
     LeftAlign  @system,         110 + @system.width, @system.height + 10
-    LeftAlign  @playerSprite,   100, @playerSprite.height + 35 if @playerSprite
+    LeftAlign  @playerSprite,   100, @playerSprite.height + 10 if @playerSprite
     LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
     LeftAlign  @primary,        110 + @primary.width,   10 + @secondary.height + @primary.height
-    LeftAlign  @throttle,       100, 40
-    LeftAlign  @fuel,           100, 35
-    LeftAlign  @energy,         100, 25
-    LeftAlign  @shield,         100, 125
-    LeftAlign  @armour,         100, 120
-    RightAlign @speed       ,   60,  75
-    RightAlign @pursuit     ,   60,  75
-    RightAlign @approach    ,   60,  75
-    RightAlign @targetShield,   5,   125
-    RightAlign @targetArmour,   5,   120
-    RightAlign @text,           115, 10 + @text.height
-    RightAlign @targetSprite,   5,   @targetSprite.height + 35 if @targetSprite
+    LeftAlign  @throttle,       100, 20
+    LeftAlign  @fuel,           100, 15
+    LeftAlign  @energy,         100, 10
+    LeftAlign  @shield,         100, 110
+    LeftAlign  @armour,         100, 105
+    RightAlign @text,           110, 10 + @text.height
+    RightAlign @speed       ,   55,  50
+    RightAlign @pursuit     ,   55,  50
+    RightAlign @approach    ,   55,  50
+    RightAlign @targetShield,   0,   110
+    RightAlign @targetArmour,   0,   105
+    RightAlign @targetSprite,   0,   @targetSprite.height + 10 if @targetSprite
 
   render: (g) ->
     @frame++

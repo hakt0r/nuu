@@ -54,48 +54,54 @@ $static 'Scanner', new class ScannerRenderer
     NUU.on '$obj:del', @removeLabel()
     NUU.on '$obj:inRange', (obj) ->
       return unless obj and l = Scanner.label[obj.id]
-      [l.text, l.style.fill] = Scanner.labelStyle obj, true
+      [l.text, l.style.fill,l._label.text] = Scanner.labelStyle obj, true
       PIXI.bringToFront l
       null
     NUU.on '$obj:outRange', (obj) ->
       return unless obj and l = Scanner.label[obj.id]
-      [l.text, l.style.fill] = Scanner.labelStyle obj
+      [l.text, l.style.fill,l._label.text] = Scanner.labelStyle obj
       null
     NUU.on 'newTarget', (obj,old) ->
       if obj and l = Scanner.label[obj.id]
-        [l.text, l.style.fill] = Scanner.labelStyle obj, true
+        [l.text, l.style.fill,l._label.text] = Scanner.labelStyle obj, true
         PIXI.bringToFront l
       if old and l = Scanner.label[old.id]
-        [l.text, l.style.fill] = Scanner.labelStyle old
+        [l.text, l.style.fill,l._label.text] = Scanner.labelStyle old
       null
     null
 
   labelStyle: (s,inRange=false)->
-    return ['◆','white'] unless t = Scanner.color[s.constructor.name]
+    return ['◆','white',''] unless t = Scanner.color[s.constructor.name]
     [fill, name] = t
-    if      s.constructor is Star   then name += s.name || 'Star'
-    else if s.constructor is Planet then name += s.name || 'Planet'
-    else if                 inRange then name += s.name || ''
+    title = ''
+    if      s.constructor is Star   then title = s.name || 'Star'
+    else if s.constructor is Planet then title = s.name || 'Planet'
+    title = '' if inRange
     fill = 'red'     if s is TARGET
-    return [name,fill]
+    return [name,fill,title]
 
   addLabel: -> (s) =>
     return unless s.name
     @removeLabel s if @label[s.id]
-    [name,fill] = @labelStyle s
-    @gfx.addChild l = @label[s.id] = new PIXI.Text name, fontFamily: 'monospace', fontSize:'8px', fill: fill
+    [name,fill,title] = @labelStyle s
+    @gfx.addChild l = @label[s.id] = new PIXI.Text name,  fontFamily: 'monospace', fontSize:'8px', fill: fill
+    @gfx.addChild l._label         = new PIXI.Text title, fontFamily: 'monospace', fontSize:'8px', fill: fill
     l.$obj = s
     null
 
   removeLabel: -> (s) =>
-    return unless l= @label[s.id]
-    @gfx.removeChild @label[s.id]
-    delete           @label[s.id]
-    # HOTFIX
-    @gfx.children.splice @gfx.children.indexOf l
+    return unless l = @label[s.id]
+    _label = l._label
+    delete @label[s.id]
     l.visible = no
-    # HOTFIX
+    @gfx.removeChild l
+    @gfx.children.splice @gfx.children.indexOf l
     l.destroy()
+    return unless _label
+    _label.visible = no
+    @gfx.removeChild _label
+    @gfx.children.splice @gfx.children.indexOf _label
+    _label.destroy()
 
   render: ->
     return unless pl = VEHICLE
@@ -120,7 +126,12 @@ $static 'Scanner', new class ScannerRenderer
       a[1] = s.y - py
       l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.normalize(v), l
-      lb[s.id].position.set v[0]+W2R-2, v[1]+H2R-10 if lb[s.id]
+      if L = lb[s.id]
+        hw = L.width/2
+        hh = L.height/2
+        L.position.set v[0]+W2R-hw, v[1]+H2R-hh
+        if v[0] < 0 then L._label.position.set v[0]+W2R+4,                v[1]+H2R+1-hh
+        else             L._label.position.set v[0]+W2R-3-L._label.width, v[1]+H2R+1-hh
       if s.state.S is $orbit and Scanner.orbits
         o = s.state.orb / @scale
         a[0] = s.state.relto.x - px
@@ -140,7 +151,12 @@ $static 'Scanner', new class ScannerRenderer
       a[1] = s.y - py
       l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.normalize(v), l
-      lb[s.id].position.set v[0]+W2R-2, v[1]+H2R-10 if lb[s.id]
+      if L = lb[s.id]
+        hw = L.width/2
+        hh = L.height/2
+        L.position.set v[0]+W2R-hw, v[1]+H2R-hh
+        if v[0] < 0 then L._label.position.set v[0]+W2R+4,                v[1]+H2R+1-hh
+        else             L._label.position.set v[0]+W2R-3-L._label.width, v[1]+H2R+1-hh
     null
 
   toggleFS: ->

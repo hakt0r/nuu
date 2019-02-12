@@ -114,12 +114,12 @@ Sprite.animate = (timestamp) ->
     Math.max 0.3, $v.mag(VEHICLE.m.slice()) * 1/Speed.max * 3 )
   mx =  0.3 if mx is 0
   my = -0.3 if my is 0
-  @starfield.tilePosition.x -= mx
-  @starfield.tilePosition.y -= my
+  @starfield.tilePosition.x -= mx * 1.25
+  @starfield.tilePosition.y -= my * 1.25
   @nebulae.  position.x = VEHICLE.x * -0.0000034
   @nebulae.  position.y = VEHICLE.y * -0.0000034
-  @parallax. tilePosition.x -= mx * 1.25
-  @parallax. tilePosition.y -= my * 1.25
+  @parallax. tilePosition.x -= mx * 2
+  @parallax. tilePosition.y -= my * 2
   @parallax2.tilePosition.x -= mx * 10
   @parallax2.tilePosition.y -= my * 10
 
