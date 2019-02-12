@@ -113,14 +113,19 @@ $static 'Scanner', new class ScannerRenderer
     canHazOrbit.map ( s )-> canHazOrbit.push s.state.relto if s.state.relto
     canHazOrbit = Array.uniq canHazOrbit
     skipId = canHazOrbit.map (i)-> i.id
+    a = [0,0] # static allocation for magnitude-input in loop
     for s in canHazOrbit
       w = max 1, min 2, s.size * 100 / @scale
-      l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
+      a[0] = s.x - px
+      a[1] = s.y - py
+      l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.normalize(v), l
       lb[s.id].position.set v[0]+W2R-2, v[1]+H2R-10 if lb[s.id]
       if s.state.S is $orbit and Scanner.orbits
         o = s.state.orb / @scale
-        ol = min W2-5, ( $v.mag ov = [ s.state.relto.x - px, s.state.relto.y - py ] ) / @scale
+        a[0] = s.state.relto.x - px
+        a[1] = s.state.relto.y - py
+        ol = min W2-5, ( $v.mag ov = a ) / @scale
         ov = $v.mult $v.normalize(ov), ol
         if o + ol < W2
           g.lineStyle 2, @color.Orbit
@@ -131,7 +136,9 @@ $static 'Scanner', new class ScannerRenderer
     for s in $obj.list
       continue unless -1 is skipId.indexOf s.id
       w = max 1, min 2, s.size * 100 / @scale
-      l = min W2-5, ( $v.mag v = [ s.x - px, s.y - py ] ) / @scale
+      a[0] = s.x - px
+      a[1] = s.y - py
+      l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.normalize(v), l
       lb[s.id].position.set v[0]+W2R-2, v[1]+H2R-10 if lb[s.id]
     null
