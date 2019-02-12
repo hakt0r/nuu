@@ -204,7 +204,10 @@ State.register class State.moving extends State
 State.register class State.burn extends State
   acceleration: true
   cache:->
-    @dir = @d / RAD
+    if @a >= 0 then @dir = @d * RADi
+    else
+      @a = -@a
+      @dir = ( @d + 180 ) % 360 * RADi
     @peak = r = Speed.max
     @cosd = cos @dir
     @sind = sin @dir
