@@ -32,7 +32,7 @@ String::clearItemName = -> @replace /[^a-zA-Z]/g , ''
 
 module.exports = (destinationFile,callback)->
   fs   = require 'fs'
-  xml  = require 'xml2json'
+  xml  = require 'x2js'
   path = require 'path'
   np   = path.join GAME_DIR, 'contrib', 'naev-master', 'dat'
   nu   = path.join GAME_DIR, 'build'
@@ -47,7 +47,8 @@ module.exports = (destinationFile,callback)->
   readDir  = (dir,call) -> call f for f in fs.readdirSync dir
   parseDir = (dir,call) -> for f in fs.readdirSync dir
     txt = fs.readFileSync dir + f, 'utf8'
-    d = parseNumbers JSON.parse(xml.toJson(txt))
+    x = new xml
+    d = parseNumbers x.xml2js txt
     call f,d
 
   flatten = (d) ->
@@ -112,6 +113,7 @@ module.exports = (destinationFile,callback)->
 
   readShip = (f,d) ->
     d = d.ship
+    d.name = d._name; delete d._name
     className = d.name.clearItemName()
     d.extends = if d.base_type isnt d.name then d.base_type else 'Ship'
     src[className] = d
@@ -121,13 +123,13 @@ module.exports = (destinationFile,callback)->
     delete d.mission if d.mission
     for t,slots of d.slots
       d.slots[t] = [slots] unless Array.isArray slots
-      for k,v of slots when v.$t
-        v.default = v.$t.clearItemName()
-        delete v.$t
+      for k,v of slots when v.__text
+        v.default = v.__text.clearItemName()
+        delete v.__text
 
     if d.GFX?
-      if d.GFX.sx?
-        meta[sprite = d.GFX.$t] = cols:d.GFX.sx,rows:d.GFX.sy
+      if d.GFX._sx?
+        meta[sprite = d.GFX.__text] = cols:d.GFX._sx,rows:d.GFX._sy
       else meta[sprite = d.GFX] = cols:8,rows:8
       meta[sprite+'_engine'] = meta[sprite]
       delete d.GFX
@@ -148,7 +150,10 @@ module.exports = (destinationFile,callback)->
 
   readOutfit = (f,d) ->
     d = d.outfit
+    d.name = d._name; delete d._name
     src[className = d.name.clearItemName()] = d
+    try d.specific.type  = d.specific._type;  delete d.specific._type
+    try d.specific.group = d.specific._group; delete d.specific._group
     t = d.specific.type
     d.specific.turret = t.match('turret') isnt null
     if      ['license','map','localmap','gui'].indexOf(t)           isnt -1 then return
@@ -161,8 +166,10 @@ module.exports = (destinationFile,callback)->
     flatten d
     d.stats.ship = d.stats.ship.clearItemName() if d.stats and d.stats.ship
     d.stats.ammo = d.stats.ammo.clearItemName() if d.stats and d.stats.ammo
+    try d.stats.blowup   = d.stats._blowup;   delete d.stats._blowup
     d.name = className
     d.class = 'outfit'
+    meta[d.sprite] = 'outf' unless meta[d.sprite]?
     outf.push d
 
   parseDir np + '/ships/', readShip
@@ -174,6 +181,7 @@ module.exports = (destinationFile,callback)->
   ###
     update metadata
   ###
+  anim = ['cargo','debris0','debris1','debris2','debris3','debris4','debris5','empm','emps','expl2','expl','expm2','expm','exps','plam2','plam','plas2','plas','shim','shis']
 
   list = {}
   read = (dir)-> for file in fs.readdirSync dir
@@ -184,8 +192,12 @@ module.exports = (destinationFile,callback)->
     f = path.basename(p).replace(/\..*$/,'')
     n = if p.match('/store/') then f + '_store' else f
     s = fast_image_size p
-    r = meta[ k = path.basename(p).replace(/\..*?$/,'') ] || {}
+    k = path.basename(p).replace(/\..*?$/,'')
     d = if null is ( p.match('/gfx/') || p.match('/imag/') ) then 6 else 1
+    r = meta[k] || {}
+    if r is 'outf' or -1 isnt anim.indexOf k
+      d = 6
+      r = {}
     r.cols = r.cols || d
     r.rows = r.rows || d
     unless r.width
@@ -193,7 +205,7 @@ module.exports = (destinationFile,callback)->
       r.height = s.height
     r.size   = Math.floor Math.max r.width / r.cols, r.height / r.rows
     r.radius = Math.floor r.size / 2
-    # console.log '@', n, r
+    # console.log '@', p, n, r if p.match /cargo/
     list[n] = r
   read 'build'
   fs.writeFileSync path.join( GAME_DIR,'build','imag','sprites_naev.json' ), JSON.stringify parseNumbers list
