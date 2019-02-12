@@ -53,9 +53,7 @@ markdown = (src,tgt)-> (c)->
   null
 
 module.exports.build = (c) ->
-  console.log 'losa222d'
   depend(dirs)( ->
-    console.log 'losad'
     $s [
       fetch       'contrib/naev.zip', 'https://github.com/bobbens/naev/archive/master.zip'
       unzip       'contrib/naev.zip', 'contrib/naev-master'
