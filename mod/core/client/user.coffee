@@ -75,10 +75,9 @@ NET.on 'switchShip', (opts) ->
   NET.emit 'setMount', opts.m
 
 NET.on 'setMount', (list) ->
-  console.log 'user', 'setMount', id if debug
-  id = parseInt id
   VEHICLE.mount = list
-  NUU.player.mountId = list.indexOf NUU.player.user.nick
+  NUU.player.mountId = id = list.indexOf NUU.player.user.nick
+  console.log 'user', 'setMount', id if debug
   NUU.player.mount = VEHICLE.mountSlot[id]
   NUU.player.equip = VEHICLE.mountSlot[id].equip if NUU.player.mount
   VEHICLE.name + '['+ id + ':' + VEHICLE.mountType[id] + ']\n' + VEHICLE.mount

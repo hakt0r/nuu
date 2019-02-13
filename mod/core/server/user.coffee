@@ -37,6 +37,7 @@ NET.on 'logout', (msg,src) ->
   mounties = o.mount.reduce (v,c=0)-> if v? then ++c else c
   console.log 'logout', u.name, mounties, o.mount[0] if debug
   o.destructor() if 1 is mounties
+  u.vehicle = null
   # delete User.byId[u.db.id] # onTimeout
   null
 
@@ -142,33 +143,52 @@ $public class User
     # Login successful #
     @sock = src
     src.authenticated = yes
-    src.json 'user.login.success': {user:@db}, sync:add:$obj.list # TODO: inRange & Stellar only
     src.removeListener "message", src.router
     src.on  "message", src.router = NET.route src
+    src.json 'user.login.success': {user:@db}, sync:add:$obj.list # TODO: inRange & Stellar only
     NUU.emit 'user:joined', @
-    return handle.rejoin src if handle = User.byId[@db.id]
-    User.byId[@db.id] = src.handle = @
-    id = NUU.users.push @; @id = --id
-    @name = @db.nick
-    @user = @db.user
-    @ping = {}
-    do @upgradeDb
-    # Load and enter vehicle #
-    vehicleType = 'Kestrel'
-    vehicleType = @db.vehicle if @db.vehicle?
-    opts = {}
-    if @db.landed and relto = $obj.byName[@db.landed]
-      opts.state = S:$fixedTo, x:0, y:0, relto: relto
-      opts.landedAt = relto
-    else if @db.orbit and relto = $obj.byName[@db.orbit[0]]
-      opts.state = @db.orbit[1]
-      opts.state.relto = relto
-    else opts.state = S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
-    v = @createVehicle vehicleType, opts
-    @enterVehicle v, 0, yes
-    @sock.json landed: opts.landedAt.id if opts.landedAt
-    console.log 'user', @db.nick.green, 'joined'.green, @db.id, vehicleType
-    true
+    if existingUser = User.byId[@db.id]
+      return existingUser.rejoin src
+    else @firstJoin src
+
+User::firstJoin = (src)->
+  console.log 'first join'
+  User.byId[@db.id] = src.handle = @
+  id = NUU.users.push @; @id = --id
+  @name = @db.nick
+  @user = @db.user
+  @ping = {}
+  do @upgradeDb
+  do @loadShip
+  @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
+  console.log 'user', @db.nick.green, 'joined'.green, @db.id, @vehicleType
+
+User::rejoin = (src)->
+  console.log 'rejoin'
+  @sock = src; src.handle = @
+  if @vehicle
+    console.log 'enter ship....', @vehicle
+    @enterVehicle @vehicle, @mountId, no
+  else
+    console.log 'loading ship....'
+    do @loadShip
+  @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
+  console.log 'user', @db.nick.green, 'rejoined'.yellow, ( @vehicle.landedAt || 'space' ).red
+  true
+
+User::loadShip = ->
+  @vehicleType = 'Kestrel'
+  @vehicleType = @db.vehicle if @db.vehicle?
+  opts = {}
+  if @db.landed and relto = $obj.byName[@db.landed]
+    opts.state = S:$fixedTo, x:0, y:0, relto: relto
+    opts.landedAt = relto
+  else if @db.orbit and relto = $obj.byName[@db.orbit[0]]
+    opts.state = @db.orbit[1]
+    opts.state.relto = relto
+  else opts.state = S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
+  v = @createVehicle @vehicleType, opts
+  @enterVehicle v, 0, yes
 
 User.testUser =
   id:0
@@ -190,14 +210,6 @@ User::upgradeDb = (src)->
   @db.inventory = {} unless @db.inventory
   @db.unlocks = {} unless @db.unlocks
   @db.loadout = {} unless @db.loadout
-
-User::rejoin = (src)->
-  @sock = src
-  src.handle = @
-  @enterVehicle @vehicle, @mountId, no
-  @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
-  console.log 'user', @db.nick.green, 'rejoined'.yellow, @vehicle.landedAt.red || @vehicle.p
-  true
 
 User::deny = (src, pass)->
   src.json 'user.login.failed':'wrong_credentials'
