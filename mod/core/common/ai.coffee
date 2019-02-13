@@ -143,6 +143,7 @@ AI.register
     closest = null
     closestDist = Infinity
     for p in NUU.users
+      continue unless p.vehicle
       if ( closestDist > d = $dist(@,p.vehicle) ) and ( not p.vehicle.destructing ) and ( abs(d) < 1000000 )
         closestDist = d
         closest =  p.vehicle
