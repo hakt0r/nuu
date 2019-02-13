@@ -75,19 +75,24 @@ module.exports = (__targets) ->
       ), c
 
   global.convFilesIn = (src,dst)-> (c)->
+    try cp.spawnSync 'inkscape',['-v'] catch e
+      console.log 'warn'.yellow, 'inkscape not installed: cannot convert svgs'
+      do c
     files = await new Promise (resolve,reject)-> fs.readdir src, (err,files)->
       return reject err if err
       resolve files
       return
-    conv = (s,d)->
+    conv = (s)->
+      d = s.replace /svg$/, 'png'
       return Promise.resolve() unless s.match /\.svg$/
-      return Promise.resolve() if fs.existsSync d = d.replace /svg$/, 'png'
-      new Promise (resolve)-> ( cp.spawn 'convert', ['-background','none',s,d] ).on 'close',->
+      return Promise.resolve() if fs.existsSync(d) and ( stat = fs.statSync s ) and ( dstat = fs.statSync d ) and stat.mtime.toString().trim() is dstat.mtime.toString().trim()
+      new Promise (resolve)-> ( cp.spawn "inkscape",['-z','-e',d,'-w',1024,s] ).on 'close',->
         console.log 'conv'.grey, s, d
+        touch.sync d, ref:s
         do resolve
     Promise.all(
       for f in files when fs.statSync(s = path.join src, f).isFile()
-        conv s, path.join dst, f
+        conv s, path.join dst
     ).then -> do c
 
   global.linkDirsIn = (src,dst)-> (c)->

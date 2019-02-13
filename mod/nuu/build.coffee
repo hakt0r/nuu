@@ -6,7 +6,7 @@ module.exports.build = (c)-> depend(contrib,sources)( ->
     link        'mod/nuu/sprites/sprites_nuu.json', 'build/imag/sprites_nuu.json'
     link        'mod/nuu/client/gui.css',           'build/gui.css'
     linkFilesIn 'mod/nuu/artwork',                  'build/imag'
-    linkFlatten 'mod/nuu/sprites',                  'build/gfx'
     convFilesIn 'mod/nuu/sprites/com',              'build/gfx'
     convFilesIn 'mod/nuu/sprites/gov',              'build/gfx'
+    linkFlatten 'mod/nuu/sprites',                  'build/gfx'
   ], c )
