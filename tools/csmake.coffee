@@ -77,7 +77,7 @@ module.exports = (__targets) ->
   global.convFilesIn = (src,dst)-> (c)->
     unless 0 is ( cp.spawnSync 'which',['inkscape'] ).status
       console.log 'warn'.yellow, 'inkscape not installed: cannot convert svgs'
-      do c
+      return do c
     files = await new Promise (resolve,reject)-> fs.readdir src, (err,files)->
       return reject err if err
       resolve files
