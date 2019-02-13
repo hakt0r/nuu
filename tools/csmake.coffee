@@ -74,6 +74,22 @@ module.exports = (__targets) ->
           ln path.join('..','..',s), d
       ), c
 
+  global.convFilesIn = (src,dst)-> (c)->
+    files = await new Promise (resolve,reject)-> fs.readdir src, (err,files)->
+      return reject err if err
+      resolve files
+      return
+    conv = (s,d)->
+      return Promise.resolve() unless s.match /\.svg$/
+      return Promise.resolve() if fs.existsSync d = d.replace /svg$/, 'png'
+      new Promise (resolve)-> ( cp.spawn 'convert', ['-background','none',s,d] ).on 'close',->
+        console.log 'conv'.grey, s, d
+        do resolve
+    Promise.all(
+      for f in files when fs.statSync(s = path.join src, f).isFile()
+        conv s, path.join dst, f
+    ).then -> do c
+
   global.linkDirsIn = (src,dst)-> (c)->
     fs.readdir src, (err,files)->
       ln = (s,d)-> (c)->
@@ -101,6 +117,7 @@ module.exports = (__targets) ->
       fs.readdir "#{src}/#{dir}", (error,files)->
         return reject error if error
         links = links.concat files.map (file)-> new Promise (resolve,reject)->
+          return do resolve unless file.match /png$/
           s = relPath "#{src}/#{dir}/#{file}", d = "#{dst}/#{file}"
           fs.exists d, (exists)->
             return do resolve if exists

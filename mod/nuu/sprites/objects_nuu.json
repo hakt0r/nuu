@@ -65,5 +65,21 @@
        "gfx_store" : "engine04"
     },
     "slot" : { "prop" : "hull", "$t" : "structure" },
-    "extends" : "Outfit" }
+    "extends" : "Outfit" },
+
+{ "class": "com", "name":"Admiral Assembly", "logo":"admiralassembly" },
+{ "class": "com", "name":"FayPoe", "logo":"faypoe" },
+{ "class": "com", "name":"Ganymede Gas", "logo":"ganymede_gas" },
+{ "class": "com", "name":"G-Force", "logo":"gforce" },
+{ "class": "com", "name":"Greywash", "logo":"greywash" },
+{ "class": "com", "name":"Johnson and Jetson", "logo":"jetson" },
+{ "class": "com", "name":"Ponomareva GaussGun", "logo":"ponomarevagaussgun" },
+{ "class": "com", "name":"Russels", "logo":"russels" },
+{ "class": "com", "name":"Sirius Robotics", "logo":"siriusrobotics" },
+{ "class": "com", "name":"Solarsuits", "logo":"solarsuits" },
+{ "class": "com", "name":"Taikuipment", "logo":"taikuipment" },
+{ "class": "com", "name":"Tau", "logo":"tau" },
+{ "class": "com", "name":"Tepeshkovalaser", "logo":"tepeshkovalaser" },
+{ "class": "com", "name":"Valkyrie", "logo":"valkyrie" }
+
 ]

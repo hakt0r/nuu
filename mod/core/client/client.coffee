@@ -117,6 +117,7 @@ NUU.on 'gfx:ready', ->
 
   $.ajax '/build/objects.json', success: (result) ->
     Item.init result
+    VT100.write """<img class="com" src="/build/gfx/#{Array.random(Item.byClass.com).logo}.png"/>"""
     vt.write NUU.intro = """
 ------------------------------------------------------------------------------------------------
 <center style="white-space: nowrap;">

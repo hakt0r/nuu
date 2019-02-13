@@ -386,6 +386,13 @@
 .window.vt svg use {
   box-shadow:0 0 2px 2px #FFF inset; }
 
+.window.vt img.com {
+  display: inline-block;
+  max-height: 100px;
+  max-width: 90%;
+  margin-left: 50%;
+  transform: translate(-50%);
+}
 .window.vt a, .window.vt a:hover, .window.vt a:active, .window.vt a:visited {
   padding: 0;
   color: red;
