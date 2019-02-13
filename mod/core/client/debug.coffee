@@ -1,7 +1,7 @@
 
 NUU.on 'debug', ->
   Kbd.macro 'build',  'KeyB', 'Show debug build menu', -> new Window.dbgStation
-  Kbd.macro 'build', 'sKeyB', 'Show debug ship menu',  -> new Window.dbgShips
+  Kbd.macro 'ships', 'sKeyB', 'Show debug ship menu',  -> new Window.dbgShips
 
 Window.dbgShips = class DebugShipWindow extends ModalListWindow
   name: 'dbg_ship'

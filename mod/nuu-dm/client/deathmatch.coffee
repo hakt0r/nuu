@@ -181,7 +181,7 @@ Kbd.macro 'rename', 'F11',  'Rename ship', ->
 Kbd.macro 'iff',    'F12',  'Add IFF-code', ->
   vt.prompt 'IFF-code', (name) -> NET.json.write set:iff:name
 
-Render =
+$static 'Render',
   Ship: (name,item,close)->
     sprite = item.sprite
     sprite = parent.sprite if item.extends and item.extends.match and ( item.extends isnt item.name ) and parent = Item.byName[item.extends]

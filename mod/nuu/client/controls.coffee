@@ -232,3 +232,4 @@ Kbd.macro 'mountNext',   'KeyM', 'Next mount', ->
 
 Kbd.macro 'debug', 'sBackquote', 'Debug', ->
   window.debug = not debug
+  NUU.emit 'debug' if debug

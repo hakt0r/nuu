@@ -25,6 +25,7 @@
       "tile",
       "animation",
       "explosion",
+      "debug",
       "client"],
     "scripts": [
       "lib.js",
