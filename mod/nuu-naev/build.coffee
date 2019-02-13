@@ -57,7 +57,7 @@ module.exports.build = (c) ->
     $s [
       fetch       'contrib/naev.zip', 'https://github.com/bobbens/naev/archive/master.zip'
       unzip       'contrib/naev.zip', 'contrib/naev-master'
-      mkdir       'build/ship'
+      mkdir       'build/gfx'
       markdown    'contrib/naev-master/dat/gfx/ARTWORK_LICENSE', 'build/ARTWORK_LICENSE.html'
       markdown    'contrib/naev-master/dat/snd/SOUND_LICENSE',   'build/SOUND_LICENSE.html'
       link        'contrib/naev-master/dat/snd/sounds',          'build/sounds'
