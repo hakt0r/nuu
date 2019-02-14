@@ -56,9 +56,8 @@ $static '$worker', new Worker TICK
 $worker.List = (worker)->
   list = c = n = count = null
   listWorker = (time)->
-    c = 0; n = 0
-    count = listWorker.count
-    list  = listWorker.list
+    { count, list } = listWorker
+    c = n = 0
     worker.call at, time while ( at = list[c++] )?
     null
   listWorker.worker = worker
@@ -78,9 +77,8 @@ $worker.List = (worker)->
 $worker.ReduceList = (worker)->
   swap = []; list = c = n = count = null
   listWorker = (time)->
-    c = 0; n = 0
-    count = listWorker.count
-    list  = listWorker.list
+    { count, list } = listWorker
+    c = n = 0
     while ( at = list[c++] )?
       swap[n++] = at if worker.call at, time
     listWorker.list = swap;swap = list
@@ -104,9 +102,7 @@ $worker.PauseList = (opts,worker)->
     worker = opts
   listKey = "pause" + $worker.PauseList.key++
   listWorker = (time)->
-    list = c = n = count = null
-    count = listWorker.count
-    list  = listWorker.list
+    { count, list } = listWorker
     c = -1; n = 0
     while count > ++c
       at = list[c]
@@ -136,9 +132,7 @@ $worker.DeadLine = (waitFor,deadline,worker)->
   listKey     = "deadline"     + $worker.DeadLine.key
   listKeyLast = "deadlineLast" + $worker.DeadLine.key++
   listWorker = (time)->
-    list = c = n = count = null
-    count = listWorker.count
-    list  = listWorker.list
+    { count, list } = listWorker
     c = -1; n = 0
     while count > ++c
       at      = list[c]
