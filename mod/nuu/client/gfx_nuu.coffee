@@ -82,13 +82,13 @@ Sprite.select = ->
       continue if SHORTRANGE[s.id]
       SHORTRANGE[s.id] = s
       NUU.emit '$obj:inRange', s
-      console.log 'inRange', s.name, s.id
+      console.log 'inRange', s.name, s.id if debug
     else
       debugger if VEHICLE is s # INVESTIGATE
       continue unless SHORTRANGE[s.id]
       delete SHORTRANGE[s.id]
       NUU.emit '$obj:outRange', s
-      console.log 'outRange', s.name, s.id
+      console.log 'outRange', s.name, s.id if debug
   null
 
 Sprite.animate = (timestamp) ->
