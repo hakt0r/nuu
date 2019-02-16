@@ -27,6 +27,7 @@ $obj.register class Explosion extends $obj
   parent: null
   constructor: (parent)->
     return unless parent and parent.id
+    return if parent.destructing and parent.constructor.type is "station"
     qs = parent.size/4
     hs = parent.size/2
     super

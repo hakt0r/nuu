@@ -39,9 +39,45 @@ $public class Weapon extends Outfit
     super name
     @ship = ship
     @id = Weapon.count++
-    Weapon[name] = @
-    @[k] = v for k,v of opts
+    Object.assign @, opts
     Weapon[@tpl.extends].call @
+  destructor:-> @release()
+
+### ██████   █████  ███    ███  █████   ██████  ███████
+    ██   ██ ██   ██ ████  ████ ██   ██ ██       ██
+    ██   ██ ███████ ██ ████ ██ ███████ ██   ███ █████
+    ██   ██ ██   ██ ██  ██  ██ ██   ██ ██    ██ ██
+    ██████  ██   ██ ██      ██ ██   ██  ██████  ███████ ###
+
+Weapon.impactType  =   hit:0,shieldsDown:1,disabled:2,destroyed:3
+Weapon.impactTypeKey = ['hit','shieldsDown','disabled','destroyed']
+Weapon.impactLogic = (wp)->
+  debugger if wp.name is 'CheatersRagnarokBeam'
+  dmg = wp.stats
+  if @shield > 0
+    @shield -= dmg.penetrate
+    if @shield < 0
+      @shield = 0
+      @armour -= dmg.physical
+      status = Weapon.impactType.shieldsDown
+  else @armour -= dmg.penetrate + dmg.physical
+  if 0 < @armour < 25
+    status = Weapon.impactType.disabled
+  else if @armour < 0
+    @armour = 0
+    @shield = 0
+    @destructing = true
+    status = Weapon.impactType.destroyed
+  else status = Weapon.impactType.hit
+  if wp.name is 'CheatersRagnarokBeam'
+    console.log status, @shield, @armor, dmg.penetrate
+  status
+
+### ██   ██  ██████  ███████ ████████ ██ ██      ██ ████████ ██    ██
+    ██   ██ ██    ██ ██         ██    ██ ██      ██    ██     ██  ██
+    ███████ ██    ██ ███████    ██    ██ ██      ██    ██      ████
+    ██   ██ ██    ██      ██    ██    ██ ██      ██    ██       ██
+    ██   ██  ██████  ███████    ██    ██ ███████ ██    ██       ██    ###
 
 Weapon.hostility = (vehicle,target)->
   # return false unless vehicle.hostile? and target.hostile?
@@ -51,6 +87,53 @@ Weapon.hostility = (vehicle,target)->
   if vehicle.hostile and -1 is vehicle.hostile.indexOf target
     vehicle.hostile.push target
     NUU.jsoncastTo vehicle, hostile: target.id if vehicle.inhabited
+
+### ████████  █████  ██████   ██████  ███████ ████████ ███████
+       ██    ██   ██ ██   ██ ██       ██         ██    ██
+       ██    ███████ ██████  ██   ███ █████      ██    ███████
+       ██    ██   ██ ██   ██ ██    ██ ██         ██         ██
+       ██    ██   ██ ██   ██  ██████  ███████    ██    ███████ ###
+
+Weapon.SelectTarget = $worker.ReduceList (time)->
+  { ship, target, slot, lock } = @
+  closest     = null
+  closestDist = Infinity
+  ship.update time
+  for p in NUU.users
+    continue unless v = p.vehicle
+    continue     if v.destructing
+    v.update time
+    if ( closestDist > d = $dist(ship,v) ) and ( 1000000 > abs d )
+      closestDist = d
+      closest = v
+  @target = target = if closestDist > 5000 then null else closest
+  if target
+    console.log ship.name, 'has target', lock, target.name
+    @trigger null, target
+    NET.weap.write null, 0, slot, ship, target
+    false
+  else true
+
+Weapon.Defensive = $worker.ReduceList (time)->
+  { ship, target, slot, lock } = @
+  unless ship.hostile? and 0 < ship.hostile.length
+    return true
+  closest     = null
+  closestDist = Infinity
+  ship.update time
+  for v in ship.hostile
+    continue if v.destructing
+    v.update time
+    if ( closestDist > d = $dist(ship,v) ) and ( 1000000 > abs d )
+      closestDist = d
+      closest = v
+  @target = target = if closestDist > 5000 then null else closest
+  if target
+    console.log ship.name, 'has target', lock, target.name
+    @trigger null, target
+    NET.weap.write null, 0, slot, ship, target
+    false
+  else true
 
 ### ████████ ██████   █████   ██████ ██   ██ ███████ ██████
        ██    ██   ██ ██   ██ ██      ██  ██  ██      ██   ██
@@ -70,12 +153,13 @@ Track = $worker.List (time)->
   else if @target.destructing
     @dir = 0
     @target = null
+    @blur() if @blur
     return
   else
     td  = $v.heading(@target.p,@ship.p) * RAD
     tdd = -180 + $v.umod360 @ship.d + @dir - td
   if @stats.track * 2 < abs tdd
-    @dir += ( if tdd > 0 then 1 else -1 ) * @stats.track
+       @dir += ( if tdd > 0 then 1 else -1 ) * @stats.track
   else @dir += tdd
   null
 
@@ -92,6 +176,9 @@ Weapon.Beam = ->
   @duration = @stats.duration.$t * 100
   @range    = @stats.range || 300
   Track.add @ if @turret
+  @destructor = =>
+    @release()
+    Track.remove @ if @turret
   @release = =>
     @stop = true; @lock = false
     do @hide if isClient
@@ -99,6 +186,8 @@ Weapon.Beam = ->
     off
   @trigger = (src,@target) =>
     return if @lock; @lock = true; @stop = false
+    return unless @target             if isServer
+    return     if @target.destructing
     Weapon.hostility @ship, @target
     do @show if isClient
     Weapon.beam[@ship.id] = @
@@ -114,16 +203,20 @@ Weapon.Beam = ->
 
 BeamWorker = $worker.ReduceList (time)->
   if @stop or @tt < time
-    do @release
-    return false
+    return do @release
   return true if isClient
   ship = @ship
   ship.update time
   dir = NavCom.unfixAngle( ship.d + @dir ) / RAD
+  bgin = ship.p
   bend = [ ship.x + sin(dir) * @range, ship.y - cos(dir) * @range ]
   for target in ship.hostile
     target.update time
-    target.hit ship, @ if Math.lineCircleCollide ship.p, bend, target.p, target.size/2
+    if Math.lineCircleCollide bgin, bend, target.p, target.size/2
+      target.hit ship, @
+      if target.destructing
+        NET.weap.write null, 1, @slot, ship, target, null if isServer
+      break
   true
 
 ### ██████  ██████   ██████       ██ ███████  ██████ ████████ ██ ██      ███████
@@ -136,7 +229,7 @@ class ProjectileVector
   constructor:(@perp,@weap,@ms,@tt,@sx,@sy,@mx,@my)->
 
 Weapon.Projectile = ->
-  Weapon.Projectile.loadAssets.call @  if isClient
+  Weapon.Projectile.loadAssets.call @ if isClient
   @delay  = @stats.delay * 500
   @ttl    = 1000 / @stats.speed * 1000
   @ppt    = @stats.speed * TICKi
@@ -164,8 +257,9 @@ ProjectileEmitter = $worker.ReduceList (time)->
   x = ship.x # + slot.x * cs
   y = ship.y # + slot.y * sn
   ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, m[0], m[1] if isServer
-  new ProjectileAnimation ship, @, time, time + @ttl, x, y, m[0], m[1], d if isClient
-  NUU.emit 'shot', @
+  new ProjectileAnimation ship, @, time, time + @ttl, x, y, m[0], m[1], d                  if isClient
+  NUU.emit 'shot', @                                                                       if isClient
+  true
 
 ProjectileDetector = $worker.ReduceList (time)->
   return false if @tt < time

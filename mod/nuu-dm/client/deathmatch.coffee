@@ -45,9 +45,11 @@ Window.DockingMenu = class DockingMenu extends ModalListWindow
   name: 'dock'
   closeKey: 'KeyQ'
   constructor:(stel)->
-    super title: 'Docked to ' + stel.name
+    menu = {}
+    Object.assign menu, Station.ownerMenu if NUU.player.user.id is stel.owner
+    Object.assign menu, Stellar.menu
+    super title: 'Docked to ' + stel.name, subject: menu
     @stel = stel
-  fetch: (done)-> done DockingMenu.root
   render: (key,val)->
     @body.append entry = $ """
       <div class="list-item menu-item noselect">
@@ -56,13 +58,26 @@ Window.DockingMenu = class DockingMenu extends ModalListWindow
       </div>"""
     entry[0].action = val
     null
-DockingMenu.root =
+
+Stellar.menu =
   shipyard: -> do Kbd.macro.ships
   loadout:  -> do Kbd.macro.equip
   undock:   ->
     do Kbd.macro.launch
     @close()
     null
+
+Station.ownerMenu =
+  harvest:->
+  supply:->
+  destroy:->
+    do Kbd.macro.launch
+    @close()
+    NET.send destroy: @stel.id
+  rename:->
+    vt.prompt 'rename', ( (name)-> if name and name.trim() isnt ''
+      NET.send rename: id: @stel.id, name:name
+    ), yes
 
 Kbd.macro 'unlocks', 'KeyU', 'Unlocked items', -> new Window.Unlocks
 Window.Unlocks = class Unlocks extends ModalListWindow

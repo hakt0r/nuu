@@ -41,26 +41,31 @@ Ship::respawn = ->
 
 Ship::hit = (src,wp) ->
   return if @destructing
-  dmg = wp.stats
-  if @shield > 0
-    @shield -= dmg.penetrate
-    if @shield < 0
-      @shield = 0
-      @armour -= dmg.physical
+  switch Weapon.impactLogic.call @, wp
+    when Weapon.impactType.hit
+      NUU.emit 'ship:hit', @, src, @shield, @armour
+      NET.mods.write @, 'hit', @shield, @armour
+    when Weapon.impactType.shieldsDown
       NUU.emit 'ship:shieldsDown', @, src
-  else @armour -= dmg.penetrate + dmg.physical
-  if 0 < @armour < 25 and @disabled > 10
-    NUU.emit 'ship:disabled', @, src
-  else if @armour < 0
-    @armour = 0
-    @shield = 0
-    @destructing = true
-    NUU.emit 'ship:destroyed', @, src
-    NET.mods.write @, 'destroyed', 0,0
-  else
-    NUU.emit 'ship:hit', @, src, @shield, @armour
-    NET.mods.write @, 'hit', @shield, @armour
-  null
+    when Weapon.impactType.disabled
+      NUU.emit 'ship:disabled', @, src
+    when Weapon.impactType.destroyed
+      NUU.emit     'ship:destroyed', @, src
+      NET.mods.write @, 'destroyed', 0, 0
+
+Station::hit = (src,wp) ->
+  return if @destructing
+  switch Weapon.impactLogic.call @, wp
+    when Weapon.impactType.hit
+      NUU.emit 'station:hit', @, src, @shield, @armour
+      NET.mods.write @, 'hit', @shield, @armour
+    when Weapon.impactType.shieldsDown
+      NUU.emit 'station:shieldsDown', @, src
+    when Weapon.impactType.disabled
+      NUU.emit 'station:disabled', @, src
+    when Weapon.impactType.destroyed
+      NUU.emit     'station:destroyed', @, src
+      NET.mods.write @, 'destroyed', 0, 0
 
 Asteroid.autospawn = (opts={})-> $worker.push =>
   roids  = @list.length

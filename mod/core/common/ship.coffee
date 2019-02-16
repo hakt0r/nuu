@@ -178,7 +178,7 @@ Ship::updateMods = ->
   null
 
 ShipModel = $worker.ReduceList (time)->
-  return if @destructing
+  return false if @destructing
   # return 1000 if @fuel <= 0
   add = null
   @fuel += @fuelRegen || 0.5
@@ -189,9 +189,9 @@ ShipModel = $worker.ReduceList (time)->
     @energy -= add
   @fuel = @fuelMax if @fuel > @fuelMax
   @fuel = 0        if @fuel <= 0
-  return unless isServer
+  return true unless isServer
   @setState S:$moving if @fuel is 0 and @state.acceleration
-  return unless @mount[0] and @lastUpdate + 3000 < time
+  return true unless @mount[0] and @lastUpdate + 3000 < time
   NET.health.write @
   @lastUpdate = time
   true
@@ -211,7 +211,7 @@ Ship::modSlot = (type,slot,item)->
   console.log 'modSlot', type, slot, item
   old = slot.equip # old.destroy() TODO
   if type is 'weapon'
-    i = new Weapon @, Item.byId[item].name
+    i = new Weapon @, Item.byId[item].name, slot:slot
   else i = new Outfit Item.byId[item].name
   slot.equip = i
   @updateMods()
@@ -223,7 +223,7 @@ Ship::loadSytems = (loadout)->
   for k,slt of @slots.weapon
     equip = loadout.weapon[k]
     continue unless slt.default or equip
-    try slt.equip = new Weapon @, if equip then equip else slt.default
+    try slt.equip = new Weapon @, ( if equip then equip else slt.default ), slot:slt
     catch e then console.error 'weap', e, equip
   for k,slt of @slots.structure
     equip = loadout.structure[k]
@@ -249,7 +249,7 @@ Ship::mockSystems = -> # equip fake weapons for development
   for k,slt of @slots.weapon when not slt.equip?
     continue if MockWeap.length is 0
     # slt.equip = new Outfit slt.default if slt.default
-    slt.equip = new Weapon @, MockWeap.shift()
+    slt.equip = new Weapon @, MockWeap.shift(), slot:slt
   for k,slt of @slots.structure when not slt.equip?
     slt.equip = new Outfit slt.default if slt.default
     #else slt.equip = new Outfit(Mock.structure[slt.size].shift())

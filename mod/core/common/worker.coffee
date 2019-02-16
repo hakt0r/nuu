@@ -79,8 +79,9 @@ $worker.ReduceList = (worker)->
   listWorker = (time)->
     { count, list } = listWorker
     c = n = 0
-    while ( at = list[c++] )?
-      swap[n++] = at if worker.call at, time
+    while c < count and ( at = list[c++] )?
+      unless false is worker.call at, time
+        swap[n++] = at
     listWorker.list = swap;swap = list
     listWorker.count = n
     null

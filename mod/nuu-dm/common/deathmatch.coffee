@@ -72,6 +72,10 @@ rules.server = ->
   NUU.on 'user:left', (p) ->
     delete stats[p.db.nick]
 
+  NUU.on 'station:destroyed', (victim,perp) ->
+    console.log '::dm', 'destroyed'.red, victim.name.yellow
+    victim.destructor()
+
   NUU.on 'ship:destroyed', (victim,perp) ->
     console.log '::dm', 'destroyed'.red, victim.name.yellow
     if victim.npc is yes then $timeout 4500, ->

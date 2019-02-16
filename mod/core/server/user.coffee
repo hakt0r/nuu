@@ -85,7 +85,7 @@ NET.on 'build', (msg,src) ->
   return src.error '_invalid_item'  unless b = Item.byType.station[msg]
   return src.error '_not_here'      unless p = o.state.relto.buildRoot
   # Create Item and inherit the creator's state
-  $ = new b state:o.state.toJSON()
+  $ = new b state:o.state.toJSON(), owner:u.db.id
   console.log ':bld', b.name, p     if debug
 
 NET.on 'jump', (target,src) ->

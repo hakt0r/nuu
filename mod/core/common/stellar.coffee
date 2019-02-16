@@ -110,14 +110,14 @@ $obj.register class Stellar extends $obj
   destructor:->
     @zone.detach @ if @zone
     super()
-  toJSON: -> return
+  toJSON: -> return {
     id:@id
     key:@key
     sprite:@sprite
     state:@state
     name:@name
     produces:@produces
-    consumes:@consumes
+    consumes:@consumes }
   produce:-> e:@produces.e * @level
 
 Object.defineProperty Stellar::, 'buildRoot', get:->
@@ -149,26 +149,63 @@ $obj.register class Moon extends Stellar
   @interfaces: [$obj,Stellar]
 
 $obj.register class Station extends Stellar
+  @interfaces: [$obj,Stellar,Station,Shootable]
   @type:'station'
-  @interfaces: [$obj,Stellar,Station]
   level:1
   population:1
+  shield:1000
+  armour:1000
+  weapon:'LaserTurretMK'
+  constructor:(opts)->
+    super opts
+    @shieldMax = @shield
+    @armourMax = @armour
+    @access = @access || []
+    @hostile = []
+    @weapon = new Weapon @, @weapon
+    @weapon.slot = id:0, equip:@weapon
+    @slots = # Mock items for now
+      weapon: [ @weapon.slot ]
+      structure: [
+        id:0, size:'large', equip:null
+        id:0, size:'large', equip:null ]
+    return unless isServer
+    do @weapon.blur = =>
+      return if @destructing
+      console.log @name, 'lost target' if debug
+      @weapon.release()
+      Weapon.Defensive.add @weapon
+  destructor:->
+    Weapon.Defensive.remove @weapon
+    @weapon.destructor()
+    @weapon = null
+    super()
+  toJSON: -> return {
+    id:       @id
+    key:      @key
+    sprite:   @sprite
+    state:    @state
+    name:     @name
+    produces: @produces
+    consumes: @consumes
+    owner:    @owner
+    access:   @access }
 
 $obj.register class Station.Powerplant extends Station
-  @interfaces: [$obj,Stellar,Station]
+  @interfaces: [$obj,Stellar,Station,Shootable]
   sprite: 'station-powerplant'
   population:0
   consumes:r:H2:10,Pu:1
 
 $obj.register class Station.Farm extends Station
-  @interfaces: [$obj,Stellar,Station]
+  @interfaces: [$obj,Stellar,Station,Shootable]
   sprite:'station-agriculture'
   population:10
   consumes:e:1,H20:10,farmland:1
   produces:Food:1
 
 $obj.register class Station.LargeFarm extends Station
-  @interfaces: [$obj,Stellar,Station]
+  @interfaces: [$obj,Stellar,Station,Shootable]
   sprite:'station-commerce3'
   upgrades:Station.Farm
   population:100
@@ -176,7 +213,7 @@ $obj.register class Station.LargeFarm extends Station
   produces:Food:10
 
 $obj.register class Station.Habitat extends Station
-  @interfaces: [$obj,Stellar,Station]
+  @interfaces: [$obj,Stellar,Station,Shootable]
   sprite:'station-commerce'
   upgrades:Station.Farm
   population:100
@@ -184,16 +221,28 @@ $obj.register class Station.Habitat extends Station
   produces:Executive:1,Workers:10
 
 $obj.register class Station.Mine extends Station
-  @interfaces: [$obj,Stellar,Station]
+  @interfaces: [$obj,Stellar,Station,Shootable]
   sprite:'station-commerce2'
   population:10
   consumes:e:1,Food:10
   # produces whater is mined
 
 $obj.register class Station.Factory extends Station
-  @interfaces: [$obj,Stellar,Station]
+  @interfaces: [$obj,Stellar,Station,Shootable]
   sprite:'station-shipyard'
   upgrades:Station.Mine
   produces:Kestrel:1
   consumes:e:1,Fe:10,Food:10
   population:10
+
+$obj.register class Station.Fortress extends Station
+  @interfaces: [$obj,Stellar,Station,Shootable]
+  sprite:'base'
+  population:10
+  consumes:e:1000
+  produces:{}
+  constructor:(opts)->
+    opts.shield = opts.shield || 10000
+    opts.armour = opts.armour || 10000
+    opts.weapon = opts.weapon || 'GraveBeam'
+    super opts

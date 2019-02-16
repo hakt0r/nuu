@@ -256,11 +256,13 @@ NET.define 11,'BURN',
    ███ ███  ███████ ██   ██ ██       ██████  ██   ████
 ###
 
-weaponActionKey = ['trigger','release','reload']
+weaponActionKey  = ['trigger','release','reload','aim']
+weaponActionCode =   trigger:0,release:1,reload:2,aim:3
+
 NET.define 3,'WEAP',
   read:
     client: (msg,src) ->
-      return console.log 'weap', 'missing:vid' unless vehicle = Ship.byId[msg.readUInt16LE 3]
+      return console.log 'weap', 'missing:vid' unless vehicle = Shootable.byId[msg.readUInt16LE 3]
       return console.log 'weap', 'missing:sid' unless slot    = vehicle.slots.weapon[msg[2]]
       return console.log 'weap', 'missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
       action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
@@ -281,8 +283,8 @@ NET.define 3,'WEAP',
       msg.writeUInt16LE tid, 4
       NET.send msg.toString 'binary'
     server: (src,mode,slot,vehicle,target)->
-      return console.log 'weap', 'nothing equipped'   unless equipped = slot.equip
-      return console.log 'weap', 'no trigger/release' unless modeCall = equipped[if mode is 0 then 'trigger' else 'release']
+      return console.log 'weap', 'nothing equipped',slot unless equipped = slot.equip
+      return console.log 'weap', 'no trigger/release' unless modeCall = equipped[weaponActionKey[mode]]
       modeCall src, target
       msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
