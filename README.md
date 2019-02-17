@@ -139,6 +139,7 @@ These are the default keybindings as found on as US/QWERTY-keyboard. You can cha
 | Equal           | Zoom scanner in             |
 | Minus           | Zoom scanner out            |
 | shift-Backquote | Debug                       |
+| B               | Debug: Station-Menu         |
 
 ## Copyrights
 
