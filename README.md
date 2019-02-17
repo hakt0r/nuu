@@ -12,7 +12,7 @@ A tip of the hat should also be extended to [Endless Sky](https://github.com/end
 
 ## **Screenshots**
 
-| <img src="https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot0.png" height="200"/> | <img src="https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot1.png" height="200"/> |
+| <img src="https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot0.png" height="200"/> | <img src="https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot1.png" height="200"/> | <img src="https://raw.githubusercontent.com/hakt0r/nuu/master/screenshot3.png" height="200"/> |
 
 ## Intro
 
