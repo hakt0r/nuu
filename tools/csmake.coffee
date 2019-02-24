@@ -95,6 +95,24 @@ module.exports = (__targets) ->
         conv s, path.join dst
     ).then -> do c
 
+  cp.exec$   = util.promisify cp.exec
+  fs.exists$ = util.promisify fs.exists
+
+  global.iconsFrom = (src,dst)->
+    return Promise.resolve() if true is await fs.exists$ "#{dst}/favicon.ico"
+    cp.exec$ """
+      convert '#{src}' -resize 256x256 -transparent white /tmp/favicon-256.png
+      convert /tmp/favicon-256.png -resize 16x16   /tmp/favicon-16.png
+      convert /tmp/favicon-256.png -resize 32x32   /tmp/favicon-32.png
+      convert /tmp/favicon-256.png -resize 64x64   /tmp/favicon-64.png
+      convert /tmp/favicon-256.png -resize 128x128 /tmp/favicon-128.png
+      convert /tmp/favicon-16.png  \\
+              /tmp/favicon-32.png  \\
+              /tmp/favicon-64.png  \\
+              /tmp/favicon-128.png \\
+              /tmp/favicon-256.png -colors 256 '#{dst}/favicon.ico'
+    """
+
   global.linkDirsIn = (src,dst)-> (c)->
     fs.readdir src, (err,files)->
       ln = (s,d)-> (c)->

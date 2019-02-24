@@ -9,4 +9,5 @@ module.exports.build = (c)-> depend(contrib,sources)( ->
     convFilesIn 'mod/nuu/sprites/com',              'build/gfx'
     convFilesIn 'mod/nuu/sprites/gov',              'build/gfx'
     linkFlatten 'mod/nuu/sprites',                  'build/gfx'
+    (c)-> c null, await iconsFrom 'mod/nuu/artwork/icon_2018.png', 'build/'
   ], c )
