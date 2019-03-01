@@ -588,6 +588,20 @@ h1,h2 {
   right:2px;
   top:2px; }
 
+.slot > span.prop {
+  display: inline-block;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  border: solid 1px red;
+  color: red;
+  padding: 0px 3px;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 13px;
+  background: black;
+}
+
 .window.modal_list .list-item.slot > label {
   width: unset;
   position: absolute;
@@ -599,16 +613,16 @@ h1,h2 {
   padding: 2px 4px;
   border: solid 1px;
   /* background: green; */
-  }
+}
 
 .window.modal_list .list-item.slot.active > label {
   color: black;
   background: #ffff00b0;
-  }
+}
 
 .slot img {
   position: absolute;
-  top: 10px;
+  top: 15px;
   z-index:-1;
   opacity: 0.65;
   right: 10px;
@@ -617,7 +631,7 @@ h1,h2 {
   width: auto;
   max-width: 128px;
   max-height: 128px;
-  }
+}
 
 .slot.list-header {
   padding: 2px; min-height: 1em; }

@@ -123,10 +123,13 @@ module.exports = (destinationFile,callback)->
     delete d.mission if d.mission
     for t,slots of d.slots
       d.slots[t] = [slots] unless Array.isArray slots
-      for k,v of slots when v.__text
-        v.default = v.__text.clearItemName()
-        delete v.__text
-
+      for k,v of slots
+        slots[k] = n = {}
+        if v.__text
+          n.default = v.__text.clearItemName()
+          delete v.__text
+        for kk,vv of v
+          n[kk.replace /^_+/, ''] = vv
     if d.GFX?
       if d.GFX._sx?
         meta[sprite = d.GFX.__text] = cols:d.GFX._sx,rows:d.GFX._sy

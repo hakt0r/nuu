@@ -27,7 +27,7 @@ Weapon.guiSymbol = (e,u)->
   s = if s.length is 1 then s else if e.type is 'fighter bay' then s[1] else s[0]
   s += NUU.symbol.turret if e.turret
   s = s + '☢' if e.name and e.name.match 'Cheaters'
-  s = if u then "[#{s}:#{u}]" else "[#{s}]"
+  s = if s then ( if u then "[#{s}:#{u}]" else "[#{s}]" ) else ''
   s
 
 Weapon.guiName = (e)->

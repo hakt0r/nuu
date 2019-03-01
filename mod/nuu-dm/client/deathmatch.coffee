@@ -158,12 +158,21 @@ Window.Loadout = class Loadout extends ModalListWindow
   renderSlot: (type,id,slot) ->
     readableType = (type,size)->
       readableType.icon[size] + readableType.icon[type]
-    readableType.icon = weapon:"✛", utility:"⚒", structure: "⛨", small:"S", medium:"M", large:"L"
+    readableType.icon =
+      weapon:"✛"
+      utility:"⚒"
+      structure: "⛨"
+      small:"S"
+      medium:"M"
+      large:"L"
     @body.append x = $ """
     <div id="slot_#{type}_#{id}" class="list-item slot">
       <label>#{readableType type, slot.size}: </label>
       <span class='equip'></span>
     </div>"""
+    x.append $ """
+    <span class="prop">#{slot.prop}</span>
+    """ if slot.prop
     x.on 'click', x[0].action = @slotSelection type, slot
     return unless e = slot.equip
     x.find('label').append ' ' + Weapon.guiName e
