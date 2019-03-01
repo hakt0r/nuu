@@ -47,7 +47,7 @@ Economy.defaults = (o,d)->
 
 Economy.for = (stellar)->
   unless root = stellar.buildRoot
-    console.log 'no buildRoot', stellar.name
+    console.log 'no buildRoot', stellar.name if debug
     return undefined
   Economy.byName[name = root.name] || Economy.byName[name] = new Economy root
 
@@ -75,10 +75,10 @@ Economy::tryAllocate = (stellar)->
   for item, count of stellar.allocates
     if not @allocate stellar, item, count
       failed = yes
-      console.log stellar.name, 'needs', item, count
+      console.log stellar.name, 'needs', item, count  if debug
       break
     else
-      console.log stellar.name, 'has', item, count
+      console.log stellar.name, 'has', item, count  if debug
   return true unless failed
   @disallocate stellar
   false
@@ -106,7 +106,7 @@ Economy.produce = ->
   now = Date.now()
   Object.values(Economy.byName).map (zone)->
     unless 1 < zone.list.length
-      console.log '$p : no zones'
+      console.log '$p : no zones'  if debug
       return
     produce = zone.list
     .filter (stellar)->
@@ -114,14 +114,14 @@ Economy.produce = ->
       return true  unless stellar.consumes?
       for item, count of stellar.consumes
         unless stellar.zone.inventory.has item, count
-          console.log '$p', stellar.name, 'needs', item, count
+          console.log '$p', stellar.name, 'needs', item, count  if debug
           return false
       for item, count of stellar.consumes
         stellar.zone.inventory.get item, count
       true
     .map    (stellar)-> stellar.nextCyle = now + stellar.interval; stellar
     Economy.queue = Economy.queue.concat produce
-    console.log zone.inventory.data
+    console.log zone.inventory.data  if debug
   Economy.queue = Economy.queue.sort (a,b)-> a.nextCyle - b.nextCyle
   Economy.queueNext()
   null
@@ -138,7 +138,7 @@ Economy.queueNext = ->
       stellar = q.pop()
       stellar.nextCyle = 0
       for item, count of stellar.produces
-        console.log stellar.name, '$p', item, count
+        console.log stellar.name, '$p', item, count  if debug
         stellar.zone.inventory.add item, count
     Economy.queueNext()
     return
