@@ -333,7 +333,8 @@ $public class SpriteSelector
             e.allowDefault = true
             setTimeout ( => @search() ), 0
       onpaste:(e)-> console.log 'paste', e
-      onkeydown:->
+      onkeydown:(e)->
+        e.preventDefault() if e.key is "Tab"
     @subject = $meta
     @render()
   search:->
