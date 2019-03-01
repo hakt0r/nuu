@@ -371,7 +371,7 @@ SpriteSelector::renderSprite = (key)->
     fh = xh * f = ( fw = 100 ) / xw
   # else
   @body$.append """
-  <div class="sprite-select">
+  <div class="sprite-select hidden">
     <span class= "frame" style="
       width:  #{fw}px;
       height: #{fh}px;
