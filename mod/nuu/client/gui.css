@@ -49,7 +49,7 @@
   left:10%;
   max-height:80%;
   max-width:600px;
-  min-height:260px;
+  min-height:80%;
   min-width:260px;
   padding:5px;
   position:fixed;
@@ -357,6 +357,43 @@
   position:absolute;
   right:7px;
   top:26px; }
+
+.sprite-editor {
+  position: fixed;
+  overflow: hidden auto;
+  left: 368px;
+  background: black;
+  top: 10%;
+  max-height: 80%;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.sprite-select {
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.sprite-select img {
+  max-width: 100px;
+  max-height: 100px;
+}
+
+.sprite-select .name {
+  float: right;
+  color: white;
+  font-weight: bold;
+}
+
+.sprite-select .frame {
+  display: inline-block;
+  overflow: hidden;
+  width: 100px;
+  height: 100px;
+}
+
+.hidden { display: none; }
+.selected { background: #00ff0055; }
 
 /* ██     ██ ██ ███    ██ ██████   ██████  ██     ██   ██    ██ ████████
    ██     ██ ██ ████   ██ ██   ██ ██    ██ ██     ██   ██    ██    ██

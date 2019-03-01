@@ -34,10 +34,11 @@ $public class Item
   @init: (items) ->
     Item.db = items
     id = 0
-    for k,o of Station when o? and o::? and o::consumes?
+    for k,o of Station.template
       o.class = "station"
-      Item.byType.station[o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
-      console.log 'item', 'Station', id, o.name, o::sprite if debug
+      o.name  = o.name || k
+      Item.byClass.station.push Item.byType.station[o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
+      console.log 'item', 'Station', id, o.name if debug
       id++
     for o in items
       Item.byClass[o.class].push o

@@ -47,15 +47,13 @@ $static 'Mouse', new class MouseInput
     null
 
   reset: ->
-    do @trigger.dn if @trigger
-    @trigger = no
+    do @trigger.dn    if @trigger
     do @triggerSec.dn if @triggerSec
-    @triggerSec = no
-    @state = off
+    document.onmousemove = document.onwheel = document.onmouseup = document.onmousedown = document.oncontextmenu = null
+    @trigger = @triggerSec = @state = off
     HUD.widget 'mouse', null
     clearInterval @timer
     @timer = null
-    document.onmousemove = document.onwheel = document.onmouseup = document.onmousedown = document.oncontextmenu = null
     null
 
   callback: ->
@@ -149,10 +147,10 @@ $static 'Mouse', new class MouseInput
     body = document.querySelector 'body'
     if @state
       HUD.widget 'mouse', 'mouse', true
-      document.onmousemove = @update
-      document.onwheel = @onwheel
-      document.onmouseup = @onmouseup
-      document.onmousedown = @onmousedown
+      document.onmousemove   = @update
+      document.onwheel       = @onwheel
+      document.onmouseup     = @onmouseup
+      document.onmousedown   = @onmousedown
       document.oncontextmenu = @oncontextmenu
       @timer = setInterval @callback, TICK
     else @reset()

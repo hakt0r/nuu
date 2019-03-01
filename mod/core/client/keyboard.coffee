@@ -119,8 +119,9 @@ Kbd.grab = (focus,opts)->
     console.log ':kbd', 'grab', focus.name if debug
   @focus = focus
   Object.assign @, opts
-  @focus.raise()
+  @focus.raise() if @focus.raise?
   document.addEventListener 'paste', @onpaste if @onpaste
+  Mouse.disable() if @hadMouse = Mouse.state
   # console.log ':kbd', 'grabbed', @focus.name  if debug
   true
 
@@ -130,6 +131,7 @@ Kbd.release = (focus)->
     do @clearHooks
     if @stack.length is 0
       console.log ':kbd', 'main-focus' if debug
+      Mouse.enable() if @hadMouse
       return true
     item = @stack.pop()
     @grab item.focus, item

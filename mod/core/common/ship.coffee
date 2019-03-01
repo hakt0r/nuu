@@ -91,21 +91,38 @@ $obj.register class Ship extends $obj
       else @mountType.push 'weaX'
     @fuel = @fuelMax = 200000
     null
-  destructor: ->
-    $worker.remove @model
-    for slot in @slots.weapon when slot and slot.equip
-      slot.equip.release()
-    super()
 
-  reset: ->
-    @hostile = []
-    @destructing = false
-    @energy = @energyMax
-    @shield = @shieldMax
-    @armour = @armourMax
-    @fuel   = @fuelMax
+Ship.blueprint =
+  name: 'Human'
+  sprite: 'sprite@suit'
+  slots:
+    structure: [ size: 'suit', default: 'Human Skin'  ]
+    utility:   [ size: 'suit', default: 'Human Heart' ]
+    weapon:    [ size: 'suit', default: 'Stock Multitool' ]
+  stats: crew:1, mass:1, fuel_consumption:0
 
-  toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl,name:@name,loadout:@loadout
+Ship::destructor = ->
+  $worker.remove @model
+  for slot in @slots.weapon when slot and slot.equip
+    slot.equip.release()
+  $obj::destructor.call @
+
+Ship::reset = ->
+  @hostile = []
+  @destructing = false
+  @energy = @energyMax
+  @shield = @shieldMax
+  @armour = @armourMax
+  @fuel   = @fuelMax
+
+Ship::toJSON = -> {
+  id:     @id
+  key:    @key
+  size:   @size
+  state:  @state
+  tpl:    @tpl
+  name:   @name
+  loadout:@loadout }
 
 ###
 Object.defineProperty Ship::, 'd',

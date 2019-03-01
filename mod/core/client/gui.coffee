@@ -161,15 +161,9 @@ $public class ModalListWindow extends Window
 # ███████ ██████  ██    ██     ██████  ██   ██
 
 $obj.classes =
-  ship: default:[],template:
-    name: 'Human'
-    sprite: 'suit'
-    slots:
-      structure: [ size: 'suit', default: 'Human Skin'  ]
-      utility:   [ size: 'suit', default: 'Human Heart' ]
-      weapon:    [ size: 'suit', default: 'Stock Multitool' ]
-    stats: crew:1, mass:1, fuel_consumption:0
-  outfit: default:[],template:{}
+  ship:    default:[], template: Ship.blueprint
+  station: default:[], template: Station.blueprint
+  outfit:  default:[], template: {}
   gov: default:[],template:
     name:'UntitledGovernment'
     diplomacy:[]
@@ -274,34 +268,120 @@ class $obj.BlueprintList extends ModalListWindow
 class $obj.editor extends ModalListWindow
   constructor:(opts)->
     super opts
-  render:(key,val) => switch typeof val
-    when 'object'
-      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>[directory]</span></div>"""
-      i.on 'click', i[0].action = => w = new $obj.editor
-        name:@name+'_'+key
-        title:@title+':'+name
-        subject: val
-        parent:@
-        closeKey:@closeKey
-    when 'number'
+  render:(key,val) =>
+    if @blueprint?.template?[key]?.match? and @blueprint.template[key].match /^sprite@/
       @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
-      i.on 'click', i[0].action = =>
-        return if @editor
-        new Number.editor parent:@, item$:i, title:key, default:val, callback:(error,value)=>
-          i.find('span').html if @subject[key] = val = value
+      i.on 'click', i[0].action = => w = new SpriteSelector parent:@, item$:i, title:key, default:val, callback:(error,value)=>
+        i.find('span').html if @subject[key] = val = value
+    else switch typeof val
+      when 'object'
+        @body.append i = $ """<div class="list-item"><label>#{key}</label><span>[directory]</span></div>"""
+        i.on 'click', i[0].action = => w = new $obj.editor
+          name:@name+'_'+key
+          title:@title+':'+name
+          subject: val
+          parent:@
+          closeKey:@closeKey
+      when 'number'
+        @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
+        i.on 'click', i[0].action = =>
+          return if @editor
+          new Number.editor parent:@, item$:i, title:key, default:val, callback:(error,value)=>
+            i.find('span').html if @subject[key] = val = value
+            NUU.saveSettings()
+      when 'string'
+        @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
+        i.on 'click', i[0].action = =>
+          return if @editor
+          new String.editor parent:@, item$:i, title:key, default:val, callback:(error,value)=>
+            i.find('span').html if @subject[key] = val = value
+            NUU.saveSettings()
+      when 'boolean'
+        @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{if val then 'true' else '<span class="red">false</div>'}</span></div>"""
+        i.on 'click', i[0].action = =>
+          i.find('span').html if @subject[key] = val = not val then 'true' else '<span class="red">false</div>'
           NUU.saveSettings()
-    when 'string'
-      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{val}</span></div>"""
-      i.on 'click', i[0].action = =>
-        return if @editor
-        new String.editor parent:@, item$:i, title:key, default:val, callback:(error,value)=>
-          i.find('span').html if @subject[key] = val = value
-          NUU.saveSettings()
-    when 'boolean'
-      @body.append i = $ """<div class="list-item"><label>#{key}</label><span>#{if val then 'true' else '<span class="red">false</div>'}</span></div>"""
-      i.on 'click', i[0].action = =>
-        i.find('span').html if @subject[key] = val = not val then 'true' else '<span class="red">false</div>'
-        NUU.saveSettings()
+
+$public class SpriteSelector
+  constructor:(opts)->
+    Object.assign @, opts
+    @item$.off 'click', @item$[0].action
+    @item$.append @input$ = $ '<input>'
+    @item$.append @body$ = $ """<div class="sprite-editor">"""
+    @value$ = @item$.find 'span'
+    @value$.css 'display','none'
+    @input$.val @value$.text()
+    @parent.editor = @
+    @input$.focus()
+    close = =>
+      @value$.css 'display', 'unset'
+      @input$.remove(); delete @parent.editor; Kbd.release @
+      @body$.remove()
+    Kbd.grab @,
+      onkeyup:(e)=>
+        switch e.key
+          when "Escape" then close()
+          when "Tab"
+            @input$.val $('.sprite-select:not(.hidden)').first().find('.name').text()
+            @input$.focus()
+            setTimeout ( => @search() ), 0
+          when "Enter"
+            @value$.text @input$.val()
+            @parent.subject[@title] = @input$.val()
+            close()
+          else
+            e.allowDefault = true
+            setTimeout ( => @search() ), 0
+      onpaste:(e)-> console.log 'paste', e
+      onkeydown:->
+    @subject = $meta
+    @render()
+  search:->
+    s = @input$.val()
+    l = @body$
+    .find '.sprite-select'
+    .toArray()
+    l.forEach (v)->
+      n = v.querySelector '.name'
+      if      n? and n.innerText is s
+        v.classList.remove 'hidden'
+        v.classList.add    'selected'
+      else if n? and n.innerText.match s
+        v.classList.remove 'hidden'
+        v.classList.remove 'selected'
+      else
+        v.classList.add    'hidden'
+        v.classList.remove 'selected'
+    return
+
+SpriteSelector::render = -> requestAnimationFrame =>
+  @body$.innerHTML = ''
+  @renderSprite k for k,v of @subject
+  @search()
+  return
+
+SpriteSelector::renderSprite = (key)->
+  return if key.match /store$/
+  return if key.match /comm$/
+  return unless m = $meta[key]
+  if m.height <= m.width
+    xw = m.width  / m.cols
+    xh = m.height / m.rows
+    fh = xh * f = ( fw = 100 ) / xw
+  # else
+  @body$.append """
+  <div class="sprite-select">
+    <span class= "frame" style="
+      width:  #{fw}px;
+      height: #{fh}px;
+    ">
+    <img src="build/gfx/#{key}.png"/ style="
+      min-width:  #{fw*m.cols}px;
+      min-height: #{fh*m.rows}px;
+    ">
+    </span>
+    <span class="name">#{key}</span>
+  </div>"""
 
 class String.editor
   constructor:(opts)->

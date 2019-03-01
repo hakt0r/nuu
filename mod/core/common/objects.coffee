@@ -102,6 +102,7 @@ $obj.register = (blueprint)->
     blueprint.is = {} unless blueprint.is
     blueprint.is[Interface.name] = true
   blueprint::key = ( $obj.byClass.push blueprint ) - 1
+  blueprint.byName = {}
   blueprint.byId = {}
   blueprint.list = []
   $public blueprint

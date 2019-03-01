@@ -212,7 +212,7 @@ $static 'Render',
     bSwitch = entry.find 'button.switch'
     bSwitch.click -> close NET.json.write switchShip: item.name
   Station: (name,item,close)->
-    sprite = item::sprite
+    sprite = item.sprite || item::sprite
     @body.append entry = $ """
       <div class="list-item select-ship">
       <label>#{item.name}</label>
