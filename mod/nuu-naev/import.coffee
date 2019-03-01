@@ -172,6 +172,9 @@ module.exports = (destinationFile,callback)->
     try d.stats.blowup   = d.stats._blowup;   delete d.stats._blowup
     d.name = className
     d.class = 'outfit'
+    if typeof d.slot is 'object'
+      d.prop = d.slot._prop
+      d.slot = d.slot.__text
     meta[d.sprite] = 'outf' unless meta[d.sprite]?
     outf.push d
 

@@ -121,7 +121,12 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
         when 'large'  then [list.large,list.medium,list.small]
         when 'medium' then [list.medium,list.small]
         when 'small'  then [list.small]
-      return r.filter (i)=> @unlocks[i]?
+      r.filter (i)=> @unlocks[i]?
+      if @slot.prop
+        r = r.filter (i)=>
+          i = Item.byName[i]
+          i.prop is @slot.prop
+      return r
     NET.queryJSON unlocks:'', (@unlocks)=>
       done collect Item.byType[@type], @slot.size if @unlocks
       @close() unless @unlocks
