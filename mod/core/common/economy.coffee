@@ -39,10 +39,14 @@ $public class Economy
 
 Economy.defaults = (o,d)->
   console.log o.template unless d?
-  o.allocates = Object.assign e:10, d.allocates || {}, o.allocates || {}
-  o.provides  = Object.assign {},   d.provides  || {}, o.provides  || {}
-  o.produces  = Object.assign {},   d.produces  || {}, o.produces  || {}
-  o.consumes  = Object.assign {},   d.consumes  || {}, o.consumes  || {}
+  filter = ['allocates','provides','produces','consumes']
+  # for k in filter
+  o.allocates = Object.assign e:10, d?.allocates || {}, o?.allocates || {}
+  o.provides  = Object.assign {},   d?.provides  || {}, o?.provides  || {}
+  o.produces  = Object.assign {},   d?.produces  || {}, o?.produces  || {}
+  o.consumes  = Object.assign {},   d?.consumes  || {}, o?.consumes  || {}
+  for k,v of d when -1 is filter.indexOf k
+    o[k] = d[k]
   o
 
 Economy.for = (stellar)->

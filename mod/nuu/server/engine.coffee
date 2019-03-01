@@ -26,13 +26,6 @@ NUU.userState = {}
 NUU.states = []
 NUU.players = []
 
-NUU.loadMeta = (obj) ->
-  if ( meta = $meta[ obj.sprite ] )
-    # console.log ':nuu', '$meta', obj.sprite, $meta[obj.sprite] if debug
-    obj.size = meta.size
-    obj.radius = meta.radius
-  else console.log ':nuu', 'no meta for', obj if debug
-
 NUU.fix_sprites = (o)->
   for k,v of o
     w = v.size
@@ -56,7 +49,6 @@ NUU.init =->
   meta = NUU.fix_sprites meta
   fs.writeFileSync 'build/images.json', JSON.stringify meta
   $static '$meta', meta
-  NUU.on '$obj:add', NUU.loadMeta
   # Load stellars
   console.log ':nuu', 'init:stars' if debug
   orbits = {}

@@ -74,6 +74,7 @@ $obj.register class Station extends Stellar
     allocates: @allocates
     produces:  @produces
     consumes:  @consumes
+    template:  @template
     owner:     @owner
     access:    @access }
 

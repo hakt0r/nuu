@@ -33,10 +33,8 @@ $public class $obj
   constructor: (opts={})->
     # read state if specified
     delete opts.state if ( state = opts.state )
-    # apply template
-    @[k] = v for k,v of Item.byId[opts.tpl] if opts.tpl
-    # apply other keys
-    @[k] = v for k,v of opts
+    Object.assign @, Item.byId[opts.tpl] if opts.tpl # apply template
+    Object.assign @, opts # apply other keys
     # choose id
     unless @id?
       @id = if freeId.length is 0 then lastId++ else freeId.shift()
@@ -49,9 +47,15 @@ $public class $obj
     @y = state.x || 0
     @d = state.d || 0
     @setState state
-    do @loadAssets if @loadAssets
+    do @loadAssets
     NUU.emit '$obj:add', @
     # console.log '$obj', 'constructor$', @id, @name
+
+  loadAssets: ->
+    if ( meta = $meta[ @sprite ] )
+      # console.log ':nuu', '$meta', @sprite, $meta[@sprite] if debug
+      { @size, @radius } = meta
+    else console.log ':nuu', 'no meta for', @ if debug
 
   destructor: ->
     @destructing = true # might be set already
