@@ -47,10 +47,10 @@
   bottom:10%;
   font-size:12px;
   left:10%;
+  min-height:10%;
   max-height:80%;
-  max-width:600px;
-  min-height:80%;
   min-width:260px;
+  max-width:600px;
   padding:5px;
   position:fixed;
   right:10%;
@@ -365,6 +365,7 @@
   background: black;
   top: 10%;
   max-height: 80%;
+  min-height: 10%;
   padding: 5px;
   border-radius: 5px;
 }
