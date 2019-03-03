@@ -34,10 +34,11 @@ $obj.register class Station extends Stellar
   weapon:'LaserTurretMK'
   interval:1000
   massMax:100
+  orbits:[]
   constructor:(opts)->
     super Economy.defaults opts,
       Station.template[opts.template = opts.template || 'Outpost']
-    if @mines
+    if @mines and @zone
       @produces[@mines] = @allocates[@mines] = min 100, @zone.availableFor @mines
     @shieldMax = @shield
     @armourMax = @armour

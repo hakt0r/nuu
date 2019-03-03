@@ -33,6 +33,7 @@ $static 'Scanner', new class ScannerRenderer
 
   color:
     Orbit:    [0x330000]
+    SubOrbit: [0x330033]
     Stellar:  [0xFFFFFF,'◆']
     Asteroid: [0xFFFFFF,'◆']
     Debris:   [0xCCCCCC,'◆']
@@ -132,6 +133,12 @@ $static 'Scanner', new class ScannerRenderer
         L.position.set v[0]+W2R-hw, v[1]+H2R-hh
         if v[0] < 0 then L._label.position.set v[0]+W2R+4,                v[1]+H2R+1-hh
         else             L._label.position.set v[0]+W2R-3-L._label.width, v[1]+H2R+1-hh
+      g.lineStyle 2, @color.SubOrbit
+      mv = max abs(v[0]), abs(v[1])
+      mc = max abs(W2R),  abs(H2R)
+      if s is TARGET then for o in s.orbits || [] when mc * 1.25 > mv + o / @scale
+        g.endFill g.drawCircle v[0]+W2R, v[1]+H2R, o / @scale
+      g.lineStyle 2, @color.Orbit
       if s.state.S is $orbit and Scanner.orbits
         o = s.state.orb / @scale
         a[0] = s.state.relto.x - px
@@ -139,8 +146,7 @@ $static 'Scanner', new class ScannerRenderer
         ol = min W2-5, ( $v.mag ov = a ) / @scale
         ov = $v.mult $v.normalize(ov), ol
         if o + ol < W2
-          g.lineStyle 2, @color.Orbit
-          g.endFill g.drawCircle ov[0]+W2R, ov[1]+H2R, o
+          g.endFill g.drawCircle v[0]+W2R, v[1]+H2R, o
     # TODO: more inRange magic
     # time = NUU.time()
     # return if @nextUpdate > time; @nextUpdate = time + if @scale < 1024 then TICK else 250

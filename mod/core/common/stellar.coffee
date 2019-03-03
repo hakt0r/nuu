@@ -67,6 +67,11 @@ $obj.register class Stellar extends $obj
   @interfaces: [$obj,Stellar]
   constructor:(opts)->
     super opts
+    unless @orbits then @orbits = (
+      if      @size > 500 then [500,1000,1500,2000]
+      else if @size > 300 then [500,1000,1500]
+      else if @size > 100 then [500,1000]
+      else                     [500] )
     @lastCycle = @nextCyle = 0
     @name = "#{@constructor.name} [#{@id}]" unless @name
     $obj.byName[@name] = @

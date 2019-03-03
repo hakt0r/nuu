@@ -331,11 +331,17 @@ User::land = (t,o,zone,dist)->
   true
 
 User::orbit = (t,o,zone,dist)->
-  return unless dist < t.size
-  console.log 'user', 'orbit', t.id if debug
-  o.setState S:$orbit,orb:dist,relto:t
-  @db.orbit = [t.name,o.state.toJSON()]
-  @save()
+  return unless ob = t.orbits
+  return     if 0 is ob.length
+  return     if o.nextOrbit and o.nextOrbit > TIME = Date.now()
+  o.nextOrbit = TIME + 1000
+  for oo in ob when 50 > abs( abs(oo) - abs(dist) )
+    console.log 'user', 'orbit', t.id, oo, dist # if debug
+    o.setState S:$orbit,orb:oo,relto:t
+    @db.orbit = [t.name,o.state.toJSON()]
+    @save()
+    break
+  return
 
 Ship::setMount = (user,mountId,only=false)->
   @mount[user.mountId] = false if @mount[user.mountId] is user
