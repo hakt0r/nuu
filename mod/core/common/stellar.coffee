@@ -86,6 +86,7 @@ $obj.register class Stellar extends $obj
     sprite:   @sprite
     state:    @state
     name:     @name
+    orbits:   if @orbits[0] is 500 then undefined else @orbits
     produces: @produces
     consumes: @consumes }
   produce:-> e:@produces.e * @level
