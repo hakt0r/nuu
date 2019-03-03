@@ -293,7 +293,7 @@ State.register class State.orbit extends State
   lock: yes
   constructor:(s) ->
     unless s.stp # cloning from JSON
-      s.vel = s.orb = s.off = s.stp = null
+      s.vel = s.off = s.stp = null
       super s
     else
       super false
@@ -309,7 +309,7 @@ State.register class State.orbit extends State
     dx = @o.x - @relto.x
     dy = @o.y - @relto.y
     relm = $v.sub @relto.m.slice(), @o.m
-    @orb = round sqrt dx * dx + dy * dy
+    @orb = @orb || round sqrt dx * dx + dy * dy
     @vel = v = max 1, min round(@orb/100), $v.mag relm
     @stp = TAU / (( TAU * @orb ) / v )
     @stp = -@stp if 0 > $v.cross(2) relm, [dx,dy]
