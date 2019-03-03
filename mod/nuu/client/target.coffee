@@ -179,7 +179,7 @@ Kbd.macro 'targetClassPrev', 'KeyS', 'Target prev class',         Target.prevCla
 Kbd.macro 'targetClosest',   'KeyU', 'Target closest target',     Target.closest
 Kbd.macro 'targetEnemy',     'KeyE', 'Target closest enemy',      Target.enemy
 Kbd.macro 'targetRoid',      'KeyR', 'Target closest asteroid',   Target.roid
-Kbd.macro 'targetMode',      'sTab', 'Toggle Land/Dock/Orbit',    Target.toggleMode
+Kbd.macro 'targetMode',      'KeyQ', 'Toggle Land/Dock/Orbit',    Target.toggleMode
 Kbd.macro 'orbit',            'Tab', 'Land / Dock / Enter Orbit', Target.orbit
 Kbd.macro 'launch',         'aKeyQ', 'Launch / Undock',           Target.launch
 Kbd.macro 'eva',           'saKeyQ', 'EVA',                       Target.eva
