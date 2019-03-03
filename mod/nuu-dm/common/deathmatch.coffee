@@ -123,94 +123,123 @@ rules.stars = [
   [ 999, Planet,  'Mercury',             'A01',                   58000000,    $orbit, 0 ]
   [ 2,   Planet,  'Venus',               'A02',                   108000000,   $orbit, 0 ]
 
-  [ 3,   Planet,  'Earth',               'M00',                   149600000,   $orbit, 0, provides:O2:1000,H20:1000,Pu:10,Fe:100,Farmland:1000 ]
-  [ 30,  Moon,    'Moon',                'moon-M01',              375000,      $orbit, 3, provides:Fe:1000,H3:1000 ]
-  [ 31,  Station, 'UEG Agriculture-01',  'station-agriculture',   500,         $orbit, 3, template:'LargeFarm']
-  [ 32,  Station, 'UEG Battlestation-01','station-battlestation', 500,         $orbit, 3, template:'Fortress']
-  [ 33,  Station, 'UEG Commerce-01',     'station-commerce',      500,         $orbit, 3, template:'Trade']
-  [ 34,  Station, 'UEG Commerce-02',     'station-commerce2',     1000,        $orbit, 3, template:'Trade']
-  [ 35,  Station, 'UEG Commerce-03',     'station-commerce3',     1000,        $orbit, 3, template:'Trade']
-  [ 36,  Station, 'UEG Cylinder-01',     'station-cylinder',      1000,        $orbit, 3, template:'Habitat']
-  [ 37,  Station, 'UEG Fleetbase-01',    'station-fleetbase',     1000,        $orbit, 3, template:'Factory']
-  [ 38,  Station, 'UEG Fleetbase-02',    'station-fleetbase2',    1000,        $orbit, 3, template:'Factory']
-  [ 39,  Station, 'UEG Fleetbase-03',    'station-fleetbase3',    1000,        $orbit, 3, template:'Mine']
-  [ 40,  Station, 'UEG Powerplant-01',   'station-powerplant',    500,         $orbit, 3, template:'Powerplant',provides:e:2000 ]
-  [ 41,  Station, 'UEG Shipyard-01',     'station-shipyard',      1500,        $orbit, 3, template:'Factory']
-  [ 42,  Station, 'UEG Shipyard-02',     'station-shipyard2',     1500,        $orbit, 3, template:'Factory']
+  [ 3,   Planet,  'Earth',               'M00',                   149600000,   $orbit, 0, provides:{O2:1000,H20:1000,Pu:10,Fe:100,Farmland:1000},occupiedBy:{gov:'AI',level:15} ]
+  [ 4,   Moon,    'Moon',                'moon-M01',              375000,      $orbit, 3, provides:{Fe:1000,H3:1000},occupiedBy:{gov:'US',level:6} ]
 
-  [ 5,   Planet,  'Mars',                'K04',                   228000000,   $orbit, 0 ]
+  [ 5,   Planet,  'Mars',                'K04',                   228000000,   $orbit, 0, occupiedBy:gov:'US',level:9 ]
 
-  [ 6,   Planet,  'Jupiter',             'J01',                   778500000,   $orbit, 0, provides:e:50 ]
-  [ 60,  Moon,    'Metis',               'moon-M01',              127690,      $orbit, 6, i:7.1472222222 ]
-  [ 61,  Moon,    'Adrastea',            'moon-I01',              128690,      $orbit, 6, i:7.2333333333 ]
-  [ 62,  Moon,    'Amalthea',            'moon-P02',              181366,      $orbit, 6, i:12.0138888889 ]
-  [ 63,  Moon,    'Thebe',               'moon-P00',              221889,      $orbit, 6, i:16.2305555556 ]
-  [ 64,  Moon,    'Io',                  'M05',                   421700,      $orbit, 6, i:10120800,provides:Farmland:1000 ]
-  [ 65,  Moon,    'Europa',              'M02',                   671034,      $orbit, 6, i:16104816 ]
-  [ 66,  Moon,    'Ganymede',            'A04',                   1070412,     $orbit, 6, i:25689888 ]
-  [ 67,  Moon,    'Callisto',            'C00',                   1882709,     $orbit, 6, i:45185016 ]
-  [ 68,  Moon,    'Themisto',            'moon-I01',              7393216,     $orbit, 6, i:177437184 ]
-  [ 69,  Moon,    'Leda',                'moon-X00',              11187781,    $orbit, 6, i:268506744 ]
-  [ 70,  Moon,    'Himalia',             'moon-P03',              11451971,    $orbit, 6, i:274847304 ]
-  [ 71,  Moon,    'Lysithea',            'D06',                   11740560,    $orbit, 6, i:281773440 ]
-  [ 72,  Moon,    'Elara',               'D06',                   11778034,    $orbit, 6, i:282672816 ]
-  [ 73,  Moon,    'S/2000 J11',          'D07',                   12570424,    $orbit, 6, i:301690176 ]
-  [ 74,  Moon,    'Carpo',               'D06',                   17144873,    $orbit, 6, i:411476952 ]
-  [ 75,  Moon,    'S/2003 J12',          'D03',                   17739539,    $orbit, 6, i:425748936 ]
-  [ 76,  Moon,    'Euporie',             'D04',                   19088434,    $orbit, 6, i:458122416 ]
-  [ 77,  Moon,    'S/2003 J3',           'D04',                   19621780,    $orbit, 6, i:470922720 ]
-  [ 78,  Moon,    'S/2003 J18',          'D04',                   19812577,    $orbit, 6, i:475501848 ]
-  [ 79,  Moon,    'S/2011 J1',           'D03',                   20165290,    $orbit, 6, i:483726960 ]
-  [ 80,  Moon,    'S/2010 J2',           'D03',                   20307150,    $orbit, 6, i:487371600 ]
-  [ 81,  Moon,    'Thelxinoe',           'D04',                   20453753,    $orbit, 6, i:490890072 ]
-  [ 82,  Moon,    'Euanthe',             'D06',                   20464854,    $orbit, 6, i:491156496 ]
-  [ 83,  Moon,    'Helike',              'D07',                   20540266,    $orbit, 6, i:492966384 ]
-  [ 84,  Moon,    'Orthosie',            'D04',                   20567971,    $orbit, 6, i:493631304 ]
-  [ 85,  Moon,    'Iocaste',             'moon-A01',              20722566,    $orbit, 6, i:497341584 ]
-  [ 86,  Moon,    'S/2003 J16',          'D04',                   20743779,    $orbit, 6, i:497850696 ]
-  [ 87,  Moon,    'Praxidike',           'moon-A00',              20823948,    $orbit, 6, i:499774752 ]
-  [ 88,  Moon,    'Harpalyke',           'D07',                   21063814,    $orbit, 6, i:505531536 ]
-  [ 89,  Moon,    'Mneme',               'D04',                   21129786,    $orbit, 6, i:507114864 ]
-  [ 90,  Moon,    'Hermippe',            'D07',                   21182086,    $orbit, 6, i:508370064 ]
-  [ 91,  Moon,    'Thyone',              'D07',                   21405570,    $orbit, 6, i:513733680 ]
-  [ 92,  Moon,    'Ananke',              'D06',                   640,         $orbit, 6, i:15369.12  ]
-  [ 93,  Moon,    'Herse',               'D04',                   22134306,    $orbit, 6, i:531223344 ]
-  [ 94,  Moon,    'Aitne',               'D06',                   22285161,    $orbit, 6, i:534843864 ]
-  [ 95,  Moon,    'Kale',                'D04',                   22409207,    $orbit, 6, i:537820968 ]
-  [ 96,  Moon,    'Taygete',             'moon-A01',              22438648,    $orbit, 6, i:538527552 ]
-  [ 97,  Moon,    'S/2003 J19',          'D04',                   22709061,    $orbit, 6, i:545017464 ]
-  [ 98,  Moon,    'Chaldene',            'D07',                   22713444,    $orbit, 6, i:545122656 ]
-  [ 99,  Moon,    'S/2003 J15',          'D04',                   22720999,    $orbit, 6, i:545303976 ]
-  [ 100, Moon,    'S/2003 J10',          'D04',                   22730813,    $orbit, 6, i:545539512 ]
-  [ 101, Moon,    'S/2003 J23',          'D04',                   22739654,    $orbit, 6, i:545751696 ]
-  [ 102, Moon,    'Erinome',             'D06',                   22986266,    $orbit, 6, i:551670384 ]
-  [ 103, Moon,    'Aoede',               'D07',                   23044175,    $orbit, 6, i:553060200 ]
-  [ 104, Moon,    'Kallichore',          'D04',                   23111823,    $orbit, 6, i:554683752 ]
-  [ 105, Moon,    'Kalyke',              'moon-A01',              23180773,    $orbit, 6, i:556338552 ]
-  [ 106, Moon,    'Carme',               'moon-M02',              23197992,    $orbit, 6, i:556751808 ]
-  [ 107, Moon,    'Callirrhoe',          'moon-M03',              23214986,    $orbit, 6, i:557159664 ]
-  [ 108, Moon,    'Eurydome',            'D06',                   23230858,    $orbit, 6, i:557540592 ]
-  [ 109, Moon,    'S/2011 J2',           'D03',                   23329710,    $orbit, 6, i:559913040 ]
-  [ 110, Moon,    'Pasithee',            'D04',                   23307318,    $orbit, 6, i:559375632 ]
-  [ 111, Moon,    'S/2010 J1',           'D04',                   23314335,    $orbit, 6, i:559544040 ]
-  [ 112, Moon,    'Kore',                'D04',                   23345093,    $orbit, 6, i:560282232 ]
-  [ 113, Moon,    'Cyllene',             'D04',                   23396269,    $orbit, 6, i:561510456 ]
-  [ 114, Moon,    'Eukelade',            'D07',                   23483694,    $orbit, 6, i:563608656 ]
-  [ 115, Moon,    'S/2003 J4',           'D04',                   23570790,    $orbit, 6, i:565698960 ]
-  [ 116, Moon,    'Pasiphae',            'D06',                   23609042,    $orbit, 6, i:566617008 ]
-  [ 117, Moon,    'Hegemone',            'D06',                   23702511,    $orbit, 6, i:568860264 ]
-  [ 118, Moon,    'Arche',               'D06',                   23717051,    $orbit, 6, i:569209224 ]
-  [ 119, Moon,    'Isonoe',              'D07',                   23800647,    $orbit, 6, i:571215528 ]
-  [ 120, Moon,    'S/2003 J9',           'D03',                   23857808,    $orbit, 6, i:572587392 ]
-  [ 121, Moon,    'S/2003 J5',           'D07',                   23973926,    $orbit, 6, i:575374224 ]
-  [ 122, Moon,    'Sinope',              'D03',                   24057865,    $orbit, 6, i:577388760 ]
-  [ 123, Moon,    'Sponde',              'D04',                   24252627,    $orbit, 6, i:582063048 ]
-  [ 124, Moon,    'Autonoe',             'D07',                   24264445,    $orbit, 6, i:582346680 ]
-  [ 125, Moon,    'Megaclite',           'moon-A01',              24687239,    $orbit, 6, i:592493736 ]
-  [ 126, Moon,    'S/2003 J2',           'D04',                   30290846,    $orbit, 6, i:726980304 ]
+  [ 6,   Planet,  'Jupiter',             'J01',                   778500000,   $orbit, 0, provides:{e:50},orbits:[640,1280,1920,2560],occupiedBy:{gov:'US',level:20} ]
+  [ 80,  Moon,    'Ananke',              'D06',                   640,         $orbit, 6, i:15369.12 ]
+  [ 81,  Moon,    'Metis',               'moon-M01',              127690,      $orbit, 6, i:7.1472222222 ]
+  [ 82,  Moon,    'Adrastea',            'moon-I01',              128690,      $orbit, 6, i:7.2333333333 ]
+  [ 83,  Moon,    'Amalthea',            'moon-P02',              181366,      $orbit, 6, i:12.0138888889 ]
+  [ 84,  Moon,    'Thebe',               'moon-P00',              221889,      $orbit, 6, i:16.2305555556 ]
+  [ 85,  Moon,    'Io',                  'M05',                   421700,      $orbit, 6, i:10120800,provides:{Farmland:1000},occupiedBy:{gov:'US',level:10} ]
+  [ 86,  Moon,    'Europa',              'M02',                   671034,      $orbit, 6, i:16104816,occupiedBy:{gov:'US',level:15} ]
+  [ 87,  Moon,    'Ganymede',            'A04',                   1070412,     $orbit, 6, i:25689888,occupiedBy:{gov:'US',level:10} ]
+  [ 88,  Moon,    'Callisto',            'C00',                   1882709,     $orbit, 6, i:45185016 ]
+  [ 89,  Moon,    'Themisto',            'moon-I01',              7393216,     $orbit, 6, i:177437184 ]
+  [ 90,  Moon,    'Leda',                'moon-X00',              11187781,    $orbit, 6, i:268506744 ]
+  [ 91,  Moon,    'Himalia',             'moon-P03',              11451971,    $orbit, 6, i:274847304 ]
+  [ 92,  Moon,    'Lysithea',            'D06',                   11740560,    $orbit, 6, i:281773440 ]
+  [ 93,  Moon,    'Elara',               'D06',                   11778034,    $orbit, 6, i:282672816 ]
+  [ 94,  Moon,    'S/2000 J11',          'D07',                   12570424,    $orbit, 6, i:301690176 ]
+  [ 95,  Moon,    'Carpo',               'D06',                   17144873,    $orbit, 6, i:411476952 ]
+  [ 96,  Moon,    'S/2003 J12',          'D03',                   17739539,    $orbit, 6, i:425748936 ]
+  [ 97,  Moon,    'Euporie',             'D04',                   19088434,    $orbit, 6, i:458122416 ]
+  [ 98,  Moon,    'S/2003 J3',           'D04',                   19621780,    $orbit, 6, i:470922720 ]
+  [ 99,  Moon,    'S/2003 J18',          'D04',                   19812577,    $orbit, 6, i:475501848 ]
+  [ 100, Moon,    'S/2011 J1',           'D03',                   20165290,    $orbit, 6, i:483726960 ]
+  [ 101, Moon,    'S/2010 J2',           'D03',                   20307150,    $orbit, 6, i:487371600 ]
+  [ 102, Moon,    'Thelxinoe',           'D04',                   20453753,    $orbit, 6, i:490890072 ]
+  [ 103, Moon,    'Euanthe',             'D06',                   20464854,    $orbit, 6, i:491156496 ]
+  [ 104, Moon,    'Helike',              'D07',                   20540266,    $orbit, 6, i:492966384 ]
+  [ 105, Moon,    'Orthosie',            'D04',                   20567971,    $orbit, 6, i:493631304 ]
+  [ 106, Moon,    'Iocaste',             'moon-A01',              20722566,    $orbit, 6, i:497341584 ]
+  [ 107, Moon,    'S/2003 J16',          'D04',                   20743779,    $orbit, 6, i:497850696 ]
+  [ 108, Moon,    'Praxidike',           'moon-A00',              20823948,    $orbit, 6, i:499774752 ]
+  [ 109, Moon,    'Harpalyke',           'D07',                   21063814,    $orbit, 6, i:505531536 ]
+  [ 110, Moon,    'Mneme',               'D04',                   21129786,    $orbit, 6, i:507114864 ]
+  [ 111, Moon,    'Hermippe',            'D07',                   21182086,    $orbit, 6, i:508370064 ]
+  [ 112, Moon,    'Thyone',              'D07',                   21405570,    $orbit, 6, i:513733680 ]
+  [ 114, Moon,    'Herse',               'D04',                   22134306,    $orbit, 6, i:531223344 ]
+  [ 115, Moon,    'Aitne',               'D06',                   22285161,    $orbit, 6, i:534843864 ]
+  [ 116, Moon,    'Kale',                'D04',                   22409207,    $orbit, 6, i:537820968 ]
+  [ 117, Moon,    'Taygete',             'moon-A01',              22438648,    $orbit, 6, i:538527552 ]
+  [ 118, Moon,    'S/2003 J19',          'D04',                   22709061,    $orbit, 6, i:545017464 ]
+  [ 119, Moon,    'Chaldene',            'D07',                   22713444,    $orbit, 6, i:545122656 ]
+  [ 120, Moon,    'S/2003 J15',          'D04',                   22720999,    $orbit, 6, i:545303976 ]
+  [ 121, Moon,    'S/2003 J10',          'D04',                   22730813,    $orbit, 6, i:545539512 ]
+  [ 122, Moon,    'S/2003 J23',          'D04',                   22739654,    $orbit, 6, i:545751696 ]
+  [ 123, Moon,    'Erinome',             'D06',                   22986266,    $orbit, 6, i:551670384 ]
+  [ 124, Moon,    'Aoede',               'D07',                   23044175,    $orbit, 6, i:553060200 ]
+  [ 125, Moon,    'Kallichore',          'D04',                   23111823,    $orbit, 6, i:554683752 ]
+  [ 126, Moon,    'Kalyke',              'moon-A01',              23180773,    $orbit, 6, i:556338552 ]
+  [ 127, Moon,    'Carme',               'moon-M02',              23197992,    $orbit, 6, i:556751808 ]
+  [ 128, Moon,    'Callirrhoe',          'moon-M03',              23214986,    $orbit, 6, i:557159664 ]
+  [ 129, Moon,    'Eurydome',            'D06',                   23230858,    $orbit, 6, i:557540592 ]
+  [ 130, Moon,    'S/2011 J2',           'D03',                   23329710,    $orbit, 6, i:559913040 ]
+  [ 131, Moon,    'Pasithee',            'D04',                   23307318,    $orbit, 6, i:559375632 ]
+  [ 132, Moon,    'S/2010 J1',           'D04',                   23314335,    $orbit, 6, i:559544040 ]
+  [ 133, Moon,    'Kore',                'D04',                   23345093,    $orbit, 6, i:560282232 ]
+  [ 134, Moon,    'Cyllene',             'D04',                   23396269,    $orbit, 6, i:561510456 ]
+  [ 135, Moon,    'Eukelade',            'D07',                   23483694,    $orbit, 6, i:563608656 ]
+  [ 136, Moon,    'S/2003 J4',           'D04',                   23570790,    $orbit, 6, i:565698960 ]
+  [ 137, Moon,    'Pasiphae',            'D06',                   23609042,    $orbit, 6, i:566617008 ]
+  [ 138, Moon,    'Hegemone',            'D06',                   23702511,    $orbit, 6, i:568860264 ]
+  [ 139, Moon,    'Arche',               'D06',                   23717051,    $orbit, 6, i:569209224 ]
+  [ 140, Moon,    'Isonoe',              'D07',                   23800647,    $orbit, 6, i:571215528 ]
+  [ 141, Moon,    'S/2003 J9',           'D03',                   23857808,    $orbit, 6, i:572587392 ]
+  [ 142, Moon,    'S/2003 J5',           'D07',                   23973926,    $orbit, 6, i:575374224 ]
+  [ 143, Moon,    'Sinope',              'D03',                   24057865,    $orbit, 6, i:577388760 ]
+  [ 144, Moon,    'Sponde',              'D04',                   24252627,    $orbit, 6, i:582063048 ]
+  [ 145, Moon,    'Autonoe',             'D07',                   24264445,    $orbit, 6, i:582346680 ]
+  [ 146, Moon,    'Megaclite',           'moon-A01',              24687239,    $orbit, 6, i:592493736 ]
+  [ 147, Moon,    'S/2003 J2',           'D04',                   30290846,    $orbit, 6, i:726980304 ]
 
   [ 7,  Planet,   'Saturn',              'I07',                   1430000000,  $orbit, 0 ]
   [ 8,  Planet,   'Uranus',              'O04',                   2880000000,  $orbit, 0 ]
   [ 9,  Planet,   'Neptun',              'P04',                   4500000000,  $orbit, 0 ]
   [ 10, Planet,   'Pluto',               'D07',                   6500000000,  $orbit, 0 ]
   [ 12, Station,  'Nibiru',              'station-sphere',        10000000000, $orbit, 0, template:'Outpost' ]]
+
+rules.seedEconomy = (stellar,opts)->
+  [ sid, stype, sname ] = stellar
+  { level, gov } = Object.assign {level:1,gov:'AI'}, opts.occupiedBy
+  l = rules.buildList.slice 0, level
+  console.log 'inflating', stellar.name, level, gov
+  l.forEach (t)->
+    ob = opts.orbits || [500,1000,1500,2000]
+    rules.stars.push [rules.lastId++,Station,"#{gov} #{sname} #{t.template}",null,ob[t.o],$orbit,sid,template:t.template]
+
+rules.buildList = [
+  { o:0, template:'Fortress' }
+  { o:0, template:'Powerplant' }
+  { o:0, template:'Mine' }
+  { o:0, template:'Habitat' }
+  { o:0, template:'Mine' }
+  { o:1, template:'Fortress' }
+  { o:1, template:'Powerplant' }
+  { o:1, template:'Mine' }
+  { o:1, template:'Factory' }
+  { o:1, template:'Fortress' }
+  { o:1, template:'Powerplant' }
+  { o:1, template:'Mine' }
+  { o:1, template:'Factory' }
+  { o:2, template:'Fortress' }
+  { o:2, template:'Powerplant' }
+  { o:2, template:'Mine' }
+  { o:2, template:'Factory' }
+  { o:2, template:'Fortress' }
+  { o:2, template:'Powerplant' }
+  { o:2, template:'Mine' }
+  { o:2, template:'Factory' }
+  { o:2, template:'Fortress' }
+  { o:2, template:'Powerplant' }
+  { o:2, template:'Mine' }
+  { o:2, template:'Factory' }
+  { o:2, template:'Fortress' }
+  { o:2, template:'Powerplant' }
+  { o:2, template:'Mine' }
+  { o:2, template:'Factory' }
+]

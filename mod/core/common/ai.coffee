@@ -169,7 +169,7 @@ $public class Drone extends AI
     opts.stel = Drone.randomStellar() unless opts.stel
     super opts
   @randomStellar:->
-    stel = $obj.byId[ Array.random [3,30] ]
+    stel = $obj.byId[ Array.random [3] ]
     stel.update()
     stel
 

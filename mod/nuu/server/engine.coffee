@@ -53,6 +53,11 @@ NUU.init =->
   console.log ':nuu', 'init:stars' if debug
   orbits = {}
   now = Date.now()
+  rules.lastId = 200
+  for i in rules.stars
+    continue unless o = i[7]
+    continue unless o.occupiedBy
+    rules.seedEconomy i, o
   for i in rules.stars
     [ id, Constructor, name, sprite, orbit, state, relto, args ] = i
     orbits[relto+'_'+orbit] = l = orbits[relto+'_'+orbit] || []
