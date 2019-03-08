@@ -30,7 +30,7 @@ console.log """\n###############################################################
 
 #######################################################################################
 
-    * c) 2007-2018 Sebastian Glaser <anx@ulzq.de>
+    * c) 2007-2019 Sebastian Glaser <anx@ulzq.de>
     * c) 2007-2018 flyc0r
 
     The nuu project intends to use all the asset files according to
