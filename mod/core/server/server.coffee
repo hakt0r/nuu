@@ -72,6 +72,15 @@ fs.open lockPath, 0, ->
 
 process.chdir BASEDIR = path.dirname path.dirname __dirname
 
+# ███████ ██   ██ ██████   ██████  ████████  ██████ ██    ██ ████████ ███████
+# ██      ██   ██ ██   ██ ██    ██    ██    ██      ██    ██    ██    ██
+# ███████ ███████ ██████  ██    ██    ██    ██      ██    ██    ██    ███████
+#      ██ ██   ██ ██   ██ ██    ██    ██    ██      ██    ██    ██         ██
+# ███████ ██   ██ ██   ██  ██████     ██     ██████  ██████     ██    ███████
+
+fs.readJSONSync = (path)-> JSON.parse fs.readFileSync path
+fs.writeJSONSync = (path,data)-> fs.writeFileSync path, JSON.stringify data
+
 # ███████ ███    ██ ██    ██ ██ ██████   ██████  ███    ██ ███    ███ ███████ ███    ██ ████████
 # ██      ████   ██ ██    ██ ██ ██   ██ ██    ██ ████   ██ ████  ████ ██      ████   ██    ██
 # █████   ██ ██  ██ ██    ██ ██ ██████  ██    ██ ██ ██  ██ ██ ████ ██ █████   ██ ██  ██    ██
@@ -99,7 +108,7 @@ $static 'NUU', {}
 # ███████  ██████  ██   ██ ██████      ███████  ██████   ██████  ██   ██  ██████ ███████ ███████
 
 
-NUU.deps = deps = JSON.parse fs.readFileSync './build/build.json'
+NUU.deps = deps = fs.readJSONSync './build/build.json'
 
 for lib in deps.server.require
   if Array.isArray lib
@@ -138,7 +147,7 @@ NUU.web.get '/start',  NUU.startPage()
 # ██      ██  ██ ██ ██    ██ ██ ██  ██ ██ ██
 # ███████ ██   ████  ██████  ██ ██   ████ ███████
 
-$static '$release', JSON.parse fs.readFileSync './build/release.json'
+$static '$release', fs.readJSONSync './build/release.json'
 $release.banner = $release.v.green + $release.git.red
 
 NUU.chgid  = process.env.CHGID   || false

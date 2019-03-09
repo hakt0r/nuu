@@ -41,6 +41,13 @@ MainMenu.root =
   settings: -> do Kbd.macro.settings
   editor:   -> new $obj.tree
 
+Window.Transfer = class Transfer extends Window
+  constructor:(leftKey,rightKey)->
+    super title:"Transfer"
+    @left  = new ModalListWindow subject: {Fe:1,Al:2}, key:@leftKey,  parent:@
+    @right = new ModalListWindow subject: {Fe:1,Al:2}, key:@rightKey, parent:@
+    @left.other = @right
+
 Window.DockingMenu = class DockingMenu extends ModalListWindow
   name: 'dock'
   closeKey: 'KeyQ'
@@ -68,8 +75,8 @@ Stellar.menu =
     null
 
 Station.ownerMenu =
-  harvest:->
-  supply:->
+  trade:->
+    new Window.Transfer '@user', 'station_' + @name
   destroy:->
     do Kbd.macro.launch
     @close()

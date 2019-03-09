@@ -24,6 +24,10 @@ DRONES_ACTIVE = yes
 DRONES_MAX    = 10
 ROIDS_MAX     = 100
 
+rules.modeName = 'deathmatch'
+rules.modeNameShort = 'dm'
+rules.systemName = 'sol'
+
 rules.client = ->
   NUU.on 'ship:spawn', (ship) ->
     ship.reset()
@@ -31,6 +35,7 @@ rules.client = ->
   NET.on 'stats', (v) -> for id, stat of v
     notice 5000, stat.name + " K: #{stat.k} D: #{stat.d}"
 
+  NUU.emit 'rules', rules
 
 rules.server = ->
   rules.stats = stats = {}
@@ -115,6 +120,8 @@ rules.server = ->
   Asteroid.autospawn max: ROIDS_MAX
   AI.autospawn max: DRONES_MAX if DRONES_ACTIVE
 
+  NUU.emit 'rules', rules
+
 rules.stars = [
   [ 0,   Star,    'Sol',                 'orange05',              0,           $fixed ]
   [ 20,  Station, 'Hades Bootcamp',      'station-battlestation', 1000,        $orbit, 0, template:'Fortress' ]
@@ -126,17 +133,17 @@ rules.stars = [
   [ 3,   Planet,  'Earth',               'M00',                   149600000,   $orbit, 0, provides:{O2:1000,H20:1000,Pu:10,Fe:100,Farmland:1000},occupiedBy:{gov:'AI',level:15} ]
   [ 4,   Moon,    'Moon',                'moon-M01',              375000,      $orbit, 3, provides:{Fe:1000,H3:1000},occupiedBy:{gov:'US',level:6} ]
 
-  [ 5,   Planet,  'Mars',                'K04',                   228000000,   $orbit, 0, occupiedBy:gov:'US',level:9 ]
+  [ 5,   Planet,  'Mars',                'K04',                   228000000,   $orbit, 0, provides:{Fe:1000,H3:1000},occupiedBy:gov:'US',level:9 ]
 
-  [ 6,   Planet,  'Jupiter',             'J01',                   778500000,   $orbit, 0, provides:{e:50},orbits:[640,1280,1920,2560],occupiedBy:{gov:'US',level:20} ]
+  [ 6,   Planet,  'Jupiter',             'J01',                   778500000,   $orbit, 0, provides:{e:50,H:1000,H2:500,H3:30,CH4:1,H20:1,NH3:1,Si:1,Ne:1},orbits:[640,1280,1920,2560],occupiedBy:{gov:'US',level:20} ]
   [ 80,  Moon,    'Ananke',              'D06',                   640,         $orbit, 6, i:15369.12 ]
   [ 81,  Moon,    'Metis',               'moon-M01',              127690,      $orbit, 6, i:7.1472222222 ]
   [ 82,  Moon,    'Adrastea',            'moon-I01',              128690,      $orbit, 6, i:7.2333333333 ]
   [ 83,  Moon,    'Amalthea',            'moon-P02',              181366,      $orbit, 6, i:12.0138888889 ]
   [ 84,  Moon,    'Thebe',               'moon-P00',              221889,      $orbit, 6, i:16.2305555556 ]
-  [ 85,  Moon,    'Io',                  'M05',                   421700,      $orbit, 6, i:10120800,provides:{Farmland:1000},occupiedBy:{gov:'US',level:10} ]
-  [ 86,  Moon,    'Europa',              'M02',                   671034,      $orbit, 6, i:16104816,occupiedBy:{gov:'US',level:15} ]
-  [ 87,  Moon,    'Ganymede',            'A04',                   1070412,     $orbit, 6, i:25689888,occupiedBy:{gov:'US',level:10} ]
+  [ 85,  Moon,    'Io',                  'M05',                   421700,      $orbit, 6, i:10120800,provides:{Farmland:1000,H2O:1000,Fe:100,O2:100},occupiedBy:{gov:'US',level:10} ]
+  [ 86,  Moon,    'Europa',              'M02',                   671034,      $orbit, 6, i:16104816,provides:{Fe:1000},occupiedBy:{gov:'US',level:15} ]
+  [ 87,  Moon,    'Ganymede',            'A04',                   1070412,     $orbit, 6, i:25689888,provides:{Fe:1000},occupiedBy:{gov:'US',level:10} ]
   [ 88,  Moon,    'Callisto',            'C00',                   1882709,     $orbit, 6, i:45185016 ]
   [ 89,  Moon,    'Themisto',            'moon-I01',              7393216,     $orbit, 6, i:177437184 ]
   [ 90,  Moon,    'Leda',                'moon-X00',              11187781,    $orbit, 6, i:268506744 ]
@@ -207,10 +214,11 @@ rules.seedEconomy = (stellar,opts)->
   [ sid, stype, sname ] = stellar
   { level, gov } = Object.assign {level:1,gov:'AI'}, opts.occupiedBy
   l = rules.buildList.slice 0, level
-  console.log 'inflating', stellar.name, level, gov
+  console.log 'inflating', sname, level, gov if debug
   l.forEach (t)->
     ob = opts.orbits || [500,1000,1500,2000]
     rules.stars.push [rules.lastId++,Station,"#{gov} #{sname} #{t.template}",null,ob[t.o],$orbit,sid,template:t.template]
+  return
 
 rules.buildList = [
   { o:0, template:'Fortress' }
@@ -242,4 +250,16 @@ rules.buildList = [
   { o:2, template:'Powerplant' }
   { o:2, template:'Mine' }
   { o:2, template:'Factory' }
+]
+
+rules.formula = [
+  {     e: H3:0.001 }
+  {     e: Pu:0.01 }
+  {    H2:  H:10, e:2 }
+  {    H3:  H:1,  e:3 }
+  {   H20:  H:.66, O:.33 }
+  {   CO2:  O:.66, C:.33 }
+  { Steel: Fe:.99, C:.01 }
+  { CarbonNanotubes: C:1 }
+  { Lasertube: C:10      }
 ]

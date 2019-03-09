@@ -65,7 +65,9 @@ $public class Item
           Item.byProp[t] = {} unless Item.byProp[t]
           Item.byProp[t][o.name] = o
         id++
-      else console.log o
+      else if o.class is 'com'
+      else if o.class is 'gov'
+      else console.log 'x', o
 
     for type, items of Item.byType when items.medium?
       if Object.keys(items.medium).length is 0 and Object.keys(items.large).length is 0

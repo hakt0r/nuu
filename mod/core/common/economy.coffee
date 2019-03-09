@@ -30,11 +30,12 @@ $public class Economy
   @queue:   []
   @byName:  {}
   constructor: (root) ->
+    @deterministic = new Deterministic rules.systemName + "-zone-" + root.name
     @allocations = {}
     @offline = []
     @list    = []
     @list.push @root = root
-    @inventory = new Inventory 'zone', root.name
+    @inventory = new Inventory 'zone_' + root.name
     Economy.byName[@name = root.name] = @
 
 Economy.defaults = (o,d)->
@@ -45,8 +46,7 @@ Economy.defaults = (o,d)->
   o.provides  = Object.assign {},   d?.provides  || {}, o?.provides  || {}
   o.produces  = Object.assign {},   d?.produces  || {}, o?.produces  || {}
   o.consumes  = Object.assign {},   d?.consumes  || {}, o?.consumes  || {}
-  for k,v of d when -1 is filter.indexOf k
-    o[k] = d[k]
+  o[k] = d[k] for k,v of d when -1 is filter.indexOf k
   o
 
 Economy.for = (stellar)->
@@ -118,7 +118,7 @@ Economy.produce = ->
       return true  unless stellar.consumes?
       for item, count of stellar.consumes
         unless stellar.zone.inventory.has item, count
-          console.log '$p', stellar.name, 'needs', item, count  if debug
+          console.log '$p', stellar.name, stellar.buildRoot.name, 'needs', item, count # if debug
           return false
       for item, count of stellar.consumes
         stellar.zone.inventory.get item, count
@@ -142,21 +142,31 @@ Economy.queueNext = ->
       stellar = q.pop()
       stellar.nextCyle = 0
       for item, count of stellar.produces
-        console.log stellar.name, '$p', item, count  if debug
+        console.log stellar.name, '$p', item, count if debug
         stellar.zone.inventory.add item, count
+        console.log stellar.zone.inventory if debug
     Economy.queueNext()
     return
   ), max 0, q[0].nextCyle - Date.now()
 
 Economy::totalFor = (key)->
   @list
-    .map (v)->
-      if v.produces and e = v.produces[key]
-        if e == true then Infinity else e
-      else 0
-    .reduce (v,t)-> t + v
+  .map (v)->
+    if v.provides and e = v.provides[key]
+      if e == true then Infinity else e
+    else 0
+  .reduce (v,t)-> t + v
 Object.defineProperty Economy::, 'energyTotal',   get:-> @totalFor 'e'
 Object.defineProperty Economy::, 'farmlandTotal', get:-> @totalFor 'Farmland'
+
+Economy::provides = (key)->
+  a = {}
+  @list.forEach (v)->
+    return unless v.provides
+    for k,v of v.provides
+      a[k] = (a[k]||0) + if v is true then Infinity else v
+    return
+  Object.keys a
 
 Economy::availableFor = (key)->
   return 0 if 0 is have = @totalFor key

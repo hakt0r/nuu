@@ -20,16 +20,6 @@
 
 ###
 
-# setInterval ( ->
-#   do $tag.flushAll if $tag.dirty
-#   $tag.dirty = no
-# ), 250
-#
-# process.on 'exit',    $tag.closeAll
-# process.on 'SIGINT',  $tag.closeAll
-# process.on 'SIGUSR1', $tag.closeAll
-# process.on 'SIGUSR2', $tag.closeAll
-
 $tag.db = (name,obj={}) ->
   obj.ready = ( -> ) unless obj.ready
   db = new $tag.XScale obj.path = path.join 'db', ( obj.name = name ) + '.db'

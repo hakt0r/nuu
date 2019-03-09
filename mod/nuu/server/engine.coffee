@@ -36,24 +36,38 @@ NUU.fix_sprites = (o)->
     v.radius = v.radius || w / 2
   o
 
+$public class Formula
+  @to:   {}
+  @from: {}
+  @define: (k,f)->
+    ( Formula.to[k]   || Formula.to[k]   = [] ).push f
+    ( Formula.from[c] || Formula.from[c] = [] ).push [k,f] for c in Object.keys f
+    return
+
 NUU.init =->
   console.log ':nuu', 'init:items' if debug
   # Load objects
-  items = JSON.parse fs.readFileSync 'build/objects_naev.json'
-  items = items.concat JSON.parse fs.readFileSync 'build/objects_nuu.json'
+  items = []
+  .concat fs.readJSONSync 'build/objects_naev.json'
+  .concat fs.readJSONSync 'build/objects_nuu.json'
   Item.init items
   fs.writeFileSync 'build/objects.json', JSON.stringify items
   # Load metadata for sprites for each object
-  meta =                     JSON.parse fs.readFileSync 'build/imag/sprites_naev.json'
-  meta = Object.assign meta, JSON.parse fs.readFileSync 'build/imag/sprites_nuu.json'
+  meta =                     fs.readJSONSync 'build/imag/sprites_naev.json'
+  meta = Object.assign meta, fs.readJSONSync 'build/imag/sprites_nuu.json'
   meta = NUU.fix_sprites meta
-  fs.writeFileSync 'build/images.json', JSON.stringify meta
+  fs.writeJSONSync 'build/images.json', meta
   $static '$meta', meta
   # Load stellars
   console.log ':nuu', 'init:stars' if debug
   orbits = {}
   now = Date.now()
   rules.lastId = 200
+  for f in rules.formula
+    k = Object.keys(f)[0]
+    Formula.define k, f[k]
+  console.log Formula.to
+  console.log Formula.from
   for i in rules.stars
     continue unless o = i[7]
     continue unless o.occupiedBy

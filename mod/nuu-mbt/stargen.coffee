@@ -11,7 +11,7 @@
 class Random
   nextDouble:-> Math.random()
 
-class NonRandom
+class Deterministic
   constructor:->
     @callCount = 0
     @value = 0.0

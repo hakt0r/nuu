@@ -38,7 +38,11 @@ $obj.register class Station extends Stellar
   constructor:(opts)->
     super Economy.defaults opts,
       Station.template[opts.template = opts.template || 'Outpost']
+    if @template is 'Mine' and not @mines
+      @mines = 'Fe'
     if @mines and @zone
+      @mines = @zone.deterministic.element @zone.provides()
+      console.log @zone.root.name, 'mines', @mines if debug
       @produces[@mines] = @allocates[@mines] = min 100, @zone.availableFor @mines
     @shieldMax = @shield
     @armourMax = @armour
@@ -148,7 +152,6 @@ Station.template =
 
   Mine:
     sprite:     'station-commerce'
-    mines:      'H2O'
     population: 2000
     allocates:  e:200, Food:100
 

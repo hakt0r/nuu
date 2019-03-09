@@ -226,3 +226,13 @@ console.colorDump = (opts={})->
   a.join ''
 
 $static 'rules', -> if isClient then rules.client() else rules.server()
+
+$public class Deterministic
+  constructor:(@seed)->
+    @callCount = 0
+    @current = Crypto.createHash('sha512').update(@seed).digest()
+  double:->
+    ++@callCount
+    @current = Crypto.createHash('sha512').update(@current).digest()
+    @current.reduce (i,v=0)-> ( ( v + i * PI ) % PI ) / PI
+  element:(a)-> a[round @double() * ( a.length - 1 )]

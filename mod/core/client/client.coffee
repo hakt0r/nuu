@@ -134,7 +134,8 @@ NUU.on 'gfx:ready', ->
     """
     unless debug then NUU.loginPrompt()
     else $timeout 500, => NET.login 'anx', sha512(''), -> vt.hide()
-    rules NUU
   null
 
-  NUU.on 'start', -> NUU.emit 'settings'
+  NUU.on 'start', ->
+    rules NUU
+    NUU.emit 'settings'

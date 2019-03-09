@@ -1,24 +1,18 @@
 
-$public class NonRandom
-  constructor:(@seed)->
-    @callCount = 0
-    @current = Crypto.createHash('sha512').update(@seed).digest()
-  nextDouble:->
-    ++@callCount
-    @current = Crypto.createHash('sha512').update(@current).digest()
-    @current.reduce (i,v=0)-> ( ( v + i * PI ) % PI ) / PI
-
 $public class Nebula
   @list: [ "02","16","21","25","29","33","04","17","22","26","30","34","10","19","23","27","31","12","20","24","28","32" ]
-  @seed: new NonRandom "sol-nebula"
   @random:->
-    idx = round Nebula.seed.nextDouble() * ( Nebula.list.length - 1 )
+    idx = round Nebula.deterministic.double() * ( Nebula.list.length - 1 )
     img = Nebula.list[idx]
     n = PIXI.Sprite.fromImage "build/gfx/nebula#{img}.png"
     n.position.set(
-      Nebula.seed.nextDouble() * 4*WIDTH  - 2*WIDTH
-      Nebula.seed.nextDouble() * 4*HEIGHT - 2*HEIGHT )
+      Nebula.deterministic.double() * 4*WIDTH  - 2*WIDTH
+      Nebula.deterministic.double() * 4*HEIGHT - 2*HEIGHT )
     Sprite.nebulae.addChild n
+
+NUU.on 'rules', ->
+  Nebula.deterministic = new Deterministic rules.systemName + "-nebulas"
+  Nebula.random(); Nebula.random(); Nebula.random(); Nebula.random()
 
 makeStarfield = (mod...)->
   field = (rmax,smax)->
@@ -48,7 +42,6 @@ Sprite.initSpace = ->
   @bg.addChild @parallax  = makeStarfield [1,0.3,2000]
   @bg.addChild @parallax2 = makeStarfield [1,0.3,1000]
   @bg.addChild @nebulae   = new PIXI.Container
-  Nebula.random(); Nebula.random(); Nebula.random(); Nebula.random()
   @nebulae.alpha = .2
 
   @on 'resize', @resizeStars = (wd,hg,hw,hh) =>

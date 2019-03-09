@@ -48,13 +48,6 @@
 ██████   ██████  ██   ████   ██████  ██   ██  ██████  ███████  ██████   ███ ███
                                     https://en.wikipedia.org/wiki/Don_Daglow ###
 
-$public class Inventory
-  constructor:(category,key)->
-    @data = {}
-  has:(item,count)-> if count then @data[item]? and @data[item] >= count else @data[item]?
-  add:(item,count)-> @data[item] = ( @data[item] || 0 ) + count
-  get:(item,count)-> if @data[item]? and @data[item] >= count then @data[item] -= count else false
-
 # ███████ ████████ ███████ ██      ██       █████  ██████
 # ██         ██    ██      ██      ██      ██   ██ ██   ██
 # ███████    ██    █████   ██      ██      ███████ ██████
@@ -75,7 +68,7 @@ $obj.register class Stellar extends $obj
     @lastCycle = @nextCyle = 0
     @name = "#{@constructor.name} [#{@id}]" unless @name
     $obj.byName[@name] = @
-    console.log @constructor.name.yellow, @name, ( @buildRoot?.name || '' ).red,( @state?.relto?.name || '' ).bold
+    console.log @constructor.name.yellow, @name, ( @buildRoot?.name || '' ).red,( @state?.relto?.name || '' ).bold if debug
     Economy.attach @ if isServer
   destructor:->
     @zone.detach @ if @zone

@@ -45,6 +45,7 @@
     ["$tag","tagscale"]],
   "sources": [
     "db",
+    "inventory",
     "user",
     "console",
     "http",
