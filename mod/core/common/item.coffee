@@ -25,62 +25,67 @@
   think of it as a factory
 ###
 
+$public class Outfit
+  constructor: (name) ->
+    @tpl = Item.byName[name]
+    Object.assign @, @tpl
+
 $public class Item
   @byId: {}
   @byName: {}
   @byType: ship:{}, station:{}
   @byProp: {}
   @byClass: ship:[],outfit:[],gov:[],skill:[],com:[],stellar:[],station:[]
-  @init: (items) ->
-    Item.db = items
-    id = 0
-    for k,o of Station.template
-      o.class = "station"
-      o.name  = o.name || k
-      Item.byClass.station.push Item.byType.station[o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
-      console.log 'item', 'Station', id, o.name if debug
-      id++
-    for o in items
-      Item.byClass[o.class].push o
-      if o.class is 'ship'
-        Item.byType['ship'][o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
-        Ship.byTpl[id] = o.name
-        Ship.byName[o.name] = id
-        id++
-      else if o.class is 'outfit'
-        Item.byId[o.itemId = id] = Item.byName[o.name] = o
-        size = o.size || 'small'
-        t = (
-          if (s = o.slot) then (if s.$t then s.$t else s)
-          else if o.extends is 'Ammo' then 'ammo'
-          else 'cargo' )
-        Item.byType[t] = {}       unless Item.byType[t]
-        Item.byType[t][size] = {} unless Item.byType[t][size]
-        Item.byType[t][size][o.name] = o
-        if o.type
-          t = o.type.split(' ').pop()
-          Item.byType[t] = {} unless Item.byType[t]
-          Item.byType[t][o.name] = o
-        if s and (t = s.prop)
-          Item.byProp[t] = {} unless Item.byProp[t]
-          Item.byProp[t][o.name] = o
-        id++
-      else if o.class is 'com'
-      else if o.class is 'gov'
-      else console.log 'x', o
-
-    for type, items of Item.byType when items.medium?
-      if Object.keys(items.medium).length is 0 and Object.keys(items.large).length is 0
-        Item.byType[type] = items.small
-
-    Item.byName.CheatersRagnarokBeam.turret = yes
-    Item.byName.CheatersRagnarokBeam.stats.track = 1.6
-    NUU.emit 'init:items:done'
 
 Item.random = ->
   Array.random Object.values Item.byId
 
-$public class Outfit
-  constructor: (name) ->
-    @tpl = Item.byName[name]
-    Object.assign @, @tpl
+Item.init = (seed) ->
+  items = seed
+  console.log ':nuu', 'init:items' if debug
+  Item.db = items
+  NUU.emit 'init:items:pre', items
+  id = 0
+  for k,o of Station.template
+    o.class = "station"
+    o.name  = o.name || k
+    Item.byClass.station.push Item.byType.station[o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
+    console.log 'item', 'Station', id, o.name if debug
+    id++
+  NUU.emit 'init:items', items
+  for o in items
+    Item.byClass[o.class].push o
+    if o.class is 'ship'
+      Item.byType['ship'][o.name] = Item.byId[o.itemId = id] = Item.byName[o.name] = o
+      Ship.byTpl[id] = o.name
+      Ship.byName[o.name] = id
+      id++
+    else if o.class is 'outfit'
+      Item.byId[o.itemId = id] = Item.byName[o.name] = o
+      size = o.size || 'small'
+      t = (
+        if (s = o.slot) then (if s.$t then s.$t else s)
+        else if o.extends is 'Ammo' then 'ammo'
+        else 'cargo' )
+      Item.byType[t] = {}       unless Item.byType[t]
+      Item.byType[t][size] = {} unless Item.byType[t][size]
+      Item.byType[t][size][o.name] = o
+      if o.type
+        t = o.type.split(' ').pop()
+        Item.byType[t] = {} unless Item.byType[t]
+        Item.byType[t][o.name] = o
+      if s and (t = s.prop)
+        Item.byProp[t] = {} unless Item.byProp[t]
+        Item.byProp[t][o.name] = o
+      id++
+    else if o.class is 'com'
+    else if o.class is 'gov'
+    else console.log 'x', o
+
+  for type, items of Item.byType when items.medium?
+    if Object.keys(items.medium).length is 0 and Object.keys(items.large).length is 0
+      Item.byType[type] = items.small
+  Item.byName.CheatersRagnarokBeam.turret = yes
+  Item.byName.CheatersRagnarokBeam.stats.track = 1.6
+  NUU.emit 'init:items:done', items
+  return seed

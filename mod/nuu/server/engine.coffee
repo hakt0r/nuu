@@ -45,18 +45,14 @@ $public class Formula
     return
 
 NUU.init =->
-  console.log ':nuu', 'init:items' if debug
   # Load objects
-  items = []
-  .concat fs.readJSONSync 'build/objects_naev.json'
-  .concat fs.readJSONSync 'build/objects_nuu.json'
-  Item.init items
-  fs.writeFileSync 'build/objects.json', JSON.stringify items
+  fs.writeJSONSync 'build/objects.json', Item.init (
+    fs.readJSONSync 'build/objects_naev.json'
+    .concat fs.readJSONSync 'build/objects_nuu.json' )
   # Load metadata for sprites for each object
-  meta =                     fs.readJSONSync 'build/imag/sprites_naev.json'
-  meta = Object.assign meta, fs.readJSONSync 'build/imag/sprites_nuu.json'
-  meta = NUU.fix_sprites meta
-  fs.writeJSONSync 'build/images.json', meta
+  fs.writeJSONSync 'build/images.json', meta = NUU.fix_sprites Object.assign(
+    fs.readJSONSync 'build/imag/sprites_naev.json'
+    fs.readJSONSync 'build/imag/sprites_nuu.json' )
   $static '$meta', meta
   # Load stellars
   console.log ':nuu', 'init:stars' if debug
