@@ -20,24 +20,11 @@
 
 ###
 
-DRONES_ACTIVE = yes
-DRONES_MAX    = 10
-ROIDS_MAX     = 100
+rules.dm.server = ->
+  $static 'DRONES_ACTIVE', yes
+  $static 'DRONES_MAX',    10
+  $static 'ROIDS_MAX',     100
 
-rules.modeName = 'deathmatch'
-rules.modeNameShort = 'dm'
-rules.systemName = 'sol'
-
-rules.client = ->
-  NUU.on 'ship:spawn', (ship) ->
-    ship.reset()
-
-  NET.on 'stats', (v) -> for id, stat of v
-    notice 5000, stat.name + " K: #{stat.k} D: #{stat.d}"
-
-  NUU.emit 'rules', rules
-
-rules.server = ->
   rules.stats = stats = {}
 
   NET.on 'shipname', (msg,src) ->
@@ -122,7 +109,7 @@ rules.server = ->
 
   NUU.emit 'rules', rules
 
-rules.stars = [
+rules.dm.stars = [
   [ 0,   Star,    'Sol',                 'orange05',              0,           $fixed ]
   [ 20,  Station, 'Hades Bootcamp',      'station-battlestation', 1000,        $orbit, 0, template:'Fortress' ]
 
@@ -210,7 +197,7 @@ rules.stars = [
   [ 10, Planet,   'Pluto',               'D07',                   6500000000,  $orbit, 0 ]
   [ 12, Station,  'Nibiru',              'station-sphere',        10000000000, $orbit, 0, template:'Outpost' ]]
 
-rules.seedEconomy = (stellar,opts)->
+rules.dm.seedEconomy = (stellar,opts)->
   [ sid, stype, sname ] = stellar
   { level, gov } = Object.assign {level:1,gov:'AI'}, opts.occupiedBy
   l = rules.buildList.slice 0, level
@@ -220,7 +207,7 @@ rules.seedEconomy = (stellar,opts)->
     rules.stars.push [rules.lastId++,Station,"#{gov} #{sname} #{t.template}",null,ob[t.o],$orbit,sid,template:t.template]
   return
 
-rules.buildList = [
+rules.dm.buildList = [
   { o:0, template:'Fortress' }
   { o:0, template:'Powerplant' }
   { o:0, template:'Mine' }
@@ -252,7 +239,7 @@ rules.buildList = [
   { o:2, template:'Factory' }
 ]
 
-rules.formula = [
+rules.dm.formula = [
   {     e: H3:0.001 }
   {     e: Pu:0.01 }
   {    H2:  H:10, e:2 }

@@ -20,7 +20,6 @@
 
 ###
 
-
 Window.MainMenu = class MainMenu extends ModalListWindow
   name: 'dbg_main'
   title: 'Main Menu'

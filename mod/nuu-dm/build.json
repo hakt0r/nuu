@@ -1,2 +1,3 @@
-{ "client":{"sources":["deathmatch"]},
-  "common":{"sources":["deathmatch"]}}
+{ "client":{"sources":["dm","dm_gui"]},
+  "server":{"sources":["dm"]},
+  "common":{"sources":["dm"]}}

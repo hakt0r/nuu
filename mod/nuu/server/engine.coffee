@@ -39,12 +39,24 @@ NUU.fix_sprites = (o)->
 $public class Formula
   @to:   {}
   @from: {}
-  @define: (k,f)->
-    ( Formula.to[k]   || Formula.to[k]   = [] ).push f
-    ( Formula.from[c] || Formula.from[c] = [] ).push [k,f] for c in Object.keys f
-    return
+
+Formula.define = (k,f)->
+  ( Formula.to[k]   || Formula.to[k]   = [] ).push f
+  ( Formula.from[c] || Formula.from[c] = [] ).push [k,f] for c in Object.keys f
+  return
+
+Formula.init = (k,f)->
+  for f in rules.formula
+    k = Object.keys(f)[0]
+    Formula.define k, f[k]
+  console.log Formula.to   if debug
+  console.log Formula.from if debug
+  return
 
 NUU.init =->
+  NUU.mode = NUU.mode || 'dm'
+  console.log 'loading game mode', NUU.mode
+  Object.assign rules, rules[NUU.mode]
   # Load objects
   fs.writeJSONSync 'build/objects.json', Item.init (
     fs.readJSONSync 'build/objects_naev.json'
@@ -54,45 +66,8 @@ NUU.init =->
     fs.readJSONSync 'build/imag/sprites_naev.json'
     fs.readJSONSync 'build/imag/sprites_nuu.json' )
   $static '$meta', meta
-  # Load stellars
-  console.log ':nuu', 'init:stars' if debug
-  orbits = {}
-  now = Date.now()
-  rules.lastId = 200
-  for f in rules.formula
-    k = Object.keys(f)[0]
-    Formula.define k, f[k]
-  console.log Formula.to
-  console.log Formula.from
-  for i in rules.stars
-    continue unless o = i[7]
-    continue unless o.occupiedBy
-    rules.seedEconomy i, o
-  for i in rules.stars
-    [ id, Constructor, name, sprite, orbit, state, relto, args ] = i
-    orbits[relto+'_'+orbit] = l = orbits[relto+'_'+orbit] || []
-    l.push id
-  for i in rules.stars
-    [ id, Constructor, name, sprite, orbit, state, relto, args ] = i
-    odx = orbits[relto+'_'+orbit].indexOf id
-    oct = ( orbits[relto+'_'+orbit] || [] ).length
-    relto$ = $obj.byId[relto] || x:0,y:0,update:$void
-    relto$.update()
-    if oct > 1
-      rand  = ( TAU / oct ) * odx
-      vel   = 3
-      stp   = TAU * 1 / ( TAU * orbit * 1/3 )
-      state = S:state, relto:relto$, t:now, orb:orbit, vel:vel, stp:stp, off:rand
-    else
-      rand = random() * TAU
-      m = [0,min 5,   max 1,  orbit % 5]
-      if orbit > 100000   then m = [0,min 19,  max 10,  orbit % 19]
-      if orbit > 1000000  then m = [0,min 99,  max 20,  orbit % 99]
-      if orbit > 10000000 then m = [0,min 199, max 100, orbit % 199]
-      state = S:state, relto:relto$, x:relto$.x + cos(rand) * orbit, y:relto$.y + sin(rand) * orbit, m:m
-    opts = id:id, name:name, sprite:sprite, state:state
-    opts[k] = v for k,v of args
-    new Constructor opts
+  do Formula.init
+  do Stellar.init
   console.log ':nuu', 'init:rules' if debug
   rules @
   @thread 'group', 1000, ->

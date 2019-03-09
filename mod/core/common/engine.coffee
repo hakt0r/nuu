@@ -225,7 +225,8 @@ console.colorDump = (opts={})->
   a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )
   a.join ''
 
-$static 'rules', -> if isClient then rules.client() else rules.server()
+$static 'rules', ->
+  if isClient then rules.client() else rules.server()
 
 $public class Deterministic
   constructor:(@seed)->

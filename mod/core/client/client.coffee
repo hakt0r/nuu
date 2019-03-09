@@ -137,5 +137,6 @@ NUU.on 'gfx:ready', ->
   null
 
   NUU.on 'start', ->
+    Object.assign rules, rules[NUU.mode||'dm']
     rules NUU
     NUU.emit 'settings'
