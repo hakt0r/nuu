@@ -229,16 +229,14 @@ State.register class State.burn extends State
     @dtmax = TICK * $v.dist(p,@m) / @a
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    dtrise = min @dtmax, dtreal = time - @t
-    dtpeak = max 0,      dtreal - @dtmax
+    dtrise  = TICKi * min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
+    dtpeak  = TICKi * max 0,      dtreal - @dtmax
     dtreal *= TICKi
-    dtrise *= TICKi
-    dtpeak *= TICKi
     @acceleration = dtpeak is 0
-    @o.m[0] = @m[0] + @cosd*@a*dtrise
-    @o.m[1] = @m[1] + @sind*@a*dtrise
-    @o.x = @x + @m[0]*dtreal + .5*dtrise*@cosd*@a*dtrise + @cosd*@peak*dtpeak
-    @o.y = @y + @m[1]*dtreal + .5*dtrise*@sind*@a*dtrise + @sind*@peak*dtpeak
+    @o.m[0] = mx = @m[0] + @cosd*@a*dtrise
+    @o.m[1] = my = @m[1] + @sind*@a*dtrise
+    @o.x = @x + @m[0]*dtrise + .5*@cosd*@a*dtrise2 + dtpeak * mx
+    @o.y = @y + @m[1]*dtrise + .5*@sind*@a*dtrise2 + dtpeak * my
     null
   toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
