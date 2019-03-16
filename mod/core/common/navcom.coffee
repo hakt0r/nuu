@@ -20,133 +20,153 @@
 
 ###
 
-class NavCom
-  @FIX: PI / 2 #
-  @unfixAngle: (d) -> abs ( 360 + 90 + d ) % 360
-  @fixAngle:   (d) -> abs ( 270 + d ) % 360
-  @absAngle:   (d) -> abs ( 360 + d ) % 360
-  @absRad:     (d) -> abs ( TAU + d ) % TAU
+$public class NavCom
+  @FIX: PI / 2
 
-  @relAngle: (me,it) ->
-    ( 360 - (Math.atan2(it.x - me.x, it.y - me.y) * 180 / PI) - 90 ) % 360 / RAD
+NavCom.unfixAngle = (d) -> abs ( 360 + 90 + d ) % 360
+NavCom.fixAngle   = (d) -> abs ( 270 + d ) % 360
+NavCom.absAngle   = (d) -> abs ( 360 + d ) % 360
+NavCom.absRad     = (d) -> abs ( TAU + d ) % TAU
 
-  @turnTo: (s,t,limit=5) ->
-    dx = s.x - t.x
-    dy = s.y - t.y
-    dir = 360 - (( 360 + floor(atan2(dx,dy) * RAD)) % 360 )
-    reldir = -180 + $v.umod360 dir - s.d + 90
-    return [ true, 180 < reldir or reldir < 0, dir, reldir ] if abs(reldir) >= limit
-    return [ false, false, dir, reldir ]
+NavCom.relAngle = (me,it)->
+  ( 360 - (Math.atan2(it.x - me.x, it.y - me.y) * 180 / PI) - 90 ) % 360 / RAD
 
-  @maxSpeed: (ship,target,thrust=254) ->
-    dst = $dist ship, target
-    vtg = $v.mag target.m
-    vmx = Speed.max
-    amx = ship.thrustToAccel thrust
-    ddeccel = ( vmx**2 - vtg**2 ) / ( 2*amx )
-    if ddeccel < dst then vmx
-    else max vtg + 3, 0.8 * sqrt abs vtg**2 - ( 2*amx*dst )
+NavCom.turnTo = (s,t,limit=5)->
+  dx = s.x - t.x
+  dy = s.y - t.y
+  dir = 360 - (( 360 + floor(atan2(dx,dy) * RAD)) % 360 )
+  reldir = -180 + $v.umod360 dir - s.d + 90
+  return [ true, 180 < reldir or reldir < 0, dir, reldir ] if abs(reldir) >= limit
+  return [ false, false, dir, reldir ]
 
-  @vectorAddDir : (v,force)->
-    angle = PI + $v.heading $v.zero, force
-    v.dir = round angle * RAD
-    v.dir_diff = $v.reldeg v.current_dir, v.dir
-    v.dir_diff_abs = abs v.dir_diff
-    v
+NavCom.maxSpeed = (ship,target,thrust=254)->
+  dst = $dist ship, target
+  vme = $v.mag ship.m
+  vtg = $v.mag target.m
+  vdf = $v.mag + $v.sub ship.m.slice(), target.m
+  acc = ship.thrustToAccel thrust
+  vmx = Speed.max
+  dtmatch = ( vme**2 - vtg**2 ) / ( 2*acc )
+  ddeccel = ( vmx**2 - vtg**2 ) / ( 2*acc )
+  if dst <= dtmatch then vme
+  if dst <= ddeccel then vmx
+  else max vtg + 3, 0.8 * sqrt abs vtg**2 - ( 2*acc*dst )
 
-  @steer: ( ship, target, context='pursue' ) ->
-    time = NUU.time()
-    ship.update time
-    target.update time
-    v = @[context] ship, target
-    v.approach_force = v.force
-    v.force = force = $v.sub v.force.slice(), ship.m
-    v.error = $v.mag force
-    v.error_threshold = max 3,   min 10,  v.distance / 1000
-    v.throttle        = max 100, min 254, 101 + v.error/2
-    @vectorAddDir v, force
-    v.maxSpeed = @maxSpeed ship, target
-    return v
 
-  @pursue: (s,t)->
-    local_position     = s.p.slice()
-    local_inertia      = s.m.slice()
-    local_speed        = $v.mag local_inertia
-    target_position    = t.p.slice()
-    target_inertia     = t.m.slice()
-    target_speed       = $v.mag target_inertia
-    shooting_vector    = $v.sub local_position.slice(), target_position
-    distance           = $v.mag shooting_vector
-    max_relative_speed = @maxSpeed s, t
-    approximate_time   = distance / max_relative_speed
+NavCom.vectorAddDir = (v,force)->
+  angle = PI + $v.heading $v.zero, force
+  v.dir = round angle * RAD
+  v.dir_diff = $v.reldeg v.current_dir, v.dir
+  v.dir_diff_abs = abs v.dir_diff
+  v
 
-    if target_speed > 0
-      target_future = ( State.future t.state, NUU.time() + approximate_time ).p
-      local_future  = ( State.future s.state, NUU.time() + approximate_time ).p
-      # this should in theory make long range more accurate
-      shooting_vector  = $v.sub local_position.slice(), target_future
-      distance         = $v.mag shooting_vector
-      approximate_time = distance / max_relative_speed
-      target_future = ( State.future t.state, NUU.time() + approximate_time ).p
-      local_future  = ( State.future s.state, NUU.time() + approximate_time ).p
+NavCom.steer = ( ship, target, context='pursue' )->
+  time = NUU.time()
+  ship.update time
+  target.update time
+  v = @[context] ship, target
+  v.approach_force = v.force
+  v.force = force = $v.sub v.force.slice(), ship.m
+  v.error = $v.mag force
+  v.error_threshold = max 3,   min 10,  v.distance / 1000
+  v.throttle        = max 100, min 254, 101 + v.error/2
+  @vectorAddDir v, force
+  v.maxSpeed = @maxSpeed ship, target
+  return v
+
+NavCom.match = (v)->
+  { ship, target } = v
+  v.ship_v  = vme = $v.mag ship.m
+  v.targ_v  = vtg = $v.mag target.m
+  v.diff_v  = $v.mag vdf = $v.sub ship.m.slice(), target.m
+  v.ship_a  = acc = ship.thrustToAccel v.thrust
+  v.match_d = ( vme**2 - vtg**2 ) / ( 2*v.ship_a )
+  v.match_t = ( 2*v.match_d ) / ( vme + vtg )
+  [cosd,sind] = $v.normalize vdf.slice()
+  [px,py] = ship.p
+  [mx,my] = ship.m
+  accmatcht2 = acc * ( ticks = v.match_t * TICKi ) * 2
+  v.match_p = [ px + mx*ticks + .5*cosd*accmatcht2, py + my*ticks + .5*sind*accmatcht2 ]
+  return v
+
+NavCom.pursue = (s,t)->
+  # return NavCom.intercept s,t
+  v = ship:s, target:t, thrust:254
+  NavCom.match v
+
+  local_position     = s.p.slice()
+  local_inertia      = s.m.slice()
+  local_speed        = $v.mag local_inertia
+  target_position    = t.p.slice()
+  target_inertia     = t.m.slice()
+  shooting_vector    = $v.sub local_position.slice(), target_position
+  distance           = $v.mag shooting_vector
+  target_speed       = $v.mag target_inertia
+
+  target_future = ( tfs = State.future t.state, NUU.time() + v.match_t ).p
+  shooting_vector  = $v.sub local_position.slice(), target_future
+  distance         = $v.mag shooting_vector
+
+  if distance < v.match_d
+    approximate_time = v.match_t
+    max_relative_speed = v.match_d / v.match_t
+  else
+    max_relative_speed = min Speed.max, sqrt 2 * v.ship_a * ( distance - v.match_d )
+    approximate_time = distance / max_relative_speed
+
+  target_future = ( tfs = State.future t.state, NUU.time() + approximate_time ).p
+
+  # target_future_inertia = $v.mag tfs.m
+  # now we need a vector
+  # - towards target_future
+  # - at most max_relative_speed
+  approach_vector    = $v.sub target_future.slice(), local_position.slice()
+  approach_dir       = $v.normalize approach_vector.slice()
+  approach_force     = $v.add target_inertia.slice(), $v.mult approach_dir.slice(), max_relative_speed
+
+  return @vectorAddDir Object.assign(v,
+    target_zone: ( t.size + s.size ) * .5
+    current_dir: s.d
+    eta: approximate_time
+    distance: distance
+    force: approach_force
+    velocity: $v.mag approach_force
+    maxSpeed: max_relative_speed
+  ), approach_force
+
+NavCom.approach = (s,v,d=-1,callback=->)->
+  { force, error, distance, dir, dir_diff, dir_diff_abs } = v
+  message = 'active'
+  if round(v.error) <= round(v.error_threshold) and v.distance < v.target_zone
+    v.recommend = 'execute'
+    message += ':exec(' + rdec3(v.dist) + ')'
+  else if v.error > v.error_threshold
+    if dir_diff_abs > 2
+      message += ':setd(' + rdec3(v.dir) + ')'
+      v.recommend = 'setdir'
     else
-      local_future  = local_position
-      target_future = target_position
+      v.recommend = 'burn'
+      v.recommend = 'boost' if 50 < v.error
+      message += ':' + v.recommend + '(f' + (rdec3 v.error) + ')'
+  else
+    v.recommend = 'wait'
+    message += ':wait(dF:'+(rdec3 v.error)+' dD:'+(rdec3 v.dir_diff)+')'
+  v.message = message
+  v
 
-    # now we need a vector
-    # - towards target_future
-    # - at most max_relative_speed
-    approach_vector    = $v.sub target_future.slice(), local_future
-    approach_dir       = $v.normalize approach_vector.slice()
-    approach_force     = $v.mult approach_dir.slice(), max_relative_speed
-    max_absolute_speed = $v.mag ( $v.add ( $v.mult approach_dir.slice(), max_relative_speed ), target_speed )
-    approach_force = $v.add approach_force, target_inertia
-
-    return @vectorAddDir (
-      target_zone: ( t.size + s.size ) * .5
-      current_dir: s.d
-      eta: approximate_time
-      distance: distance
-      force: approach_force
-      velocity: $v.mag approach_force
-      maxSpeed: max_relative_speed
-    ), approach_force
-
-  @approach : (s,v,d=-1,callback=->) ->
-    { force, error, distance, dir, dir_diff, dir_diff_abs } = v
-    message = 'active'
-    if round(v.error) <= round(v.error_threshold) and v.distance < v.target_zone
-      v.recommend = 'execute'
-      message += ':exec(' + rdec3(v.dist) + ')'
-    else if v.error > v.error_threshold
-      if dir_diff_abs > 2
-        message += ':setd(' + rdec3(v.dir) + ')'
-        v.recommend = 'setdir'
-      else
-        v.recommend = 'burn'
-        v.recommend = 'boost' if 50 < v.error
-        message += ':' + v.recommend + '(f' + (rdec3 v.error) + ')'
-    else
-      v.recommend = 'wait'
-      message += ':wait(dF:'+(rdec3 v.error)+' dD:'+(rdec3 v.dir_diff)+')'
-    v.message = message
-    v
-
-  @aim: (s,target)->
-    s.update time = NUU.time()
-    target.update time
-    angle = $v.heading(target.p,s.p) * RAD
-    v = {}
-    v.dir = dir = $v.umod360 angle
-    v.dir_diff_abs = abs v.dir_diff = -180 + dir
-    v.fire = v.dir_diff_abs < 5
-    # v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.right||v.left, v.left, v.boost, no, no, no ]
-    # if v.dir_diff_abs > 4
-    #   v.left  = -180 < v.dir_diff < 0
-    #   v.right = not v.left
-    # else
-    v.setDir = yes
-    # s.d = v.dir
-    return v
-
-$public NavCom
+NavCom.aim = (s,target)->
+  s.update time = NUU.time()
+  target.update time
+  angle = $v.heading(target.p,s.p) * RAD
+  v = {}
+  v.dir = dir = $v.umod360 angle
+  v.dir_diff_abs = abs v.dir_diff = -180 + dir
+  v.fire = v.dir_diff_abs < 5
+  # v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.right||v.left, v.left, v.boost, no, no, no ]
+  # if v.dir_diff_abs > 4
+  #   v.left  = -180 < v.dir_diff < 0
+  #   v.right = not v.left
+  # else
+  v.setDir = yes
+  # s.d = v.dir
+  return v

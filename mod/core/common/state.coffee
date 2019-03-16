@@ -213,7 +213,7 @@ State.register class State.burn extends State
     @sind = sin @dir
     $v.mult $v.normalize(@m), r*.99 if r < $v.mag @m # reset to speed limit
     a = @m.slice()
-    b = $v.add @m.slice(), $v.mult [@cosd,@sind], r * 2.5
+    b = $v.add @m.slice(), $v.mult [@cosd,@sind], r
     d = $v.sub  b.slice(), a
     D = a[0]*b[1] - a[1]*b[0]
     dr = sqrt dr_squared = d[0]**2 + d[1]**2
@@ -233,11 +233,11 @@ State.register class State.burn extends State
     dtpeak  = TICKi * max 0,      dtreal - @dtmax
     dtreal *= TICKi
     @acceleration = dtpeak is 0
-    @o.m[0] = mx = @m[0] + @cosd*@a*dtrise
-    @o.m[1] = my = @m[1] + @sind*@a*dtrise
-    @o.x = @x + @m[0]*dtrise + .5*@cosd*@a*dtrise2 + dtpeak * mx
-    @o.y = @y + @m[1]*dtrise + .5*@sind*@a*dtrise2 + dtpeak * my
-    null
+    @o.m[0] = mx = @m[0]        +    @cosd*@a*dtrise
+    @o.m[1] = my = @m[1]        +    @sind*@a*dtrise
+    @o.x    = @x + @m[0]*dtrise + .5*@cosd*@a*dtrise2 + dtpeak * mx
+    @o.y    = @y + @m[1]*dtrise + .5*@sind*@a*dtrise2 + dtpeak * my
+    return
   toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
 
 ## updateUnlimited:(time)->
