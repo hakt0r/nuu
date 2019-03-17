@@ -98,8 +98,8 @@ NET.on 'jump', (target,src) ->
   target.update()
   o.setState
     S: $moving
-    x: parseInt target.x - 1000 + random()*500
-    y: parseInt target.y - 1000 + random()*500
+    x: parseInt target.x - 500 + random()*1000
+    y: parseInt target.y - 500 + random()*1000
     m: target.m.slice()
     relto: target.id
   null
