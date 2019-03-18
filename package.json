@@ -11,7 +11,8 @@
     "build": "test -d node_modules/browserify || npm i; coffee tools/build.coffee assets",
     "clean": "npm prune --production",
     "prepare": "coffee tools/build.coffee assets",
-    "test": "npm run build; CLIENT=true npm start"
+    "test": "npm run build; CLIENT=true npm start",
+    "inspect": "npm run build; CLIENT=true node --inspect-brk ."
   },
   "repository": {
     "type": "git",
