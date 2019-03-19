@@ -142,9 +142,12 @@ Object.defineProperty Stellar::, 'buildRoot', get:->
 $obj.register class Star extends Stellar
   @interfaces: [$obj,Stellar]
   provides: e:1000
+  bigMass:yes
 
 $obj.register class Planet extends Stellar
   @interfaces: [$obj,Stellar]
+  bigMass:yes
 
 $obj.register class Moon extends Stellar
   @interfaces: [$obj,Stellar]
+  bigMass:yes

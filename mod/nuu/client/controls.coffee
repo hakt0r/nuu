@@ -66,10 +66,7 @@ $static 'Mouse', new class MouseInput
     return if -1 is ['helm','weap'].indexOf
     switch VEHICLE.mountType[NUU.player.mountId]
       when 'helm'
-        # v.d = @destDir if NUU.settings.trueInstantWorld
-        if dirChanged and not accelChanged
-          NET.steer.write @destDir
-        else do Kbd.setState 'accel', @accel
+        NET.steer.write @destDir if dirChanged and not accelChanged
       when 'weap'
         NET.steer.write @destDir
     @lastDir = @destDir; @lastAccel = @accel
@@ -184,6 +181,7 @@ Kbd.setState = (key,value)-> =>
     @state[@mmap["steerLeft"]],
     @state[@mmap["boost"]],
     0,0,rid])
+  return
 
 Kbd.macro 'mouseturn', 'KeyZ', 'Toggle mouseturning', Mouse.macro()
 

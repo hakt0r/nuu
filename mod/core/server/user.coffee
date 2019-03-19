@@ -101,7 +101,7 @@ NET.on 'jump', (target,src) ->
     x: parseInt target.x - 500 + random()*1000
     y: parseInt target.y - 500 + random()*1000
     m: target.m.slice()
-    relto: target.id
+    relto: if target.bigMass then target else undefined
   null
 
 NUU.users = []
@@ -232,7 +232,7 @@ User::createVehicle = (id,opts={})->
   return console.error 'noship$', id          unless tpl = Ship.byName[id]
   opts.user    = @
   opts.tpl     = tpl
-  opts.state   = @vehicle.state.toJSON()      unless opts.state or not @vehicle
+  opts.state   = @vehicle.state.clone()       unless opts.state or not @vehicle
   opts.loadout = @db.loadout[Ship.byTpl[tpl]] unless opts.loadout
   opts.iff     = [Math.random()]              unless opts.iff
   vehicle      = new Ship opts
@@ -322,7 +322,7 @@ User::land = (t,o,zone,dist)->
   return false if t.mount # cant attach to vehicles
   return false unless dist < zone # too far
   console.log 'user', 'land'.green, t.name if debug
-  o.setState S:$fixedTo,relto:t.id,x:(o.x-t.x),y:(o.y-t.y)
+  o.setState S:$fixedTo, relto:t
   o.fuel = o.fuelMax
   o.landedAt = $obj.byName[@db.landed = t.name]
   @save()

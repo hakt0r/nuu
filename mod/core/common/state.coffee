@@ -20,21 +20,56 @@
 
 ###
 
+# ▄▄███▄▄· ██████  ██████       ██
+# ██      ██    ██ ██   ██      ██
+# ███████ ██    ██ ██████       ██
+#      ██ ██    ██ ██   ██ ██   ██
+# ███████  ██████  ██████   █████
+#   ▀▀▀
+
 $obj::update = $void
+$obj::setState = (s)->
+  new byKey[s.S] Object.assign s, o:@
+
+if isServer then $obj::applyControlFlags = (state)->
+  # TODO: orbit modifiction (elliptical orbits?)
+  @update()
+  @a = (
+    if @state.S is $orbit then 0
+    else if @boost then @throttle * @thrust * Speed.boost
+    else if @retro then @throttle * @thrust * -.5
+    else @throttle * @thrust )
+  ControlState = (
+    if @state.S is $orbit then State.orbit
+    else if @right or @left then State.turn
+    else if @accel or @retro or @boost then State.burn
+    else State.moving )
+  new ControlState o:@, a:@a
+  return @
+
+if isClient then NET.on 'state', (list)->
+  new State.byKey[i.S] i for i in list
+  return
+
+# ███████ ████████  █████  ████████ ███████
+# ██         ██    ██   ██    ██    ██
+# ███████    ██    ███████    ██    █████
+#      ██    ██    ██   ██    ██    ██
+# ███████    ██    ██   ██    ██    ███████
 
 if isClient then $public class State
   constructor:(opts) ->
     return if false is opts
+    @update = @updateRelTo if opts.relto and @updateRelTo
     time = NUU.time()
     Object.assign @, opts
     @o = if @o.id? then @o else $obj.byId[@o]
     @o.locked = @lock?
     @o.state = @
     @o.update = @update.bind @
-    @relto.update time if @relto? and @relto = $obj.byId[@relto]
+    @relto.update time if @relto?.id? or @relto = $obj.byId[@relto]
     do @cache if @cache
     @update time
-    # debugger if @S is $orbit and isClient and @stp is null
 
 if isServer then $public class State
   constructor:(opts) ->
@@ -43,6 +78,10 @@ if isServer then $public class State
     @o.locked = @lock?
     @t = time = NUU.time()
     @o.update time if @o.update
+    if ( opts.relto?.id? or opts.relto = $obj.byId[opts.relto] )
+      opts.relto.update time
+    else @findRelTo opts
+    opts.update = @updateRelTo if opts.relto and @updateRelTo
     Object.assign @, opts
     @o.m = @m = @m || @o.m
     @o.x = @x = @x || @o.x
@@ -53,15 +92,29 @@ if isServer then $public class State
     @m   = @m.slice()
     @o.state  = @
     @o.update = @update.bind @
-    if @relto? and ( @relto.id? or @relto = $obj.byId[@relto] )
-      @relto.update time
-    else @relto = null
-    @toBuffer()
     do @translate if @translate
+    @toBuffer()
     do @cache     if @cache
     @update time
     NET.state.write @
-    # console.log '::st', 'w', @toJSON() if @o.name is 'Kestrel'
+
+State::findRelTo = (opts) ->
+  @o.update()
+  if ( r = @o.state?.relto ) and r.bigMass
+    if ( 10000 > d = $dist @o, r )
+      opts.relto = r
+      opts.relto.update @t
+    else opts.relto = null
+  else
+    opts.relto = null
+    dist = 10000
+    for r in Stellar.list
+      continue unless r.bigMass
+      r.update @t
+      continue if dist < d = $dist @o, r
+      dist = d
+      opts.relto = r
+  return
 
 State::S = $fixed
 State::o = null
@@ -96,9 +149,16 @@ State.future = (state,time)->
   do state.update # let's not confuse anyone
   return result
 
+State::clone = ->
+  v = @toJSON()
+  v.translate = no
+  v
 
-
-
+# ██████  ██    ██ ███████ ███████ ███████ ██████
+# ██   ██ ██    ██ ██      ██      ██      ██   ██
+# ██████  ██    ██ █████   █████   █████   ██████
+# ██   ██ ██    ██ ██      ██      ██      ██   ██
+# ██████   ██████  ██      ██      ███████ ██   ██
 
 State::toBuffer = ->
   return @_buffer if @_buffer
@@ -129,47 +189,14 @@ State.fromBuffer = (msg)->
     m: [ msg.readDoubleLE(42), msg.readDoubleLE(58) ]
     a: msg.readFloatLE 74
     t: NUU.timePrefix() + msg.readUInt32LE 82
-    relto: msg.readUInt16LE 4
+    relto: $obj.byId[msg.readUInt16LE 4]
   return o
 
-if isClient then NET.on 'state', (list)->
-  new State.byKey[i.S] i for i in list
-  null
-
-if isServer then $obj::applyControlFlags = (state)->
-  # TODO: orbit modifiction (needs elliptical orbits)
-  # return console.log '::st', 'applyControlFlags' 'relto' if @state.relto?
-  # return @setState state if state
-  return console.log '::st', 'locked', @name if @locked or @state.S is $orbit
-  @update()
-  @a = (
-    if @state.S is $orbit then 0
-    else if @boost then @throttle * @thrust * Speed.boost
-    else if @retro then @throttle * @thrust * -.5
-    else @throttle * @thrust )
-  ControlState = (
-    if @state.S is $orbit then State.orbit
-    else if @right or @left then State.turn
-    else if @accel or @retro or @boost then State.burn
-    else if not ( @m[0] is @m[1] is 0 ) then State.moving
-    else State.fixed )
-  new ControlState o:@, x:@x, y:@y, x:@x, d:@d, a:@a, m:@m.slice()
-  @
-
-$obj::setState = (
-  if isClient then (s) ->
-    s.o = @
-    new byKey[s.S] s
-  else (s)->
-    @locked = false if @locked
-    s.o = @
-    new byKey[s.S] s
-    @ )
-
-
-
-
-
+# ███████ ██ ██   ██ ███████ ██████
+# ██      ██  ██ ██  ██      ██   ██
+# █████   ██   ███   █████   ██   ██
+# ██      ██  ██ ██  ██      ██   ██
+# ██      ██ ██   ██ ███████ ██████
 
 State.register class State.fixed extends State
   constructor:(s)->
@@ -183,13 +210,26 @@ State.register class State.fixed extends State
 State.register class State.fixedTo extends State
   lock: yes
   update:(time)->
-    @relto.update time || time = NUU.time()
+    return if @lastUpdate is time
+    @relto.update @lastUpdate = time || time = NUU.time()
     @o.x = @relto.x + @x
     @o.y = @relto.y + @y
+    @o.m[0] = @relto.m[0]
+    @o.m[1] = @relto.m[1]
+    return
+  translate:->
+    @relto.update @t
+    @x = @o.x - @relto.x
+    @y = @o.y - @relto.y
     @o.m = @relto.m.slice()
-    @lastUpdate = time
-    null
+    return
   toJSON:-> S:@S,x:@x,y:@y,d:@d,relto:@relto.id
+
+# ███    ███  ██████  ██    ██ ██ ███    ██  ██████
+# ████  ████ ██    ██ ██    ██ ██ ████   ██ ██
+# ██ ████ ██ ██    ██ ██    ██ ██ ██ ██  ██ ██   ███
+# ██  ██  ██ ██    ██  ██  ██  ██ ██  ██ ██ ██    ██
+# ██      ██  ██████    ████   ██ ██   ████  ██████
 
 State.register class State.moving extends State
   update:(time)->
@@ -197,9 +237,30 @@ State.register class State.moving extends State
     dt = ( time - @t ) * TICKi
     @o.x = @x + @m[0] * dt
     @o.y = @y + @m[1] * dt
-    null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m
+    return
+  translate:->
+    return unless @relto
+    @relto.update @t
+    @o.x    = @x    -= @relto.x
+    @o.y    = @y    -= @relto.y
+    @o.m[0] = @m[0] -= @relto.m[0]
+    @o.m[1] = @m[1] -= @relto.m[1]
+  updateRelTo:(time)->
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+    @relto.update time
+    dt = ( time - @t ) * TICKi
+    @o.x    = @relto.x + @x + @m[0] * dt
+    @o.y    = @relto.y + @y + @m[1] * dt
+    @o.m[0] = @relto.m[0]   + @m[0]
+    @o.m[1] = @relto.m[1]   + @m[1]
+    return
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,t:@t,m:@m,relto:(@relto||id:0).id
 
+# ██████  ██    ██ ██████  ███    ██
+# ██   ██ ██    ██ ██   ██ ████   ██
+# ██████  ██    ██ ██████  ██ ██  ██
+# ██   ██ ██    ██ ██   ██ ██  ██ ██
+# ██████   ██████  ██   ██ ██   ████
 
 State.register class State.burn extends State
   acceleration: true
@@ -238,16 +299,27 @@ State.register class State.burn extends State
     @o.x    = @x + @m[0]*dtrise + .5*@cosd*@a*dtrise2 + dtpeak * mx
     @o.y    = @y + @m[1]*dtrise + .5*@sind*@a*dtrise2 + dtpeak * my
     return
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a
+  updateRelTo:(time)->
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+    @relto.update time
+    dtrise  = TICKi * min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
+    dtpeak  = TICKi * max 0,      dtreal - @dtmax
+    dtreal *= TICKi
+    @acceleration = dtpeak is 0
+    @o.m[0] = mx = @relto.m[0]   + @m[0]        +    @cosd*@a*dtrise
+    @o.m[1] = my = @relto.m[1]   + @m[1]        +    @sind*@a*dtrise
+    @o.x         = @relto.x + @x + @m[0]*dtrise + .5*@cosd*@a*dtrise2 + dtpeak * mx
+    @o.y         = @relto.y + @y + @m[1]*dtrise + .5*@sind*@a*dtrise2 + dtpeak * my
+    return
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,a:@a,relto:(@relto||id:0).id
 
-## updateUnlimited:(time)->
-##   time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-##   hdt = .5 * ( dt = ( time - @t ) * TICKi )
-##   adt = @a * dt
-##   @o.m[0] = @m[0] + cosadt = adt * cos @dir
-##   @o.m[1] = @m[1] + sinadt = adt * sin @dir
-##   @o.x = @x + @m[0] * dt + hdt * cosadt
-##   @o.y = @y + @m[1] * dt + hdt * sinadt
+State.burn::translate = State.moving::translate if isServer
+
+# ████████ ██    ██ ██████  ███    ██
+#    ██    ██    ██ ██   ██ ████   ██
+#    ██    ██    ██ ██████  ██ ██  ██
+#    ██    ██    ██ ██   ██ ██  ██ ██
+#    ██     ██████  ██   ██ ██   ████
 
 State.register class State.turn extends State
   constructor:(s)->
@@ -260,8 +332,18 @@ State.register class State.turn extends State
     @o.x = @x + @m[0] * dt
     @o.y = @y + @m[1] * dt
     @o.d = $v.umod360 @d + @turn * dt
-    null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
+    return
+  updateRelTo:(time)->
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+    @relto.update time
+    dt = ( time - @t ) * TICKi
+    @o.x    = @relto.x + @x + @m[0] * dt
+    @o.y    = @relto.y + @y + @m[1] * dt
+    @o.m[0] = @relto.m[0]   + @m[0]
+    @o.m[1] = @relto.m[1]   + @m[1]
+    @o.d = $v.umod360 @d + @turn * dt
+    return
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,relto:(@relto||id:0).id
 
 State.register class State.turnTo extends State
   constructor:(s)->
@@ -283,8 +365,51 @@ State.register class State.turnTo extends State
     @o.x = @x + @m[0] * dt
     @o.y = @y + @m[1] * dt
     @o.d = $v.umod360 360 + @d + @turn * min @turnTime, tdt
-    null
-  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t
+    return
+  updateRelTo:(time)->
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+    @relto.update time
+    dt  = ( time - @t  ) * TICKi
+    tdt = ( time - @tt ) * TICKi
+    @o.x    = @relto.x + @x + @m[0] * dt
+    @o.y    = @relto.y + @y + @m[1] * dt
+    @o.m[0] = @relto.m[0]   + @m[0]
+    @o.m[1] = @relto.m[1]   + @m[1]
+    @o.d = $v.umod360 360 + @d + @turn * min @turnTime, tdt
+    return
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,relto:(@relto||id:0).id
+
+State.register class State.steer extends State
+  constructor:(s)->
+    s.turn   = ( s.o.turn || 1 ) / 10
+    s.turn   = -s.turn if s.o.left
+    super s
+  cache:->
+    @speed  = $v.mag @m || @o.m
+    @radius = @speed / Math.tan @turn * RADi
+    @di     = RADi * @d + PI/2
+    @rcosdi = @radius * cos @di
+    @rsindi = @radius * sin @di
+  update:(time)->
+    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+    dt = ( time - @t ) * TICKi
+    dr = RADi * @o.d = $v.umod360 @d + @turn * dt
+    dp = RADi *        $v.umod360      @turn * dt
+    @o.x = @x + ( @rcosdi ) - @radius * cos dp + @di
+    @o.y = @y + ( @rsindi ) - @radius * sin dp + @di
+    @o.m[0]   = @speed  * cos dr
+    @o.m[1]   = @speed  * sin dr
+    return
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,m:@m,t:@t,relto:(@relto||id:0).id
+
+State.turn::translate   = State.moving::translate if isServer
+State.turnTo::translate = State.moving::translate if isServer
+
+#  ██████  ██████  ██████  ██ ████████
+# ██    ██ ██   ██ ██   ██ ██    ██
+# ██    ██ ██████  ██████  ██    ██
+# ██    ██ ██   ██ ██   ██ ██    ██
+#  ██████  ██   ██ ██████  ██    ██
 
 State.register class State.orbit extends State
   json: yes
@@ -312,7 +437,6 @@ State.register class State.orbit extends State
     @stp = TAU / (( TAU * @orb ) / v )
     @stp = -@stp if 0 > $v.cross(2) relm, [dx,dy]
     @off = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
-    # console.log '::st', 'orbit', @o.id, @orb, @off, @stp, @angl if @o.id is 20
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time
     @relto.update time unless @relto.id is 0
@@ -349,133 +473,3 @@ State.register class State.travel extends State
     m[1] = ( @o.y - @ly ) / deltaT; @ly = @o.y
     @lastUpdate = time; null
   toJSON:-> S:@S, from:from.toJSON(), to:@to.id
-
-
-
-
-
-###  The mighty collection of Stae debug mocks and tests  ##
-
-if isClient and @o is VEHICLE
-@gfx = Sprite.debug || Sprite.layer 'debug', new PIXI.Graphics
-@gfx.position.set 100, 100
-@gfx.clear()
-@gfx.width = @gfx.height = r * 3; h = r * 1.5
-ox = h+@m[0]
-oy = h+@m[1]
-@gfx.lineStyle 1, 0xFFFFFF; @gfx.drawCircle h,h,r
-@gfx.lineStyle 1, 0xFF00FF; @gfx.moveTo h,  h;  @gfx.lineTo ox,     oy
-@gfx.lineStyle 1, 0x00FF00; @gfx.moveTo ox, oy; @gfx.lineTo ox+d[0],oy+d[1]
-@gfx.lineStyle 1, 0xFF0000; @gfx.moveTo ox, oy; @gfx.lineTo h+p[0], h+p[1]
-@gfx.lineStyle 1, 0xFF0000; @gfx.drawCircle h+p[0],h+p[1],3
-console.log 'this can\'t be happening!', dist1, p, @m
-
-Object.defineProperty $obj::, 'm', get:( -> @_m ), set:(v)->
-  debugger if v[1] is -1206
-  if @id is 0
-    console.log 'proxy m for', @name, v
-    v = new Proxy(v,
-      apply:(target, thisArg, argumentsList) ->
-        thisArg[target].apply this, argumentList
-      deleteProperty:(target, property) ->
-        console.log 'Deleted %s', property
-        true
-      set:(target, property, value, receiver) ->
-        debugger if value is -1206
-        target[property] = value
-        console.rlog 'Set %s to %o', property, value
-        true )
-  @_m = v
-
-Object.debugPropNaN = (o,k)-> Object.defineProperty o,k,
-  get: -> @['_'+k]
-  set:(v)-> debugger if isNaN v; @['_'+k] = v
-
-Object.debugPropNaN.v2 = (o,k)-> Object.defineProperty o,k,
-  set:(v)-> debugger if isNaN v[0] or isNaN v[1]; @['_'+k] = v
-  get: -> @['_'+k]
-
-Object.debugPropNaN  $obj::, k for k in ['x','y','d']
-Object.debugPropNaN State::, k for k in ['x','y','d']
-Object.debugPropNaN.v2  $obj::, 'm'
-Object.debugPropNaN.v2 State::, 'm'
-Object.defineProperty $obj::, 'state', get:(->@_state), set:(v)->
-  debugger if v.void; @_state = v
-
-setTimeout ( ->
-  return
-  try
-    assert = require 'assert'
-    states = [$fixed,$fixedTo,$moving,$burn,$turn,$orbit]
-    NUU._time = NUU.time
-    NUU.time = -> 2342
-    mko = (opts={})-> Object.assign {a:2.2, turn:1.2}, opts
-    mkst= (opts={})->
-      s = x:10, y:11, m:[1,1], d:42
-      s.t = NUU.time() if isClient
-      Object.assign s, opts
-    # Fixed state
-    s = new State.fixed ( o = do mko ), mkst()
-    test = "fixed:pre:x"; assert.equal o.x, 10
-    test = "fixed:pre:y"; assert.equal o.y, 11
-    test = "fixed:pre:d"; assert.equal o.d, 42
-    test = "fixed:pre:m"; assert.deepEqual o.m, [0,0]
-    s.update 2342 + TICK
-    test = "move:tick:x"; assert.equal o.x, 10
-    test = "move:tick:y"; assert.equal o.y, 11
-    test = "move:tick:d"; assert.equal o.d, 42
-    test = "move:tick:m"; assert.deepEqual o.m, [0,0]
-    # Moving state
-    s = new State.moving ( o = do mko ), mkst()
-    test = "move:pre:x"; assert.equal o.x, 10
-    test = "move:pre:y"; assert.equal o.y, 11
-    test = "move:pre:d"; assert.equal o.d, 42
-    test = "move:pre:m"; assert.deepEqual o.m, [1,1]
-    s.update 2342 + TICK
-    test = "move:tick:x"; assert.equal round(o.x), 11
-    test = "move:tick:y"; assert.equal round(o.y), 12
-    test = "move:tick:d"; assert.equal round(o.d), 42
-    test = "move:tick:m"; assert.deepEqual o.m, [1,1]
-    # burn state
-    s = new State.burn ( o = do mko ), mkst a:2.2
-    test = "accel:plain:x"; assert.equal o.x, 10
-    test = "accel:plain:y"; assert.equal o.y, 11
-    test = "accel:plain:d"; assert.equal o.d, 42
-    test = "accel:plain:m"; assert.deepEqual o.m, [1,1]
-    s.update 2342 + TICK
-    test = "accel:tick:x"; assert.equal true, o.x > 11
-    test = "accel:tick:y"; assert.equal true, o.y > 12
-    test = "accel:tick:d"; assert.equal o.d, 42
-    test = "accel:tick:X"; assert.equal true, 2.63 < o.m[0] < 2.7
-    test = "accel:tick:Y"; assert.equal true, 2.45 < o.m[1] < 2.5
-    # turn state
-    s = new State.turn ( o = do mko ), mkst turn:1.1
-    test = "turn:plain:x"; assert.equal o.x, 10
-    test = "turn:plain:y"; assert.equal o.y, 11
-    test = "turn:plain:d"; assert.equal o.d, 42
-    test = "turn:plain:m"; assert.deepEqual o.m, [1,1]
-    s.update 2342 + TICK
-    test = "turn:tick:x"; assert.equal round(o.x),    11
-    test = "turn:tick:y"; assert.equal round(o.y),    12
-    test = "turn:tick:d"; assert.equal round(o.d*10), 431
-    test = "turn:tick:m"; assert.deepEqual o.m, [1,1]
-    # Orbit state
-    suns = new State.fixed ( sun = mko id: 0 ), x:0, y:0
-    s = new State.orbit ( o = do mko ), mkst relto: sun
-    test = "orbt:plain:x"; assert.equal o.x, 10
-    test = "orbt:plain:y"; assert.equal o.y, 11
-    test = "orbt:plain:d"; assert.equal o.d, 42
-    test = "orbt:plain:m"; assert.deepEqual o.m, [1,1]
-    s.update 2342 + TICK
-    test = "orbt:tick:x"; assert.equal round(o.x),    11
-    test = "orbt:tick:y"; assert.equal round(o.y),    12
-    test = "orbt:tick:d"; assert.equal round(o.d*10), 431
-    test = "orbt:tick:m"; assert.deepEqual o.m, [1,1]
-    NUU.time = NUU._time
-  catch e
-    console.log 'test', 'state', test, e.message
-    console.log require('util').inspect s
-    console.log require('util').inspect o
-), 0
-
-###

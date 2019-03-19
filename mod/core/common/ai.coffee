@@ -188,7 +188,7 @@ $public class Trader extends AI
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
     # @escort = ( for i in [0..floor random()*3]
-    #   new Escort escortFor:@id, state:@state.toJSON() )
+    #   new Escort escortFor:@id, state:@state.clone() )
     return
 
 $public class Escort extends AI
