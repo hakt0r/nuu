@@ -40,7 +40,9 @@ $abstract 'Animated',
 $Animated.id = 0
 
 $Animated Debris, sprite: 'debris0'
-$Animated Cargo,  sprite: 'cargo', loop: yes
+$Animated Cargo,  sprite: 'cargo',  loop: yes
+
+
 
 Weapon.Beam.loadAssets = ->
   @meta = $meta[@sprite]

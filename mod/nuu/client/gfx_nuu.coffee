@@ -146,3 +146,27 @@ Sprite.animate = (timestamp) ->
   #   VEHICLE.sprite.position.set WDB2, HGB2
   @renderer.render @stage
   null
+
+# ███████ ████████ ██             ██ ██    ██ ███    ███ ██████
+# ██         ██    ██             ██ ██    ██ ████  ████ ██   ██
+# █████      ██    ██             ██ ██    ██ ██ ████ ██ ██████
+# ██         ██    ██        ██   ██ ██    ██ ██  ██  ██ ██
+# ██         ██    ███████    █████   ██████  ██      ██ ██
+
+NET.on 'jump', (v)->
+  VEHICLE.sprite.visible = v is 2
+  new Shim state: S:$fixedTo, relto:VEHICLE, x:0, y:0
+  return
+
+$public class Shim extends $obj
+  @interfaces: []
+  constructor: (opts={})->
+    super Object.assign {
+      sprite: 'shim'
+      name: 'A Shim'
+      ttl: opts.ttl || NUU.time() + 500
+      ttlFinal: yes
+      layer:'fg'
+    }, opts
+
+$Animated Shim

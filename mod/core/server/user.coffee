@@ -95,14 +95,18 @@ NET.on 'jump', (target,src) ->
   return src.error '_no_fuel'       unless o.fuel > 500
   o.fuel -= 500; NET.health.write o
   o.accel = o.boost = o.retro = o.left = o.right = no
-  target.update()
-  o.setState
-    S: $moving
-    x: parseInt target.x - 500 + random()*1000
-    y: parseInt target.y - 500 + random()*1000
-    m: target.m.slice()
-    relto: if target.bigMass then target else undefined
-  null
+  src.json jump:1
+  setTimeout ( ->
+    src.json jump:2
+    target.update()
+    o.setState {
+      S: $moving
+      x: parseInt target.x - 500 + random()*1000
+      y: parseInt target.y - 500 + random()*1000
+      m: target.m.slice()
+      relto: if target.bigMass then target else undefined
+  }), 1000
+  return
 
 NUU.users = []
 
