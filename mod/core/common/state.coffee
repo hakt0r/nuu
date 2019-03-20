@@ -51,11 +51,11 @@ if isClient then NET.on 'state', (list)->
   new State.byKey[i.S] i for i in list
   return
 
-# ███████ ████████  █████  ████████ ███████
-# ██         ██    ██   ██    ██    ██
-# ███████    ██    ███████    ██    █████
-#      ██    ██    ██   ██    ██    ██
-# ███████    ██    ██   ██    ██    ███████
+#  ██████ ██      ██ ███████ ███    ██ ████████
+# ██      ██      ██ ██      ████   ██    ██
+# ██      ██      ██ █████   ██ ██  ██    ██
+# ██      ██      ██ ██      ██  ██ ██    ██
+#  ██████ ███████ ██ ███████ ██   ████    ██
 
 if isClient then $public class State
   constructor:(opts) ->
@@ -70,6 +70,13 @@ if isClient then $public class State
     @relto.update time if @relto?.id? or @relto = $obj.byId[@relto]
     do @cache if @cache
     @update time
+    # console.log @o.name, State.toKey[@S], @p, @m
+
+# ███████ ███████ ██████  ██    ██ ███████ ██████
+# ██      ██      ██   ██ ██    ██ ██      ██   ██
+# ███████ █████   ██████  ██    ██ █████   ██████
+#      ██ ██      ██   ██  ██  ██  ██      ██   ██
+# ███████ ███████ ██   ██   ████   ███████ ██   ██
 
 if isServer then $public class State
   constructor:(opts) ->
@@ -93,10 +100,12 @@ if isServer then $public class State
     @o.state  = @
     @o.update = @update.bind @
     do @translate if @translate
-    @toBuffer()
     do @cache     if @cache
+    @toBuffer()
     @update time
     NET.state.write @
+    # console.log @o.name, State.toKey[@S], @p, @m # if @o.name is "Exosuit"
+
 
 State::findRelTo = (opts) ->
   @o.update()
@@ -426,6 +435,8 @@ State.register class State.orbit extends State
       @o.state = @
       @o.locked = yes
       @o.update = @update.bind @
+      do @cache
+      do @update
     s.a = s.a || s.o.a || 0
   translate:->
     return console.log '::st', 'orbit', 'set:no-relto' unless @relto
@@ -437,6 +448,8 @@ State.register class State.orbit extends State
     @stp = TAU / (( TAU * @orb ) / v )
     @stp = -@stp if 0 > $v.cross(2) relm, [dx,dy]
     @off = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
+  cache:->
+    @stpangl = if @stp > 0 then PI/2 else -PI/2
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time
     @relto.update time unless @relto.id is 0
@@ -444,9 +457,7 @@ State.register class State.orbit extends State
     angl = ((( TAU + @off + tick * @stp ) % TAU ) + TAU ) % TAU
     @o.x = @relto.x + @orb * cos angl
     @o.y = @relto.y + @orb * sin angl
-    angl += PI/2 if @stp > 0
-    angl -= PI/2 if @stp < 0
-    angl = (( angl % TAU ) + TAU ) % TAU
+    angl = ( @stpangl + angl + TAU ) % TAU
     @o.m = [ @relto.m[0] + (@vel * cos angl), @relto.m[1] + (@vel * sin angl) ]
     @o.d = angl * RAD
     @lastUpdate = time; null
