@@ -430,7 +430,7 @@ new class uiHUD
       "  objects: #{$obj.list.length}"+
       " vehicles: #{Sprite.visibleList.length} "+
       " hostiles: #{if Target.hostile then Object.keys(Target.hostile).length else 0}\n" +
-      "    state: #{State.toKey[VEHICLE.state.S]} "+
+      "    state: #{State.toKey[VEHICLE.state.S]} #{if VEHICLE.state.relto? then 'relto ' + VEHICLE.state.relto.name +  ' ' else''}"+
       "#{parseInt VEHICLE.d}d #{VEHICLE.x.toFixed 0}x #{VEHICLE.y.toFixed 0}y " +
       "#{round VEHICLE.m[0]}mx #{round VEHICLE.m[1]}my #{round $v.mag VEHICLE.m}pps\n" +
       "  scanner: #{Scanner.scale}\n"
