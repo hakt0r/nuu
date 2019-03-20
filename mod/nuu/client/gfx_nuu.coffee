@@ -154,8 +154,9 @@ Sprite.animate = (timestamp) ->
 # ██         ██    ███████    █████   ██████  ██      ██ ██
 
 NET.on 'jump', (v)->
-  VEHICLE.sprite.visible = v is 2
-  new Shim state: S:$fixedTo, relto:VEHICLE, x:0, y:0
+  VEHICLE.sprite.visible = false unless arrive = v is 2
+  callback = if arrive then ( -> VEHICLE.sprite.visible = true ) else undefined
+  new Shim onComplete:callback, reverse: arrive, state: S:$fixedTo, relto:VEHICLE, x:0, y:0
   return
 
 $public class Shim extends $obj

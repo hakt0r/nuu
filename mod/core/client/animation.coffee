@@ -26,9 +26,12 @@ $abstract 'Animated',
 
   loadAssets: ->
     @sprite = movieFactory @sprite, '/build/gfx/' + @sprite + '.png', (
-      if @loop is on then on else => @destructor() )
+      if @loop is on then on else =>
+        @onComplete() if @onComplete
+        @destructor() )
     { @radius, @size } = @sprite.meta
     @updateSprite()
+    @sprite.textures = @sprite.textures.slice().reverse() if @reverse
     @sprite.play()
     @show @loaded = true
 
@@ -41,8 +44,6 @@ $Animated.id = 0
 
 $Animated Debris, sprite: 'debris0'
 $Animated Cargo,  sprite: 'cargo',  loop: yes
-
-
 
 Weapon.Beam.loadAssets = ->
   @meta = $meta[@sprite]
