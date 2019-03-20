@@ -346,7 +346,6 @@ new class uiHUD
     RightAlign @targetSprite,   0,   @targetSprite.height + 10 if @targetSprite
 
   render: (g) ->
-    @frame++
     dir = ((VEHICLE.d + 180) % 360) / RAD
     radius  = VEHICLE.size / 2 + 10
     fox = WDB2 + 55; foy = HEIGHT - 85
@@ -422,19 +421,19 @@ new class uiHUD
     @notice.text = Notice.queue.join '\n'
     @notice.position.set WIDTH - 20 - @notice.width, 10
     # DEBUG STATS
-    fps = round((NUU.time() - @startTime) / @frame)
-    @debug.text = if debug then "[t:#{Date.now()}:#{NUU.time()-Date.now()}] [tps#{fps}|" +
-      "o#{$obj.list.length}|"+
-      "v#{Sprite.visibleList.length}]\n"+
-      "co[#{parseInt VEHICLE.d}|#{VEHICLE.x.toFixed 0}|#{VEHICLE.y.toFixed 0}|" +
-      "m[#{round VEHICLE.m[0]}|#{round VEHICLE.m[1]}|#{round $v.dist $v.zero, VEHICLE.m}]" +
-      "s[#{VEHICLE.state.S}]]\n"+
-      "scanner[#{Scanner.scale}]\n"+
-      "net[rx:#{NET.PPS.in}(#{parseInt NET.PPS.inAvg.avrg})|"+
-      "tx:#{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg}|"+
-      "ping:#{round Ping.avrgPing}]\n"+
-      "dt[#{round Ping.avrgDelta}]\n"+
-      "hostiles:#{if Target.hostile then Object.keys(Target.hostile).length else 0}" else ''
+    # fps = round((NUU.time() - @startTime) / @frame)
+    @debug.text = unless debug then '' else "\n" +
+      "     time: #{Date.now()} #{NET.FPS}tps\n" +
+      "     ping: #{round Ping.avrgPing}ms delta: #{round Ping.avrgDelta}ms\n"+
+      "       tx: #{NET.PPS.out}(#{parseInt NET.PPS.outAvg.avrg})pps #{NET.PPS.outKb.toFixed(2)}kbps\n"+
+      "       rx: #{NET.PPS.in }(#{parseInt NET.PPS.inAvg.avrg })pps #{NET.PPS.inKb.toFixed(2) }kbps\n"+
+      "  objects: #{$obj.list.length}"+
+      " vehicles: #{Sprite.visibleList.length} "+
+      " hostiles: #{if Target.hostile then Object.keys(Target.hostile).length else 0}\n" +
+      "    state: #{State.toKey[VEHICLE.state.S]} "+
+      "#{parseInt VEHICLE.d}d #{VEHICLE.x.toFixed 0}x #{VEHICLE.y.toFixed 0}y " +
+      "#{round VEHICLE.m[0]}mx #{round VEHICLE.m[1]}my #{round $v.mag VEHICLE.m}pps\n" +
+      "  scanner: #{Scanner.scale}\n"
     @resize()
 
   widgetList: []

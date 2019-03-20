@@ -117,6 +117,7 @@ class NET.Connection
 
   send: (msg) =>
     NET.TX++
+    NET.TXB += msg.length
     return do @reconnect if @sock.readyState > 1
     return unless @sock.readyState is 1
     @sock.send msg
@@ -159,10 +160,24 @@ class NET.Connection
     ), 5000
 
 # Stats
-NET.PPS = in:0,out:0,inAvg:new Mean,outAvg:new Mean
-NET.TX = 0
-NET.RX = 0
+NET.PPS =
+  in:     0
+  out:    0
+  inKb:   0
+  outKb:  0
+  inAvg:  new Mean
+  outAvg: new Mean
+  inVol:  new Mean
+  outVol: new Mean
+
+NET.TXB = NET.TX = 0
+NET.RXB = NET.RX = 0
+
 $interval 1000, ->
-  NET.PPS.outAvg.add NET.PPS.out = NET.TX
-  NET.PPS.inAvg.add  NET.PPS.in  = NET.RX
-  NET.TX = NET.RX = 0
+  NET.PPS.outAvg.add NET.PPS.out   = NET.TX
+  NET.PPS.inAvg.add  NET.PPS.in    = NET.RX
+  NET.PPS.inVol.add  NET.PPS.inKb  = NET.RXB / 1024
+  NET.PPS.outVol.add NET.PPS.outKb = NET.TXB / 1024
+  NET.TX = NET.RX = NET.TXB = NET.RXB = 0
+  NET.FPS = HUD.frame
+  HUD.frame = 0

@@ -86,6 +86,7 @@ Sprite.select = ->
 
 Sprite.animate = (timestamp) ->
   return unless VEHICLE
+  HUD.frame++
   time = NUU.time()
   VEHICLE.update time
   window.OX = -VEHICLE.x + WDB2
