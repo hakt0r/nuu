@@ -54,9 +54,9 @@ $Tile Ship,
     # Cache.get p + '_comm.png', (cached) => @imgCom = cached
     @loadTile p + '.png', 'sprite', (e,s) =>
       { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
+      s.anchor.set 0.5
       @loaded = true
-      # @show @updateSprite()
-    @loadTile p + '_engine.png', 'spriteEngine'
+    @loadTile p + '_engine.png', 'spriteEngine', (e,s)-> s.anchor.set 0.5
 
   updateSprite: (time)->
     @update time
@@ -67,11 +67,11 @@ $Tile Ship,
     else if @spriteMode is 1
       @changeSprite @spriteNormal
       @spriteMode = 0
-    @sprite.anchor.set 0.5
     p = @sprite.position.set @x + OX, @y + OY
     if @count is 1 then @sprite.rotation = ( @d + 90 % 360 ) / 360 * TAU
-    else @sprite.gotoAndStop @count - parseInt @d * ( @count / 360 )
+    else
+      @sprite.gotoAndStop @count - i = floor @d * ( @count / 360 )
+      # @sprite.rotation = @d * RADi - i * TAU / @count
     true
-
 
 $Tile Missile, sprite: 'banshee', ttlFinal: yes
