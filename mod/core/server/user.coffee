@@ -186,8 +186,8 @@ User::loadShip = ->
   @vehicleType = 'Kestrel'
   @vehicleType = @db.vehicle if @db.vehicle?
   opts = {}
-  if @db.landed and relto = $obj.byName[@db.landed]
-    opts.state = S:$fixedTo, x:0, y:0, relto: relto
+  if @db.landed and relto = $obj.byId[@db.landed]
+    opts.state = S:$fixedTo, x:0, y:0, relto:relto, translate:no
     opts.landedAt = relto
   else if @db.orbit and relto = $obj.byName[@db.orbit[0]]
     opts.state = @db.orbit[1]
@@ -299,7 +299,7 @@ User::launch = (t,o,zone,dist)->
     o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
     NUU.jsoncastTo o, launch:yes
   else if o.landedAt and @mountId is 0
-    NUU.emit 'ship:launch', o, o.landedAt
+    NUU.emit 'ship:launch', o, o.landedAt.name
     @save @db.landed = o.landedAt = o.locked = no
     o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
     NUU.jsoncastTo o, launch:yes
@@ -333,8 +333,9 @@ User::land = (t,o,zone,dist)->
   return false unless dist < zone # too far
   console.log 'user', 'land'.green, t.name if debug
   o.setState S:$fixedTo, relto:t
-  o.fuel = o.fuelMax
-  o.landedAt = $obj.byName[@db.landed = t.name]
+  @db.landed = t.id
+  o.fuel     = o.fuelMax
+  o.landedAt = t
   @save()
   @sock.json landed: t.id
   NUU.emit 'ship:land', @db.nick, o.name, t.name
