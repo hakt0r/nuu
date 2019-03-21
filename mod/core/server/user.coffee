@@ -29,7 +29,7 @@ NET.on 'login', NET.loginFunction = (msg,src) ->
       return src.json 'user.login.nx': true
     src.json 'user.login.challenge': salt:user.salt
   else if msg.user? then new User src, msg.user, msg.pass
-  null
+  return
 
 NET.on 'logout', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
@@ -39,7 +39,7 @@ NET.on 'logout', (msg,src) ->
   o.destructor() if 1 is mounties
   u.vehicle = null
   # delete User.byId[u.db.id] # onTimeout
-  null
+  return
 
 NET.on 'debug', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
@@ -50,7 +50,7 @@ NET.on 'switchMount', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
   return src.error '_no_vehicle'    unless o = u.vehicle
   o.setMount u, parseInt msg
-  null
+  return
 
 # TODO: mark old ship for autodestruction or sth
 # anyways it's cool if it floats around for a bit
@@ -65,7 +65,7 @@ NET.on 'switchShip', (msg,src) ->
   vehicle.landedAt = o.landedAt
   u.enterVehicle vehicle, 0, no
   o.destructor()
-  null
+  return
 
 NET.on 'modSlot', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
@@ -76,7 +76,7 @@ NET.on 'modSlot', (msg,src) ->
   return src.error '_no_slot'       unless s = t[msg.slot]
   o.modSlot msg.type, s, msg.item
   NUU.jsoncastTo o, modSlot: type:msg.type, slot:msg.slot, item:msg.item, level:1
-  null
+  return
 
 NET.on 'build', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
@@ -87,6 +87,7 @@ NET.on 'build', (msg,src) ->
   # Create Item and inherit the creator's state
   $ = new Station template:msg, state:o.state.toJSON(), owner:u.db.id
   console.log ':bld', b.name, p     if debug
+  return
 
 NET.on 'jump', (target,src) ->
   return src.error '_no_handle'     unless u = src.handle
@@ -166,6 +167,7 @@ User::firstJoin = (src)->
   do @loadShip
   @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
   console.log 'user', @db.nick.green, 'joined'.green, @db.id, @vehicleType
+  return
 
 User::rejoin = (src)->
   console.log 'rejoin'
@@ -193,6 +195,7 @@ User::loadShip = ->
   else opts.state = S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
   v = @createVehicle @vehicleType, opts
   @enterVehicle v, 0, yes
+  return
 
 User.testUser =
   id:0
@@ -208,12 +211,14 @@ User.testUser =
 User::save = ->
   return if @db.nick.match /^test[0-9]+$/
   UserDB.set @db.nick, @db
-  # console.log 'save', @db.nick, @db
+  # console.log 'save', @db.nick, @db if debug
+  return
 
 User::upgradeDb = (src)->
   @db.inventory = {} unless @db.inventory
-  @db.unlocks = {} unless @db.unlocks
-  @db.loadout = {} unless @db.loadout
+  @db.unlocks   = {} unless @db.unlocks
+  @db.loadout   = {} unless @db.loadout
+  return
 
 User::deny = (src, pass)->
   src.json 'user.login.failed':'wrong_credentials'
@@ -231,6 +236,7 @@ User::register = (src, user, pass)->
 User::part = (spawn) ->
   console.log 'PART'.red, @db.nick
   NUU.emit 'user:left', @ unless spawn
+  return
 
 User::createVehicle = (id,opts={})->
   return console.error 'noship$', id          unless tpl = Ship.byName[id]
@@ -256,7 +262,7 @@ User::enterVehicle = (vehicle,mountId,spawn)->
     hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
   NUU.jsoncastTo vehicle, setMount: @vehicle.mount.map (i)-> if i then i.db.nick else false
   console.log 'user', 'enter', @db.nick.green, vehicle.id, @mountId if debug
-  null
+  return
 
 User::leaveVehicle = ->
   if -1 is idx = @vehicle.mount.indexOf @
@@ -281,11 +287,11 @@ User::action = (t,mode) ->
   dist  = $dist o, t
   zone  = ( o.size + t.size ) * .5
   @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit'].includes mode
-  null
+  return
 
 User::eva = (t,o,zone,dist)->
   @enterVehicle @createVehicle('Exosuit'), 0, no if o.name isnt 'Exosuit'
-  null
+  return
 
 User::launch = (t,o,zone,dist)->
   if o.state.S is $orbit and @mountId is 0
@@ -301,7 +307,7 @@ User::launch = (t,o,zone,dist)->
     @save @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
   else if o.name isnt 'Exosuit'
     @save @enterVehicle @createVehicle('Exosuit'), 0, no
-  null
+  return
 
 User::capture = (t,o,zone,dist)->
   unless t.constructor.is.Collectable
