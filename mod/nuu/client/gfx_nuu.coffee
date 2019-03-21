@@ -12,7 +12,9 @@ $public class Nebula
 
 NUU.on 'rules', ->
   Nebula.deterministic = new Deterministic rules.systemName + "-nebulas"
-  Nebula.random(); Nebula.random(); Nebula.random(); Nebula.random()
+  for i in [1..max 1, Math.ceil Nebula.deterministic.double()*5]
+    Nebula.random(); Nebula.random(); Nebula.random(); Nebula.random()
+  return
 
 makeStarfield = (mod...)->
   field = (rmax,smax)->
