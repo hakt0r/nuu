@@ -340,7 +340,7 @@ User::orbit = (t,o,zone,dist)->
   return     if o.nextOrbit and o.nextOrbit > TIME = Date.now()
   o.nextOrbit = TIME + 1000
   for oo in ob when 50 > abs( abs(oo) - abs(dist) )
-    console.log 'user', 'orbit', t.id, oo, dist # if debug
+    console.log 'user', 'orbit', t.id, oo, dist if debug
     o.setState S:$orbit,orb:oo,relto:t
     @db.orbit = [t.name,o.state.toJSON()]
     @save()
