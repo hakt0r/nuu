@@ -29,10 +29,12 @@ $public class AI extends Ship
     opts.target = opts.target || false
     opts.npc  = if opts.npc? then opts.npc else yes
     opts.state = opts.state || {
+      translate: no
       S: $moving
+      relto: opts.stel
       m: [0,0]
-      x: floor random() * 1000 - 500 + opts.stel.x
-      y: floor random() * 1000 - 500 + opts.stel.y
+      x: floor random() * 1000 - 500
+      y: floor random() * 1000 - 500
       d: floor random() * 359 }
     super opts
     @name = 'HKS ' + @id.toString(2) + ' (' + @aiType + ')'
