@@ -143,7 +143,8 @@ NavCom.pursue = (s,t)->
 NavCom.approach = (s,v,d=-1,callback=->)->
   { force, error, distance, dir, dir_diff, dir_diff_abs } = v
   message = 'active'
-  if v.inRange and 5 > $v.mag $v.sub s.m.slice(), v.m
+  # message += " dV(round #{$v.mag $v.sub s.m.slice(), v.target.m})"
+  if v.inRange and 5 > $v.mag $v.sub s.m.slice(), v.target.m
     v.recommend = 'execute'
     message += ':exec(' + rdec3(v.dist) + ')'
   else if 0.1 < v.error / $v.mag v.force # v.error_threshold
