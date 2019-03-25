@@ -158,7 +158,7 @@ Sprite.animate = (timestamp) ->
 
 NET.on 'jump', (v)->
   VEHICLE.sprite.visible = false unless arrive = v is 2
-  callback = if arrive then ( -> VEHICLE.sprite.visible = true ) else undefined
+  callback = if arrive then ( -> VEHICLE.spriteNormal.visible = VEHICLE.spriteEngine.visible = true ) else undefined
   new Shim onComplete:callback, reverse: arrive, state: S:$fixedTo, relto:VEHICLE, x:0, y:0
   return
 
