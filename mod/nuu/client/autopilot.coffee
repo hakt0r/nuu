@@ -68,11 +68,11 @@ Autopilot.macro = ->
     VEHICLE.approachTarget = -> @target = TARGET
     VEHICLE.changeStrategy = AI.prototype.changeStrategy
     VEHICLE.onDecision = Autopilot.widget.bind Autopilot
-    VEHICLE.onTarget = (v)->
-      Autopilot.stop()
-      Target.orbit()
   unless  Autopilot.active
        do Autopilot.start
+       VEHICLE.onTarget = (v)->
+         Autopilot.stop()
+         Target.orbit()
   else do Autopilot.stop
 
 Kbd.macro 'autopilot', 'sKeyZ', 'Autopilot', Autopilot.macro
