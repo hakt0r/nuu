@@ -88,6 +88,10 @@ AI.register = (opts)-> AI.worker[opts.strategy] = $worker.PauseList opts, (time)
   @getTarget() unless @target
   return 1000  unless @target
   v = NavCom.approach @, NavCom.steer @, @target, 'pursue'
+  if v.inRange isnt @lastInRange
+    fnc = if v.inRange then 'inRange' else 'outRange'
+    do @[fnc] if @[fnc]
+    @lastInRange = v.inRange
   switch v.recommend
     when "setdir"
       return 1000 if @lastRecommend is 'setDir' and 2 < (abs(@lastDir)-abs(v.dir))
@@ -95,18 +99,20 @@ AI.register = (opts)-> AI.worker[opts.strategy] = $worker.PauseList opts, (time)
       NET.steer.write @, 0, round v.dir
       return TICKi * @turnTime v.dir
     when "burn"
-      return 1000 if @lastRecommend is 'burn' and @lastThrottle is v.throttle
+      return 100 if @lastRecommend is 'burn' and @lastThrottle is v.throttle
       @lastDir = -1; @lastThrottle = v.throttle
       NET.burn.write @, v.throttle
     when "boost"
-      return 1000 if @lastRecommend is 'boost' and @lastThrottle is v.throttle
+      return 100 if @lastRecommend is 'boost' and @lastThrottle is v.throttle
       @lastDir = -1; @lastThrottle = v.throttle
       NET.burn.write @, 254
     when "retro"
-      return 1000 if @lastRecommend is 'retro' and @lastThrottle is v.throttle
+      return 100 if @lastRecommend is 'retro' and @lastThrottle is v.throttle
       @lastDir = -1; @lastThrottle = v.throttle
       NET.burn.write @, v.throttle
     when "wait"
+      @setState S:$moving if isServer
+      NET.state.write @, [no,no,no,no,no,no,no,no ] if isClient
       @onDecision v if isClient and @onDecision
       return 100
     when "execute"
@@ -129,14 +135,17 @@ AI.register
 
 AI.register
   strategy: 'attackPlayers'
-  onTarget: ->
+  inRange: ->
     v = NavCom.aim @, @target
-    if v.fire and not @fire
-      @fire = true
-      NET.weap.write 'ai', 0, @primarySlot, @, @target
-    else if @fire and not v.fire
-      @fire = false
-      NET.weap.write 'ai', 1, @primarySlot, @, @target
+    # if v.fire and not @fire
+    #@fire = true
+    console.log 'startShooting'
+    NET.weap.write 'ai', 0, @primarySlot, @, @target
+  outRange: ->
+    # else if @fire and not v.fire
+    # @fire = false
+    console.log 'stopShooting'
+    NET.weap.write 'ai', 1, @primarySlot, @, @target
   getTarget: ->
     @target = null
     return unless NUU.users.length > 0

@@ -58,6 +58,7 @@ NavCom.vectorAddDir = (v,force)->
   v.dir = round angle * RAD
   v.dir_diff = $v.reldeg v.current_dir, v.dir
   v.dir_diff_abs = abs v.dir_diff
+  v.inRange = v.distance < v.target_zone
   v
 
 NavCom.steer = ( ship, target, context='pursue' )->
@@ -95,52 +96,57 @@ NavCom.pursue = (s,t)->
   NavCom.match v
 
   local_position     = s.p.slice()
-  local_inertia      = s.m.slice()
-  local_speed        = $v.mag local_inertia
+  local_velocity     = s.m.slice()
+  local_speed        = $v.mag local_velocity
   target_position    = t.p.slice()
-  target_inertia     = t.m.slice()
+  target_velocity    = t.m.slice()
+  target_speed       = $v.mag target_velocity
   shooting_vector    = $v.sub local_position.slice(), target_position
   distance           = $v.mag shooting_vector
-  target_speed       = $v.mag target_inertia
 
-  target_future = ( tfs = State.future t.state, NUU.time() + v.match_t ).p
-  shooting_vector  = $v.sub local_position.slice(), target_future
-  distance         = $v.mag shooting_vector
+  if distance > 10000
+    target_future = ( tfs = State.future t.state, NUU.time() + v.match_t ).p
+    shooting_vector  = $v.sub local_position.slice(), target_future
+    apx_distance     = $v.mag shooting_vector
 
-  if distance < v.match_d
-    approximate_time = v.match_t
-    max_relative_speed = v.match_d / v.match_t
-  else
-    max_relative_speed = min Speed.max, sqrt 2 * v.ship_a * ( distance - v.match_d )
-    approximate_time = distance / max_relative_speed
+    if apx_distance < v.match_d
+      approximate_time = v.match_t
+      max_relative_speed = v.match_d / v.match_t
 
-  target_future = ( tfs = State.future t.state, NUU.time() + approximate_time ).p
 
-  # target_future_inertia = $v.mag tfs.m
+  unless max_relative_speed
+    apx_distance = distance
+    max_relative_speed = min Speed.max, sqrt 2 * v.ship_a * ( apx_distance - v.match_d )
+    approximate_time = apx_distance / max_relative_speed
+    target_future = target_position.slice()
+
+  else target_future = ( tfs = State.future t.state, NUU.time() + approximate_time ).p
+
+
+  # target_future_velocity = $v.mag tfs.m
   # now we need a vector
   # - towards target_future
   # - at most max_relative_speed
   approach_vector    = $v.sub target_future.slice(), local_position.slice()
   approach_dir       = $v.normalize approach_vector.slice()
-  approach_force     = $v.add target_inertia.slice(), $v.mult approach_dir.slice(), max_relative_speed
+  approach_force     = $v.add target_velocity.slice(), $v.mult approach_dir.slice(), max_relative_speed
 
-  return @vectorAddDir Object.assign(v,
+  return Object.assign(v,
     target_zone: ( t.size + s.size ) * .5
     current_dir: s.d
     eta: approximate_time
     distance: distance
     force: approach_force
     velocity: $v.mag approach_force
-    maxSpeed: max_relative_speed
-  ), approach_force
+    maxSpeed: max_relative_speed )
 
 NavCom.approach = (s,v,d=-1,callback=->)->
   { force, error, distance, dir, dir_diff, dir_diff_abs } = v
   message = 'active'
-  if round(v.error) <= round(v.error_threshold) and v.distance < v.target_zone
+  if v.inRange and 5 > $v.mag $v.sub s.m.slice(), v.m
     v.recommend = 'execute'
     message += ':exec(' + rdec3(v.dist) + ')'
-  else if v.error > v.error_threshold
+  else if 0.1 < v.error / $v.mag v.force # v.error_threshold
     if dir_diff_abs > 2
       message += ':setd(' + rdec3(v.dir) + ')'
       v.recommend = 'setdir'
@@ -150,7 +156,7 @@ NavCom.approach = (s,v,d=-1,callback=->)->
       message += ':' + v.recommend + '(f' + (rdec3 v.error) + ')'
   else
     v.recommend = 'wait'
-    message += ':wait(dF:'+(rdec3 v.error)+' dD:'+(rdec3 v.dir_diff)+')'
+    message += ':wait(dF:'+(v.error)+' dD:'+(rdec3 v.dir_diff)+')'
   v.message = message
   v
 
@@ -161,7 +167,7 @@ NavCom.aim = (s,target)->
   v = {}
   v.dir = dir = $v.umod360 angle
   v.dir_diff_abs = abs v.dir_diff = -180 + dir
-  v.fire = v.dir_diff_abs < 5
+  v.fire = true # v.dir_diff_abs < 5
   # v.flags = NET.setFlags v.setFlags = [ v.accel, v.retro, v.right||v.left, v.left, v.boost, no, no, no ]
   # if v.dir_diff_abs > 4
   #   v.left  = -180 < v.dir_diff < 0

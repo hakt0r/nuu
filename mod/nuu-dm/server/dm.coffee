@@ -113,7 +113,7 @@ rules.dm.stars = [
   [ 0,   Star,    'Sol',                 'orange05',              0,           $fixed ]
   [ 20,  Station, 'Hades Bootcamp',      'station-battlestation', 1000,        $orbit, 0, template:'Fortress' ]
 
-  [ 1,   Planet,  'Mercury-13',          'A01',                   23000000,    $orbit, 0 ]
+  [ 1,   Planet,  'Mercury-13',          'A01',                   2300000,     $orbit, 0 ]
   [ 999, Planet,  'Mercury',             'A01',                   58000000,    $orbit, 0 ]
   [ 2,   Planet,  'Venus',               'A02',                   108000000,   $orbit, 0 ]
 
