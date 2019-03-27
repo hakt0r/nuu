@@ -127,7 +127,7 @@ NUU.nearcast = (data,o) -> wsServer.clients.forEach (src) ->
   src.send data, $websocket.error(src)
   null
 
-NUU.jsoncast = (data) ->
+NUU.jsoncast = (data,o) ->
   data = NET.JSON + JSON.stringify data
   wsServer.clients.forEach (src)-> src.send data, $websocket.error(src)
   null

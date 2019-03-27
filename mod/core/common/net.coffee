@@ -155,9 +155,9 @@ NET.define 1,'PING', read:
 NET.define 2,'STATE',
   write:
     server: (s) ->
+      if s.json then NUU.jsoncast state:[s.toJSON()], s.o
+      else NUU.nearcast s._buffer, s.o
       NET.stateSync.add s.o
-      if s.json then NUU.jsoncast state:[s.toJSON()]
-      else NUU.nearcast ( s.toBuffer().toString 'binary' ), s.o
     client:(o,flags) ->
       msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0,parseInt(o.throttle*255)]
       msg.writeUInt16LE parseInt(o.d), 2
@@ -173,9 +173,9 @@ NET.define 2,'STATE',
       o.applyControlFlags()
       src
 
-if isServer then NET.stateSync = $worker.DeadLine 5000, 60000, ->
-  if @state.json then NUU.jsoncast state:[@state.toJSON()]
-  else NUU.nearcast ( @state.toBuffer().toString 'binary' ), @
+if isServer then NET.stateSync = $worker.DeadLine 1000, 5000, ->
+  if @state.json then NUU.jsoncast state:[@state.toJSON()], @
+  else NUU.bincast @state._buffer, @
 
 ###
   ███████ ████████ ███████ ███████ ██████

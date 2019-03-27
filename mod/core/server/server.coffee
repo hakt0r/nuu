@@ -94,7 +94,7 @@ global.$library  = (args...) -> for a in args
 global.$public   = (args...) -> global[a.name] = a for a in args
 global.$cue      = (f) -> setImmediate f
 
-$static 'debug',    no
+$static 'debug',    process.env.DEBUG
 $static 'isClient', no
 $static 'isServer', yes
 

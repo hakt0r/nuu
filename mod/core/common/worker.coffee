@@ -82,7 +82,7 @@ $worker.ReduceList = (worker)->
     while c < count and ( at = list[c++] )?
       unless false is worker.call at, time
         swap[n++] = at
-    listWorker.list = swap;swap = list
+    listWorker.list = swap; swap = list
     listWorker.count = n
     null
   listWorker.worker = worker
@@ -101,31 +101,39 @@ $worker.PauseList = (opts,worker)->
   unless worker
     opts = {}
     worker = opts
-  listKey = "pause" + $worker.PauseList.key++
+  listKey = opts.listKey || "pause" + $worker.PauseList.key++
+  if debug then setInterval ( ->
+    console.log '$PauseWorker', listKey, listWorker.count
+  ), 5000
   listWorker = (time)->
     { count, list } = listWorker
     c = -1; n = 0
     while count > ++c
-      at = list[c]
-      if -1 is delay = at[listKey]
-        delete at[listKey]
+      item  = list[c]
+      delay = item[listKey]
+      if -1 is delay
+        delete item[listKey]
         continue
       if time < delay
-        list[n++] = at
+        list[n++] = item
         continue
-      res = worker.call at, time
-      if -1 is res or -1 is at[listKey]
-        delete at[listKey]
+      res = worker.call item, time
+      if -1 is res or -1 is item[listKey]
+        delete item[listKey]
         continue
-      at[listKey] = time + res
-      list[n++] = at
+      item[listKey] = time + res
+      list[n++] = item
     listWorker.count = n
-    null
+    return
   listWorker.worker = worker
-  listWorker.list = []
-  listWorker.count = 0
-  listWorker.add = (at)-> at[listKey] = 0; @list[@count++] = at; Object.assign at, opts
-  listWorker.remove = (at)-> at[listKey] = -1
+  listWorker.list   = []
+  listWorker.count  = 0
+  listWorker.add    = (item)->
+    item[listKey] = 0
+    @list[@count++] = item
+    Object.assign item, opts
+  listWorker.remove = (item)->
+    item[listKey] = -1
   $worker.push listWorker
 $worker.PauseList.key = 0
 
@@ -136,30 +144,30 @@ $worker.DeadLine = (waitFor,deadline,worker)->
     { count, list } = listWorker
     c = -1; n = 0
     while count > ++c
-      at      = list[c]
-      delay   = at[listKey]
-      deadlay = at[listKeyLast]
+      item    = list[c]
+      delay   = item[listKey]
+      deadlay = item[listKeyLast]
       if delay is false
-        delete at[listKey]
-        delete at[listKeyLast]
+        delete item[listKey]
+        delete item[listKeyLast]
         continue
       if time < delay and time < deadlay
-        list[n++] = at
+        list[n++] = item
         continue
-      worker.call at, time
-      at[listKey] = 0
-      at[listKeyLast] = time + deadline
+      worker.call item, time
+      delete item[listKey]
+      delete item[listKeyLast]
     listWorker.count = n
-    null
+    return
   listWorker.worker = worker
   listWorker.list   = []
   listWorker.count  = 0
-  listWorker.add    = (at)->
-    at[listKey] = ( time = NUU.time() ) + waitFor
-    unless at[listKeyLast]
-      at[listKeyLast] = time + deadline
-      @list[@count++] = at
-  listWorker.remove = (at)->
-    at[listKey] = false
+  listWorker.add    = (item)->
+    item[listKey] = waitFor + time = NUU.time()
+    unless item[listKeyLast]
+      item[listKeyLast] = deadline + time
+      @list[@count++] = item
+  listWorker.remove = (item)->
+    item[listKey] = false
   $worker.push listWorker
 $worker.DeadLine.key = 0
