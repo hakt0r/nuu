@@ -11,9 +11,8 @@ $public class Nebula
     Sprite.nebulae.addChild n
 
 NUU.on 'rules', ->
-  Nebula.deterministic = new Deterministic rules.systemName + "-nebulas"
-  for i in [1..max 1, Math.ceil Nebula.deterministic.double()*5]
-    Nebula.random(); Nebula.random(); Nebula.random(); Nebula.random()
+  Nebula.deterministic = new Deterministic rules.systemName + "-nebulae"
+  Nebula.random() for i in [0..2+max 1, Math.ceil Nebula.deterministic.double()*5]
   return
 
 makeStarfield = (mod...)->
@@ -44,7 +43,7 @@ Sprite.initSpace = ->
   @bg.addChild @parallax  = makeStarfield [1,0.3,2000]
   @bg.addChild @parallax2 = makeStarfield [1,0.3,1000]
   @bg.addChild @nebulae   = new PIXI.Container
-  @nebulae.alpha = .2
+  @nebulae.alpha = .03
 
   @on 'resize', @resizeStars = (wd,hg,hw,hh) =>
     @starfield.width  = @parallax2.width  = @parallax.width  = wd
