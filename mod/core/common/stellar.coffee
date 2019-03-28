@@ -88,7 +88,7 @@ Stellar.init = ->
   console.log ':nuu', 'init:stars' if debug
   orbits = {}
   now = Date.now()
-  rules.lastId = 200
+  rules.lastId = 256
   for i in rules.stars
     continue unless o = i[7]
     continue unless o.occupiedBy
