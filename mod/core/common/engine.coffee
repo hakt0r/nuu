@@ -96,10 +96,25 @@ $static 'abs',           Math.abs
 $static 'pow',           Math.pow
 $static 'sin',           Math.sin
 $static 'cos',           Math.cos
+$static 'tan',           Math.tan
 $static 'random',        Math.random
 $static 'round',         Math.round
 $static 'sec',           Math.sec = (v)-> 1 / cos v
 $static 'csc',           Math.csc = (v)-> 1 / sin v
+
+Math.nextPow2 = (v)->
+  v += v is  0; --v
+  v |= v >>> 1; v |= v >>> 2; v |= v >>> 4; v |= v >>> 8; v |= v >>> 16
+  return v + 1
+
+Math.linear = (a,b)->
+  return `a==0?(b==0?[]:[0]):[-b/a]`
+
+Math.quadratic = (a,b,c)->
+  if      0 is a then Math.linear b,c
+  else if 0 > ( s = ( p = b / a ) / 2 * p / 2 - ( q = c / a ) )
+       [ [-p / 2,   sr = Math.sqrt -s], [-p / 2, -sr ] ]
+  else [  -p / 2 + ( sr = Math.sqrt s ), -p / 2 - sr ]
 
 Math.lineCircleCollideInf = (a, b, c, r) ->
   # @FUNCTION Math.lineCircleCollideInf
