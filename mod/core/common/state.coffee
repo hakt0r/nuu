@@ -172,7 +172,7 @@ State::clone = ->
 State::toBuffer = ->
   return @_buffer if @_buffer
   o = @o
-  msg =  @_buffer = Buffer.allocUnsafe 90
+  msg = Buffer.allocUnsafe 90
   msg[0] = NET.stateCode
   msg.writeUInt16LE o.id, 1
   msg[3] = o.flags = NET.setFlags [o.accel,o.retro,o.right,o.left,o.boost,0,0,1]
@@ -185,7 +185,8 @@ State::toBuffer = ->
   msg.writeDoubleLE @m[1],        58; @m[1] = msg.readDoubleLE 58
   msg.writeFloatLE  @a || @a=0.0, 74; @a    = msg.readFloatLE  74
   msg.writeUInt32LE @t % 1000000, 82
-  return msg
+  msg = msg.toString 'binary'
+  return @_buffer = msg
 
 State.fromBuffer = (msg)->
   return unless o = $obj.byId[id = msg.readUInt16LE 1]
