@@ -148,15 +148,15 @@ Kbd.defaultMap =
   boost:      'sArrowUp'
   accel:      'ArrowUp'
   retro:      'ArrowDown'
-  steerLeft:  'ArrowLeft'
-  steerRight: 'ArrowRight'
+  left:  'ArrowLeft'
+  right: 'ArrowRight'
 
 Kbd.d10 =
   execute:    "Execute something"
   accel:      "Accelerate"
   retro:      "Decelerate"
-  steerLeft:  "Turn left"
-  steerRight: "Turn right"
+  left:  "Turn left"
+  right: "Turn right"
   autopilot:  "Turn to target"
   escape:     "Exit something"
   boost:      "Boost"

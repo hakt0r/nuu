@@ -157,35 +157,31 @@ Object.assign Kbd.defaultMap,
   boost:      'sArrowUp'
   accel:      'ArrowUp'
   retro:      'ArrowDown'
-  steerLeft:  'ArrowLeft'
-  steerRight: 'ArrowRight'
+  left:  'ArrowLeft'
+  right: 'ArrowRight'
 
 Object.assign Kbd.d10,
   execute:    "Execute something"
   accel:      "Accelerate"
   retro:      "Decelerate"
-  steerLeft:  "Turn left"
-  steerRight: "Turn right"
+  left:  "Turn left"
+  right: "Turn right"
   autopilot:  "Turn to target"
   escape:     "Exit something"
   boost:      "Boost"
 
 Kbd.setState = (key,value)-> =>
   @state[@mmap[key]] = value
-  rid = 0
-  rid = VEHICLE.relto.id if VEHICLE.relto
-  NET.state.write(VEHICLE,[
-    @state[@mmap["accel"]],
-    @state[@mmap["retro"]],
-    @state[@mmap["steerRight"]],
-    @state[@mmap["steerLeft"]],
-    @state[@mmap["boost"]],
-    0,0,rid])
+  cmd = 0
+  for i,k of State.controls when @state[@mmap[k]]
+    cmd = i
+    break
+  NET.state.write VEHICLE, cmd
   return
 
 Kbd.macro 'mouseturn', 'KeyZ', 'Toggle mouseturning', Mouse.macro()
 
-for a in ["accel","retro","steerRight","steerLeft","boost"]
+for a in ["accel","retro","right","left","boost"]
   Kbd.macro a, Kbd.defaultMap[a], Kbd.d10[a],
     up: Kbd.setState(a,false)
     dn: Kbd.setState(a,true)

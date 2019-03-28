@@ -154,28 +154,32 @@ NET.define 1,'PING', read:
 
 NET.define 2,'STATE',
   write:
-    server: (s) ->
-      if s.json then NUU.jsoncast state:[s.toJSON()], s.o
-      else NUU.nearcast s._buffer, s.o
-      NET.stateSync.add s.o
-    client:(o,flags) ->
-      msg = Buffer.from [NET.stateCode,( o.flags = NET.setFlags o.flags = flags ),0,0,parseInt(o.throttle*255)]
+    client:(o,cmd) ->
+      thrust = switch cmd
+        when "1" then 100 + round o.throttle * 149
+        when "2" then       round ( 1 - o.throttle ) * 99
+        when "3" then 250 + round o.throttle * 4
+        else 0
+      msg = Buffer.from [ NET.stateCode, cmd, 0, 0, thrust ]
+      o.accel = o.boost = o.retro = o.right = o.left = o.idle = undefined; o[State.controls[msg[1]]] = true
       msg.writeUInt16LE parseInt(o.d), 2
       NET.send msg.toString 'binary'
+    server: (s) ->
+      NUU.nearcast s._buffer, s.o
+      NET.stateSync.add s.o
   read:
     client: State.fromBuffer
     server: (msg,src) ->
       o = src.handle.vehicle
       return unless o.mount[0] is src.handle # only user on helm mount
-      [ o.accel, o.retro, o.right, o.left, o.boost ] = NET.getFlags msg[1]
+      o.accel = o.boost = o.retro = o.right = o.left = o.idle = undefined; o[State.controls[msg[1]]] = true
       o.d = msg.readUInt16LE 2
-      o.throttle = msg[4] * 1/255
+      o.a = o.thrustToAccel msg[4]
       o.applyControlFlags()
       src
 
-if isServer then NET.stateSync = $worker.DeadLine 1000, 5000, ->
-  if @state.json then NUU.jsoncast state:[@state.toJSON()], @
-  else NUU.bincast @state._buffer, @
+if isServer then NET.stateSync = $worker.DeadLine 1000, 5000,
+  -> NUU.bincast @state._buffer, @
 
 ###
   ███████ ████████ ███████ ███████ ██████
@@ -239,12 +243,12 @@ NET.define 11,'BURN',
     return src.error '_no_vehicle' unless o = u.vehicle
     return src.error '_no_mounts'  unless m = o.mount
     return src.error '_not_helm'   unless 0 is idx = m.indexOf u
-    NET.burn.write o,  msg.readUInt16LE 1
+    NET.burn.write o, msg.readUInt16LE 1
   write:
     server:(o,value)->
       o.setState S:$burn, a:o.thrustToAccel value
     client:(o,value)->
-      value = max 0, min 255, value || THROTTLE || 255
+      value = max 0, min 255, value || THROTTLE || 249
       msg = Buffer.from [NET.burnCode,0,0]
       msg.writeUInt16LE value, 1
       NET.send msg.toString 'binary'

@@ -95,7 +95,7 @@ NET.on 'jump', (target,src) ->
   return src.error '_nx_target'     unless target = $obj.byId[parseInt target]
   return src.error '_no_fuel'       unless o.fuel > 500
   o.fuel -= 500; NET.health.write o
-  o.accel = o.boost = o.retro = o.left = o.right = no
+  o.accel = o.left = o.right = no
   src.json jump:1
   setTimeout ( ->
     src.json jump:2
@@ -366,7 +366,7 @@ Ship::setMount = (user,mountId,only=false)->
   @mount[user.mountId = mountId] = user
   user.mount = @mountSlot[mountId]
   user.equip = if user.mount then user.mount.equip else undefined
-  @flags = String.fromCharCode 0 if 0 is mountId
+  @accel = @left = @right = no if 0 is mountId
   @inhabited = yes
   return mountId if only
   NUU.jsoncastTo @, setMount: @mount.map (i)->

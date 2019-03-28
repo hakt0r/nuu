@@ -132,6 +132,15 @@ NUU.jsoncast = (data,o) ->
   wsServer.clients.forEach (src)-> src.send data, $websocket.error(src)
   null
 
+NUU.jsoncastNear = (data,o) ->
+  data = NET.JSON + JSON.stringify data
+  wsServer.clients.forEach (src) ->
+    if o? and src.handle? and src.handle.vehicle? and o isnt src.handle.vehicle
+      v = src.handle.vehicle
+      return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
+    src.send data, $websocket.error(src)
+    null
+
 NUU.jsoncastTo = (v,data) ->
   return unless v.inhabited
   data = NET.JSON + JSON.stringify data

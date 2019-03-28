@@ -25,31 +25,27 @@ $obj.register class Ship extends $obj
   @byName: {}
   @byTpl: {}
 
-  iff: ''
+  iff:  ''
   name: ''
-  accel: no
-  retro: no
-  right: no
-  left: no
 
-  thrust: 0.1
-  turn: 10.0
-  type: 0
-  cargo: 10
-  throttle: 1
+  thrust:   0.1
+  turn:     10.0
+  type:     0
+  cargo:    10
+  throttle: .75
 
   reactorOut: 10.0
-  energy: 100
-  energyMax: 100
+  energy:     100
+  energyMax:  100
 
-  armour: 100
-  armourMax: 100
-  shield: 100
-  shieldMax: 100
+  armour:      100
+  armourMax:   100
+  shield:      100
+  shieldMax:   100
   shieldRegen: 0.1
 
-  fuel: 100
-  fuelMax: 100
+  fuel:        100
+  fuelMax:     100
 
   sprite:
     name: 'shuttle'
@@ -58,9 +54,9 @@ $obj.register class Ship extends $obj
     count: 108
   size: 32
 
-  mount: null
+  mount:     null
   inventory: null
-  slots: null
+  slots:     null
 
   constructor: (opts) ->
     super opts
@@ -136,12 +132,12 @@ Object.defineProperty Ship::, 'eventHorizon',
   get:-> $v.mag $v.sub @p, ( State.future @state, Date.now() + t ).p
 
 Ship::thrustToAccel = (value)->
-  # TODO: boost / frameshift / warp / slipstream
+  # TODO: frameshift / warp / slipstream :D
   value = max 0, min 255, value
-  value = (
-    if      value < 100 then .3 * -@thrust * .01 * ( 100 - value )
-    else if value < 200 then       @thrust * .01 * ( value - 99  )
-    else                           @thrust * .03 * ( value - 199 ) )
+  value = NET.floatLE (
+    if      value < 100 then -@thrust * (1/100) * ( 100 - value )
+    else if value < 250 then  @thrust * (1/149) * ( value - 100 )
+    else                      @thrust *           ( value - 248 ) )
   NET.floatLE value
 
 Ship::burnTime = (v,thurst,origin)->
