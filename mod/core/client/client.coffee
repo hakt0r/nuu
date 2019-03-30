@@ -49,7 +49,7 @@ $static 'WDT2',   1280
 $static 'HGT2',   960
 
 NUU.defaults =
-  mouseturn: off
+  mouseturnoff: off
   gfx: hud: off, scanner: off, speedScale: off
 
 NUU.saveSettings = ->
@@ -60,6 +60,7 @@ NUU.saveSettings = ->
 NUU.loadSettings = ->
   try data = NUU.applyDefaults JSON.parse( localStorage.getItem "config" ), NUU.defaults
   catch error then data = NUU.defaults
+  data = new Proxy data, set:(o,k,v)-> NUU.saveSettings o[k] = v
   NUU.settings = data
 
 NUU.applyDefaults = (o={},d={})->

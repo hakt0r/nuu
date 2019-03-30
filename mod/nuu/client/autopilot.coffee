@@ -55,7 +55,7 @@ Autopilot.start = ->
   VEHICLE.changeStrategy null
   VEHICLE.changeStrategy 'approach'
   Autopilot.active = yes
-  Mouse.disable()
+  Mouse.disableTemp()
   VEHICLE.onTarget = (v)->
     Autopilot.stop()
     Target.orbit()
@@ -65,7 +65,7 @@ Autopilot.stop = ->
   HUD.widget 'autopilot', 'ap:off', yes
   VEHICLE.changeStrategy null
   Autopilot.active = no
-  Mouse.enable()
+  Mouse.enableIfWasEnabled()
   return
 
 Autopilot.macro = ->

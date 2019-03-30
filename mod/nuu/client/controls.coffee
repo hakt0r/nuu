@@ -22,7 +22,7 @@
 ###
 
 NUU.on 'settings', ->
-  do Mouse.macro() unless NUU.settings.mouseturnoff
+  do Mouse.macro @state = no unless NUU.settings.mouseturnoff
 
 $static 'Mouse', new class MouseInput
   state: off
@@ -137,8 +137,11 @@ $static 'Mouse', new class MouseInput
     do evt.stopPropagation
     false
 
-  enable: ->  @state = off; do @macro()
-  disable: -> @state = on;  do @macro()
+  enable:             -> do @macro NUU.settings.mouseturnoff = @state = off
+  disable:            -> do @macro NUU.settings.mouseturnoff = @state = on
+  disableTemp:        -> do @macro @state = on
+  enableIfWasEnabled: -> do @macro @state = off unless NUU.settings.mouseturnoff
+
   macro: -> =>
     @state = not @state
     body = document.querySelector 'body'
