@@ -262,7 +262,7 @@ State.fixedTo.fromBuffer = (o,msg)-> new State.fixedTo {
 State.register class State.moving extends State
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    dt = ( time - @t ) * TICKi
+    dt = time - @t
     @o.x = @x + @m[0] * dt
     @o.y = @y + @m[1] * dt
     return
@@ -276,7 +276,7 @@ State.register class State.moving extends State
   updateRelTo:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     @relto.update time
-    dt = ( time - @t ) * TICKi
+    dt = time - @t
     @o.x    = @relto.x + @x + @m[0] * dt
     @o.y    = @relto.y + @y + @m[1] * dt
     @o.m[0] = @relto.m[0]   + @m[0]
@@ -337,12 +337,11 @@ State.register class State.burn extends State
     ] else [
       (  D * d[1] - sgn_dx * sqrt_discr ) / dr_squared
       ( -D * d[0] - sgn_dy * sqrt_discr ) / dr_squared ]
-    @dtmax = TICK * $v.dist(p,@m) / @acc
+    @dtmax = $v.dist(p,@m) / @acc
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    dtrise  = TICKi * min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
-    dtpeak  = TICKi * max 0,      dtreal - @dtmax
-    dtreal *= TICKi
+    dtrise  = min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
+    dtpeak  = max 0,      dtreal - @dtmax
     @acceleration = dtpeak is 0
     @o.m[0] = mx = @m[0]        +    @cosd*@acc*dtrise
     @o.m[1] = my = @m[1]        +    @sind*@acc*dtrise
@@ -352,9 +351,8 @@ State.register class State.burn extends State
   updateRelTo:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     @relto.update time
-    dtrise  = TICKi * min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
-    dtpeak  = TICKi * max 0,      dtreal - @dtmax
-    dtreal *= TICKi
+    dtrise  = min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
+    dtpeak  = max 0,      dtreal - @dtmax
     @acccceleration = dtpeak is 0
     @o.m[0] = mx = @relto.m[0]   + @m[0]        +    @cosd*@acc*dtrise
     @o.m[1] = my = @relto.m[1]   + @m[1]        +    @sind*@acc*dtrise
@@ -406,7 +404,7 @@ State.register class State.turn extends State
     super s
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    dt = ( time - @t ) * TICKi
+    dt = time - @t
     @o.x = @x + @m[0] * dt
     @o.y = @y + @m[1] * dt
     @o.d = $v.umod360 @d + @turn * dt
@@ -414,7 +412,7 @@ State.register class State.turn extends State
   updateRelTo:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     @relto.update time
-    dt = ( time - @t ) * TICKi
+    dt = time - @t
     @o.x    = @relto.x + @x + @m[0] * dt
     @o.y    = @relto.y + @y + @m[1] * dt
     @o.m[0] = @relto.m[0]   + @m[0]
@@ -458,25 +456,25 @@ State.turn::translate = State.moving::translate if isServer
 #    ██     ██████  ██   ██ ██   ████    ██     ██████
 
 State.register class State.turnTo extends State
-  constructor:(s)->
-    s.turn = s.o.turn || 1
-    s.turnTime = s.tt = 0
-    super s
-    @changeDir @D if @D
   changeDir:(dir)->
     @update tt = NUU.time()
-    @d = @o.d; @tt = tt
+    @tt = tt
     @D = dir
-    ddiff = -180 + $v.umod360 -180 + dir - @d
-    adiff = abs ddiff
+    do @cache
+    return unless isServer
+    @_buffer = null; @toBuffer()
+  cache:->
+    @tt = @tt || @t
+    @d = @o.d
+    adiff = abs ddiff = (@D-@d+540)%360-180
+    return @turn = @turnTime = 0 if adiff is 0
     @turn = @o.turn || 1
     @turnTime = adiff / @turn
-    @turn = -@turn if ddiff < 0
-    @_buffer = null; @toBuffer()
+    @turn = -@turn if 0 > ddiff
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    dt  = ( time - @t  ) * TICKi
-    tdt = ( time - @tt ) * TICKi
+    dt  = time - @t
+    tdt = time - @tt
     @o.x = @x + @m[0] * dt
     @o.y = @y + @m[1] * dt
     @o.d = $v.umod360 360 + @d + @turn * min @turnTime, tdt
@@ -484,8 +482,8 @@ State.register class State.turnTo extends State
   updateRelTo:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
     @relto.update time
-    dt  = ( time - @t  ) * TICKi
-    tdt = ( time - @tt ) * TICKi
+    dt  = time - @t
+    tdt = time - @tt
     @o.x    = @relto.x + @x + @m[0] * dt
     @o.y    = @relto.y + @y + @m[1] * dt
     @o.m[0] = @relto.m[0]   + @m[0]
@@ -495,30 +493,32 @@ State.register class State.turnTo extends State
   toJSON:-> S:@S,x:@x,y:@y,d:@d,D:@D,m:@m,t:@t,relto:(@relto||id:0).id
 
 State.turnTo::toBuffer = ->
-  return @_buffer if @_buffer; msg = Buffer.allocUnsafe 82; o = @o
+  return @_buffer if @_buffer; msg = Buffer.allocUnsafe 93; o = @o
   msg[0] = NET.stateCode; msg[1] = @S
   msg.writeUInt16LE o.id,                                      2
   msg.writeUInt16LE ( if @relto then @relto.id else 0 ),       4
   msg.writeUInt16LE ( @d = parseInt @d ),                      6
   msg.writeDoubleLE ( @x = parseInt @x ),                      8
   msg.writeDoubleLE ( @y = parseInt @y ),                      24
-  msg.writeUInt32LE ( @t % 1000000     ),                      40
-  msg.writeDoubleLE @m[0],        48; @m[0] = msg.readDoubleLE 48
-  msg.writeDoubleLE @m[1],        64; @m[1] = msg.readDoubleLE 64
-  msg.writeUInt16LE ( @D = parseInt @D ),                      80
+  msg.writeUInt32LE ( @t  % 1000000    ),                      40
+  msg.writeUInt32LE ( @tt % 1000000    ),                      48
+  msg.writeDoubleLE @m[0],        64; @m[0] = msg.readDoubleLE 64
+  msg.writeDoubleLE @m[1],        80; @m[1] = msg.readDoubleLE 80
+  msg.writeUInt16LE ( @D = parseInt @D ),                      88
   return @_buffer = msg.toString 'binary'
 
 State.turnTo.fromBuffer = (o,msg)->
   new State.turnTo
     o: o
-    relto:    $obj.byId[  msg.readUInt16LE 4 ]
-    d:                    msg.readUInt16LE 6
-    x:                    msg.readDoubleLE 8
-    y:                    msg.readDoubleLE 24
-    t: NUU.timePrefix() + msg.readUInt32LE 40
-    m: [                  msg.readDoubleLE 48
-                          msg.readDoubleLE 64
-    D:                    msg.readUInt16LE 80 ]
+    relto:     $obj.byId[  msg.readUInt16LE 4 ]
+    d:                     msg.readUInt16LE 6
+    x:                     msg.readDoubleLE 8
+    y:                     msg.readDoubleLE 24
+    t:  NUU.timePrefix() + msg.readUInt32LE 40
+    tt: NUU.timePrefix() + msg.readUInt32LE 48
+    m:  [                  msg.readDoubleLE 64
+                           msg.readDoubleLE 80 ]
+    D:                     msg.readUInt16LE 88
 
 State.turnTo::translate = State.moving::translate if isServer
 
@@ -541,7 +541,7 @@ State.register class State.steer extends State
     @rsindi = @radius * sin @di
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
-    dt = ( time - @t ) * TICKi
+    dt = time - @t
     dr = RADi * @o.d = $v.umod360 @d + @turn * dt
     dp = RADi *        $v.umod360      @turn * dt
     @o.x = @x + ( @rcosdi ) - @radius * cos dp + @di
@@ -606,7 +606,7 @@ State.register class State.orbit extends State
     dy = @o.y - @relto.y
     relm = $v.sub @relto.m.slice(), @o.m
     @orb = @orb || round sqrt dx * dx + dy * dy
-    @vel = v = max 1, min round(@orb/100), $v.mag relm
+    @vel = v = max 0.02, min 0.01, min $v.mag(relm), @orb / 10000000
     @stp = TAU / (( TAU * @orb ) / v )
     @stp = -@stp if 0 > $v.cross(2) relm, [dx,dy]
     @off = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
@@ -615,8 +615,8 @@ State.register class State.orbit extends State
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time
     @relto.update time unless @relto.id is 0
-    tick = ( time - @t ) * TICKi
-    angl = ((( TAU + @off + tick * @stp ) % TAU ) + TAU ) % TAU
+    t = time - @t
+    angl = ((( TAU + @off + t * @stp ) % TAU ) + TAU ) % TAU
     @o.x = @relto.x + @orb * cos angl
     @o.y = @relto.y + @orb * sin angl
     angl = ( @stpangl + angl + TAU ) % TAU
@@ -663,13 +663,13 @@ State.register class State.travel extends State
       @pta = 60 # secs
   update:(time)->
     time = NUU.time() unless time; return null if @lastUpdate is time
-    deltaT = ( time - @lastUpdate ) / TICK
+    t = time - @lastUpdate
     time_passed  = time - @from.t
     @to.state.update time
     @o.x = @from.x + time_passed * ( @from.x - @to.x )
     @o.y = @from.y + time_passed * ( @from.y - @to.y )
     @o.m = m = $v.zero.slice()
-    m[0] = ( @o.x - @lstx ) / deltaT; @lstx = @o.x
-    m[1] = ( @o.y - @ly ) / deltaT; @ly = @o.y
+    m[0] = ( @o.x - @lstx ) / t; @lstx = @o.x
+    m[1] = ( @o.y - @ly   ) / t; @ly   = @o.y
     @lastUpdate = time; null
   toJSON:-> S:@S, from:from.toJSON(), to:@to.id

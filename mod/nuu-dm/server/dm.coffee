@@ -105,7 +105,12 @@ rules.dm.server = ->
     null
 
   Asteroid.autospawn max: ROIDS_MAX
-  AI.autospawn max: DRONES_MAX if DRONES_ACTIVE
+
+  Miner.max  = 100
+  Trader.max = 200
+  Drone.max  = 100
+
+  AI.autospawn() if DRONES_ACTIVE
 
   NUU.emit 'rules', rules
 

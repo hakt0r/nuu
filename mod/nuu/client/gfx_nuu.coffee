@@ -132,9 +132,9 @@ Sprite.animate = (timestamp) ->
   # time = NUU.time()
   while ++i < length
     s = list[i]
-    ticks = ( time - s.ms ) * TICKi
-    x = floor s.sx + s.mx * ticks
-    y = floor s.sy + s.my * ticks
+    t = time - s.ms
+    x = floor s.sx + s.mx * t
+    y = floor s.sy + s.my * t
     s.sprite.position.set x + OX, y + OY
     if s.tt < time
       Sprite.weap.removeChild s.sprite

@@ -179,10 +179,10 @@ Ship::updateMods = ->
   @[k] += @[k] * ( v / 100 ) for k,v of map
 
   # scale model values
-  @armourMax = @armour = @stats.armour / 1000
-  @fuelMax   = @fuel   = @fuel * 10
-  @turn      = @turn    / 10
-  @thrust    = @thrust  / 100
+  @armourMax = @armour  = @stats.armour / 1000
+  @fuelMax   = @fuel    = @fuel * 10
+  @turn      = @turn   / 500
+  @thrust    = @thrust / 10000
 
   # add/exchange model-worker
   @lastUpdate = 0
@@ -202,12 +202,12 @@ ShipModel = $worker.ReduceList (time)->
     @energy -= add
   @fuel = @fuelMax if @fuel > @fuelMax
   @fuel = 0        if @fuel <= 0
-  return true unless isServer
+  return 100 unless isServer
   @setState S:$moving if @fuel is 0 and @state.acceleration
-  return true unless @mount[0] and @lastUpdate + 3000 < time
+  return 100 unless @mount[0] and @lastUpdate + 3000 < time
   NET.health.write @
   @lastUpdate = time
-  true
+  100
 
 Ship::save = ->
   loadout = weapon:[], structure:[], utility:[]

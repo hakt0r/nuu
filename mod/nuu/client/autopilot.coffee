@@ -24,10 +24,10 @@ $public class Autopilot
   @active: no
   @plan:   'land'
 
-Autopilot.commit = (@ship, @target, @plan='land')->
-  VEHICLE.target = @target
-
 Autopilot.widget = (v) ->
+  unless VEHICLE.target
+    HUD.widget 'autopilot', 'no target', yes
+    return v
   s = ''
   s += VEHICLE.target.name + '\n'
   s += v.message + '\n'
@@ -46,21 +46,27 @@ Autopilot.widget = (v) ->
   s += '⌘' if v.recommend is 'execute'
   s += ']\nFm:' + hdist v.maxSpeed
   HUD.widget 'autopilot', s, yes
-  v
+  return v
 
 Autopilot.start = ->
   Autopilot.stop() if Autopilot.active
   HUD.widget 'autopilot', 'ap:booting', yes
   VEHICLE.target = TARGET
+  VEHICLE.changeStrategy null
   VEHICLE.changeStrategy 'approach'
   Autopilot.active = yes
   Mouse.disable()
+  VEHICLE.onTarget = (v)->
+    Autopilot.stop()
+    Target.orbit()
+  return
 
 Autopilot.stop = ->
   HUD.widget 'autopilot', 'ap:off', yes
-  VEHICLE.changeStrategy()
+  VEHICLE.changeStrategy null
   Autopilot.active = no
   Mouse.enable()
+  return
 
 Autopilot.macro = ->
   unless VEHICLE.hasAP
@@ -70,9 +76,6 @@ Autopilot.macro = ->
     VEHICLE.onDecision = Autopilot.widget.bind Autopilot
   unless  Autopilot.active
        do Autopilot.start
-       VEHICLE.onTarget = (v)->
-         Autopilot.stop()
-         Target.orbit()
   else do Autopilot.stop
 
 Kbd.macro 'autopilot', 'sKeyZ', 'Autopilot', Autopilot.macro

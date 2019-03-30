@@ -105,8 +105,8 @@ Stellar.init = ->
     relto$.update()
     if oct > 1
       rand  = ( TAU / oct ) * odx
-      vel   = 3
-      stp   = TAU * 1 / ( TAU * orbit * 1/3 )
+      vel   = 0.05
+      stp   = TAU / ( ( TAU * orbit ) / vel )
       state = S:state, relto:relto$, t:now, orb:orbit, vel:vel, stp:stp, off:rand
     else
       rand = random() * TAU

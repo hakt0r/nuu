@@ -199,9 +199,9 @@ NET.define 10,'STEER',
     server:(o,idx,value)->
       if idx is 0
         return console.log '::st','dir','locked' if o.locked
-        o.update()
-        o.setState S:$turnTo unless o.state.S is $turnTo
-        o.state.changeDir value
+        if o.state.S is $turnTo
+          o.state.changeDir value
+        else return o.setState S:$turnTo, D:value
       else if s = o.mountSlot[idx]
            if e = s.equip then e.target = value = ( 360 + value - o.d ) % 360
       else return false

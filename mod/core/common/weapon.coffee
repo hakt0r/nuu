@@ -157,7 +157,7 @@ Track = $worker.List (time)->
     return
   else
     td  = $v.heading(@target.p,@ship.p) * RAD
-    tdd = -180 + $v.umod360 @ship.d + @dir - td
+    tdd = (@ship.d+@dir-td+360)%360-180
   if @stats.track * 2 < abs tdd
        @dir += ( if tdd > 0 then 1 else -1 ) * @stats.track
   else @dir += tdd
@@ -232,7 +232,7 @@ Weapon.Projectile = ->
   Weapon.Projectile.loadAssets.call @ if isClient
   @delay  = @stats.delay * 500
   @ttl    = 1000 / @stats.speed * 1000
-  @ppt    = @stats.speed * TICKi
+  @pps    = @stats.speed / 333
   @dir    = 0
   @lock = @stop = false
   Track.add @ if @turret
@@ -251,9 +251,9 @@ ProjectileEmitter = $worker.ReduceList (time)->
   @next = time + @delay
   ship = @ship
   ship.update time
-  cs = cos d = (( ship.d + @dir ) % 360 ) / RAD
+  cs = cos d = (( ship.d + @dir ) % 360 ) * RADi
   sn = sin d
-  m = [ ship.m[0] + cs * @ppt, ship.m[1] + sn * @ppt ]
+  m = [ ship.m[0] + cs * @pps, ship.m[1] + sn * @pps ]
   x = ship.x # + slot.x * cs
   y = ship.y # + slot.y * sn
   ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, m[0], m[1] if isServer
@@ -264,9 +264,9 @@ ProjectileEmitter = $worker.ReduceList (time)->
 ProjectileDetector = $worker.ReduceList (time)->
   return false if @tt < time
   for target in @perp.hostile
-    ticks = ( time - @ms ) * TICKi
-    x = floor @sx + @mx * ticks
-    y = floor @sy + @my * ticks
+    t = time - @ms
+    x = floor @sx + @mx * t
+    y = floor @sy + @my * t
     continue if target.size < $dist (x:x,y:y), target
     target.hit @perp, @weap if isServer
     return false
@@ -282,7 +282,6 @@ $abstract 'Missile',
   d: 0
   thrust: 0.1
   turn: 1
-  accel: true
   size: 22
   tpl: 175 # Spearhead Missile
   init: $void
@@ -311,9 +310,6 @@ Weapon.Launcher = ->
     else (src,target)=>
       Weapon.hostility @ship, target
       new Missile source:@ship, target:target
-      setTimeout (=> new Missile source:@ship, target:target), 100
-      setTimeout (=> new Missile source:@ship, target:target), 200
-      setTimeout (=> new Missile source:@ship, target:target), 300
   @release = $void
 
 $obj.register class Missile extends $obj
@@ -322,25 +318,26 @@ $obj.register class Missile extends $obj
 
   constructor: (opts={})->
     src = opts.source
-    opts.turn = 6.0
-    opts.thrust = 1.4
+    opts.turn   = 0.4
+    opts.thrust = 0.0014
     sm = src.m.slice()
     sd = src.d / RAD
     src.update time = NUU.time()
     opts.state =
-      S: $moving
+      S: $burn
+      a: opts.thrust
       t: time
       d: src.d
       x: src.x
       y: src.y
-      m: [ sm[0] + cos(sd) * opts.thrust * 10, sm[1] + sin(sd) * opts.thrust * 10 ]
+      m: [ sm[0] + cos(sd) * opts.thrust, sm[1] + sin(sd) * opts.thrust ]
     super opts
     @ttl = time + 10000
     @needState = 0
     @prevState = 0
     @hitDist   = pow ( @size + @target.size ) / 2, 2
     @prototype = Item.byId[@tpl]
-    MissilePilot.add @
+    setTimeout ( => MissilePilot.add @ ), 500
 
 return if isClient
 
@@ -348,26 +345,20 @@ MissilePilot = $worker.ReduceList (time)->
   if time > @ttl
     @destructor()
     return false
-  @update @target.update()
-  dx = parseInt @target.x - @x
-  dy = parseInt @target.y - @y
-  dst = dx * dx + dy * dy
-  if @hitDist > dst
+  @update time = NUU.time()
+  @target.update time
+  dist = $v.sub @target.p, @p
+  if @hitDist > $v.mag dist
     @target.hit @source, @prototype
-    NET.operation.write(@,'remove')
+    NET.operation.write @, 'remove'
     @destructor()
     return false
-  dir = parseInt NavCom.fixAngle( atan2( dx, -dy ) * RAD )
-  dif = $v.smod( dir - @d + 180 ) - 180
-  if abs( dif ) > 10
-    @left  = -180 < dif < 0
-    @right = not @left
-    @needState = if @left then 1 else 2
-  else if @turn < abs(dif) < 2 * @turn
-    @left = @right = no
-    NET.steer.write @, 0, dir # steer sets @d
-    @needState = 3
-  else @needState = 4
-  @applyControlFlags() if @needState isnt @prevState
-  @prevState = @needState
+  dir = (360+RAD*$v.heading dist, $v.zero)%360
+  dif = (dir-@d+540)%360-180
+  if abs(dif) < 2
+    return true if @prevState is 4; @prevState = 4
+    @setState S:$burn, a:@thrust, d:dir
+  else
+    return true if @prevState is 3 and @prevDir is dir; @prevState = 3; @prevDir = dir
+    if @state.S is $turnTo then @state.changeDir dir else @setState S:$turnTo, D:dir
   true

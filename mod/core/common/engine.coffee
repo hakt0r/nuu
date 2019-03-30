@@ -51,13 +51,11 @@ NUU.stop = ->
 $static '$version',      '0.4.73'
 
 # ENGINE CONSTANTS
-$static 'TICK',          16.6
-$static 'TICKi',         1/16.6    # old habit, avoid division
-$static 'TICKs',         1000/16.6 # old habit, avoid division
 $static 'Speed',
-  ofLight: 299792.458
-  max:     299792.458 * TICKi
-  boost:   10
+  ofLight: 299792.458 # px/s
+  max:     299792.457 / 100 # 10C cuz youknow :D C is far too slow :D
+
+$static 'TICK',          15 # worker resolution in ms
 
 # ENGINE VARIABLES
 $static 'OX',            0 # global delta
