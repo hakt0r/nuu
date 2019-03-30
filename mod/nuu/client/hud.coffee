@@ -314,11 +314,11 @@ new class uiHUD
     @startTime = NUU.time()
     new uiArrow  @, 'dir',      'yellow'
     new uiArrow  @, 'targetDir',   'red'
-    new uiVector @, 'speed',    0x00FF00
+    #new uiVector @, 'speed',    0x00FF00
     new uiVector @, 'force',    0xFF00FF
-    new uiVector @, 'match',    0xFF0000
     new uiVector @, 'approach', 0xFFFF00
-    new uiVector @, 'creep',    0x00FFFF
+    #new uiVector @, 'match',    0xFF0000
+    #new uiVector @, 'creep',    0x00FFFF
     do uiBar.init # HEALTH BARS
     do uiText.init # TEXT NODES
     @topLeft.position.set 10, 10
@@ -352,8 +352,9 @@ new class uiHUD
   render: (g) ->
     dir = ((VEHICLE.d + 180) % 360) / RAD
     radius  = VEHICLE.size / 2 + 10
-    fox = WDB2 + 55; foy = HEIGHT - 85
-    # fox = WDB2; foy = HGB2 if Scanner.fullscreen
+    fox = WDB2; foy = HEIGHT - 108
+    fox = WDB2; foy = HGB2 if Scanner.fullscreen
+    fol = Scanner.radius
     # PLAYER
     unless VEHICLE.dummy or not p = NUU.player
       @fuel.width   = VEHICLE.fuel   / VEHICLE.fuelMax * 100
@@ -376,13 +377,13 @@ new class uiHUD
     t = ''
     cid = Target.class
     list = Target.typeNames
-    @targetShield.visible = @targetArmour.visible = @targetShield.bg.visible = @targetArmour.bg.visible = @targetDir.visible = @approach.visible = @match.visible = TARGET?
+    @targetShield.visible = @targetArmour.visible = @targetShield.bg.visible = @targetArmour.bg.visible = @targetDir.visible = @approach.visible = @force.visible = TARGET?
     unless TARGET
       m = VEHICLE.m.slice()
       l = Math.min 50, 50 / Speed.max * $v.mag(m)
       m = $v.mult $v.normalize(m), l
-      @speed.width = l
-      @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
+      #@speed.width = l
+      # @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
     else if TARGET
       @targetShield.width = TARGET.shield / TARGET.shieldMax * 100
       @targetArmour.width = TARGET.armour / TARGET.armourMax * 100
@@ -390,30 +391,30 @@ new class uiHUD
       m = $v.sub VEHICLE.m.slice(), TARGET.m
       l = Math.min 50, 50 / Speed.max * $v.mag(m)
       m = $v.mult $v.normalize(m), l
-      @speed.width = l
-      @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
+      #@speed.width = l
+      #@speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
       if vec = NavCom.decide @, NavCom.steer VEHICLE, TARGET, 'pursue' # VEHICLE.lastVec
         t += "v[#{hdist vec.creep_s}:#{vec.setThrottle}:#{rdec3 vec.error_threshold}:#{rdec3 vec.error}]\n"
-        if @approach.visible = vec.approach?
-          @approach.height   = 1
-          @approach.width    = vec.approach_vs
-          @approach.rotation = vec.approach_vh
-          @approach.position.set WDB2, HGB2
-        if @match.visible = vec.match_d? and vec.approach_d < vec.match_d
-          @match.height   = 10
-          @match.width    = vec.match_d
-          @match.rotation = vec.approach_h
-          @match.position.set WDB2, HGB2
-        if @creep.visible = vec.creep?
-          @creep.height   = 4
-          @creep.width    = vec.creep_s
-          @creep.rotation = vec.creep_h
-          @creep.position.set WDB2, HGB2
         if @force.visible = vec.approach?
           @force.height   = 1
-          @force.width    = $v.mag VEHICLE.m.slice()
+          @force.width    = fol * Speed.maxi * min Speed.max, $v.mag VEHICLE.m.slice()
           @force.rotation = $v.heading VEHICLE.m.slice(), $v.zero
-          @force.position.set WDB2, HGB2
+          @force.position.set fox, foy
+        if @approach.visible = vec.approach?
+          @approach.height   = 1
+          @approach.width    = fol * Speed.maxi * min Speed.max, vec.approach_vs
+          @approach.rotation = vec.approach_vh
+          @approach.position.set fox, foy
+        # if @match.visible = no # vec.match_d? and vec.approach_d < vec.match_d
+        #   @match.height   = 10
+        #   @match.width    = fol * Speed.maxi * min Speed.max, vec.match_d
+        #   @match.rotation = vec.approach_h
+        #   @match.position.set fox, foy
+        # if @creep.visible = no # vec.creep?
+        #   @creep.height   = 4
+        #   @creep.width    = fol * Speed.maxi * min Speed.max, vec.creep_s
+        #   @creep.rotation = vec.creep_h
+        #   @creep.position.set fox, foy
       # DIRECTION
       relDir = $v.heading TARGET.p, VEHICLE.p
       @targetDir.position.set WDB2 + cos(relDir) * radius * 1.1, HGB2 + sin(relDir) * radius * 1.1

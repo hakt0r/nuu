@@ -112,6 +112,7 @@ $static 'Scanner', new class ScannerRenderer
     else
       W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 100
       @gfx.position.set WDB2 - 100, HEIGHT - 210
+    @radius = W2
     lb = @label
     px = pl.x; py = pl.y
     ( g = @gfx ).clear()

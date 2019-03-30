@@ -52,8 +52,9 @@ $static '$version',      '0.4.73'
 
 # ENGINE CONSTANTS
 $static 'Speed',
-  ofLight: 299792.458 # px/s
-  max:     299792.457 / 100 # 10C cuz youknow :D C is far too slow :D
+  ofLight: C  = 299792.458 # px/s
+  max:     CC = C / 100 # 10C cuz youknow :D C is far too slow :D
+  maxi:    1 / CC
 
 $static 'TICK',          15 # worker resolution in ms
 
