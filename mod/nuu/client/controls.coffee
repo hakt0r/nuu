@@ -36,8 +36,8 @@ $static 'Mouse', new class MouseInput
   lastAccel: no
 
   constructor:->
-    @[k] = @[k].bind @ for k in ['update','reset','callback','oncontextmenu','onwheel','onmouseup','onmousedown']
-    null
+    @[k] = @[k].bind @ for k in ['update','reset','callback','oncontextmenu','onwheel','onmouseup','onmousedown','blockZoom']
+    return
 
   update: (evt) ->
     evt = evt
@@ -49,7 +49,9 @@ $static 'Mouse', new class MouseInput
   reset: ->
     do @trigger.dn    if @trigger
     do @triggerSec.dn if @triggerSec
-    document.onmousemove = document.onwheel = document.onmouseup = document.onmousedown = document.oncontextmenu = null
+    document.onmousemove = document.onmouseup = document.onmousedown = document.oncontextmenu = null
+    document.removeEventListener 'wheel', @onwheel, passive:no
+    document.addEventListener 'wheel', @blockZoom, passive:no
     @trigger = @triggerSec = @state = off
     HUD.widget 'mouse', null
     clearInterval @timer
@@ -115,7 +117,9 @@ $static 'Mouse', new class MouseInput
     do evt.stopPropagation
     false
 
+  blockZoom: (evt) -> evt.preventDefault()
   onwheel: (evt) ->
+    evt.preventDefault()
     down = evt.wheelDeltaY >= 0
     if evt.altKey # alt: set throttle
       return unless NUU.player.mountId is 0
@@ -148,7 +152,8 @@ $static 'Mouse', new class MouseInput
     if @state
       HUD.widget 'mouse', 'mouse', true
       document.onmousemove   = @update
-      document.onwheel       = @onwheel
+      document.removeEventListener 'wheel', @blockZoom, passive:no
+      document.addEventListener 'wheel', @onwheel, passive:no
       document.onmouseup     = @onmouseup
       document.onmousedown   = @onmousedown
       document.oncontextmenu = @oncontextmenu
