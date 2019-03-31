@@ -98,6 +98,7 @@ if isClient then NET.route = (src,msg)->
   msg = new Buffer msg, 'binary'
   fnc = NET.resolve[msg[0]]
   fnc.call NET, msg, src if fnc?
+  return
 
 else if isServer then NET.route = (src) ->
   res = NET.resolve
@@ -105,6 +106,7 @@ else if isServer then NET.route = (src) ->
     msg = Buffer.from msg, 'binary'
     fnc = res[msg[0]]
     fnc.call NET, msg, src if fnc?
+    return
 
 ###
        ██ ███████  ██████  ███    ██
@@ -388,3 +390,45 @@ NET.define 8,'HEALTH',
     t.armour = msg[5] * ( t.armourMax / 255 )
     t.fuel   = msg[6] * ( t.fuelMax   / 255 )
     console.log ':net', 'health', t.id, t.shield, t.armour if debug
+
+# ██ ██████   █████   ██████
+# ██ ██   ██ ██   ██ ██
+# ██ ██████  ███████ ██
+# ██ ██   ██ ██   ██ ██
+# ██ ██   ██ ██   ██  ██████
+
+if isServer then NUU.on 'extend', ->
+  NET.channel = {}
+  Object.defineProperty User::, 'channel',
+    get:-> @db.channel || 'global'
+    set:(v)->
+      nc = NET.channel
+      return if v is @db.channel and nc[@channel]?.includes @
+      Array.remove ( nc[@channel] || nc[@channel] = [] ), @ if @channel
+      Array.pushUnique ( c = nc[@db.channel=v||'global'] || nc[v] = [] ), @
+      return v
+  User.cleanup.push ->
+    Array.remove c, @ if @channel and c = NET.channel[@channel] || NET.channel[@channel] = []
+    return
+
+NET.define 12,'AUDIO',
+  write:client: (channel,blob)->
+    buffer = await new Promise (resolve)->
+      r = new FileReader
+      r.onload = (event)-> resolve event.target.result
+      r.readAsArrayBuffer blob
+    channel = Buffer.from ( channel.substring 0, 63 ), 'utf8' # at most 252 bytes
+    NET.send Buffer.concat [Buffer.from([NET.audioCode, channel.length ]),channel,Buffer.from buffer]
+  read:
+    server:(msg,src)->
+      src.handle.channel = channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'
+      dataLength = msg.byteLength - 2 - chanLength
+      return console.log dataLength if dataLength is 0 or dataLength > 65536
+      NET.channelBincast channel, msg, except:[src]
+      console.log "##{channel}@#{src.handle.db.nick}: (audio) ", dataLength if debug
+    client:(msg)->
+      channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'
+      dataLength = msg.byteLength - 2 - chanLength
+      dataOffset = 2 + chanLength
+      Sound.radio.add URL.createObjectURL new Blob [msg.slice(dataOffset)], type:'audio/webm'
+      console.log "##{channel}@#{'unknown'}: (audio) ", dataLength if debug

@@ -118,19 +118,29 @@ NET.awaitLogin = (src)-> (msg)->
 
 NUU.bincast = (data,o) ->  wsServer.clients.forEach (src) ->
   src.send data, $websocket.error(src)
-  null
+  return
+
+NET.channelBincast = (channel,data,opts={})->
+  return console.log 'nochan' unless c = NET.channel[channel]
+  except = opts.except || []
+  c.forEach (user) ->
+    return if except.includes user
+    src = user.sock
+    src.send data, $websocket.error(src)
+    return
+  return
 
 NUU.nearcast = (data,o) -> wsServer.clients.forEach (src) ->
   if o? and src.handle? and src.handle.vehicle? and o isnt src.handle.vehicle
     v = src.handle.vehicle
     return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
   src.send data, $websocket.error(src)
-  null
+  return
 
 NUU.jsoncast = (data,o) ->
   data = NET.JSON + JSON.stringify data
   wsServer.clients.forEach (src)-> src.send data, $websocket.error(src)
-  null
+  return
 
 NUU.jsoncastNear = (data,o) ->
   data = NET.JSON + JSON.stringify data
@@ -139,7 +149,8 @@ NUU.jsoncastNear = (data,o) ->
       v = src.handle.vehicle
       return unless ( abs abs(v.x) - abs(o.x) ) < 5000 and ( abs abs(v.y) - abs(o.y) ) < 5000
     src.send data, $websocket.error(src)
-    null
+    return
+  return
 
 NUU.jsoncastTo = (v,data) ->
   return unless v.inhabited
@@ -147,7 +158,7 @@ NUU.jsoncastTo = (v,data) ->
   v.mount.map (user)-> if user and src = user.sock
     console.log '::ws', 'jsoncastTo', v.id, data
     src.send data, $websocket.error(src)
-  null
+  return
 
 NUU.splashPage = (audio=no,isExcuse=no) ->
   audioTag = ""

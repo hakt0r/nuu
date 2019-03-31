@@ -119,6 +119,7 @@ for lib in deps.server.require
 
 require BASEDIR + '/build/common/' + lib + '.js' for lib in deps.common.sources
 require BASEDIR + '/build/server/' + lib + '.js' for lib in deps.server.sources when lib isnt 'server'
+NUU.emit 'extend'
 
 # ██     ██ ███████ ██████  ███████ ███████ ██████  ██    ██ ███████ ██████
 # ██     ██ ██      ██   ██ ██      ██      ██   ██ ██    ██ ██      ██   ██

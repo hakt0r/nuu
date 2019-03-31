@@ -230,6 +230,10 @@ Array.empty = (a)->
   a.pop() while a.length > 0
   a
 
+Array.pushUnique = (a,v)->
+  a.push v unless a.includes v
+  return
+
 Object.empty = (o)->
   delete o[k] for k of o
   o

@@ -108,6 +108,7 @@ class NET.Connection
     console.log ':net', 'connect', @addr
     try s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
     catch e then @onerror e
+    s.binaryType = 'arraybuffer'
     @connectTimeout = setTimeout ( =>
       s.close() unless s.readyState is 1
     ), 5000

@@ -33,12 +33,7 @@ NET.on 'login', NET.loginFunction = (msg,src) ->
 
 NET.on 'logout', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
-  return src.error '_no_vehicle'    unless o = u.vehicle
-  mounties = o.mount.reduce (v,c=0)-> if v? then ++c else c
-  console.log 'logout', u.name, mounties, o.mount[0] if debug
-  o.destructor() if 1 is mounties
-  u.vehicle = null
-  # delete User.byId[u.db.id] # onTimeout
+  u.logout()
   return
 
 NET.on 'debug', (msg,src) ->
@@ -130,6 +125,7 @@ $tag.db 'UserDB',
 
 $public class User
   @byId: {}
+  @cleanup: []
   constructor: (src, user, pass) ->
     console.log 'user', user, pass # if debug
     if user? and user is 'test'
@@ -180,6 +176,23 @@ User::rejoin = (src)->
     do @loadShip
   @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
   console.log 'user', @db.nick.green, 'rejoined'.yellow, ( @vehicle.landedAt || 'space' ).red
+  true
+
+User::logout = ->
+  if o = @vehicle
+    mounties = o.mount.reduce (v,c=0)-> if v? then ++c else c
+    console.log 'logout', @name, mounties, o.mount[0] if debug
+    o.destructor() if 1 is mounties
+  @sock = @vehicle = undefined
+  setTimeout => @destructor()
+  return
+
+User::destructor = ->
+  return false if @sock
+  do @save
+  @channel = null
+  delete User.byId[@db.id]
+  f.call @ for f in User.cleanup
   true
 
 User::loadShip = ->
