@@ -424,7 +424,7 @@ NET.define 12,'AUDIO',
       src.handle.channel = channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'
       dataLength = msg.byteLength - 2 - chanLength
       return console.log dataLength if dataLength is 0 or dataLength > 65536
-      NET.channelBincast channel, msg, except:[src]
+      NET.channelBincast channel, msg, except:[src.handle]
       console.log "##{channel}@#{src.handle.db.nick}: (audio) ", dataLength if debug
     client:(msg)->
       channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'
