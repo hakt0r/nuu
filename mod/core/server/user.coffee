@@ -293,15 +293,14 @@ User::eva = (t,o,zone,dist)->
   @enterVehicle @createVehicle('Exosuit'), 0, no if o.name isnt 'Exosuit'
   return
 
+$obj::launch = ->
+  @locked = no
+  @setState S:$moving
+
 User::launch = (t,o,zone,dist)->
-  if o.state.S is $orbit and @mountId is 0
-    @save @db.orbit = o.locked = no
-    o.setState S:$moving #, x:o.x, y:o.y, m:o.m.slice()
-    NUU.jsoncastTo o, launch:yes
-  else if o.landedAt and @mountId is 0
-    NUU.emit 'ship:launch', o, o.landedAt.name
-    @save @db.landed = o.landedAt = o.locked = no
-    o.setState S:$moving #, x:o.x, y:o.y, m:t.m.slice()
+  if ( o.state.S is $orbit or o.landedAt ) and @mountId is 0
+    o.launch o.landedAt = no
+    @save()
     NUU.jsoncastTo o, launch:yes
   else if @equip? and @equip.type is 'fighter bay'
     @save @enterVehicle @createVehicle(Item.byName[@equip.stats.ammo.replace(' ','')].stats.ship), 0, no
@@ -328,18 +327,33 @@ User::dock = (t,o,zone,dist)->
   o.destructor()
   @enterVehicle t, 0, no
 
-User::land = (t,o,zone,dist)->
+# ██       █████  ███    ██ ██████
+# ██      ██   ██ ████   ██ ██   ██
+# ██      ███████ ██ ██  ██ ██   ██
+# ██      ██   ██ ██  ██ ██ ██   ██
+# ███████ ██   ██ ██   ████ ██████
+
+$obj::land = (t,zone=@size,dist=$dist(t,@))->
   return false if t.mount # cant attach to vehicles
   return false unless dist < zone # too far
-  console.log 'user', 'land'.green, t.name if debug
-  o.setState S:$fixedTo, relto:t
-  @db.landed = t.id
-  o.fuel     = o.fuelMax
-  o.landedAt = t
-  @save()
+  console.log 'land'.green, @name, 'on', t.name if debug
+  @setState S:$fixedTo, relto:t
+  @fuel     = @fuelMax
+  @landedAt = t
+  true
+
+User::land = (t,o,zone,dist)->
+  return false unless o.land t,zone,dist
+  @save @db.landed = t.id
   @sock.json landed: t.id
   NUU.emit 'ship:land', @db.nick, o.name, t.name
   true
+
+#  ██████  ██████  ██████  ██ ████████
+# ██    ██ ██   ██ ██   ██ ██    ██
+# ██    ██ ██████  ██████  ██    ██
+# ██    ██ ██   ██ ██   ██ ██    ██
+#  ██████  ██   ██ ██████  ██    ██
 
 User::orbit = (t,o,zone,dist)->
   return unless ob = t.orbits
@@ -353,6 +367,12 @@ User::orbit = (t,o,zone,dist)->
     @save()
     break
   return
+
+# ███    ███  ██████  ██    ██ ███    ██ ████████
+# ████  ████ ██    ██ ██    ██ ████   ██    ██
+# ██ ████ ██ ██    ██ ██    ██ ██ ██  ██    ██
+# ██  ██  ██ ██    ██ ██    ██ ██  ██ ██    ██
+# ██      ██  ██████   ██████  ██   ████    ██
 
 Ship::setMount = (user,mountId,only=false)->
   @mount[user.mountId] = false if @mount[user.mountId] is user

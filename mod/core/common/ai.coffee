@@ -196,12 +196,62 @@ $public class Trader extends AI
   aiType: 'Trader'
   @list:[]
   constructor:(opts={})->
-    opts.strategy = opts.strategy || 'approach'
+    opts.strategy = opts.strategy || 'trade'
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
+    @inventory = new Inventory data:{}, key:no
     @escort = ( for i in [0..floor random()*3]
       new Escort escortFor:@id, state:@state.clone() )
     return
+
+AI.register 'trade',
+  getTarget: ->
+    if @inventory.total is 0 or not @misson
+      return unless r = Object.randomPair Economy.need
+      [ item, dest ] = r
+      return unless t = Object.randomPair dest
+      [ dest, count ] = t
+      return unless dest = $obj.byId[dest]
+      return unless z = Array.random Economy.has item
+      return unless source = Array.random z.list
+      @misson = item:item, source:source, dest:dest, count:count, task:'pickup'
+      @target = source
+      # console.log "new misson: #{item} from #{dest.name}@#{z.root.name} for #{source.name}" # if debug
+      return
+    else
+      @target = @misson.dest
+      # m = @misson; console.log "bring: #{m.item} from #{m.source.name} to #{m.dest.name}@#{m.dest.zone.root.name}" # if debug
+  onTarget: ->
+    if @land @target
+      @changeStrategy @target = null
+      tries = 0
+      setTimeout ( waitForResources = =>
+        switch @misson.task
+          when 'pickup'
+            m = @misson
+            unless @misson.source.zone.inventory.give @inventory, m.item, m.count
+              if ++tries is 3
+                # console.log '::ai', "#{@name} missonFailed #{@landedAt.name}" # if debug
+                return
+              setTimeout waitForResources, 10000
+              # console.log '::ai', "#{@name} wait at #{@landedAt.name}@#{@landedAt.zone.root.name}" # if debug
+              # console.log @misson.source.zone.inventory
+              return
+            m.task = 'deliver'
+            # console.log "pickup: #{m.item} from #{m.dest.name}@#{m.dest.zone.root.name} for #{m.source.name}" # if debug
+            @launch()
+            @changeStrategy 'trade'
+          when 'deliver'
+            m = @misson
+            @inventory.give m.source.zone.inventory, m.item, m.count
+            @inventory.data = {}
+            # console.log '::ai', "#{@name} delivered #{m.item} to #{@landedAt.name}" # if debug
+            delete @misson
+            @launch()
+            @changeStrategy 'trade'
+          else console.log @mission
+      ), 10000
+    else console.log '::ai', "#{@name} landFailed", @target.name # if debug
 
 $public class Escort extends AI
   aiType: 'Escort'

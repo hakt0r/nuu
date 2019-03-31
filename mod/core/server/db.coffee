@@ -55,3 +55,5 @@ functions =
 setInterval ( ->
   $tag.flushAll()
 ), 1000
+
+NUU.emit "server:db"

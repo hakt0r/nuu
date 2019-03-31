@@ -28,6 +28,12 @@ if isServer
   NUU[k] = v for k,v of EventEmitter::; EventEmitter.call NUU
   NET[k] = v for k,v of EventEmitter::; EventEmitter.call NET
 
+NUU.$target = (o)->
+  return h if h = o.client || o.common if isClient
+  return h if h = o.server || o.common if isServer
+
+NET.register = (k,o)-> NET.on k, NUU.$target o
+
 NUU.init = $void
 
 NUU.time = Date.now
@@ -227,6 +233,13 @@ Array.empty = (a)->
 Object.empty = (o)->
   delete o[k] for k of o
   o
+
+Object.reducedMapToArray = (o,c,a)->
+  v for k, v of o when ( v = c k, v, o )?
+
+Object.randomPair = (o)->
+  return null unless k = Array.random Object.keys o
+  [k,o[k]]
 
 String.random = (length) ->
   text = ''; i = 0

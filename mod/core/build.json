@@ -45,7 +45,6 @@
     ["$tag","tagscale"]],
   "sources": [
     "db",
-    "inventory",
     "user",
     "console",
     "http",
@@ -57,6 +56,7 @@
     "error",
     "worker",
     "objects",
+    "inventory",
     "economy",
     "stellar",
     "station",

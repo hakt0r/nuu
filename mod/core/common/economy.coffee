@@ -29,25 +29,34 @@ $public class Economy
   @timer:   null
   @queue:   []
   @byName:  {}
+  @need:    {}
   constructor: (root) ->
-    @deterministic = new Deterministic rules.systemName + "-zone-" + root.name
+    @deterministic = new Deterministic @key = rules.systemName + "-zone-" + root.name
     @allocations = {}
     @offline = []
     @list    = []
     @list.push @root = root
-    @inventory = new Inventory 'zone_' + root.name
+    @root.zone = @
+    @inventory = new Inventory key:@key, create:yes
     Economy.byName[@name = root.name] = @
 
 Economy.defaults = (o,d)->
   console.log o.template unless d?
   filter = ['allocates','provides','produces','consumes']
-  # for k in filter
   o.allocates = Object.assign e:10, d?.allocates || {}, o?.allocates || {}
   o.provides  = Object.assign {},   d?.provides  || {}, o?.provides  || {}
   o.produces  = Object.assign {},   d?.produces  || {}, o?.produces  || {}
   o.consumes  = Object.assign {},   d?.consumes  || {}, o?.consumes  || {}
   o[k] = d[k] for k,v of d when -1 is filter.indexOf k
   o
+
+Economy.has = (item,count=1)->
+  Object
+  .values Economy.byName
+  .map (zone)->
+    return false unless has = zone.inventory.has item, count
+    return zone
+  .filter (zone)-> zone
 
 Economy.for = (stellar)->
   unless root = stellar.buildRoot
@@ -118,14 +127,16 @@ Economy.produce = ->
       return true  unless stellar.consumes?
       for item, count of stellar.consumes
         unless stellar.zone.inventory.has item, count
-          console.log '$p', stellar.name, stellar.buildRoot.name, 'needs', item, count # if debug
+          console.log '$p', stellar.name, stellar.buildRoot.name, 'needs', item, count if debug
+          ( Economy.need[item] || Economy.need[item] = {} )[stellar.id] = count
           return false
       for item, count of stellar.consumes
         stellar.zone.inventory.get item, count
       true
-    .map    (stellar)-> stellar.nextCyle = now + stellar.interval; stellar
+    .map (stellar)-> stellar.nextCyle = now + stellar.interval; stellar
     Economy.queue = Economy.queue.concat produce
-    console.log zone.inventory.data  if debug
+    console.log zone.key, zone.inventory.data if debug
+    # console.log zone.key, zone.inventory.data if zone.inventory.data.Fe
   Economy.queue = Economy.queue.sort (a,b)-> a.nextCyle - b.nextCyle
   Economy.queueNext()
   null
