@@ -91,6 +91,8 @@ $public class RadioQueue
     @msg = 0
     @$ = []
     @ctx = new AudioContext latencyHint: "playback", sampleRate: 48000
+    @out = @ctx.destination
+    return unless Sound.radioEffect
     @out = @band = @ctx.createBiquadFilter()
     @band.type = "bandpass"
     @band.frequency.value = 3001
