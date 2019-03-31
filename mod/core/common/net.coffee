@@ -403,9 +403,9 @@ if isServer then NUU.on 'extend', ->
     get:-> @db.channel || 'global'
     set:(v)->
       nc = NET.channel
-      return if v is @db.channel and nc[@channel]?.includes @
-      Array.remove ( nc[@channel] || nc[@channel] = [] ), @ if @channel
-      Array.pushUnique ( c = nc[@db.channel=v||'global'] || nc[v] = [] ), @
+      return if v is ( cur = @db.channel ) and cur.includes @
+      Array.remove     cur, @ if cur
+      Array.pushUnique ( nc[@db.channel=v||'global'] || nc[v] = [] ), @
       return v
   User.cleanup.push ->
     Array.remove c, @ if @channel and c = NET.channel[@channel] || NET.channel[@channel] = []
@@ -424,7 +424,7 @@ NET.define 12,'AUDIO',
       src.handle.channel = channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'
       dataLength = msg.byteLength - 2 - chanLength
       return console.log dataLength if dataLength is 0 or dataLength > 65536
-      NET.channelBincast channel, msg, except:[src.handle]
+      NET.channelBincast channel, msg, except:[src]
       console.log "##{channel}@#{src.handle.db.nick}: (audio) ", dataLength if debug
     client:(msg)->
       channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'

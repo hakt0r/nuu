@@ -32,6 +32,7 @@ $public class Sound
     @$.src = @url
     @$.onload = resolve
     @$.onerror = reject
+    @$.volume = 1
     resolve @ if @url.match 'blob:'
     return
   play:->
@@ -46,9 +47,25 @@ $public class Sound
     @$.loop = true
     @$.play()
 
+Sound.init = (callback)->
+  Sound.radio = new Radio
+  splashSound = ->
+    Sound.radio.ctx.resume()
+    Sound.radio.add Sound['hail.ogg'].url, 0.01
+    document.removeEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
+    document.removeEventListener 'keydown',   splashSound, passive:no, once:yes, capture:yes
+  document.addEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
+  document.addEventListener 'keydown',  splashSound, passive:no, once:yes, capture:yes
+  list = ( Sound.load 'build/sounds/' + name for name in Sound.autoload )
+  Promise.all(list)
+  .then Sound.defaults
+  .then callback
+  return
+NUU.on 'gfx:ready', Sound.init
+
 Sound.on = yes
-Sound.chat = yes
-Sound.effects = no
+Sound.chat = no
+Sound.effects = yes
 Sound.volume = 1
 
 Sound.autoload = ['afb_disengage.wav','afterburner.wav','autocannon.ogg',
@@ -68,14 +85,6 @@ Sound.load = (path)-> return new Promise (resolve)->
     new Sound(id:name, url:objURL, autoPlay:no, volume:1, effect:yes).load().then resolve
   return
 
-NUU.on 'gfx:ready', Sound.init = (callback)->
-  Sound.radio = new RadioQueue
-  list = ( Sound.load 'build/sounds/' + name for name in Sound.autoload )
-  Promise.all(list)
-  .then Sound.defaults
-  .then callback
-  return
-
 Sound.defaults = ->
   NUU.on 'ship:hit', -> Sound['explosion1.wav'].play() if Sound.on
   NUU.on 'shot', -> Sound['laser.wav'].play() if Sound.on
@@ -86,7 +95,14 @@ Sound.defaults = ->
 # ██ ██   ██ ██   ██ ██
 # ██ ██   ██ ██   ██  ██████
 
-$public class RadioQueue
+NUU.on 'settings', ->
+  Sound.on      = NUU.settings.sound
+  Sound.effects = NUU.settings.soundEffects
+  if Sound.chat = NUU.settings.soundChat
+    HUD.widget 'radio', ( '#' + Sound.channel ), yes
+  return
+
+$public class Radio
   constructor:->
     @msg = 0
     @$ = []
@@ -102,46 +118,56 @@ $public class RadioQueue
     @dist.connect @gain = @ctx.createGain()
     @gain.gain.value = 1
     @gain.connect @ctx.destination
-  makeDistortionCurve:(amount)->
-    k = `typeof amount === 'number' ? amount : 0`
-    n_samples = 44100
-    curve = new Float32Array n_samples
-    deg = Math.PI / 180
-    i = 0
-    while i < n_samples
-      x = i * 2 / n_samples - 1
-      curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x))
-      ++i
-    curve
-  add:(url)->
-    return URL.revokeObjectURL url unless Sound.chat
-    s = new Sound id:"msg#{@msg++}", url:url
-    s.load().then =>
-      @$.push s
-      do @start
-      return
+
+Radio::makeDistortionCurve = (amount)->
+  k = `typeof amount === 'number' ? amount : 0`
+  n_samples = 44100
+  curve = new Float32Array n_samples
+  deg = Math.PI / 180
+  i = 0
+  while i < n_samples
+    x = i * 2 / n_samples - 1
+    curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x))
+    ++i
+  curve
+
+Radio::add = (url,volume=1)->
+  return URL.revokeObjectURL url unless Sound.chat
+  s = new Sound id:"msg#{@msg++}", url:url, volume:volume
+  s.load().then =>
+    @$.push s
+    do @play
     return
-  start:->
-    @ctx.resume()
-    return if @current or 0 is @$.length
-    @current = @$.pop()
-    @src = @ctx.createMediaElementSource @current.$
-    @src.connect @out
-    @current.play()
-    @current.$.onended = =>
-      @src.disconnect @out
-      URL.revokeObjectURL @src.url
-      delete Sound[@current.id]
-      @src = @current = undefined
-      do @start
-      return
+  return
+
+Radio::play = ->
+  @ctx.resume()
+  if @current or 0 is @$.length
+    @current.$.play()
+    console.error @$.length, @current
     return
+  @current = @$.pop()
+  @src = @ctx.createMediaElementSource @current.$
+  @src.connect @out
+  @current.$.play()
+  HUD.widget 'radio', ( '#' + Sound.channel + '[!]' ), yes
+  @current.$.onended = =>
+    HUD.widget 'radio', ( '#' + Sound.channel ), yes
+    @src.disconnect @out
+    URL.revokeObjectURL @src.url
+    delete Sound[@current.id]
+    @src = @current = undefined
+    do @play
+    return
+  return
 
 Sound.channel = 'global'
 
 Sound.recordMessage = ->
   return unless Sound.chat
+  HUD.widget 'radio', ( '#' + Sound.channel + "[*]" ), yes
   NET.audio.write Sound.channel, await @startRecording()
+  HUD.widget 'radio', ( '#' + Sound.channel ), yes
   return
 
 Sound.startRecording = -> new Promise (resolve,reject)=>
@@ -163,11 +189,30 @@ Sound.abortRecording = ->
   return unless @recording
   @aborted = true
   do @recorder.stop
-  URL.revokeObjectURL @lastMessageURL if @lastMessageURL
   @recStream.getAudioTracks()[0].stop();
-  @aborted = @recording = @lastMessageURL = no
+  @aborted = @recording = no
   return
 
 Kbd.macro 'ptt', 'KeyX', 'Send voice',
-  dn:-> setTimeout Sound.recordMessage.bind Sound
-  up:-> setTimeout Sound.sendMessage  .bind Sound
+  dn:->
+    Sound.radio.ctx.resume()
+    setTimeout Sound.recordMessage.bind Sound
+  up:-> setTimeout Sound.sendMessage.bind Sound
+
+Kbd.macro 'pttPlay', 'cKeyX', 'Play radio', ->
+  Sound.radio.ctx.resume()
+  Sound.radio.play()
+
+Kbd.macro 'pttToggle', 'sKeyX', 'Toggle radio', ->
+  if NUU.settings.soundChat = Sound.chat = not Sound.chat
+       HUD.widget 'radio', ( '#' + Sound.channel ), yes
+  else HUD.widget 'radio', ( null ), yes
+  do NUU.saveSettings
+  return
+
+Kbd.macro 'pttChannel', 'aKeyX', 'Set channel', up:->
+  vt.prompt 'channel', ( (c)->
+    HUD.widget 'radio', ( '#' + Sound.channel = c if Sound.chat ), yes
+    return
+  ), yes
+  return

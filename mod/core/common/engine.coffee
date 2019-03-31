@@ -218,7 +218,8 @@ $public class Mean
     @avrg = @total / @count
 
 Array.remove = (a,v) ->
-  a.splice a.indexOf(v), 1
+  return if pos = a.indexOf v
+  a.splice pos, 1
 
 Array.random = (a) ->
   a[round random()*(a.length-1)]

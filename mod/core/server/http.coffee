@@ -121,11 +121,12 @@ NUU.bincast = (data,o) ->  wsServer.clients.forEach (src) ->
   return
 
 NET.channelBincast = (channel,data,opts={})->
-  return console.log 'nochan' unless c = NET.channel[channel]
+  return unless c = NET.channel[channel]
   except = opts.except || []
   c.forEach (user) ->
-    return if except.includes user
+    return unless user?.sock
     src = user.sock
+    return if except.includes src
     src.send data, $websocket.error(src)
     return
   return

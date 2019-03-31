@@ -330,7 +330,7 @@ new class uiHUD
     @system.fontSize = @text.fontSize = @notice.fontSize = @debug.fontSize = @fontSize + 'px'
     @notice.position.set        WIDTH - 20 - @notice.width, 10
     @debug.position.set         10,  26
-    LeftAlign  @system,         110 + @system.width, @system.height + 10
+    LeftAlign  @system,         110 + @system.width, @system.height + 25
     LeftAlign  @playerSprite,   100, @playerSprite.height + 10 if @playerSprite
     LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
     LeftAlign  @primary,        110 + @primary.width,   10 + @secondary.height + @primary.height
@@ -371,7 +371,7 @@ new class uiHUD
         t.rotation = ( ( tdir + 90 ) % 360 ) / RAD
       # WIDGETS
       t = ''
-      t += v + '\n\n' for k,v of @widgetList
+      t += v + '\n' for k,v of @widgetList
       @system.text = t
     # TARGET
     t = ''
