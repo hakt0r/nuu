@@ -217,7 +217,10 @@ Ship::save = ->
   @user.db.loadout[@tplName] = loadout
   @user.db.vehicle = @tplName
   @user.save()
-  console.log 'ship', 'saveFor', @user.db.nick, @tplName, util.inspect loadout
+  console.log 'ship', 'saveFor', @user.db.nick, @tplName                      if debug
+  console.log ' structure:', loadout.structure.join(' ') if loadout.structure if debug
+  console.log ' weapon:',    loadout.weapon.join(' ')    if loadout.utility   if debug
+  console.log ' utility:',   loadout.utility.join(' ')   if loadout.weapon    if debug
   null
 
 Ship::modSlot = (type,slot,item)->

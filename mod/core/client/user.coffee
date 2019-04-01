@@ -71,12 +71,12 @@ NUU.on '$obj:add', (o)->
 NET.on 'switchShip', (opts) ->
   console.log 'user', 'switchShip', opts if debug
   NUU.player.vehicle = Ship.byId[opts.i]
-  NET.emit 'setMount', opts.m
+  NET.emit 'setMount', opts.mount
 
 NET.on 'setMount', (list) ->
   VEHICLE.mount = list
   NUU.player.mountId = id = list.indexOf NUU.player.user.nick
-  console.log 'user', 'setMount', id if debug
+  console.log 'user', 'setMount', id # if debug
   NUU.player.mount = VEHICLE.mountSlot[id]
   NUU.player.equip = VEHICLE.mountSlot[id].equip if NUU.player.mount
   VEHICLE.name + '['+ id + ':' + VEHICLE.mountType[id] + ']\n' + VEHICLE.mount

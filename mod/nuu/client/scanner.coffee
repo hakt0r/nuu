@@ -96,12 +96,12 @@ $static 'Scanner', new class ScannerRenderer
     delete @label[s.id]
     l.visible = no
     @gfx.removeChild l
-    @gfx.children.splice @gfx.children.indexOf l
+    Array.remove @gfx.children, l
     l.destroy()
     return unless _label
     _label.visible = no
     @gfx.removeChild _label
-    @gfx.children.splice @gfx.children.indexOf _label
+    Array.remove @gfx.children, _label
     _label.destroy()
 
   render: ->

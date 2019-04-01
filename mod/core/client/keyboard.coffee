@@ -139,7 +139,7 @@ Kbd.release = (focus)->
     true
   else if @stack.length > 0 and item = @stack.reverse().reduce( (v,c=no)-> if v.focus is focus then v else c )
     console.log ':kbd', 'release_obscured', focus.name if debug
-    Array.splice idx, 0 if idx = @stack.indexOf item
+    Array.remove @stack, item
     console.log ':kbd', 'main' unless @focus if debug
     true
   else false

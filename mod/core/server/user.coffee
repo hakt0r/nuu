@@ -271,7 +271,7 @@ User::enterVehicle = (vehicle,mountId,spawn)->
     @vehicle.save() # save loadout and ship
   else console.log 'owned-by', @vehicle.user.db.nick
   @sock.json
-    switchShip: i:vehicle.id, v:@vehicle.mount.map (i)-> if i then i.db.nick else false
+    switchShip: i:vehicle.id, mount:@vehicle.mount.map (i)-> if i then i.db.nick else false
     hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
   NUU.jsoncastTo vehicle, setMount: @vehicle.mount.map (i)-> if i then i.db.nick else false
   console.log 'user', 'enter', @db.nick.green, vehicle.id, @mountId if debug
@@ -402,6 +402,6 @@ Ship::setMount = (user,mountId,only=false)->
   @accel = @left = @right = no if 0 is mountId
   @inhabited = yes
   return mountId if only
-  NUU.jsoncastTo @, setMount: @mount.map (i)->
-    if i then i.db.nick else false
+  console.log ' => ', @mount.map (i)-> if i then i.db.nick else false if debug
+  NUU.jsoncastTo @, setMount: @mount.map (i)-> if i then i.db.nick else false
   mountId
