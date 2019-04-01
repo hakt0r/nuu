@@ -94,8 +94,8 @@ NET.define.index = 1
 
 if isClient then NET.route = (src,msg)->
   NET.RX++
-  NET.RXB += msg.length
-  msg = new Buffer msg, 'binary'
+  NET.RXB += msg.length or msg.byteLength
+  msg = new Buffer msg, 'binary' unless msg.readUInt16LE
   fnc = NET.resolve[msg[0]]
   fnc.call NET, msg, src if fnc?
   return
