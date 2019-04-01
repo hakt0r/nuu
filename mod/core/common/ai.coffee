@@ -32,7 +32,7 @@ $public class AI extends Ship
       translate: no
       S: $moving
       relto: opts.stel
-      m: [0,0]
+      v: [0,0]
       x: floor random() * 1000 - 500
       y: floor random() * 1000 - 500
       d: floor random() * 359 }

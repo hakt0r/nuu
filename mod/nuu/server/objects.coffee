@@ -26,7 +26,7 @@ Ship::dropLoot = ->
     S: $moving
     x: @x + -@size/2 + Math.random()*@size
     y: @y + -@size/2 + Math.random()*@size
-    m: [ @m[0] + Math.random()*2 - 1, @m[1] + Math.random()*2 - 1 ]
+    v: [ @v[0] + Math.random()*2 - 1, @v[1] + Math.random()*2 - 1 ]
   newRandom Cargo  for i in [0...10]
   newRandom Debris for i in [0...10]
   null
@@ -35,7 +35,7 @@ Ship::respawn = ->
   do @reset
   @x = Math.random()*100
   @y = Math.random()*100
-  @setState S:$moving, x:@x, y:@y, m:[0,0]
+  @setState S:$moving, x:@x, y:@y, v:[0,0]
   do @update
   NET.mods.write  @, 'spawn'
 
@@ -81,12 +81,12 @@ Asteroid::hit = (perp,weapon)->
   NET.mods.write @, ( if @hp is 0 then 'destroyed' else 'hit' ), 0, @hp
   return unless @hp is 0
   if @resource.length > 1 then for r in @resource
-    m = @m.slice(); m[0]+=-6+random()*6; m[1]+=-6+random()*6
+    v = @v.slice(); v[0]+=-6+random()*6; v[1]+=-6+random()*6
     Weapon.hostility perp, new Asteroid
       hostile: []
       resource: r
       size: size = max 10, floor random() * @size / 2
-      state: S:$moving, x:@x, y:@y, m:m
+      state: S:$moving, x:@x, y:@y, v:v
   NUU.emit 'asteroid:destroyed', perp, @resource
   @destructor()
   null

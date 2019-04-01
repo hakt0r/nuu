@@ -226,7 +226,7 @@ BeamWorker = $worker.ReduceList (time)->
     ██      ██   ██  ██████   █████  ███████  ██████    ██    ██ ███████ ███████ ###
 
 class ProjectileVector
-  constructor:(@perp,@weap,@ms,@tt,@sx,@sy,@mx,@my)->
+  constructor:(@perp,@weap,@ms,@tt,@sx,@sy,@vx,@vy)->
 
 Weapon.Projectile = ->
   Weapon.Projectile.loadAssets.call @ if isClient
@@ -253,11 +253,11 @@ ProjectileEmitter = $worker.ReduceList (time)->
   ship.update time
   cs = cos d = (( ship.d + @dir ) % 360 ) * RADi
   sn = sin d
-  m = [ ship.m[0] + cs * @pps, ship.m[1] + sn * @pps ]
+  v = [ ship.v[0] + cs * @pps, ship.v[1] + sn * @pps ]
   x = ship.x # + slot.x * cs
   y = ship.y # + slot.y * sn
-  ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, m[0], m[1] if isServer
-  new ProjectileAnimation ship, @, time, time + @ttl, x, y, m[0], m[1], d                  if isClient
+  ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, v[0], v[1] if isServer
+  new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d                  if isClient
   NUU.emit 'shot', @                                                                       if isClient
   true
 
@@ -265,8 +265,8 @@ ProjectileDetector = $worker.ReduceList (time)->
   return false if @tt < time
   for target in @perp.hostile
     t = time - @ms
-    x = floor @sx + @mx * t
-    y = floor @sy + @my * t
+    x = floor @sx + @vx * t
+    y = floor @sy + @vy * t
     continue if target.size < $dist (x:x,y:y), target
     target.hit @perp, @weap if isServer
     return false
@@ -320,7 +320,7 @@ $obj.register class Missile extends $obj
     src = opts.source
     opts.turn   = 0.4
     opts.thrust = 0.0014
-    sm = src.m.slice()
+    sv = src.v.slice()
     sd = src.d / RAD
     src.update time = NUU.time()
     opts.state =
@@ -330,7 +330,7 @@ $obj.register class Missile extends $obj
       d: src.d
       x: src.x
       y: src.y
-      m: [ sm[0] + cos(sd) * opts.thrust, sm[1] + sin(sd) * opts.thrust ]
+      v: [ sv[0] + cos(sd) * opts.thrust, sv[1] + sin(sd) * opts.thrust ]
     super opts
     @ttl = time + 10000
     @needState = 0

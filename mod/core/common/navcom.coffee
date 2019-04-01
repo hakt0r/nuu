@@ -46,7 +46,7 @@ NavCom.steer = ( ship, target, context='pursue' )->
   ship  .update time = NUU.time()
   target.update time
   v = @[context] ship, target
-  v.steer_v = velocity = $v.sub v.approach_v.slice(), ship.m
+  v.steer_v = velocity = $v.sub v.approach_v.slice(), ship.v
   v.error   = $v.mag velocity
   v.error_threshold = min 10,  v.approach_d / 100000
   v.setThrottle = v.thrust
@@ -61,10 +61,10 @@ NavCom.steer = ( ship, target, context='pursue' )->
 NavCom.pursue = (s,t)->
   v = ship:s, target:t, current_dir:s.d, target_zone:s.size
   v.local_p     = s.p.slice()
-  v.local_v     = s.m.slice()
+  v.local_v     = s.v.slice()
   v.local_s     = $v.mag v.local_v
   v.target_p    = t.p.slice()
-  v.target_v    = t.m.slice()
+  v.target_v    = t.v.slice()
   v.target_s    = $v.mag v.target_v
   v.approach    = $v.sub v.target_p.slice(), v.local_p
   v.approach_d  = $v.mag v.approach
@@ -147,28 +147,28 @@ NavCom.aim = (s,target)->
 
 NavCom.match = (v)->
   { ship, target } = v
-  v.ship_v  = vme = $v.mag ship.m
-  v.targ_v  = vtg = $v.mag target.m
-  v.diff_v  = $v.mag v.match_v = vdf = $v.sub ship.m.slice(), target.m
+  v.ship_v  = vme = $v.mag ship.v
+  v.targ_v  = vtg = $v.mag target.v
+  v.diff_v  = $v.mag v.match_v = vdf = $v.sub ship.v.slice(), target.v
   v.ship_a  = acc = ship.thrustToAccel v.thrust
   v.match_d = ( vme**2 - vtg**2 ) / ( 2*v.ship_a )
   v.match_t = ( 2*v.match_d ) / ( vme + vtg )
   [cosd,sind] = $v.normalize vdf.slice()
   [px,py] = ship.p
-  [mx,my] = ship.m
+  [vx,vy] = ship.v
   accmatcht2 = acc * ( t = v.match_t ) * 2
-  v.match_p = [ px + mx*t + .5*cosd*accmatcht2, py + my*t + .5*sind*accmatcht2 ]
+  v.match_p = [ px + vx*t + .5*cosd*accmatcht2, py + vy*t + .5*sind*accmatcht2 ]
   return v
 
 NavCom.creep_s = (ship,target,thrust=254)->
   dst = $dist ship, target
-  vme = $v.mag ship.m
-  vtg = $v.mag target.m
-  vdf = $v.mag + $v.sub ship.m.slice(), target.m
+  sme = $v.mag ship.v
+  stg = $v.mag target.v
+  vdf = $v.mag + $v.sub ship.v.slice(), target.v
   acc = ship.thrustToAccel thrust
-  vmx = Speed.max
-  dtmatch = ( vme**2 - vtg**2 ) / ( 2*acc )
-  ddeccel = ( vmx**2 - vtg**2 ) / ( 2*acc )
-  if      dst <= dtmatch then max vme, vtg
-  else if dst >= ddeccel then vmx
-  else max vtg, sqrt abs vtg**2 - ( 2*acc*dst )
+  smx = Speed.max
+  dtmatch = ( sme**2 - stg**2 ) / ( 2*acc )
+  ddeccel = ( smx**2 - stg**2 ) / ( 2*acc )
+  if      dst <= dtmatch then max sme, stg
+  else if dst >= ddeccel then smx
+  else max stg, sqrt abs stg**2 - ( 2*acc*dst )

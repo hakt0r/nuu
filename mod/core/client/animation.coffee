@@ -68,7 +68,7 @@ Weapon.Projectile.loadAssets = ->
   @base = new PIXI.Texture @base.baseTexture, new PIXI.Rectangle 0,0,w,w
   null
 
-window.ProjectileAnimation = (@perp,@weap,@ms,@tt,@sx,@sy,@mx,@my,@dir) ->
+window.ProjectileAnimation = (@perp,@weap,@ms,@tt,@sx,@sy,@vx,@vy,@dir) ->
   @sprite = new PIXI.Sprite @weap.base
   @sprite.anchor.set 0, 0.5
   @sprite.position.set @perp.x + OX, @perp.y + OY

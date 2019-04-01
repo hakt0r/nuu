@@ -188,7 +188,7 @@ $static 'htime', (t) ->
   d  = Math.floor(t / 60 / 60 / 24)
   y  = Math.floor(t / 60 / 60 / 24 / 365)
   ky = Math.floor(t / 60 / 60 / 24 / 365 / 1000)
-  my = Math.floor(t / 60 / 60 / 24 / 365 / 1000 / 1000)
+  vy = Math.floor(t / 60 / 60 / 24 / 365 / 1000 / 1000)
   gy = Math.floor(t / 60 / 60 / 24 / 365 / 1000 / 1000 / 1000)
   if t < 60 then s + "s"
   else if t < 60 * 60 then m + "m" + s + "s"

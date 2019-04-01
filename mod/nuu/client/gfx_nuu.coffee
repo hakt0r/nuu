@@ -95,7 +95,7 @@ Sprite.animate = (timestamp) ->
 
   # if NUU.settings.gfx.speedScale
   sc = min 1, Sprite.scale
-  # ( max 1, ( abs(VEHICLE.m[0]) + abs(VEHICLE.m[1]) ) / 500 )
+  # ( max 1, ( abs(VEHICLE.v[0]) + abs(VEHICLE.v[1]) ) / 500 )
   @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
   @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
   @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
@@ -104,19 +104,19 @@ Sprite.animate = (timestamp) ->
   # @bg.position.y =
 
   # STARS
-  [ mx, my ] = $v.mult(
-    $v.normalize(VEHICLE.m.slice()),
-    Math.max 0.3, $v.mag(VEHICLE.m.slice()) * 1/Speed.max * 3 )
-  mx =  0.3 if mx is 0
-  my = -0.3 if my is 0
-  @starfield.tilePosition.x -= mx * 1.25
-  @starfield.tilePosition.y -= my * 1.25
+  [ vx, vy ] = $v.mult(
+    $v.normalize(VEHICLE.v.slice()),
+    Math.max 0.3, $v.mag(VEHICLE.v.slice()) * 1/Speed.max * 3 )
+  vx =  0.3 if vx is 0
+  vy = -0.3 if vy is 0
+  @starfield.tilePosition.x -= vx * 1.25
+  @starfield.tilePosition.y -= vy * 1.25
   @nebulae.  position.x = VEHICLE.x * -0.0000034
   @nebulae.  position.y = VEHICLE.y * -0.0000034
-  @parallax. tilePosition.x -= mx * 2
-  @parallax. tilePosition.y -= my * 2
-  @parallax2.tilePosition.x -= mx * 10
-  @parallax2.tilePosition.y -= my * 10
+  @parallax. tilePosition.x -= vx * 2
+  @parallax. tilePosition.y -= vy * 2
+  @parallax2.tilePosition.x -= vx * 10
+  @parallax2.tilePosition.y -= vy * 10
 
   length = ( list = @visibleList ).length; i = -1
   # time = NUU.time()
@@ -133,8 +133,8 @@ Sprite.animate = (timestamp) ->
   while ++i < length
     s = list[i]
     t = time - s.ms
-    x = floor s.sx + s.mx * t
-    y = floor s.sy + s.my * t
+    x = floor s.sx + s.vx * t
+    y = floor s.sy + s.vy * t
     s.sprite.position.set x + OX, y + OY
     if s.tt < time
       Sprite.weap.removeChild s.sprite

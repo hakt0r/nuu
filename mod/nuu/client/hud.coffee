@@ -379,26 +379,26 @@ new class uiHUD
     list = Target.typeNames
     @targetShield.visible = @targetArmour.visible = @targetShield.bg.visible = @targetArmour.bg.visible = @targetDir.visible = @approach.visible = @force.visible = TARGET?
     unless TARGET
-      m = VEHICLE.m.slice()
-      l = Math.min 50, 50 / Speed.max * $v.mag(m)
-      m = $v.mult $v.normalize(m), l
+      v = VEHICLE.v.slice()
+      l = Math.min 50, 50 / Speed.max * $v.mag(v)
+      v = $v.mult $v.normalize(v), l
       #@speed.width = l
       # @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
     else if TARGET
       @targetShield.width = TARGET.shield / TARGET.shieldMax * 100
       @targetArmour.width = TARGET.armour / TARGET.armourMax * 100
       # MY-SPEED relto
-      m = $v.sub VEHICLE.m.slice(), TARGET.m
-      l = Math.min 50, 50 / Speed.max * $v.mag(m)
-      m = $v.mult $v.normalize(m), l
+      v = $v.sub VEHICLE.v.slice(), TARGET.v
+      l = Math.min 50, 50 / Speed.max * $v.mag(v)
+      v = $v.mult $v.normalize(v), l
       #@speed.width = l
       #@speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
       if vec = NavCom.decide @, NavCom.steer VEHICLE, TARGET, 'pursue' # VEHICLE.lastVec
-        t += "v[#{hdist vec.creep_s}:#{vec.setThrottle}:#{rdec3 vec.error_threshold}:#{rdec3 vec.error}]\n"
+        t += "ap[#{hdist vec.creep_s}:#{vec.setThrottle}:#{rdec3 vec.error_threshold}:#{rdec3 vec.error}]\n"
         if @force.visible = vec.approach?
           @force.height   = 1
-          @force.width    = fol * Speed.maxi * min Speed.max, $v.mag VEHICLE.m.slice()
-          @force.rotation = $v.heading VEHICLE.m.slice(), $v.zero
+          @force.width    = fol * Speed.maxi * min Speed.max, $v.mag VEHICLE.v.slice()
+          @force.rotation = $v.heading VEHICLE.v.slice(), $v.zero
           @force.position.set fox, foy
         if @approach.visible = vec.approach?
           @approach.height   = 1
@@ -421,10 +421,10 @@ new class uiHUD
       @targetDir.rotation = ( relDir + PI/2 ) % TAU
       # NAVCOM-DATA
       TARGET.ap_dist = $dist(VEHICLE,TARGET)
-      TARGET.ap_eta = Math.round( TARGET.ap_dist / (Math.sqrt( Math.pow(VEHICLE.m[0],2) + Math.pow(VEHICLE.m[1],2) ) / 0.04))
+      TARGET.ap_eta = Math.round( TARGET.ap_dist / (Math.sqrt( Math.pow(VEHICLE.v[0],2) + Math.pow(VEHICLE.v[1],2) ) / 0.04))
       t += "#{TARGET.name} [#{TARGET.id}]\n"
       t += "d[#{htime(TARGET.ap_eta)}/#{hdist TARGET.ap_dist}]\n"
-      t += "m[#{round TARGET.m[0]}x#{round TARGET.m[1]}y]\n\n"
+      t += "v[#{round TARGET.v[0]}x#{round TARGET.v[1]}y]\n\n"
       t += "[#{list[cid]}:#{cid}:#{Target.id}]"
     else if not VEHICLE.dummy
       @targetShield.visible = @targetArmour.visible = @targetDir.visible = false
@@ -446,7 +446,7 @@ new class uiHUD
       " hostiles: #{if Target.hostile then Object.keys(Target.hostile).length else 0}\n" +
       "    state: #{State.toKey[VEHICLE.state.S]} #{if VEHICLE.state.relto? then 'relto ' + VEHICLE.state.relto.name +  ' ' else''}"+
       "#{parseInt VEHICLE.d}d #{VEHICLE.x.toFixed 0}x #{VEHICLE.y.toFixed 0}y " +
-      "#{round VEHICLE.m[0]}mx #{round VEHICLE.m[1]}my #{1000 * round $v.mag VEHICLE.m}pps\n" +
+      "#{round VEHICLE.v[0]}vx #{round VEHICLE.v[1]}vy #{1000 * round $v.mag VEHICLE.v}pps\n" +
       "  scanner: #{Scanner.scale}\n"
     @resize()
 

@@ -36,7 +36,7 @@ $static 'debug', no
 $static 'NET', {}
 $static 'NUU', {}
 
-$static 'DUMMY', dummy:yes, id:0, d:0, x:0, y:0, m: [0,0], update: (->), updateSprite: (->), state:S:'none'
+$static 'DUMMY', dummy:yes, id:0, d:0, x:0, y:0, v: [0,0], update: (->), updateSprite: (->), state:S:'none'
 $static 'VEHICLE',    DUMMY
 $static 'TARGET',     null
 $static 'SHORTRANGE', {}

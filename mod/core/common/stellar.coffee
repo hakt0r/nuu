@@ -114,7 +114,7 @@ Stellar.init = ->
       if orbit > 100000   then m = [0,min 19,  max 10,  orbit % 19]
       if orbit > 1000000  then m = [0,min 99,  max 20,  orbit % 99]
       if orbit > 10000000 then m = [0,min 199, max 100, orbit % 199]
-      state = S:state, relto:relto$, x:relto$.x + cos(rand) * orbit, y:relto$.y + sin(rand) * orbit, m:m
+      state = S:state, relto:relto$, x:relto$.x + cos(rand) * orbit, y:relto$.y + sin(rand) * orbit, v:m
     opts = id:id, name:name, sprite:sprite, state:state
     opts[k] = v for k,v of args
     new Constructor opts

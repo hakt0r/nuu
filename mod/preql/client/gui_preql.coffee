@@ -88,18 +88,18 @@ URMap::hud = ->
   # Replace by renderer
   @hud = render = =>
     ctx.clearRect 0,0,win.width(),win.height()
-    {drag, start:{x:mstx,y:msty},pos:{x:mx,y:my}} = Control.mouse
+    {drag, start:{x:mstx,y:msty},pos:{x:vx,y:vy}} = Control.mouse
     if Control.build? and (i = Control.build.instance)
-      i.render ctx,mx-@x,my-@y,@scale,@scale/2
+      i.render ctx,vx-@x,vy-@y,@scale,@scale/2
     else if drag
       ctx.fillStyle = 'rgba(0,255,255,0.3)'
-      # console.log mstx, mx, msty, my
-      ctx.fillRect (mstx)*@scale, (msty)*@scale, (mx-mstx)*@scale, (my-msty)*@scale
+      # console.log mstx, vx, msty, vy
+      ctx.fillRect (mstx)*@scale, (msty)*@scale, (vx-mstx)*@scale, (vy-msty)*@scale
     else
       # ctx.fillStyle = '#FFF'
       # ctx.fillText "c{#{@x}:#{@y}:#{@scale}}", 10, 20
       ctx.fillStyle = 'rgba(0,0,180,0.3)'
-      ctx.fillRect (mx-@x)*@scale,(my-@y)*@scale,@scale,@scale
+      ctx.fillRect (vx-@x)*@scale,(vy-@y)*@scale,@scale,@scale
 
 URMap::minimap = ->
   frame = $ '<div>'
@@ -296,16 +296,16 @@ $public class URControl extends EventEmitter
     false
 
   mousemove_down : (e) =>
-    mx = Map.x + e.clientX / Map.scale
-    my = Map.y + e.clientY / Map.scale
-    @mouse.pos.x = Math.ceil mx
-    @mouse.pos.y = Math.ceil my
+    vx = Map.x + e.clientX / Map.scale
+    vy = Map.y + e.clientY / Map.scale
+    @mouse.pos.x = Math.ceil vx
+    @mouse.pos.y = Math.ceil vy
     if not @mouse.drag
       Map.clickface.off 'mouseup', @mouseup
       Map.clickface.on  'mouseup', @mouseup_drag
       @mouse.drag = yes
-      @mouse.start.x = Math.floor mx
-      @mouse.start.y = Math.floor my
+      @mouse.start.x = Math.floor vx
+      @mouse.start.y = Math.floor vy
     Map.hud()
 
   mouseup_drag : (e) =>

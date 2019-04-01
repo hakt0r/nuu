@@ -42,7 +42,7 @@ $public class $obj
     # register
     i.list.push i.byId[@id] = @ for i in @constructor.interfaces
     # read or setup momentum vector
-    @m = if m = state.m then m.slice() else [0,0]
+    @v = if v = state.v then v.slice() else [0,0]
     @x = state.x || 0
     @y = state.x || 0
     @d = state.d || 0

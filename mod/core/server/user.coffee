@@ -99,7 +99,7 @@ NET.on 'jump', (target,src) ->
       S: $moving
       x: parseInt target.x - 500 + random()*1000
       y: parseInt target.y - 500 + random()*1000
-      m: target.m.slice()
+      v: target.v.slice()
       relto: if target.bigMass then target else undefined
   }), 1000
   return
@@ -205,7 +205,7 @@ User::loadShip = ->
   else if @db.orbit and relto = $obj.byName[@db.orbit[0]]
     opts.state = @db.orbit[1]
     opts.state.relto = relto
-  else opts.state = S:$moving, m:[0.1,0.1], relto: $obj.byId[0]
+  else opts.state = S:$moving, v:[0.1,0.1], relto: $obj.byId[0]
   v = @createVehicle @vehicleType, opts
   @enterVehicle v, 0, yes
   return
@@ -271,7 +271,7 @@ User::enterVehicle = (vehicle,mountId,spawn)->
     @vehicle.save() # save loadout and ship
   else console.log 'owned-by', @vehicle.user.db.nick
   @sock.json
-    switchShip: i:vehicle.id, m:@vehicle.mount.map (i)-> if i then i.db.nick else false
+    switchShip: i:vehicle.id, v:@vehicle.mount.map (i)-> if i then i.db.nick else false
     hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
   NUU.jsoncastTo vehicle, setMount: @vehicle.mount.map (i)-> if i then i.db.nick else false
   console.log 'user', 'enter', @db.nick.green, vehicle.id, @mountId if debug
