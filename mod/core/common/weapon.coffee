@@ -306,7 +306,11 @@ Weapon.Launcher = ->
       ship = Item.byName[ammo.stats.ship]
       (src,target)=>
         Weapon.hostility @ship, target
-        new Escort escortFor:@ship.id, tpl:ship.itemId, state:@ship.state.toJSON()
+        time = NUU.time()
+        new Escort
+          escortFor: @ship.id
+          state: Missile.ejectState time, @ship, 0.004
+          tpl: ship.itemId
     else (src,target)=>
       Weapon.hostility @ship, target
       new Missile source:@ship, target:target
@@ -317,20 +321,10 @@ $obj.register class Missile extends $obj
   @interfaces: [$obj]
 
   constructor: (opts={})->
-    src = opts.source
+    time = NUU.time()
     opts.turn   = 0.4
-    opts.thrust = 0.0014
-    sv = src.v.slice()
-    sd = src.d / RAD
-    src.update time = NUU.time()
-    opts.state =
-      S: $burn
-      a: opts.thrust
-      t: time
-      d: src.d
-      x: src.x
-      y: src.y
-      v: [ sv[0] + cos(sd) * opts.thrust, sv[1] + sin(sd) * opts.thrust ]
+    src = opts.source
+    opts.state  = Missile.ejectState time, src, opts.thrust = 0.0014
     super opts
     @ttl = time + 10000
     @needState = 0
@@ -338,6 +332,18 @@ $obj.register class Missile extends $obj
     @hitDist   = pow ( @size + @target.size ) / 2, 2
     @prototype = Item.byId[@tpl]
     setTimeout ( => MissilePilot.add @ ), 500
+
+Missile.ejectState = (time,src,thrust)->
+  src.update time
+  sv = src.v.slice()
+  sd = src.d / RAD
+  S: $burn
+  a: thrust
+  t: time
+  d: src.d
+  x: src.x
+  y: src.y
+  v: [ sv[0] + cos(sd) * thrust, sv[1] + sin(sd) * thrust ]
 
 return if isClient
 
