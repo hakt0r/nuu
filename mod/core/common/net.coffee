@@ -423,12 +423,19 @@ NET.define 12,'AUDIO',
     server:(msg,src)->
       src.handle.channel = channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'
       dataLength = msg.byteLength - 2 - chanLength
-      return console.log dataLength if dataLength is 0 or dataLength > 65536
-      NET.channelBincast channel, msg, except:[src]
-      console.log "##{channel}@#{src.handle.db.nick}: (audio) ", dataLength if debug
+      return if dataLength is 0 or dataLength > 65536
+      { nick, id } = src.handle.db
+      meta = Buffer.from JSON.stringify c:channel, n:nick, u:id, 'utf8'
+      data = msg.slice 2 + chanLength
+      pack = Buffer.concat [ Buffer.from([NET.audioCode,0,0]), meta, data ]
+      pack.writeUInt16LE meta.byteLength, 1
+      NET.channelBincast channel, pack, except:[src]
+      console.log "##{channel}@#{nick}: (audio) ", dataLength if debug
     client:(msg)->
-      channel = msg.slice(2,2+chanLength=msg[1]).toString 'utf8'
-      dataLength = msg.byteLength - 2 - chanLength
-      dataOffset = 2 + chanLength
-      Sound.radio.add URL.createObjectURL new Blob [msg.slice(dataOffset)], type:'audio/webm'
-      console.log "##{channel}@#{'unknown'}: (audio) ", dataLength if debug
+      meta = JSON.parse msg.slice(3,3+metaLength=msg.readUInt16LE 1).toString 'utf8'
+      dataLength = msg.byteLength - 3 - metaLength
+      dataOffset = 3 + metaLength
+      Sound.radio.add(
+        URL.createObjectURL(new Blob [msg.slice(dataOffset)],type:'audio/webm')
+        nick:meta.n, user:meta.u, channel:meta.c)
+      console.log "##{meta.c}@#{meta.n}: (audio) ", dataLength # if debug

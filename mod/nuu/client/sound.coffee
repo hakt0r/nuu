@@ -20,6 +20,13 @@
 
 ###
 
+NUU.on 'settings:apply', ->
+  Sound.on      = NUU.settings.sound
+  Sound.effects = NUU.settings.soundEffects
+  if Sound.chat = NUU.settings.soundChat
+    HUD.widget 'radio', "##{Sound.channel}", yes
+  return
+
 $public class Sound
   volume:1
   constructor:(opts={})->
@@ -30,10 +37,12 @@ $public class Sound
     return reject new Error 'URL required' unless @url
     @$ = document.createElement 'audio'
     @$.src = @url
-    @$.onload = resolve
+    @$.onloadeddata = =>
+      @loaded = true
+      do resolve
     @$.onerror = reject
-    @$.volume = 1
-    resolve @ if @url.match 'blob:'
+    @$.volume = @volume || 1
+    # resolve @ if @url.match 'blob:'
     return
   play:->
     return unless Sound.on
@@ -51,7 +60,7 @@ Sound.init = (callback)->
   Sound.radio = new Radio
   splashSound = ->
     Sound.radio.ctx.resume()
-    Sound.radio.add Sound['hail.ogg'].url, 0.01
+    # Sound.radio.add Sound['hail.ogg'].url, volume:0.01, keep:yes
     document.removeEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
     document.removeEventListener 'keydown',   splashSound, passive:no, once:yes, capture:yes
   document.addEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
@@ -95,13 +104,6 @@ Sound.defaults = ->
 # ██ ██   ██ ██   ██ ██
 # ██ ██   ██ ██   ██  ██████
 
-NUU.on 'settings', ->
-  Sound.on      = NUU.settings.sound
-  Sound.effects = NUU.settings.soundEffects
-  if Sound.chat = NUU.settings.soundChat
-    HUD.widget 'radio', ( '#' + Sound.channel ), yes
-  return
-
 $public class Radio
   constructor:->
     @msg = 0
@@ -131,9 +133,14 @@ Radio::makeDistortionCurve = (amount)->
     ++i
   curve
 
-Radio::add = (url,volume=1)->
-  return URL.revokeObjectURL url unless Sound.chat
-  s = new Sound id:"msg#{@msg++}", url:url, volume:volume
+Radio::add = (url,opts={})->
+  unless Sound.chat
+    URL.revokeObjectURL url unless opts.keep
+    return
+  opts.volume = 1 unless opts.volume
+  opts.id = "msg#{@msg++}"
+  opts.url = url
+  s = new Sound opts
   s.load().then =>
     @$.push s
     do @play
@@ -142,32 +149,33 @@ Radio::add = (url,volume=1)->
 
 Radio::play = ->
   @ctx.resume()
-  if @current or 0 is @$.length
-    @current.$.play()
-    console.error @$.length, @current
-    return
+  return do @cleanAndNext if @current and @current.$.buffered.length is 0
+  return                  if 0 is @$.length
   @current = @$.pop()
   @src = @ctx.createMediaElementSource @current.$
   @src.connect @out
   @current.$.play()
-  HUD.widget 'radio', ( '#' + Sound.channel + '[!]' ), yes
-  @current.$.onended = =>
-    HUD.widget 'radio', ( '#' + Sound.channel ), yes
-    @src.disconnect @out
-    URL.revokeObjectURL @src.url
-    delete Sound[@current.id]
-    @src = @current = undefined
-    do @play
-    return
+  HUD.widget 'radio', "#{@current.nick}@#{Sound.channel}", yes
+  @current.$.onended = @current.$.onerror = => do @cleanAndNext
+  setTimeout ( => do @play ), 100
+  return
+
+Radio::cleanAndNext = ->
+  HUD.widget 'radio', "##{Sound.channel}", yes
+  @src.disconnect @out
+  URL.revokeObjectURL @src.url
+  delete Sound[@current.id]
+  @src = @current = undefined
+  do @play
   return
 
 Sound.channel = 'global'
 
 Sound.recordMessage = ->
   return unless Sound.chat
-  HUD.widget 'radio', ( '#' + Sound.channel + "[*]" ), yes
+  HUD.widget 'radio', "##{Sound.channel}[*]", yes
   NET.audio.write Sound.channel, await @startRecording()
-  HUD.widget 'radio', ( '#' + Sound.channel ), yes
+  HUD.widget 'radio', "##{Sound.channel}", yes
   return
 
 Sound.startRecording = -> new Promise (resolve,reject)=>
@@ -205,14 +213,14 @@ Kbd.macro 'pttPlay', 'cKeyX', 'Play radio', ->
 
 Kbd.macro 'pttToggle', 'sKeyX', 'Toggle radio', ->
   if NUU.settings.soundChat = Sound.chat = not Sound.chat
-       HUD.widget 'radio', ( '#' + Sound.channel ), yes
-  else HUD.widget 'radio', ( null ), yes
+       HUD.widget 'radio', "##{Sound.channel}", yes
+  else HUD.widget 'radio', null, yes
   do NUU.saveSettings
   return
 
 Kbd.macro 'pttChannel', 'aKeyX', 'Set channel', up:->
   vt.prompt 'channel', ( (c)->
-    HUD.widget 'radio', ( '#' + Sound.channel = c if Sound.chat ), yes
+    HUD.widget 'radio', "##{Sound.channel = c}", yes if Sound.chat
     return
   ), yes
   return
