@@ -105,6 +105,7 @@ $static 'Scanner', new class ScannerRenderer
     _label.destroy()
 
   render: ->
+    return unless @active
     return unless pl = VEHICLE
     if @fullscreen
       W = min WIDTH, HEIGHT; W2 = W/2-150; W2R = WDB2; H2R = HGB2

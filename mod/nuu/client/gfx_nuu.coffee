@@ -17,13 +17,13 @@ NUU.on 'rules', ->
 
 makeStarfield = (mod...)->
   field = (rmax,smax)->
-    [ rx, ry, rr, rb ] = [ random()*1024, random()*1024, random()*smax, random()*rmax ]
+    [ rx, ry, rr, rb ] = [ random()*512, random()*512, random()*smax, random()*rmax ]
     g.fillStyle = 'rgba(255,255,255,'+rb+')'
     g.beginPath()
     g.arc rx,ry,rr,0,TAU
     g.fill()
     null
-  c = $ '<canvas class="offscreen" width=1024 height=1024>'
+  c = $ '<canvas class="offscreen" width=512 height=512>'
   g = c[0].getContext '2d'
   field.apply null, x for i in [0..x[2]] while x = mod.shift()
   return new PIXI.TilingSprite PIXI.Texture.fromCanvas c[0]
@@ -39,9 +39,9 @@ Sprite.initSpace = ->
   @layer 'fx',   new PIXI.Container
   @layer 'fg',   new PIXI.Container
 
-  @bg.addChild @starfield = makeStarfield [1,0.3,1000],[1.5,0.7,20]
-  @bg.addChild @parallax  = makeStarfield [1,0.3,2000]
-  @bg.addChild @parallax2 = makeStarfield [1,0.3,1000]
+  @bg.addChild @starfield = makeStarfield [1,0.3,250],[1.5,0.7,20],[2,0.7,5]
+  @bg.addChild @parallax  = makeStarfield [1,0.2,500]
+  @bg.addChild @parallax2 = makeStarfield [1,0.1,250]
   @bg.addChild @nebulae   = new PIXI.Container
   @nebulae.alpha = .03
 
