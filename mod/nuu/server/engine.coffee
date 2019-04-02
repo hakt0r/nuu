@@ -20,12 +20,6 @@
 
 ###
 
-NUU.server = null
-NUU.drone = {}
-NUU.userState = {}
-NUU.states = []
-NUU.players = []
-
 NUU.fix_sprites = (o)->
   for k,v of o
     w = v.size

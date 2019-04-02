@@ -153,7 +153,6 @@ $public class User
     else @firstJoin src
 
 User::firstJoin = (src)->
-  console.log 'first join'
   User.byId[@db.id] = src.handle = @
   id = NUU.users.push @; @id = --id
   @name = @db.nick
@@ -166,14 +165,8 @@ User::firstJoin = (src)->
   return
 
 User::rejoin = (src)->
-  console.log 'rejoin'
   @sock = src; src.handle = @
-  if @vehicle
-    console.log 'enter ship....', @vehicle
-    @enterVehicle @vehicle, @mountId, no
-  else
-    console.log 'loading ship....'
-    do @loadShip
+  if @vehicle then @enterVehicle @vehicle, @mountId, no else do @loadShip
   @sock.json landed: @vehicle.landedAt.id if @vehicle.landedAt
   console.log 'user', @db.nick.green, 'rejoined'.yellow, ( @vehicle.landedAt || 'space' ).red
   true

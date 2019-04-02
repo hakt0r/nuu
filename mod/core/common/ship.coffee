@@ -58,7 +58,7 @@ $obj.register class Ship extends $obj
   inventory: null
   slots:     null
 
-  constructor: (opts) ->
+  constructor:(opts)->
     super opts
     @hostile = []
     @tplName = @name

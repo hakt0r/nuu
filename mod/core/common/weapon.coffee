@@ -214,8 +214,7 @@ BeamWorker = $worker.ReduceList (time)->
     target.update time
     if Math.lineCircleCollide bgin, bend, target.p, target.size/2
       target.hit ship, @
-      if target.destructing
-        NET.weap.write null, 1, @slot, ship, target, null if isServer
+      NET.weap.write null, 1, @slot, ship, target, null if target.destructing if isServer
       break
   true
 

@@ -107,7 +107,7 @@ AI.register = (strategy,opts)-> AI.worker[opts.listKey = strategy] = $worker.Pau
     when "wait"
       @setState S:$moving if isServer and @state.S isnt $moving
       NET.state.write @, [no,no,no,no,no,no,no,no] if isClient
-      @onDecision v if isClient and @onDecision
+      @onDecision v if @onDecision if isClient
       return min 2000, max 0, v.wait_t
     when "execute"
       # console.log '::ai', "#{@name} at", @target.name if debug

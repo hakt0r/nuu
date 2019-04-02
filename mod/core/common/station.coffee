@@ -55,9 +55,8 @@ $obj.register class Station extends Stellar
       structure: [
         id:0, size:'large', equip:null
         id:0, size:'large', equip:null ]
-    if isClient
-      @name += " (#{@constructor.name})"
-      return
+    @name += " (#{@constructor.name})" if isClient
+    return                             if isClient
     do @weapon.blur = =>
       return if @destructing
       console.log @name, 'lost target' if debug
