@@ -71,3 +71,7 @@ $obj::updateSprite = (time)->
   true
 
 Stellar::layer = 'stel'
+
+NUU.on '$obj:del', (obj) ->
+  Array.remove VEHICLE.hostile, obj
+  return
