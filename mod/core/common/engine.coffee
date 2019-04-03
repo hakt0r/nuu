@@ -77,7 +77,8 @@ $static '$turn',         4
 $static '$turnTo',       5
 $static '$steer',        6
 $static '$orbit',        7
-$static '$travel',       8
+$static '$formation',    8
+$static '$travel',       9
 
 # MATH-CONSTANTS
 $static 'PI',            Math.PI

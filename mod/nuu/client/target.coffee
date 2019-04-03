@@ -120,8 +120,8 @@ Target.prevClass = ->
 Target.toggleMode = ->
   Target.mode = switch Target.mode
     when 'orbit' then 'dock'
-    when 'land'  then 'orbit'
     when 'dock'  then 'land'
+    when 'land'  then 'formation'
     else              'land'
   Target.widget()
   null

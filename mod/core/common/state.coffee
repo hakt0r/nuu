@@ -647,6 +647,52 @@ State.orbit.fromBuffer = (o,msg)-> o.flags = 0; new State.orbit {
   off:                  msg.readDoubleLE 46
   vel:                  msg.readDoubleLE 62 }
 
+# ███████  ██████  ██████  ███    ███  █████  ████████ ██  ██████  ███    ██
+# ██      ██    ██ ██   ██ ████  ████ ██   ██    ██    ██ ██    ██ ████   ██
+# █████   ██    ██ ██████  ██ ████ ██ ███████    ██    ██ ██    ██ ██ ██  ██
+# ██      ██    ██ ██   ██ ██  ██  ██ ██   ██    ██    ██ ██    ██ ██  ██ ██
+# ██       ██████  ██   ██ ██      ██ ██   ██    ██    ██  ██████  ██   ████
+
+State.register class State.formation extends State
+  lock: yes
+  update:(time)->
+    return if @lastUpdate is time
+    @relto.update @lastUpdate = time || time = NUU.time()
+    @o.x = @relto.x + @x
+    @o.y = @relto.y + @y
+    @o.v[0] = @relto.v[0]
+    @o.v[1] = @relto.v[1]
+    @o.d = @relto.d
+    @acceleration = @relto.state.acceleration
+    return
+  translate:->
+    @relto.update @t
+    @x = @o.x - @relto.x
+    @y = @o.y - @relto.y
+    @o.v = @relto.v.slice()
+    @o.d = @relto.d
+    return
+  toJSON:-> S:@S,x:@x,y:@y,d:@d,relto:@relto.id
+
+State.formation::toBuffer = ->
+  return @_buffer if @_buffer; msg = Buffer.allocUnsafe 49; o = @o
+  msg[0] = NET.stateCode; msg[1] = @S
+  msg.writeUInt16LE o.id,                                2
+  msg.writeUInt16LE ( if @relto then @relto.id else 0 ), 4
+  msg.writeUInt16LE ( @d = parseInt @d ),                6
+  msg.writeDoubleLE ( @x = parseInt @x ),                8
+  msg.writeDoubleLE ( @y = parseInt @y ),                24
+  msg.writeUInt32LE ( @t % 1000000     ),                40
+  return @_buffer = msg.toString 'binary'
+
+State.formation.fromBuffer = (o,msg)-> new State.formation {
+  o: o
+  relto: $obj.byId[msg.readUInt16LE 4]
+  d: msg.readUInt16LE 6
+  x: msg.readDoubleLE 8
+  y: msg.readDoubleLE 24
+  t: NUU.timePrefix() + msg.readUInt32LE 40 }
+
 # ████████ ██████   █████  ██    ██ ███████ ██
 #    ██    ██   ██ ██   ██ ██    ██ ██      ██
 #    ██    ██████  ███████ ██    ██ █████   ██

@@ -52,6 +52,7 @@ Ship::hit = (src,wp) ->
     when Weapon.impactType.destroyed
       NUU.emit     'ship:destroyed', @, src
       NET.mods.write @, 'destroyed', 0, 0
+  return
 
 Station::hit = (src,wp) ->
   return if @destructing
@@ -66,6 +67,7 @@ Station::hit = (src,wp) ->
     when Weapon.impactType.destroyed
       NUU.emit     'station:destroyed', @, src
       NET.mods.write @, 'destroyed', 0, 0
+  return
 
 Asteroid.autospawn = (opts={})-> $worker.push =>
   roids  = @list.length

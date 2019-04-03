@@ -288,7 +288,7 @@ User::action = (t,mode) ->
   t.update time
   dist  = $dist o, t
   zone  = ( o.size + t.size ) * .5
-  @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit'].includes mode
+  @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit','formation'].includes mode
   return
 
 User::eva = (t,o,zone,dist)->
@@ -395,3 +395,17 @@ Ship::setMount = (user,mountId,only=false)->
   NUU.jsoncastTo @, setMount: @mount.map (i)-> if i then i.db.nick else false
   # Sync.enter @, user
   mountId
+
+# ███████  ██████  ██████  ███    ███  █████  ████████ ██  ██████  ███    ██
+# ██      ██    ██ ██   ██ ████  ████ ██   ██    ██    ██ ██    ██ ████   ██
+# █████   ██    ██ ██████  ██ ████ ██ ███████    ██    ██ ██    ██ ██ ██  ██
+# ██      ██    ██ ██   ██ ██  ██  ██ ██   ██    ██    ██ ██    ██ ██  ██ ██
+# ██       ██████  ██   ██ ██      ██ ██   ██    ██    ██  ██████  ██   ████
+
+User::formation = (t,o,zone=100,dist)->
+  dist = t.dist o unless dist
+  t.update time = NUU.time()
+  o.update time
+  console.log 'user', 'formation', t.id, dist if debug
+  o.setState S:$formation, relto:t if zone > dist
+  return

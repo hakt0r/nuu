@@ -26,7 +26,7 @@ $public class User
   secondary: id: 0
   constructor: (opts)->
     @[k] = v for k,v of opts
-    console.log 'user', @
+    console.log 'user', @ if debug
 
 Object.defineProperty User::, 'vehicle',
   set: (v) ->

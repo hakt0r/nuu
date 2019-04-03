@@ -509,9 +509,18 @@ NUU.registerPrompt = ->
   p_user = 'Register (<i style="color:green">Username</i>)'
   p_pas1 = '         (<i style="color:yellow">Password</i>)'
   p_pas2 = '         (   <i style="color:yellow">Again</i>)'
+  NUU.testButton.remove() if NUU.testButton
+  vt.$.prepend NUU.testButton = $ """<button>Demo</button>"""
+  NUU.testButton.click demo
+  demo = ->
+    user = 'test'
+    pass = 'test'
+    NUU.testButton.remove() if NUU.testButton
+    dologin()
   onkey = (e)->
     return true if e.altKey and e.code is 'KeyL' and new Window.About
     return true if e.altKey and e.code is 'KeyR' and NUU.loginPrompt()
+    return true if e.altKey and e.code is 'KeyD' and demo()
     false
   onuser = (u)->
     user = u
@@ -543,7 +552,8 @@ NUU.loginPrompt = ->
   p_pass = '<i style="color:green">Password</i>'
   NUU.testButton.remove() if NUU.testButton
   vt.$.prepend NUU.testButton = $ """<button>Demo</button>"""
-  NUU.testButton.click ->
+  NUU.testButton.click demo
+  demo = ->
     user = 'test'
     pass = 'test'
     NUU.testButton.remove() if NUU.testButton
@@ -551,6 +561,7 @@ NUU.loginPrompt = ->
   onkey = (e)->
     return true if e.altKey and e.code is 'KeyL' and new Window.About
     return true if e.altKey and e.code is 'KeyR' and NUU.registerPrompt()
+    return true if e.altKey and e.code is 'KeyC' and demo()
     false
   onuser = (u)=>
     return true if ( user = u ) is null and NUU.loginPrompt()
