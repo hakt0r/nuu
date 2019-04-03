@@ -41,6 +41,7 @@ Object.defineProperty User::, 'vehicle',
     switchWeap(-1) NUU.player, 'primary'
     switchWeap(-1) NUU.player, 'secondary'
     console.log 'user', 'enterVehicle', v.id if debug
+    $obj.select yes
   get: -> @_vehicle
 
 switchWeap = (mutate)-> (player,trigger='primary') ->
@@ -64,14 +65,12 @@ Ship::setWeap  = (idx,trigger='primary')-> switchWeap( -> idx )(NUU.player,'prim
 Ship::nextWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ++id % (ct + 1 )
 Ship::prevWeap = switchWeap (id,ct)-> if ct < 1 then 0 else ( --id + ct ) % (ct + 1 )
 
-NUU.on '$obj:add', (o)->
-  NUU.player.vehicle = o if o.id is NUU.player.vehicleId
-  null
-
 NET.on 'switchShip', (opts) ->
   console.log 'user', 'switchShip', opts if debug
   NUU.player.vehicle = Ship.byId[opts.i]
   NET.emit 'setMount', opts.mount
+  $obj.select yes
+  return
 
 NET.on 'setMount', (list) ->
   VEHICLE.mount = list

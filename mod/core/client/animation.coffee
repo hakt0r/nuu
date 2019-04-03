@@ -25,7 +25,7 @@ $abstract 'Animated',
   loop: no
 
   loadAssets: ->
-    @sprite = movieFactory @sprite, '/build/gfx/' + @sprite + '.png', (
+    @sprite = Sprite.makeMovie @sprite, '/build/gfx/' + @sprite + '.png', (
       if @loop is on then on else =>
         @onComplete() if @onComplete
         @destructor() )

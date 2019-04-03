@@ -302,12 +302,13 @@ uiVector::remove = ->
    ██████  ██ ██   ██  ██████  ██████
 ###
 
-new class uiHUD
+$static 'HUD', new class NUU.HUD
+
   fontSize:10
   frame: 0
   label: {}
-  constructor: ->
-    $static 'HUD', @
+
+  show:->
     Sprite.renderHUD = @render.bind @, @layer
     Sprite.stage.addChild @layer = new PIXI.Container
     Sprite.on 'resize', @resize.bind @

@@ -93,15 +93,15 @@ NET.on 'jump', (target,src) ->
   o.accel = o.left = o.right = no
   src.json jump:1
   setTimeout ( ->
-    src.json jump:2
     target.update()
     o.setState {
       S: $moving
       x: parseInt target.x - 500 + random()*1000
       y: parseInt target.y - 500 + random()*1000
       v: target.v.slice()
-      relto: if target.bigMass then target else undefined
-  }), 1000
+      relto: if target.bigMass then target else undefined }
+    src.json jump:2
+  ), 1000
   return
 
 NUU.users = []
@@ -252,7 +252,6 @@ User::createVehicle = (id,opts={})->
   opts.loadout = @db.loadout[Ship.byTpl[tpl]] unless opts.loadout
   opts.iff     = [Math.random()]              unless opts.iff
   vehicle      = new Ship opts
-  @sock.json sync:add:[vehicle.toJSON()]
   console.log 'user', 'ship', @db.nick.green, vehicle.id
   vehicle
 
@@ -263,10 +262,7 @@ User::enterVehicle = (vehicle,mountId,spawn)->
     @vehicle.user = @
     @vehicle.save() # save loadout and ship
   else console.log 'owned-by', @vehicle.user.db.nick
-  @sock.json
-    switchShip: i:vehicle.id, mount:@vehicle.mount.map (i)-> if i then i.db.nick else false
-    hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
-  NUU.jsoncastTo vehicle, setMount: @vehicle.mount.map (i)-> if i then i.db.nick else false
+  Sync.enter vehicle, @
   console.log 'user', 'enter', @db.nick.green, vehicle.id, @mountId if debug
   return
 
@@ -275,7 +271,7 @@ User::leaveVehicle = ->
     console.log 'user', 'leaveVehicle'.red, @vehicle.name, @db.nick
     return false
   @vehicle.mount[idx] = false; @equip = @mount = undefined
-  NUU.jsoncastTo @vehicle, leaveVehicle: @db.nick
+  Sync.leave @vehicle, @
   if 0 is @vehicle.mount.filter((i)-> i ).length
     @vehicle.inhabited = no
   console.log 'user', 'leaveVehicle'.green, @vehicle.name, @vehicle.mount
@@ -395,6 +391,7 @@ Ship::setMount = (user,mountId,only=false)->
   @accel = @left = @right = no if 0 is mountId
   @inhabited = yes
   return mountId if only
-  console.log ' => ', @mount.map (i)-> if i then i.db.nick else false if debug
+  console.log ' => ', @mount.map (i)-> if i then i.db.nick else false # if debug
   NUU.jsoncastTo @, setMount: @mount.map (i)-> if i then i.db.nick else false
+  # Sync.enter @, user
   mountId

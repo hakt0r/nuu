@@ -69,25 +69,3 @@ NUU.init =->
     o.update time for o in $obj.list
     null
   @start()
-
-## Sync - queue object-creation notification
-$public class Sync
-  @flush: ->
-    NUU.jsoncast sync: add:Sync.adds, del:freeIds = Sync.dels.map (i)-> i.id
-    Sync.adds = []; Sync.dels = []; Sync.inst = false
-    return unless 0 < freeIds.length
-    setImmediate -> $obj.freeId = $obj.freeId.concat freeIds
-    null
-  @adds: []
-  @dels: []
-  @inst: false
-
-NUU.on '$obj:add', Sync.add = (obj)->
-  Sync.inst = setImmediate Sync.flush unless Sync.inst
-  Sync.adds.push obj
-  obj
-
-NUU.on '$obj:del', Sync.del = (obj)->
-  Sync.inst = setImmediate Sync.flush unless Sync.inst
-  Sync.dels.push obj
-  obj

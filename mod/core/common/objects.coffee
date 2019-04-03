@@ -39,35 +39,43 @@ $public class $obj
     unless @id?
       @id = if freeId.length is 0 then lastId++ else freeId.shift()
     else lastId = max(lastId,@id+1)
+    console.log '$obj', 'constructor$', @id, @name if debug
     # register
     i.list.push i.byId[@id] = @ for i in @constructor.interfaces
-    # read or setup momentum vector
+    # ( @range = SHORTRANGE ).push @ if isClient
+    Scanner.addLabel @, SHORTRANGE if isClient
+    TTL.add @ if @ttlFinal
+    # read or setup velocity
     @v = if v = state.v then v.slice() else [0,0]
     @x = state.x || 0
     @y = state.x || 0
     @d = state.d || 0
     @setState state
-    do @loadAssets
-    NUU.emit '$obj:add', @
-    # console.log '$obj', 'constructor$', @id, @name
+    do @loadAssets # loads metadata on server
+    Sync.add @
+    return
 
   loadAssets: ->
     if ( meta = $meta[ @sprite ] )
       # console.log ':nuu', '$meta', @sprite, $meta[@sprite] if debug
       { @size, @radius } = meta
     else console.log ':nuu', 'no meta for', @ if debug
+    return
 
   destructor: ->
     @destructing = true # might be set already
-    console.log '$obj', 'destructor$', @id, @name if debug
     for i in @constructor.interfaces
-      console.log '$obj', 'destructor$', 'object', i.name if debug
+      console.log '$obj', @id, 'destructor$'+i.name if debug
       delete i.byId[@id]
       Array.remove i.list, @
-    NUU.emit '$obj:del', @
+    Array.remove @range, @ if @range                if isClient
+    Array.remove VEHICLE.hostile, @                 if isClient
+    @hide()                                         if isClient
+    Sync.del @id
+    console.log '$obj', @id, 'destructor$', @name   if debug
+    return
 
-  dist: (o)-> sqrt(pow(abs(o.x-@x),2)-pow(abs(o.y-@y),2))
-
+  dist: (o)-> sqrt abs(o.x-@x)**2 - abs(o.y-@y)**2
   toJSON: -> id:@id,key:@key,size:@size,state:@state,tpl:@tpl
 
 Object.defineProperty $obj::, 'p',
@@ -111,22 +119,104 @@ $obj.register = (blueprint)->
   blueprint.list = []
   $public blueprint
 
-###
-  Interface-only
-   Objects are just registered here for
-   now, Might be un-stubbed later with
-   some related code.
-###
+# ███████ ██    ██ ███    ██  ██████
+# ██       ██  ██  ████   ██ ██
+# ███████   ████   ██ ██  ██ ██
+#      ██    ██    ██  ██ ██ ██
+# ███████    ██    ██   ████  ██████
+#
+# queue object-creation notification
+
+$static 'Sync', new class SyncQ
+  constructor:->
+    @adds = []
+    @dels = []
+    @inst = false
+    @free = []
+  flush:=>
+    do @sendLeaves                                if isServer
+    NUU.emit '$obj:del', dels = @dels         unless 0 is @dels.length
+    NUU.emit '$obj:add', adds = @adds         unless 0 is @adds.length
+    NUU.jsoncast sync: add:@adds, del:@dels       if isServer
+    do @sendEnters                                if isServer
+    @free = @dels.map (i)-> i.id
+    @inst = false; @adds = []; @dels = []
+    setTimeout @clean, 0 unless 0 is @free.length
+    return
+  clean:=>
+    $obj.freeId = $obj.freeId.concat @free
+  add:(obj)=>
+    NUU.player.vehicle = obj if obj.id is NUU.player.vehicleId if isClient
+    @inst = setTimeout @flush unless @inst
+    @adds.push obj
+    obj
+  del:(obj)=>
+    @inst = setTimeout @flush unless @inst
+    @dels.push obj
+    obj
+
+if isServer
+  Sync.enters = new Set
+  Sync.enter = (vehicle,user)->
+    ( vehicle.enterList || vehicle.enterList = [] ).push user
+    Sync.enters.add vehicle
+    return
+  Sync.sendEnters = ->
+    Sync.enters.forEach (vehicle)->
+      if list = vehicle.enterList
+        for user in list
+          user.sock.json
+            switchShip: i:vehicle.id, mount: vehicle.mount.map (i)-> if i then i.db.nick else false
+            hostile: vehicle.hostile.map ( (i)-> i.id ) if vehicle.hostile
+        NUU.jsoncastTo vehicle, setMount: vehicle.mount.map (i)-> if i then i.db.nick else false
+    Sync.enters = new Set
+    return
+
+  Sync.leaves = new Set
+  Sync.leave = (vehicle,user)->
+    ( vehicle.leaveList || vehicle.leaveList = [] ).push user.db.id
+    Sync.leaves.add vehicle
+    return
+  Sync.sendLeaves = ->
+    Sync.leaves.forEach (vehicle)->
+      return unless list = vehicle.leaveList
+      NUU.jsoncastTo vehicle, setMount: vehicle.mount.map (i)-> if i then i.db.nick else false
+      delete vehicle.leaveList
+    Sync.leaves = new Set
+    return
+
+# ████████ ████████ ██
+#    ██       ██    ██
+#    ██       ██    ██
+#    ██       ██    ██
+#    ██       ██    ███████
+
+$worker.push NUU.checkTTL = ->
+  i = -1; s = null; list = TTL; length = list.length
+  while ++i < length
+    s = list[i]
+    continue unless s.ttl and s.ttl < time
+    s.hide()
+    s.destructor() if s.ttlFinal
+    TTL.remove s
+  return
+
+# ███████ ██ ███    ███ ██████  ██      ███████ ████████  ██████  ███    ██ ███████
+# ██      ██ ████  ████ ██   ██ ██      ██         ██    ██    ██ ████   ██ ██
+# ███████ ██ ██ ████ ██ ██████  ██      █████      ██    ██    ██ ██ ██  ██ ███████
+#      ██ ██ ██  ██  ██ ██      ██      ██         ██    ██    ██ ██  ██ ██      ██
+# ███████ ██ ██      ██ ██      ███████ ███████    ██     ██████  ██   ████ ███████
+##
+# Interface-only
+#  Objects are just registered here for
+#  now, Might be un-stubbed later with
+#  some related code.
 
 $obj.register class Collectable extends $obj
   @interface: true
 
 $obj.register class Shootable extends $obj
   @interface: true
-
-###
-  Some simple objects
-###
 
 $obj.register class Debris extends $obj
   @interfaces: [$obj,Shootable,Collectable,Debris]
@@ -154,13 +244,14 @@ $obj.register class Asteroid extends $obj
       r    = 0.8 + random() / 5
       phi  = random() * TAU
       size = max 10, floor random() * 73
+      belt = Array.random [503250000,5.984e+9]
       opts =
         resource: ( Element.random() for i in [0...5] )
         size: size
         state:
           S: $orbit
-          x: sqrt(r) * cos(phi) * 7000000000
-          y: sqrt(r) * sin(phi) * 7000000000
+          x: sqrt(r) * cos(phi) * belt
+          y: sqrt(r) * sin(phi) * belt
           relto: Stellar.byId[0]
     img = opts.size - 10
     img = '0' + img if img < 10
@@ -168,3 +259,72 @@ $obj.register class Asteroid extends $obj
     super opts
     @name = 'roid-' + @id
     @hp = 100
+
+return unless isClient
+
+# ██   ██  ██████  ██████  ██ ███████  ██████  ███    ██
+# ██   ██ ██    ██ ██   ██ ██    ███  ██    ██ ████   ██
+# ███████ ██    ██ ██████  ██   ███   ██    ██ ██ ██  ██
+# ██   ██ ██    ██ ██   ██ ██  ███    ██    ██ ██  ██ ██
+# ██   ██  ██████  ██   ██ ██ ███████  ██████  ██   ████
+
+$obj.HorizonShort = 1000000
+$obj.HorizonMid   = 200000000
+$obj.nextMidrangeUpdate = 0
+$obj.nextLongrangeUpdate = 0
+
+$obj.select = (force)->
+  S = SHORTRANGE; M = MIDRANGE; L = LONGRANGE
+  hS = @HorizonShort; hM = @HorizonMid
+  aS = []; aL = []; aM = []; dS = new Set; dM = new Set; dL = new Set
+  uM = @nextMidrangeUpdate; uL = @nextLongrangeUpdate
+  uM = uL = 0 if force
+
+  VEHICLE.update time = NUU.time()
+  { x,y } = VEHICLE
+
+  if time > uL
+    @selectFrom LONGRANGE, hS,hM,x,y,time,aS,aM,aL,S,M,L,dL
+    @nextLongrangeUpdate = time + 10000
+    Scanner.updateLongrange = yes
+  if time > uM
+    @selectFrom MIDRANGE,  hS,hM,x,y,time,aS,aM,aL,S,M,L,dM
+    @nextMidrangeUpdate  = time + 2000
+    Scanner.updateMidrange = yes
+  @selectFrom SHORTRANGE,hS,hM,x,y,time,aS,aM,aL,S,M,L,dS
+  @selectFrom force,     hS,hM,x,y,time,aS,aM,aL,S,M,L,(add:->) if Array.isArray force
+
+  # console.log "<=(horizon)=> " +
+  #   "Short(#{SHORTRANGE.length}:#{aS.length}|#{dS.length}) " +
+  #   "Mid(#{MIDRANGE.length}:#{aM.length}|#{dM.length}|#{Scanner.updateMidrange}|#{@nextLongrangeUpdate}) " +
+  #   "Long(#{LONGRANGE.length}:#{aL.length}|#{dL.length})|#{Scanner.updateLongrange}|#{@nextLongrangeUpdate}"
+
+  @announce 'SHORTRANGE', '$obj:range:short', aS, dS
+  @announce 'MIDRANGE',   '$obj:range:mid',   aM, dM
+  @announce 'LONGRANGE',  '$obj:range:long',  aL, dL
+  return
+
+$obj.selectFrom = (list,hS,hM,x,y,time,aS,aM,aL,S,M,L,del)->
+  i = -1; s = null; length = list.length
+  while ++i < length
+    continue unless s = list[i]
+    s.update time; dist = abs sqrt abs(x-s.x)**2 + abs(y-s.y)**2
+    if dist < hS
+      continue if S.includes s
+      aS.push s; del.add s; s.range = S; s.inRange = yes
+    else if dist < hM
+      continue if M.includes s
+      aM.push s; del.add s; s.range = M
+    else
+      continue if L.includes s
+      aL.push s; del.add s; s.range = L
+  Scanner.updateLongrange = yes
+  return
+
+$obj.announce = (key,event,add,del)->
+  unless 0 is add.length
+    window[key] = window[key]
+    .filter (i)-> not del.has i
+    .concat add
+    NUU.emit event, add
+  else window[key] = window[key].filter (i)-> not del.has i

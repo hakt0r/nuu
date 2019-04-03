@@ -20,16 +20,18 @@
 
 ###
 
-$static 'Scanner', new class ScannerRenderer
-  id     : 0
-  type   : 0
-  width  : 200
-  height : 200
-  scale  : 1.0
-  active : true
-  label  : {}
-  orbits : yes
-  fullscreen : no
+$static 'Scanner', new class NUU.Scanner
+
+  scale:         16
+  width:         200
+
+  active:        true
+  orbits:        yes
+  midRange:      yes
+  longRange:     yes
+
+  fullscreen:    no
+  wasFullscreen: no
 
   color:
     Orbit:    [0x330000]
@@ -44,148 +46,217 @@ $static 'Scanner', new class ScannerRenderer
     Ship:     [0xCC00FF,'◭']
     Star:     [0xFFFF00,'◍']
 
-  constructor: ->
-    @gfx = Sprite.layer 'scan', new PIXI.Graphics true
-    # @gfx.cacheAsBitmap = yes
-    @gfx.width = @gfx.height = @width
-    @circleMode = yes
-    @fullscreen = no
-    Sprite.renderScanner = @render.bind @
-    NUU.on '$obj:add', @addLabel()
-    NUU.on '$obj:del', @removeLabel()
-    NUU.on '$obj:inRange', (obj) ->
-      return unless obj and l = Scanner.label[obj.id]
-      [l.text, l.style.fill,l._label.text] = Scanner.labelStyle obj, true
-      PIXI.bringToFront l
-      null
-    NUU.on '$obj:outRange', (obj) ->
-      return unless obj and l = Scanner.label[obj.id]
-      [l.text, l.style.fill,l._label.text] = Scanner.labelStyle obj
-      null
-    NUU.on 'newTarget', (obj,old) ->
-      if obj and l = Scanner.label[obj.id]
-        [l.text, l.style.fill,l._label.text] = Scanner.labelStyle obj, true
-        PIXI.bringToFront l
-      if old and l = Scanner.label[old.id]
-        [l.text, l.style.fill,l._label.text] = Scanner.labelStyle old
-      null
-    null
+  constructor:-> Sprite.renderScanner = ->
 
-  labelStyle: (s,inRange=false)->
-    return ['◆','white',''] unless t = Scanner.color[s.constructor.name]
+  show:->
+    @$ = new PIXI.Container
+    @bg = new PIXI.Sprite
+    @bg.alpha = 0.4
+    @$.addChild @bg
+    # @$.addChild @orbit = new PIXI.Graphics true
+    @$.addChild @long  = new PIXI.Container; @long.alpha = 0.4
+    @$.addChild @mid   = new PIXI.Container; @mid .alpha = 0.7
+    @$.addChild @short = new PIXI.Container
+    NUU.on '$obj:add',         @addLabel   .bind @
+    NUU.on '$obj:del',         @removeLabel.bind @
+    NUU.on '$obj:range:short', @addToRange 'short', @short, yes
+    NUU.on '$obj:range:mid',   @addToRange 'mid',   @mid,   yes
+    NUU.on '$obj:range:long',  @addToRange 'long',  @long,  yes
+    Sprite.layer 'scanner', @$
+    NUU.on 'newTarget', @newTarget
+    Sprite.renderScanner = @render
+    Sprite.on 'resize', @resize
+    do @resize
+    return
+
+  resize:=>
+    @renderLongrange = @renderMidrange = yes
+    if @fullscreen
+      W = min WIDTH - 20, HEIGHT - 115 - 20; W2 = W/2; W2R = W2/2
+      @$.position.set WDB2 - W2 - 7, HEIGHT - W - 7 - 115
+    else
+      W = @width; W2 = W/2; W2R = W2/2
+      @$.position.set WDB2 - W2 - 7, HEIGHT - W2 - 7 - 115
+    @radius = @W2 = W2; @W2R = W2R
+    @short.position.set W2R+7,W2R+7
+    @mid  .position.set W2R+7,W2R+7
+    @long .position.set W2R+7,W2R+7
+    #@orbit.position.set W2R+7,W2R+7
+    c = document.createElement 'canvas'
+    c.width = c.height = W2 * 2 + 28
+    g = c.getContext '2d'
+    g.fillStyle = "#000"
+    g.strokeStyle = "#444"
+    g.strokeWidth = 2
+    g.beginPath()
+    g.arc W2+7, W2+7, W2+6, 0, TAU
+    g.fill()
+    g.stroke()
+    @bg.setTexture t = PIXI.Texture.from c
+    @bg.___tex__.destroy() if @bg.___tex__
+    @bg.___tex__ = t
+    do @render
+
+  labelStyle:(s,inRange=false)->
+    return ['◆','white',''] unless t = @color[s.constructor.name]
     [fill, name] = t
     title = ''
-    if      s.constructor is Star   then title = s.name || 'Star'
-    else if s.constructor is Planet then title = s.name || 'Planet'
-    title = '' if inRange
-    fill = 'red'     if s is TARGET
+    if      s.constructor is Star    then title = s.name || 'Star'
+    else if s.constructor is Planet  then title = s.name || 'Planet'
+    # else if s.constructor is Moon    then title = s.name || 'Moon'
+    # else if s.constructor is Station then title = s.name || 'Station'
+    # title = ''    if inRange
+    fill = 'red'  if s is TARGET
     return [name,fill,title]
 
-  addLabel: -> (s) =>
-    return unless s.name
-    @removeLabel s if @label[s.id]
-    [name,fill,title] = @labelStyle s
-    @gfx.addChild l = @label[s.id] = new PIXI.Text name,  fontFamily: 'monospace', fontSize:'8px', fill: fill
-    @gfx.addChild l._label         = new PIXI.Text title, fontFamily: 'monospace', fontSize:'8px', fill: fill
-    l.$obj = s
-    null
+  addLabel:(list,scope=@short)->
+    for s in list
+      continue if s.label or not s.name
+      [ name, fill, title ] = @labelStyle s
+      scope.addChild l = s.label = new PIXI.Text name,  fontFamily: 'monospace', fontSize:'8x', fill: fill
+      scope.addChild t = s.title = new PIXI.Text title, fontFamily: 'monospace', fontSize:'8x', fill: fill
+      l.scope = t.scope = scope
+      l.pivot.set .5, .5
+      t.pivot.set .5, .5
+    return
 
-  removeLabel: -> (s) =>
-    return unless l = @label[s.id]
-    _label = l._label
-    delete @label[s.id]
-    l.visible = no
-    @gfx.removeChild l
-    Array.remove @gfx.children, l
-    l.destroy()
-    return unless _label
-    _label.visible = no
-    @gfx.removeChild _label
-    Array.remove @gfx.children, _label
-    _label.destroy()
+  removeLabel:(list,keep)->
+    for s in list
+      continue unless label = s.label
+      scope = label.scope
+      scope.removeChild label
+      scope.removeChild title = s.title
+      Array.remove scope.children, label
+      Array.remove scope.children, title
+      unless keep
+        delete s.label
+        delete s.title
+        label.destroy()
+        title.destroy()
+      delete s.scope
+    return
 
-  render: ->
+  addToRange:(name,scope,inRange)=> (list)=>
+    @updateLabel list, scope, inRange
+
+  updateLabel:(list,scope,inRange)->
+    add = []
+    for s in list
+      unless old = s.scope then add.push s
+      else
+        continue if old is scope or not label = s.label
+        @removeLabel [s], true
+        ( l = s.label ).scope = ( t = s.title ).scope = scope
+        [l.text, l.style.fill,t.text] = @labelStyle s, inRange
+        scope.addChild l
+        scope.addChild t
+    @addLabel add, scope
+    return
+
+  newTarget:(obj,old)=>
+    if obj and l = obj.label
+      t = obj.title
+      [l.text, l.style.fill,t.text] = @labelStyle obj, yes
+      PIXI.bringToFront l
+    if old and l = old.label
+      t = old.title
+      [l.text, l.style.fill,t.text] = @labelStyle old
+    return
+
+  render:=>
     return unless @active
     return unless pl = VEHICLE
-    if @fullscreen
-      W = min WIDTH, HEIGHT; W2 = W/2-150; W2R = WDB2; H2R = HGB2
-      @gfx.position.set 0,0 unless @gfx.position[0] is 0
-    else
-      W2 = H2 = ( W = H = @width ) / 2; W2R = H2R = 100
-      @gfx.position.set WDB2 - 100, HEIGHT - 210
-    @radius = W2
-    lb = @label
-    px = pl.x; py = pl.y
-    ( g = @gfx ).clear()
-    g.fillAlpha = 0.2
-    canHazOrbit = Array.uniq [TARGET,VEHICLE].concat Object.values Target.hostile
-    canHazOrbit.map ( s )-> canHazOrbit.push s.state.relto if s.state.relto
-    canHazOrbit = Array.uniq canHazOrbit
-    skipId = canHazOrbit.map (i)-> i.id
-    a = [0,0] # static allocation for magnitude-input in loop
-    for s in canHazOrbit
+    { W2, W2R } = @
+    { x,y } = pl
+    renderAll       = @wasFullscreen isnt @fullscreen or @scale isnt @lastScale
+    renderMidrange  = @updateMidrange  or renderAll
+    renderLongrange = @updateLongrange or renderAll
+    @updateLongrange = @updateMidrange = no
+    @wasFullscreen   = @fullscreen
+    @lastScale       = @scale
+    @renderRange x,y,W2,W2R,SHORTRANGE
+    # if @orbits and Target
+    #   orbits = Array.uniq [TARGET,VEHICLE].concat Object.values Target.hostile
+    #   orbits.map (s)-> Array.pushUnique orbits, rel if rel = s.state.relto
+    #   @orbit.cacheAsBitmap = no
+    #   @renderOrbits @orbit,x,y,W2,W2R,orbits
+    #   @orbit.cacheAsBitmap = yes
+    if renderMidrange
+      @mid.cacheAsBitmap = no
+      @renderRange x,y,W2,W2R,MIDRANGE
+      @mid.cacheAsBitmap = yes
+    if renderLongrange
+      @long.cacheAsBitmap = no
+      @renderRange x,y,W2,W2R,LONGRANGE
+      @long.cacheAsBitmap = yes
+    return
+
+  renderOrbits:(g,x,y,W2,W2R,list)->
+    g.clear(); g.fillAlpha = 0.2
+    a = [0,0]
+    for s in list
       w = max 1, min 2, s.size * 100 / @scale
-      a[0] = s.x - px
-      a[1] = s.y - py
+      a[0] = s.x - x
+      a[1] = s.y - y
       l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.normalize(v), l
-      if L = lb[s.id]
+      if L = s.label
         hw = L.width/2
         hh = L.height/2
-        L.position.set v[0]+W2R-hw, v[1]+H2R-hh
-        if v[0] < 0 then L._label.position.set v[0]+W2R+4,                v[1]+H2R+1-hh
-        else             L._label.position.set v[0]+W2R-3-L._label.width, v[1]+H2R+1-hh
+        L.position.set v[0]+W2R-hw, v[1]+W2R-hh
+        T = s.title
+        if v[0] < 0 then T.position.set v[0]+W2R+4,         v[1]+W2R+1-hh
+        else             T.position.set v[0]+W2R-3-T.width, v[1]+W2R+1-hh
       g.lineStyle 2, @color.SubOrbit
       mv = max abs(v[0]), abs(v[1])
-      mc = max abs(W2R),  abs(H2R)
+      mc = max abs(W2R),  abs(W2R)
       if s is TARGET then for o in s.orbits || [] when mc * 1.25 > mv + o / @scale
-        g.endFill g.drawCircle v[0]+W2R, v[1]+H2R, o / @scale
+        g.endFill g.drawCircle v[0]+W2R, v[1]+W2R, o / @scale
       g.lineStyle 2, @color.Orbit
-      if s.state.S is $orbit and Scanner.orbits
-        o = s.state.orb / @scale
-        a[0] = s.state.relto.x - px
-        a[1] = s.state.relto.y - py
+      if ( st = s.state ).S is $orbit
+        rel = st.relto
+        o = st.orb / @scale
+        a[0] = rel.x - x
+        a[1] = rel.y - y
         ol = min W2-5, ( $v.mag ov = a ) / @scale
         ov = $v.mult $v.normalize(ov), ol
-        if o + ol < W2
-          g.endFill g.drawCircle v[0]+W2R, v[1]+H2R, o
-    # TODO: more inRange magic
-    # time = NUU.time()
-    # return if @nextUpdate > time; @nextUpdate = time + if @scale < 1024 then TICK else 250
-    for s in $obj.list
-      continue unless -1 is skipId.indexOf s.id
+        g.endFill g.drawCircle v[0]+W2R, v[1]+W2R, o if o + ol < W2
+    return
+
+  renderRange:(x,y,W2,W2R,list)->
+    a = [0,0]; length = list.length; i = 0
+    while i < length
+      s = list[i++]
       w = max 1, min 2, s.size * 100 / @scale
-      a[0] = s.x - px
-      a[1] = s.y - py
+      a[0] = s.x - x
+      a[1] = s.y - y
       l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.normalize(v), l
-      if L = lb[s.id]
-        hw = L.width/2
-        hh = L.height/2
-        L.position.set v[0]+W2R-hw, v[1]+H2R-hh
-        if v[0] < 0 then L._label.position.set v[0]+W2R+4,                v[1]+H2R+1-hh
-        else             L._label.position.set v[0]+W2R-3-L._label.width, v[1]+H2R+1-hh
-    null
+      if L = s.label
+        hw = L.width/2; hh = L.height/2
+        L.position.set v[0]+W2R-hw, v[1]+W2R-hh
+        T = s.title
+        if v[0] < 0 then T.position.set v[0]+W2R+4,         v[1]+W2R+1-hh
+        else             T.position.set v[0]+W2R-3-T.width, v[1]+W2R+1-hh
+    return
 
-  toggleFS: ->
-    if not @active then Sprite.stage.addChild @gfx
+  toggle:=>
+    @$.visible = @active = not @active
+    if @active then Sprite.stage.addChild @$
+    else Sprite.stage.removeChild @$
+    return
+
+  toggleFullscreen:=>
+    if not @active then Sprite.stage.addChild @$
     @active = true
     @fullscreen = not @fullscreen
+    do @resize
+    return
 
+  zoomIn:=>  @scale = max 1,         @scale / 2
+  zoomOut:=> @scale = min 134217728, @scale * 2
 
-  toggle: ->
-    @active = not @active
-    #console.log Sprite.stage.children.indexOf @gfx
-    if @active then Sprite.stage.addChild @gfx
-    else Sprite.stage.removeChild @gfx
-
-  zoomIn: ->
-    Scanner.scale = max 1, Scanner.scale / 2
-
-  zoomOut: ->
-    Scanner.scale = min 134217728, Scanner.scale * 2
-
-Kbd.macro 'scanToggleFS', 'aEnter',  'Toggle Scanner FS',  Scanner.toggleFS.bind Scanner
-Kbd.macro 'scanToggle',   'Enter',   'Toggle Scanner',     Scanner.toggle.bind Scanner
-Kbd.macro 'scanPlus',     'Equal',   'Zoom scanner in',    Scanner.zoomIn.bind Scanner
-Kbd.macro 'scanMinus',    'Minus',   'Zoom scanner out',   Scanner.zoomOut.bind Scanner
+Kbd.macro 'scanToggleFS', 'aEnter',  'Toggle Scanner FS',  Scanner.toggleFullscreen
+Kbd.macro 'scanToggle',   'Enter',   'Toggle Scanner',     Scanner.toggle
+Kbd.macro 'scanPlus',     'Equal',   'Zoom scanner in',    Scanner.zoomIn
+Kbd.macro 'scanMinus',    'Minus',   'Zoom scanner out',   Scanner.zoomOut

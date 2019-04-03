@@ -31,6 +31,16 @@
 
 ###
 
+# ██████  ██ ██   ██ ██      ██ ███████
+# ██   ██ ██  ██ ██  ██      ██ ██
+# ██████  ██   ███   ██      ██ ███████
+# ██      ██  ██ ██  ██ ██   ██      ██
+# ██      ██ ██   ██ ██  █████  ███████
+
+PIXI.Ticker         = PIXI.ticker.Ticker         unless PIXI.Ticker
+PIXI.AnimatedSprite = PIXI.extras.AnimatedSprite unless PIXI.AnimatedSprite
+PIXI.TilingSprite   = PIXI.extras.TilingSprite   unless PIXI.TilingSprite
+
 PIXI.bringToFront = (sprite, parent) ->
   sprite = if typeof sprite != 'undefined' then sprite.target or sprite else this
   parent = parent or sprite.parent or 'children': false
@@ -39,13 +49,86 @@ PIXI.bringToFront = (sprite, parent) ->
   chd.push sprite
   return
 
-# Moved in v5 we use both atm
-PIXI.Ticker = PIXI.ticker.Ticker                 unless PIXI.Ticker
-PIXI.AnimatedSprite = PIXI.extras.AnimatedSprite unless PIXI.AnimatedSprite
-PIXI.TilingSprite   = PIXI.extras.TilingSprite   unless PIXI.TilingSprite
+# ██████  ███████ ███    ██ ██████  ███████ ██████  ███████ ██████
+# ██   ██ ██      ████   ██ ██   ██ ██      ██   ██ ██      ██   ██
+# ██████  █████   ██ ██  ██ ██   ██ █████   ██████  █████   ██████
+# ██   ██ ██      ██  ██ ██ ██   ██ ██      ██   ██ ██      ██   ██
+# ██   ██ ███████ ██   ████ ██████  ███████ ██   ██ ███████ ██   ██
+
+$static 'Sprite', new class NUU.Render extends EventEmitter
+  visible: {}
+  visibleList: []
+  nextSelect: 0
+
+  constructor: (callback)->
+    super()
+    @scale = 1
+    @tick = 0
+    @stage = stage = new PIXI.Container # 0x000000
+    @pixi = new PIXI.Application 640, 480, antialias:no, forceFXAA:yes, autoResize:no
+    @renderer = renderer = @pixi.renderer
+    @emit 'init'
+    document.body.appendChild renderer.view
+    window.addEventListener 'resize', @resize
+    @ticker = new PIXI.Ticker
+    @ticker.add =>
+      do @animate
+    setInterval (=> do $obj.select ), TICK * 3
+    @ticker.start()
+    do @resize
+    do @initialize
+    return
+
+  initialize:-> new Promise (resolve,reject)=> $.ajax '/build/images.json',
+    success:(result)=>
+      $static '$meta', result
+      @makeMovie k, '/build/gfx/' + k + '.png' for k in @preload
+      NUU.emit 'gfx:ready'
+      do resolve
+    error:reject
+
+  repositionPlayer:->
+  animate:->
+
+  resize:=>
+    w = window
+    d = document
+    w.WIDTH  = w.innerWidth
+    w.HEIGHT = w.innerHeight
+    w.WDB2 = WIDTH  / 2
+    w.HGB2 = HEIGHT / 2
+    w.WDT2 = WIDTH  + WIDTH
+    w.HGT2 = HEIGHT + HEIGHT
+    @renderer.resize WIDTH, HEIGHT
+    @emit 'resize', WIDTH, HEIGHT, WDB2, HGB2
+    do @repositionPlayer
+    return
+
+  layer:(name,container)->
+    @[name] = container
+    @stage.addChild container
+    @visible[name] = []
+    container
+
+  start:(callback) =>
+    @startTime = NUU.time()
+    callback null if callback
+    null
+
+  stop:-> @bg.removeChildren()
+
+Sprite.preload = [
+  'exps','expm','expl','expl2','cargo','debris0','debris1','debris2','debris3','debris4','debris5']
+
+# ███    ███  ██████  ██    ██ ██ ███████ ███████
+# ████  ████ ██    ██ ██    ██ ██ ██      ██
+# ██ ████ ██ ██    ██ ██    ██ ██ █████   ███████
+# ██  ██  ██ ██    ██  ██  ██  ██ ██           ██
+# ██      ██  ██████    ████   ██ ███████ ███████
 
 movieCache = {}
-$static 'movieFactory', (sprite, url, _loop) ->
+
+Sprite.makeMovie = (sprite, url, _loop)->
   unless (c = movieCache[sprite])
     base = new PIXI.BaseTexture.fromImage url
     meta = $meta[String.filename sprite]
@@ -65,66 +148,3 @@ $static 'movieFactory', (sprite, url, _loop) ->
       c.onComplete = _loop unless ( c.loop = _loop is true )
       c
   c(_loop)
-
-$static 'SpriteSurface', class SpriteSurface extends EventEmitter
-  visible: {}
-  visibleList: []
-  nextSelect: 0
-
-  constructor: (callback)->
-    super()
-
-    @scale = 1
-    @tick = 0
-    @stage    = stage    = new PIXI.Container # 0x000000
-    @pixi = new PIXI.Application 640, 480, antialias: no, forceFXAA:yes, autoResize:no
-    @renderer = renderer = @pixi.renderer
-
-    @emit 'init'
-
-    document.body.appendChild renderer.view
-    d = $ document
-    w = $ window
-    do @resize = =>
-      window.WIDTH  = d.width()
-      window.HEIGHT = d.height()
-      window.WDB2 = WIDTH  / 2
-      window.HGB2 = HEIGHT / 2
-      window.WDT2 = WIDTH  + WIDTH
-      window.HGT2 = HEIGHT + HEIGHT
-      @renderer.resize WIDTH, HEIGHT
-      @emit 'resize', WIDTH, HEIGHT, WDB2, HGB2
-    w.on 'resize', @resize
-    @ticker = new PIXI.Ticker
-    @ticker.add => do @animate
-    @ticker.start()
-    $interval 500, => do @select
-    $.ajax '/build/images.json', success: (result) =>
-      $static '$meta', result
-      # preload animations
-      for k in ['exps','expm','expl','expl2','cargo','debris0','debris1','debris2','debris3','debris4','debris5']
-        movieFactory k, '/build/gfx/' + k + '.png'
-      NUU.emit 'gfx:ready'
-    @on 'resize', @repositionPlayer.bind @
-    null
-
-  layer: (name,container)->
-    @[name] = container
-    @stage.addChild container
-    @visible[name] = []
-    container
-
-  start: (callback) =>
-    @startTime = NUU.time()
-    callback null if callback
-    null
-
-  stop: ->
-    @bg.removeChildren()
-
-  select:->
-  animate:->
-  repositionPlayer:->
-
-$static 'Sprite', new SpriteSurface
-console.log Sprite

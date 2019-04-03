@@ -33,7 +33,7 @@ $abstract 'Tile',
       @sprite.anchor.set 0.5
 
   loadTile: (url,dest='sprite',callback=$void) ->
-    callback null, @[dest] = movieFactory url, url
+    callback null, @[dest] = Sprite.makeMovie url, url
 
   updateSprite: (time)->
     @update time

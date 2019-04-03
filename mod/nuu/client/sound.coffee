@@ -58,13 +58,13 @@ $public class Sound
 
 Sound.init = (callback)->
   Sound.radio = new Radio
-  splashSound = ->
-    Sound.radio.ctx.resume()
-    # Sound.radio.add Sound['hail.ogg'].url, volume:0.01, keep:yes
-    document.removeEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
-    document.removeEventListener 'keydown',   splashSound, passive:no, once:yes, capture:yes
-  document.addEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
-  document.addEventListener 'keydown',  splashSound, passive:no, once:yes, capture:yes
+  # splashSound = ->
+  #   Sound.radio.ctx.resume()
+  #   Sound.radio.add Sound['hail.ogg'].url, volume:0.01, keep:yes
+  #   document.removeEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
+  #   document.removeEventListener 'keydown',   splashSound, passive:no, once:yes, capture:yes
+  # document.addEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
+  # document.addEventListener 'keydown',  splashSound, passive:no, once:yes, capture:yes
   list = ( Sound.load 'build/sounds/' + name for name in Sound.autoload )
   Promise.all(list)
   .then Sound.defaults
@@ -108,8 +108,10 @@ $public class Radio
   constructor:->
     @msg = 0
     @$ = []
+  init:->
     @ctx = new AudioContext latencyHint: "playback", sampleRate: 48000
     @out = @ctx.destination
+    @add Sound['hail.ogg'].url, volume:0.1, keep:yes
     return unless Sound.radioEffect
     @out = @band = @ctx.createBiquadFilter()
     @band.type = "bandpass"

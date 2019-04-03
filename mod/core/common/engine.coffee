@@ -235,6 +235,8 @@ Array.pushUnique = (a,v)->
   a.push v unless a.includes v
   return
 
+Array.fake = push:->
+
 Object.empty = (o)->
   delete o[k] for k of o
   o

@@ -33,18 +33,22 @@ NET.on 'landed',  (id)->
   new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
 
 NUU.sync = (list,callback) ->
-  if list.del
-    do o.destructor for id in list.del when o = $obj.byId[id]
-  if list.add then for obj in list.add
+  if list.del then for id in list.del when o = $obj.byId[id]
+    do o.destructor
+  if list.add then $obj.select list.add.map (obj)->
     if o = $obj.byId[obj.id]
-      console.log '$obj', 'exists:replace', obj.id if debug
+      console.log '$obj', 'exists:replace', obj.id # if debug
       o.destructor()
     new $obj.byClass[obj.key] obj
+  else $obj.select yes
   callback null if callback
 
 NUU.firstSync = (opts,callback)->
   @player = new User opts
-  Sprite.start => @start callback
+  do Sprite.initSpace
+  Sound.radio.init()
+  Sprite.start =>
+    @start callback
 
 NET.queryJSON = (opts,callback)->
   p = new Promise (resolve,reject)->

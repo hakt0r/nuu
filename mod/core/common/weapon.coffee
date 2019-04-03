@@ -296,74 +296,72 @@ if isClient # client implements the simple case
     @implements: [$Missile]
     @interfaces: [$obj,Debris]
 
-  return
+if isServer
 
-Weapon.Launcher = ->
-  ammo = Item.byName[@stats.ammo]
-  @trigger = switch ammo.type
-    when 'fighter'
-      ship = Item.byName[ammo.stats.ship]
-      (src,target)=>
+  Weapon.Launcher = ->
+    ammo = Item.byName[@stats.ammo]
+    @trigger = switch ammo.type
+      when 'fighter'
+        ship = Item.byName[ammo.stats.ship]
+        (src,target)=>
+          Weapon.hostility @ship, target
+          time = NUU.time()
+          new Escort
+            escortFor: @ship.id
+            state: Missile.ejectState time, @ship, 0.004
+            tpl: ship.itemId
+      else (src,target)=>
         Weapon.hostility @ship, target
-        time = NUU.time()
-        new Escort
-          escortFor: @ship.id
-          state: Missile.ejectState time, @ship, 0.004
-          tpl: ship.itemId
-    else (src,target)=>
-      Weapon.hostility @ship, target
-      new Missile source:@ship, target:target
-  @release = $void
+        new Missile source:@ship, target:target
+    @release = $void
 
-$obj.register class Missile extends $obj
-  @implements: [$Missile]
-  @interfaces: [$obj]
+  $obj.register class Missile extends $obj
+    @implements: [$Missile]
+    @interfaces: [$obj]
 
-  constructor: (opts={})->
-    time = NUU.time()
-    opts.turn   = 0.4
-    src = opts.source
-    opts.state  = Missile.ejectState time, src, opts.thrust = 0.0014
-    super opts
-    @ttl = time + 10000
-    @needState = 0
-    @prevState = 0
-    @hitDist   = pow ( @size + @target.size ) / 2, 2
-    @prototype = Item.byId[@tpl]
-    setTimeout ( => MissilePilot.add @ ), 500
+    constructor: (opts={})->
+      time = NUU.time()
+      opts.turn   = 0.4
+      src = opts.source
+      opts.state  = Missile.ejectState time, src, opts.thrust = 0.0014
+      super opts
+      @ttl = time + 10000
+      @needState = 0
+      @prevState = 0
+      @hitDist   = pow ( @size + @target.size ) / 2, 2
+      @prototype = Item.byId[@tpl]
+      setTimeout ( => MissilePilot.add @ ), 500
 
-Missile.ejectState = (time,src,thrust)->
-  src.update time
-  sv = src.v.slice()
-  sd = src.d / RAD
-  S: $burn
-  a: thrust
-  t: time
-  d: src.d
-  x: src.x
-  y: src.y
-  v: [ sv[0] + cos(sd) * thrust, sv[1] + sin(sd) * thrust ]
+  Missile.ejectState = (time,src,thrust)->
+    src.update time
+    sv = src.v.slice()
+    sd = src.d / RAD
+    S: $burn
+    a: thrust
+    t: time
+    d: src.d
+    x: src.x
+    y: src.y
+    v: [ sv[0] + cos(sd) * thrust, sv[1] + sin(sd) * thrust ]
 
-return if isClient
-
-MissilePilot = $worker.ReduceList (time)->
-  if time > @ttl
-    @destructor()
-    return false
-  @update time = NUU.time()
-  @target.update time
-  dist = $v.sub @target.p, @p
-  if @hitDist > $v.mag dist
-    @target.hit @source, @prototype
-    NET.operation.write @, 'remove'
-    @destructor()
-    return false
-  dir = (360+RAD*$v.heading dist, $v.zero)%360
-  dif = (dir-@d+540)%360-180
-  if abs(dif) < 2
-    return true if @prevState is 4; @prevState = 4
-    @setState S:$burn, a:@thrust, d:dir
-  else
-    return true if @prevState is 3 and @prevDir is dir; @prevState = 3; @prevDir = dir
-    if @state.S is $turnTo then @state.changeDir dir else @setState S:$turnTo, D:dir
-  true
+  MissilePilot = $worker.ReduceList (time)->
+    if time > @ttl
+      @destructor()
+      return false
+    @update time = NUU.time()
+    @target.update time
+    dist = $v.sub @target.p, @p
+    if @hitDist > $v.mag dist
+      @target.hit @source, @prototype
+      NET.operation.write @, 'remove'
+      @destructor()
+      return false
+    dir = (360+RAD*$v.heading dist, $v.zero)%360
+    dif = (dir-@d+540)%360-180
+    if abs(dif) < 2
+      return true if @prevState is 4; @prevState = 4
+      @setState S:$burn, a:@thrust, d:dir
+    else
+      return true if @prevState is 3 and @prevDir is dir; @prevState = 3; @prevDir = dir
+      if @state.S is $turnTo then @state.changeDir dir else @setState S:$turnTo, D:dir
+    true
