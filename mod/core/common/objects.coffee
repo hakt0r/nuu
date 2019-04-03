@@ -260,7 +260,7 @@ $obj.register class Asteroid extends $obj
     @name = 'roid-' + @id
     @hp = 100
 
-return unless isClient
+return if isServer
 
 # ██   ██  ██████  ██████  ██ ███████  ██████  ███    ██
 # ██   ██ ██    ██ ██   ██ ██    ███  ██    ██ ████   ██

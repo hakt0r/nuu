@@ -44,11 +44,12 @@
     ["$v","vectors"],
     ["$tag","tagscale"]],
   "sources": [
+    "server",
     "db",
     "user",
     "console",
     "http",
-    "server"]},
+    "start"]},
 "common":{
   "sources":[
     "buffer",

@@ -42,6 +42,10 @@ module.exports = (__targets) ->
   global.$s = async.series
   global.$p = async.parallel
 
+  global.exec$ = (cmd)-> new Promise (resolve,reject)->
+    console.log cmd.grey
+    cp.spawn( 'sh', [ '-c', cmd ], stdio: 'inherit' ).on 'close', resolve
+
   global.exec = (cmd)-> (c)->
     console.log cmd.grey
     cp.spawn( 'sh', [ '-c', cmd ], stdio: 'inherit' ).on 'close', ->
@@ -185,21 +189,45 @@ module.exports = (__targets) ->
       r.pipe(fs.createWriteStream dst)
     else c null
 
-  global.compile = (src,dst)-> (c)->
-    return c null unless src.match /\.coffee$/
-    return c null if ( stat = fs.statSync(src) ).isDirectory()
-    if fs.existsSync(dst)
-      if ( dstat = fs.statSync(dst) )
-        if stat.mtime.toString().trim() is dstat.mtime.toString().trim()
-          # console.log 'up-todate:'.green, src.yellow, ( dstat || mtime: null ).mtime
-          return c null
-    console.log 'compile:'.red, src.yellow, stat.mtime, ( dstat || mtime: null ).mtime
-    compiled = coffee.compile fs.readFileSync( src, 'utf8')
-    compiled = '#!/usr/bin/env node\n' + compiled if src.match /server\.coffee$/
-    fs.writeFileSync dst, compiled
-    cp.execSync "chmod a+x #{dst}" if src.match /server\.coffee$/
-    touch.sync dst, ref: src
-    c null
+  global.compile = (src,dst,hint)->
+    return Promise.resolve() unless src.match /\.coffee$/
+    new Promise (resolve)->
+      return resolve null if ( stat = fs.statSync(src) ).isDirectory()
+      if fs.existsSync(dst)
+        if ( dstat = fs.statSync(dst) )
+          if stat.mtime.toString().trim() is dstat.mtime.toString().trim()
+            # console.log 'up-todate:'.green, src.yellow, ( dstat || mtime: null ).mtime
+            return resolve null
+      console.log 'compile:'.red, hint, src.yellow, stat.mtime, ( dstat || mtime: null ).mtime
+      code = fs.readFileSync src, 'utf8'
+      bare = src.match /\/(server|start|client)\.coffee$/
+      unless process.env.DEBUG
+        while m = code.match /\n[^\n]+[a-zA-Z][^\n]+[ ]+if debug\n/
+          code = code.substring(0,m.index) + "\n" + code.substring(m.index+m[0].length)
+        if hint is 'client'
+          code = code.substring 0, cut + 1 if -1 isnt cut = code.indexOf '\nreturn if isClient\n'
+          while m = code.match /(\n[^\n]+[a-zA-Z][^\n ]+)[ ]+if isServer\n/
+            code = code.substring(0,m.index) + "\n" + code.substring(m.index+m[0].length)
+          while m = code.match /(\n[^\n]+[a-z][^\n]+)[ ]+if isClient\n/
+            code = code.substring(0,m.index) + m[1] + "\n" + code.substring(m.index+m[0].length)
+          while m = code.match /\nreturn if isClient\n/
+            code = code.substring(0,m.index) + "\n" + code.substring(m.index+m[0].length)
+        if hint is 'server'
+          code = code.substring 0, cut + 1 if -1 isnt cut = code.indexOf '\nreturn if isServer\n'
+          while m = code.match /(\n[^\n]+[a-zA-Z][^\n ]+)[ ]+if isClient\n/
+            code = code.substring(0,m.index) + "\n" + code.substring(m.index+m[0].length)
+          while m = code.match /(\n[^\n]+[a-z][^\n]+)[ ]+if isServer\n/
+            code = code.substring(0,m.index) + m[1] + "\n" + code.substring(m.index+m[0].length)
+          while m = code.match /\nreturn if isServer\n/
+            code = code.substring(0,m.index) + "\n" + code.substring(m.index+m[0].length)
+      try compiled = coffee.compile code, bare:bare
+      catch e
+        console.log hint, src, code
+        console.log e.toString().red
+      compiled = '#!/usr/bin/env node\n' + compiled if src.match /init\.coffee$/
+      fs.writeFileSync dst, compiled
+      touch.sync dst, ref: src
+      do resolve
 
   global.depend = (deps...)-> (c)->
     $s deps, -> c null

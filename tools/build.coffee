@@ -110,30 +110,45 @@ require('./csmake.coffee')( global.STAGES =
     bundle lib for lib in TARGETS.client.libs
     browserify.bundle().pipe(fs.createWriteStream('build/lib.js')).on 'close', -> c null )
 
-  sources: (c)-> depend(libs)( ->
-    $s [
-      (c) ->
-        fs.writeFileSync path.join('build','build.json'), JSON.stringify TARGETS
-        $p ( TARGETS.compile.map (directive)->
-          [ source, scope ] = directive
-          compile source+'.coffee', path.join('build', scope, path.basename source + '.js' )
-        ), c
-      (c) ->
-        list = []
-        # prepend client.js
-        TARGETS.common.sources.filter (i) -> list.push 'build/common/' + i + '.js'
-        TARGETS.client.sources.filter (i) -> list.push 'build/client/' + i + '.js' if i isnt 'client'
-        list.unshift 'build/client/client.js'
-        exec("""
-          cat #{list.join(' ')} > build/client.js;
-          sha512sum build/client.js > build/hashsums
-          awk '
-          BEGIN{ print "NUU.hash = {" }
-               { RS=","; print c "\\"" $2 "\\": \\"" $1 "\\"" }
-            END{ print "}" }
-          ' build/hashsums >> build/client.js
-        """)(c)
-    ], c )
+  sources: (c)-> depend(libs) ->
+    fs.writeFileSync path.join('build','build.json'), JSON.stringify TARGETS
+    jobs = []; TARGETS.compile.forEach (directive)->
+      [ source, scope ] = directive
+      if scope is 'common'
+           jobs.push compile source+'.coffee', path.join('build', 'server', "_#{path.basename source}.js" ), 'server'
+           jobs.push compile source+'.coffee', path.join('build', 'client', "_#{path.basename source}.js" ), 'client'
+      else jobs.push compile source+'.coffee', path.join('build',  scope,    "#{path.basename source}.js" ), scope
+    await Promise.all(jobs)
+    clientSources = []
+    TARGETS.common.sources.forEach (i) -> clientSources.push 'build/client/_' + i + '.js'
+    TARGETS.client.sources.forEach (i) -> clientSources.push 'build/client/' + i + '.js' if i isnt 'client'
+    clientSources.unshift 'build/client/client.js'
+    serverSources = []
+    TARGETS.common.sources.forEach (i) -> serverSources.push 'build/server/_' + i + '.js'
+    TARGETS.server.sources.forEach (i) -> serverSources.push 'build/server/' + i + '.js' if i isnt 'server' and i isnt 'start'
+    serverSources.unshift 'build/server/server.js'
+    serverSources.push    'build/server/start.js'
+    await exec$ """
+      cat #{clientSources.join(' ')} > build/client.js;
+      cat #{serverSources.join(' ')} > build/server.js;
+    """
+    # if process.env.UGLIFY
+    #   ugly = require 'uglify-es'
+    #   for which in ['server','client']
+    #     code = fs.readFileSync "build/#{which}.js", 'utf8'
+    #     try compiled = ugly.minify code
+    #     catch e then console.log e.toString().red
+    #     fs.writeFileSync "build/#{which}.js", compiled.code
+    await exec$ """
+      chmod a+x build/server.js
+      sha512sum build/client.js > build/hashsums
+      awk '
+      BEGIN{ print "NUU.hash = {" }
+           { RS=","; print c "\\"" $2 "\\": \\"" $1 "\\"" }
+        END{ print "}" }
+      ' build/hashsums >> build/client.js
+    """
+    do c
   debug:  (c)-> depend(assets)(-> exec("node --debug .")(c))
   run:    (c)-> depend(assets)(-> exec("node . &")(c))
   all:    (c)-> run c

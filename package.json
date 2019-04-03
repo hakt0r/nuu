@@ -2,9 +2,9 @@
   "name": "nuu",
   "version": "0.4.73",
   "description": "escape velocity inspired space sim browser game",
-  "main": "./build/server/server.js",
+  "main": "./build/server.js",
   "bin": {
-    "nuu": "./build/server/server.js"
+    "nuu": "./build/server.js"
   },
   "scripts": {
     "start": "node .",
