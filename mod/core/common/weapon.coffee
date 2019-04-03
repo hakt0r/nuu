@@ -83,6 +83,7 @@ Weapon.hostility = (vehicle,target)->
   # return false unless vehicle.hostile? and target.hostile?
   if  target.hostile and -1 is  target.hostile.indexOf vehicle
     target.hostile.push vehicle
+    target.onHostility() if target.onHostility
     NUU.jsoncastTo target, hostile: vehicle.id if target.inhabited
   if vehicle.hostile and -1 is vehicle.hostile.indexOf target
     vehicle.hostile.push target

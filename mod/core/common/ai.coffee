@@ -20,10 +20,16 @@
 
 ###
 
+#  ██████  ██████  ███    ███ ███    ███  ██████  ███    ██
+# ██      ██    ██ ████  ████ ████  ████ ██    ██ ████   ██
+# ██      ██    ██ ██ ████ ██ ██ ████ ██ ██    ██ ██ ██  ██
+# ██      ██    ██ ██  ██  ██ ██  ██  ██ ██    ██ ██  ██ ██
+#  ██████  ██████  ██      ██ ██      ██  ██████  ██   ████
+
 $public class AI extends Ship
   constructor: (opts={})->
     opts.flags    = -1
-    strategy = opts.strategy || 'attackPlayers'; delete opts.strategy
+    strategy = opts.strategy; delete opts.strategy
     opts.stel     = opts.stel || AI.randomStellar()
     opts.tpl      = opts.tpl  || Item.byName.Drone.itemId
     opts.target   = opts.target || false
@@ -53,11 +59,36 @@ $public class AI extends Ship
     super()
     off
 
+  onHit:->
+  onHostility:->
+  onShieldsDown:->
+  onDisabled:->
+  onDestruct:->
+
+AI::hit = (src,wp) ->
+  return if @destructing
+  switch Weapon.impactLogic.call @, wp
+    when Weapon.impactType.hit
+      NUU.emit 'ship:hit', @, src, @shield, @armour
+      NET.mods.write @, 'hit', @shield, @armour
+      do @onHit
+    when Weapon.impactType.shieldsDown
+      NUU.emit 'ship:shieldsDown', @, src
+      do @onShieldsDown
+    when Weapon.impactType.disabled
+      NUU.emit 'ship:disabled', @, src
+      do @onDisabled
+    when Weapon.impactType.destroyed
+      NUU.emit     'ship:destroyed', @, src
+      NET.mods.write @, 'destroyed', 0, 0
+      do @onDestruct if @onDestruct
+  return
+
 AI::changeStrategy = (strategy)->
   return if strategy is @strategy
-  console.log 'strategy', @name, @strategy, '=>', strategy if @strategy if debug
+  console.log 'strategy', @name, @strategy, '=>', strategy # if @strategy if debug
   ( AI.worker[@strategy].remove @; delete @strategy ) if @strategy
-  ( AI.worker[@strategy = strategy].add    @        ) if strategy?
+  ( AI.worker[@strategy = strategy].add   @         ) if strategy?
   return @
 
 AI::aiType       = 'ai'
@@ -133,6 +164,22 @@ AI.register 'approach',
     @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
     console.log '::ai', "#{@name} to", @target.name if @target if debug
 
+# ██████  ██████   ██████  ███    ██ ███████
+# ██   ██ ██   ██ ██    ██ ████   ██ ██
+# ██   ██ ██████  ██    ██ ██ ██  ██ █████
+# ██   ██ ██   ██ ██    ██ ██  ██ ██ ██
+# ██████  ██   ██  ██████  ██   ████ ███████
+
+$public class Drone extends AI
+  constructor:(opts={})->
+    opts.stel = Drone.randomStellar() unless opts.stel
+    super opts
+  @list:[]
+  @randomStellar:->
+    stel = $obj.byId[ Array.random [3] ]
+    stel.update()
+    stel
+
 AI.register 'attackPlayers',
   inRange: ->
     v = NavCom.aim @, @target
@@ -160,48 +207,54 @@ AI.register 'attackPlayers',
     @target = closest
     null
 
-AI.register 'escort',
-  getTarget: ->
-    if target = $obj.byId[@escortFor]
-      console.log '::ai', "#{@name} Escorting", target.name if debug
-      return @target = target unless target.hostile.length > 0 or target.destructing
-      return @target if @target and not @target.destructing
-      @target = target.hostile[0]
-      console.log '::ai', "#{@name} Escort:Attack", @target.name if debug
-      return @target
-    @changeStrategy 'attackPlayers'
-    console.log '::ai', "#{@name} going berserk" if debug
-    false
-
-$public class Drone extends AI
-  constructor:(opts={})->
-    opts.stel = Drone.randomStellar() unless opts.stel
-    super opts
-  @list:[]
-  @randomStellar:->
-    stel = $obj.byId[ Array.random [3] ]
-    stel.update()
-    stel
+# ███    ███ ██ ███    ██ ███████ ██████
+# ████  ████ ██ ████   ██ ██      ██   ██
+# ██ ████ ██ ██ ██ ██  ██ █████   ██████
+# ██  ██  ██ ██ ██  ██ ██ ██      ██   ██
+# ██      ██ ██ ██   ████ ███████ ██   ██
 
 $public class Miner extends AI
   aiType: 'Miner'
   @list:[]
   constructor:(opts={})->
-    opts.strategy = opts.strategy || 'approach'
+    opts.strategy = opts.strategy || 'collect'
     opts.tpl = opts.tpl || Array.random Miner.ships
     super opts
     return
+
+AI.register 'collect',
+  getTarget: ->
+    @target = Asteroid.byId[ Array.random Object.keys Asteroid.byId ]
+    console.log '::ai', "#{@name} to", @target.name if @target if debug
+  onTarget: ->
+    # @changeStrategy 'mine'
+    console.log '::ai', "#{@name} at", @target.name if @target if debug
+    @target = Stellar.byId[ Array.random Object.keys Asteroid.byId ]
+    console.log '::ai', "#{@name} to", @target.name if @target if debug
+
+# ████████ ██████   █████  ██████  ███████ ██████
+#    ██    ██   ██ ██   ██ ██   ██ ██      ██   ██
+#    ██    ██████  ███████ ██   ██ █████   ██████
+#    ██    ██   ██ ██   ██ ██   ██ ██      ██   ██
+#    ██    ██   ██ ██   ██ ██████  ███████ ██   ██
 
 $public class Trader extends AI
   aiType: 'Trader'
   @list:[]
   constructor:(opts={})->
-    opts.strategy = opts.strategy || 'trade'
+    opts.strategy = null # opts.strategy || 'trade'
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
     @inventory = new Inventory data:{}, key:no
+    vec = [[150,-40],[-150,-40],[300,-80],[300,-80]]
     @escort = ( for i in [0..floor random()*3]
-      new Escort escortFor:@id, state:@state.clone() )
+      new Escort escortFor:@id, formVec:vec.shift() )
+    return
+  onHostility:->
+    console.log @name, 'offended'
+    @onHostility = ->
+    @changeStrategy 'escort:defend'
+    e.changeStrategy 'escort:defend' for e in @escort
     return
 
 AI.register 'trade',
@@ -253,15 +306,63 @@ AI.register 'trade',
       ), 10000
     else console.log '::ai', "#{@name} landFailed", @target.name # if debug
 
+# ███████ ███████  ██████  ██████  ██████  ████████
+# ██      ██      ██      ██    ██ ██   ██    ██
+# █████   ███████ ██      ██    ██ ██████     ██
+# ██           ██ ██      ██    ██ ██   ██    ██
+# ███████ ███████  ██████  ██████  ██   ██    ██
+
 $public class Escort extends AI
   aiType: 'Escort'
   constructor:(opts={})->
-    opts.strategy = opts.strategy || 'escort'
+    [x,y] = opts.formVec
+    p = $obj.byId[opts.escortFor]; p.update()
+    phi = p.d * RAD
+    fx = 0 + x*cos(phi) - y*sin(phi)
+    fy = 0 + x*sin(phi) + y*cos(phi)
+    opts.state = S:$formation, x:fx, y:fy, d:p.d, v:p.v.slice(), relto:p, translate:no
     opts.tpl = opts.tpl || Array.random Escort.ships
     super opts
+  onHostility:->
+    @lock = no; @setState S:$moving
+    console.log @name, 'offended'
+    @onHostility = ->
+    return unless p = $obj.byId[@escortFor]
+    p.hostile = Array.uniq @hostile.concat p.hostile || []
+    p.onHostility()
+    @changeStrategy 'escort:defend'
+    return
 
-Miner.ships = [];
-Trader.ships = [];
+AI.register 'escort:defend',
+  getTarget:->
+    if @escortFor
+      unless p = $obj.byId[@escortFor]
+        console.log '::ai', "#{@name} going berserk" if debug
+        @changeStrategy "attackPlayers"
+        return false
+    else p = @
+    if 0 is p.hostile.length
+      console.log '::ai', "#{@name} my job here is done" if debug
+      @changeStrategy null # 'escort:return'
+      return false
+    @target = p.hostile[0]
+    console.log '::ai', "#{@name} Escort:Attack", @target.name if debug
+    return @target
+  inRange:->
+    v = NavCom.aim @, @target
+    console.log 'startShooting'
+    NET.weap.write 'ai', 0, @primarySlot, @, @target
+  outRange:->
+    console.log 'stopShooting'
+    NET.weap.write 'ai', 1, @primarySlot, @, @target
+
+# ███████ ██   ██ ██ ██████  ███████
+# ██      ██   ██ ██ ██   ██ ██
+# ███████ ███████ ██ ██████  ███████
+#      ██ ██   ██ ██ ██           ██
+# ███████ ██   ██ ██ ██      ███████
+
+Miner .ships = Trader.ships = Escort.ships = []
 
 NUU.on 'init:items:done', ->
   Miner.ships = [

@@ -99,11 +99,15 @@ Ship.blueprint =
 
 Ship::destructor = ->
   $worker.remove @model
+  do @reset
   for slot in @slots.weapon when slot and slot.equip
     slot.equip.release()
   $obj::destructor.call @
 
 Ship::reset = ->
+  for h in @hostile
+    h.target = no if h.target is @
+    Array.remove h.hostile, @
   @hostile = []
   @destructing = false
   @energy = @energyMax
