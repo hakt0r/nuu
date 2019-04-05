@@ -49,14 +49,21 @@ $Tile Ship,
 
   loadAssets: ->
     console.log ':gfx', 'ship$', 'assets', @id, @name if debug
+    scale = .5 if @sprite.match 'suit'
     p = "/build/gfx/#{@sprite}"
     @imgCom = p + '_comm.png'
     # Cache.get p + '_comm.png', (cached) => @imgCom = cached
     @loadTile p + '.png', 'sprite', (e,s) =>
       { @radius, @size, @count } = ( @spriteNormal = @sprite = s ).meta
       s.anchor.set 0.5
+      s.scale.set scale if scale
       @loaded = true
-    @loadTile p + '_engine.png', 'spriteEngine', (e,s)-> s.anchor.set 0.5
+      return
+    @loadTile p + '_engine.png', 'spriteEngine', (e,s)->
+      s.anchor.set 0.5
+      s.scale.set scale if scale
+      return
+    return
 
   updateSprite: (time)->
     @update time
