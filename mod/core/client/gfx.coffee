@@ -49,6 +49,12 @@ PIXI.bringToFront = (sprite, parent) ->
   chd.push sprite
   return
 
+PIXI.blurOut = (o,t=1500,s=2)-> new Promise (resolve)->
+  o.filterArea = new PIXI.Rectangle 0,0,WIDTH,HEIGHT
+  i = -s; f = setInterval (-> o.filters = [new PIXI.filters.BlurFilter i+=s]), TICK
+  setTimeout (-> clearInterval(f); o.filters = []; resolve() ), t
+  return
+
 # ██████  ███████ ███    ██ ██████  ███████ ██████  ███████ ██████
 # ██   ██ ██      ████   ██ ██   ██ ██      ██   ██ ██      ██   ██
 # ██████  █████   ██ ██  ██ ██   ██ █████   ██████  █████   ██████
