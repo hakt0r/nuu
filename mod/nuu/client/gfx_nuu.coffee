@@ -98,7 +98,7 @@ Sprite.animateSpace = (timestamp) ->
   window.OX = -VEHICLE.x + WDB2
   window.OY = -VEHICLE.y + HGB2
 
-  sc = min 1, Sprite.scale
+  sc = min 2, Sprite.scale
   if sc isnt @lastSC
     @stel.scale.x = @stel.scale.y = @debr.scale.x = @debr.scale.y = @ship.scale.x = @ship.scale.y = @weap.scale.x = @weap.scale.y = @tile.scale.x = @tile.scale.y = @play.scale.x = @play.scale.y = @fx.scale.x = @fx.scale.y = @fg.scale.x = @fg.scale.y = sc
     @stel.position.x = @debr.position.x = @ship.position.x = @weap.position.x = @tile.position.x = @play.position.x = @fx.position.x = @fg.position.x = .5 * ( WIDTH - WIDTH * sc )
