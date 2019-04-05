@@ -306,7 +306,7 @@ NET.define 3,'WEAP',
   ██   ██  ██████    ██    ██  ██████  ██   ████
 ###
 
-action_key = ['eva','launch','land','orbit','dock','capture','formation']
+action_key = ['eva','launch','land','orbit','dock','capture','formation','travel']
 NET.define 4,'ACTION',
   read:server:(msg,src) ->
     return console.log ':net', 'action:nx:t', msg unless t = $obj.byId[msg.readUInt16LE 2]

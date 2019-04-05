@@ -288,7 +288,7 @@ User::action = (t,mode) ->
   t.update time
   dist  = $dist o, t
   zone  = ( o.size + t.size ) * .5
-  @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit','formation'].includes mode
+  @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit','formation','travel'].includes mode
   return
 
 User::eva = (t,o,zone,dist)->
@@ -408,4 +408,15 @@ User::formation = (t,o,zone=100,dist)->
   o.update time
   console.log 'user', 'formation', t.id, dist if debug
   o.setState S:$formation, relto:t if zone > dist
+  return
+
+User::travel = (t,o,zone=100,dist)->
+  o.travel t,o,zone=100,dist
+  return
+
+Ship::travel = (t,o,zone=100,dist)->
+  dist = t.dist o unless dist
+  return unless dist > 10000000
+  console.log 'ship', @name, 'travel to', t.name
+  o.setState S:$travel, relto:t
   return

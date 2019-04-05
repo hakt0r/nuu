@@ -818,5 +818,5 @@ State.register class State.travel extends State
     @o.x = @dx + @mx * dt = time - v.etaf
     @o.y = @dy + @my * dt
     @lastUpdate = time
-  toBuffer:-> NET.jsonCode + JSON.stringify @toJSON()
-  toJSON:-> Object.assign S:@S,x:@x,y:@y,d:@d,t:@t,v:@v,relto:@relto.id,vec:@vec
+  toBuffer:-> @_buffer = NET.JSON + JSON.stringify state:[@toJSON()]
+  toJSON:-> S:@S,o:@o.id,x:@x,y:@y,d:@d,t:@t,v:@v,relto:@relto.id,vec:@vec
