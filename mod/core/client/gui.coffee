@@ -510,9 +510,8 @@ NUU.registerPrompt = ->
   p_pas1 = '         (<i style="color:yellow">Password</i>)'
   p_pas2 = '         (   <i style="color:yellow">Again</i>)'
   NUU.testButton.remove() if NUU.testButton
-  vt.$.prepend NUU.testButton = $ """<button>Demo</button>"""
-  NUU.testButton.click demo
-  demo = ->
+  vt.$.prepend NUU.testButton = $ """<button class=demo>Demo</button>"""
+  NUU.testButton.click demo = ->
     user = 'test'
     pass = 'test'
     NUU.testButton.remove() if NUU.testButton
@@ -537,6 +536,7 @@ NUU.registerPrompt = ->
     setTimeout onpasswordsmatch, 0
     false
   onpasswordsmatch = ->
+    NUU.testButton.remove() if NUU.testButton
     vt.status 'Register', '<i style="color:yellow">Registering</i> <i style="color:red">'+user+'</i>'
     NET.register user, pass1, onregister
   onregister = (success)->
@@ -551,9 +551,8 @@ NUU.loginPrompt = ->
   p_user = '<i style="color:green">    User</i>'
   p_pass = '<i style="color:green">Password</i>'
   NUU.testButton.remove() if NUU.testButton
-  vt.$.prepend NUU.testButton = $ """<button>Demo</button>"""
-  NUU.testButton.click demo
-  demo = ->
+  vt.$.prepend NUU.testButton = $ """<button class=demo>Demo</button>"""
+  NUU.testButton.click demo = ->
     user = 'test'
     pass = 'test'
     NUU.testButton.remove() if NUU.testButton
@@ -573,6 +572,7 @@ NUU.loginPrompt = ->
     setTimeout dologin, 0
     false
   dologin = =>
+    NUU.testButton.remove() if NUU.testButton
     vt.status 'Login', 'Opening connnection...'
     vt.show()
     NET.login user, pass, onlogin

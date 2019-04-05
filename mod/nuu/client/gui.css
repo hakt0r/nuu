@@ -424,13 +424,25 @@
 .window.vt svg use {
   box-shadow:0 0 2px 2px #FFF inset; }
 
-.window.vt img.com {
-  display: inline-block;
-  max-height: 100px;
+img.com {
+  position: fixed;
   max-width: 90%;
-  margin-left: 50%;
-  transform: translate(-50%);
-}
+  max-height: 200px;
+  margin: auto;
+  left: 0;
+  right: 0;
+  top: 20px;
+  opacity: 0.4 }
+img.com.bottom {
+  top: unset;
+  bottom: 20px; }
+
+.window.vt button.demo {
+  position:fixed;bottom:6px;right:5px;
+  background: #090; color: black; border-color: #00ff00; }
+.window.vt button.demo:hover { background: #0a0; }
+.window.vt button.demo:active { background: #0c0; }
+
 .window.vt a, .window.vt a:hover, .window.vt a:active, .window.vt a:visited {
   padding: 0;
   color: red;

@@ -33,9 +33,11 @@ $public class VT100 extends Window
     @$.addClass 'vt full'
     @body.append @input$ = $ """<div class="inputArea"></div>"""
     console.user = @write
-    @write 'nuu console / v ' + $version + '<span class="right">(c) 2007-2019 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2018 flyc0r</span>' +
-    '<span class="right">GNU General Public License v3 / see license screen (alt-L)</span>'
-    null
+    @write """\
+    <br/><span class="center">nuu console / v#{$version}</span>\
+    <span class="center">(c) 2007-2019 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2019 flyc0r</span>\
+    <span class="center">GNU General Public License v3 / see license screen (alt-L)</span>"""
+    return
 
   draw: =>
     c = @cursor.x

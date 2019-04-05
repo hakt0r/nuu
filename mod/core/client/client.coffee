@@ -106,8 +106,7 @@ PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode, sourceScale) ->
     baseTexture.sourceScale = sourceScale if sourceScale
     baseTexture.resolution = PIXI.utils.getResolutionOfUrl(imageUrl)
     Cache.get imageUrl, (cachedUrl) ->
-      image.src = cachedUrl
-      # Setting this triggers load
+      image.src = cachedUrl # Setting this triggers load
       PIXI.BaseTexture.addToCache baseTexture, imageUrl
   baseTexture
 
@@ -117,32 +116,38 @@ $ ->
   NUU.emit 'runtime:ready'
   NUU.emit 'settings:apply'
 
-# <center><img class="powered" src="https://camo.githubusercontent.com/eae4496331dc8533db7c7ff8879c0d6a12da2282/687474703a2f2f706978696a732e646f776e6c6f61642f706978696a732d62616e6e65722e706e67"/> <img class="powered" src="https://nodejs.org/static/images/logos/nodejs-new-white.png"/> <img class="powered" src="https://cdn-1.wp.nginx.com/wp-content/uploads/2018/03/icon-NGINX-OSS.svg"/></center>
-NUU.on 'gfx:ready', ->
-  $static 'vt', new VT100
+NUU.on 'start', ->
+  Object.assign rules, rules[NUU.mode||'dm']
+  rules NUU
+  NUU.emit 'settings'
 
+
+NUU.on 'gfx:ready', ->
   $.ajax '/build/objects.json', success: (result) ->
     Item.init result
-    VT100.write """<img class="com" src="/build/gfx/#{Array.random(Item.byClass.com).logo}.png"/>"""
-    vt.write NUU.intro = """
-------------------------------------------------------------------------------------------------
-<center style="white-space: nowrap;">
-<svg viewBox="0 0 62 20"><defs><path id="U" d="M5 0C2.25 0 0 2.25 0 5v10c0 2.75 2.25 5 5 5h10c2.75 0 5-2.25 5-5V5c0-2.75-2.25-5-5-5h-1.5v10h-7V0H5z" style="fill:#333;border:solid red 1px"/></defs><use href="#U" transform="rotate(180 10 10)"/><use href="#U" transform="translate(21)"/><use href="#U" transform="translate(42)"/></svg>
+    vt.hide = ->
+      $('img.com').remove()
+      Window::hide.call @
+    a = Item.byClass.com.sort -> Math.random() - .5
+    $('body').append $ """<img class="com" src="/build/gfx/#{a.pop().logo}.png"/>"""
+    $('body').append $ """<img class="com bottom" src="/build/gfx/#{a.pop().logo}.png"/>"""
+  $static 'vt', new VT100
+  VT100.write """\
+<center style="white-space: nowrap">\
+<svg viewBox="0 0 62 20"><defs><path id="U" d="M5 0C2.25 0 0 2.25 0 5v10c0 2.75 2.25 5 5 5h10c2.75 0 5-2.25 5-5V5c0-2.75-2.25-5-5-5h-1.5v10h-7V0H5z" style="fill:#333;border:solid red 1px"/></defs><use href="#U" transform="rotate(180 10 10)"/><use href="#U" transform="translate(21)"/><use href="#U" transform="translate(42)"/></svg>\
 </center>\
+<div style="position:absolute;right: 0;top:0;left: 0;"> <img class="powered" src="https://cdn-1.wp.nginx.com/wp-content/uploads/2018/03/icon-NGINX-OSS.svg"><img class="powered" src="https://nodejs.org/static/images/logos/nodejs-new-white.png"> <img class="powered" src="http://pixijs.download/pixijs-text.svg" style="float:right"></div>"""
+  vt.write NUU.intro = """
 --- [ FakeNN ] BREAKING ------------------------------------------------------------------------\
 <span class="center news">Earth and Luna have been overrun by the drones our own creation, and now,</span>\
 <span class="center news">her Majesty the Kernel is scheming to take Mars and the Jupiter-system!</span>\
 ------------------------------------------------------------------------------------------------
 
-  ➜ Press alt-R to register (we only store <a href="https://en.wikipedia.org/wiki/Salt_(cryptography)">salted</a> <a href="https://en.wikipedia.org/wiki/Hash_function">hashes</a>)
-  ➜ Press alt-L to show license screen
+➜ Press alt-R to register (we only store <a href="https://en.wikipedia.org/wiki/Salt_(cryptography)">salted</a> <a href="https://en.wikipedia.org/wiki/Hash_function">hashes</a>)
+➜ Press alt-L to show license screen
+➜ Press alt-C for demo
 
-    """
-    unless debug then NUU.loginPrompt()
-    else $timeout 500, => NET.login 'anx', sha512(''), -> vt.hide()
-  null
-
-  NUU.on 'start', ->
-    Object.assign rules, rules[NUU.mode||'dm']
-    rules NUU
-    NUU.emit 'settings'
+  """
+  unless debug then NUU.loginPrompt()
+  else $timeout 500, => NET.login 'anx', sha512(''), -> vt.hide()
+  return
