@@ -165,11 +165,11 @@ State.register = (constructor) ->
   byKey.push @[name] = constructor
   constructor
 
-State.future = (state,time)->
+State.future = (state,time,now=NUU.time())->
   o = state.o
   state.update time
   result = p:[o.x,o.y], v:o.v.slice()
-  do state.update # let's not confuse anyone
+  state.update now # let's not confuse anyone
   return result
 
 State.fromBuffer = (msg)->
@@ -260,8 +260,8 @@ State.fixedTo.fromBuffer = (o,msg)-> new State.fixedTo {
 # ██      ██  ██████    ████   ██ ██   ████  ██████
 
 State.register class State.moving extends State
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  update:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     dt = time - @t
     @o.x = @x + @v[0] * dt
     @o.y = @y + @v[1] * dt
@@ -273,8 +273,8 @@ State.register class State.moving extends State
     @o.y    = @y    -= @relto.y
     @o.v[0] = @v[0] -= @relto.v[0]
     @o.v[1] = @v[1] -= @relto.v[1]
-  updateRelTo:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  updateRelTo:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     @relto.update time
     dt = time - @t
     @o.x    = @relto.x + @x + @v[0] * dt
@@ -338,8 +338,8 @@ State.register class State.burn extends State
       (  D * d[1] - sgn_dx * sqrt_discr ) / dr_squared
       ( -D * d[0] - sgn_dy * sqrt_discr ) / dr_squared ]
     @dtmax = $v.dist(p,@v) / @acc
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  update:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     dtrise  = min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
     dtpeak  = max 0,      dtreal - @dtmax
     @acceleration = dtpeak is 0
@@ -348,8 +348,8 @@ State.register class State.burn extends State
     @o.x    = @x + @v[0]*dtrise + .5*@cosd*@acc*dtrise2 + dtpeak * vx
     @o.y    = @y + @v[1]*dtrise + .5*@sind*@acc*dtrise2 + dtpeak * vy
     return
-  updateRelTo:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  updateRelTo:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     @relto.update time
     dtrise  = min @dtmax, dtreal = time - @t; dtrise2 = dtrise*dtrise
     dtpeak  = max 0,      dtreal - @dtmax
@@ -402,15 +402,15 @@ State.register class State.turn extends State
     s.turn = s.o.turn || 1
     s.turn = -s.turn if s.o.left
     super s
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  update:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     dt = time - @t
     @o.x = @x + @v[0] * dt
     @o.y = @y + @v[1] * dt
     @o.d = $v.umod360 @d + @turn * dt
     return
-  updateRelTo:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  updateRelTo:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     @relto.update time
     dt = time - @t
     @o.x    = @relto.x + @x + @v[0] * dt
@@ -471,16 +471,16 @@ State.register class State.turnTo extends State
     @turn = @o.turn || 1
     @turnTime = adiff / @turn
     @turn = -@turn if 0 > ddiff
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  update:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     dt  = time - @t
     tdt = time - @tt
     @o.x = @x + @v[0] * dt
     @o.y = @y + @v[1] * dt
     @o.d = $v.umod360 360 + @d + @turn * min @turnTime, tdt
     return
-  updateRelTo:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  updateRelTo:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     @relto.update time
     dt  = time - @t
     tdt = time - @tt
@@ -539,8 +539,8 @@ State.register class State.steer extends State
     @di     = RADi * @d + PI/2
     @rcosdi = @radius * cos @di
     @rsindi = @radius * sin @di
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time; @lastUpdate = time
+  update:(time=NUU.time())->
+    return if @lastUpdate is time; @lastUpdate = time
     dt = time - @t
     dr = RADi * @o.d = $v.umod360 @d + @turn * dt
     dp = RADi *        $v.umod360      @turn * dt
@@ -612,8 +612,8 @@ State.register class State.orbit extends State
     @off = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
   cache:->
     @stpangl = if @stp > 0 then PI/2 else -PI/2
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time
+  update:(time=NUU.time())->
+    return if @lastUpdate is time
     @relto.update time unless @relto.id is 0
     t = time - @t
     angl = ((( TAU + @off + t * @stp ) % TAU ) + TAU ) % TAU
@@ -622,7 +622,8 @@ State.register class State.orbit extends State
     angl = ( @stpangl + angl + TAU ) % TAU
     @o.v = [ @relto.v[0] + (@vel * cos angl), @relto.v[1] + (@vel * sin angl) ]
     @o.d = angl * RAD
-    @lastUpdate = time; null
+    @lastUpdate = time
+    return
   toJSON:->
     S:@S,o:@o.id,relto:@relto.id,t:@t,orb:@orb,stp:@stp,off:@off,vel:@vel
 
@@ -698,24 +699,124 @@ State.formation.fromBuffer = (o,msg)-> new State.formation {
 #    ██    ██████  ███████ ██    ██ █████   ██
 #    ██    ██   ██ ██   ██  ██  ██  ██      ██
 #    ██    ██   ██ ██   ██   ████   ███████ ███████
+$v.div = $v.div 2
 
 State.register class State.travel extends State
-  translate:(old,time)->
-    return old unless @to
-    old.update time
-    unless @from
-      @from = {}
-      @from.x = o.x; @from.y = o.y; @from.v = o.v.slice()
-      @pta = 60 # secs
-  update:(time)->
-    time = NUU.time() unless time; return null if @lastUpdate is time
-    t = time - @lastUpdate
-    time_passed  = time - @from.t
-    @to.state.update time
-    @o.x = @from.x + time_passed * ( @from.x - @to.x )
-    @o.y = @from.y + time_passed * ( @from.y - @to.y )
-    @o.v = m = $v.zero.slice()
-    m[0] = ( @o.x - @lstx ) / t; @lstx = @o.x
-    m[1] = ( @o.y - @ly   ) / t; @ly   = @o.y
-    @lastUpdate = time; null
-  toJSON:-> S:@S, from:from.toJSON(), to:@to.id
+  lock:yes
+  acceleration:yes
+  translate:-> # sometimes I really miss goto
+    return if @vec
+    s = @o; t = @relto; @vec = v = eta:0
+    v.local_pos = [s.x,s.y]
+    v.local_vel = @o.v.slice()
+    v.local_speed = $v.mag v.local_vel
+    v.local_acc = s.thrustToAccel v.thrust = 252
+    v.local_aps = 1000 * v.local_acc
+    v.top_speed = Speed.max * .5
+    t.state.update @t
+    $approach = =>
+      t.state.update @t + v.eta
+      v.target_pos     = [t.x,t.y]
+      v.target_vel     = t.v.slice()
+      v.target_speed   = $v.mag v.target_vel
+      v.approach_path  = $v.sub v.target_pos.slice(), v.local_pos
+      v.approach_norm  = $v.normalize v.approach_path.slice()
+      v.approach_dist  = $v.mag v.approach_path
+      v.approach_head  = $v.heading v.approach_path, $v.zero
+      v.approach_r     = $v.mult v.approach_path.slice(), -1
+      v.approach_rnorm = $v.normalize v.approach_r.slice()
+      v.approach_rhead = $v.heading v.approach_r, $v.zero
+      v.travel_vel     = $v.mult v.approach_norm.slice(), v.top_speed
+      v.travel_speed   = $v.mag v.travel_vel
+      v.steer_vel      = $v.sub v.travel_vel.slice(), v.local_vel
+      v.accel_t        = abs ( v.local_vel[0]  - v.travel_vel[0] ) / (v.approach_norm[0]*v.local_acc)
+      v.deccel_t       = abs ( v.target_vel[0] - v.travel_vel[0] ) / (v.approach_norm[0]*v.local_acc)
+      [ cosd, sind ] = v.approach_norm
+      accdt2b2 = .5*(acc = v.local_acc)*(dt2 = (dt = v.accel_t)**2)
+      v.accel_dist = $v.mag [
+        v.local_vel[0]*dt+cosd*accdt2b2
+        v.local_vel[1]*dt+sind*accdt2b2 ]
+      [ cosd, sind ] = v.approach_rnorm
+      accdt2b2 = .5*(acc = v.local_acc)*(dt2 = (dt = v.deccel_t)**2)
+      v.deccel_dist = $v.mag [
+        v.travel_vel[0]*dt+cosd*accdt2b2
+        v.travel_vel[1]*dt+sind*accdt2b2 ]
+      v.glide_dist     = v.approach_dist - v.deccel_dist - v.accel_dist
+      v.glide_t        = v.glide_dist / v.top_speed
+      v.eta            = v.accel_t + v.deccel_t + v.glide_t
+      v.glide_hd       = RAD * v.approach_head
+      v.glide_rhd      = RAD * v.approach_rhead
+      v.accel_tf       = @t + v.accel_t
+      v.glide_tf       = v.accel_tf + v.glide_t
+      v.deccel_tf      = v.glide_tf + v.deccel_t
+      v.etaf           = @t + v.eta
+    eta1 = $approach(); tp0 = v.target_pos.slice()
+    console.log 'travel:eta1', htime(v.eta/1000)
+    eta2 = $approach()
+    console.log 'travel:eta2'.red,
+      'eta', htime(v.eta/1000),
+      'diff:', htime((eta2-eta1)/1000)
+      'tcip:', $v.mag $v.sub tp0.slice(), v.target_pos
+    util = require 'util'
+    console.log util.inspect(v).bold.inverse
+    t.state.update NUU.time()
+    return
+  update:(time=NUU.time())=>
+    return if @lastUpdate is time; v = @vec
+    return @toGlide time if time > v.accel_tf
+    [ cosd, sind ] = v.approach_norm; acc = v.local_acc
+    dt = time - @t; dt2 = dt**2
+    @o.x    = @x + @v[0]*dt + .5*cosd*acc*dt2
+    @o.y    = @y + @v[1]*dt + .5*sind*acc*dt2
+    @o.v[0] =      @v[0]    +    cosd*acc*dt
+    @o.v[1] =      @v[1]    +    sind*acc*dt
+    @o.d    = v.glide_hd
+    @lastUpdate = time
+  toGlide:(time)->
+    @acceleration = no
+    v = @vec; [ cosd, sind ] = v.approach_norm; acc = v.local_acc
+    dt = v.accel_t; dt2 = dt**2
+    @dx      = @x + @v[0]*dt + .5*cosd*acc*dt2
+    @dy      = @y + @v[1]*dt + .5*sind*acc*dt2
+    @o.v[0] = @mx = @v[0]    +    cosd*acc*dt
+    @o.v[1] = @my = @v[1]    +    sind*acc*dt
+    @o.d = v.glide_hd
+    ( @update = @o.update = @updateGlide )( time )
+  updateGlide:(time=NUU.time())=>
+    return if @lastUpdate is time; v = @vec
+    return @toDeccel time if time > v.glide_tf
+    @o.x = @dx + @mx * dt = time - v.accel_tf
+    @o.y = @dy + @my * dt
+    @lastUpdate = time
+  toDeccel:(time)->
+    @acceleration = yes; v = @vec
+    @dx  = @dx + @mx * v.glide_t
+    @dy  = @dy + @my * v.glide_t
+    @o.d = v.glide_rhd
+    ( @update = @o.update = @updateDeccel )( time )
+  updateDeccel:(time=NUU.time())=>
+    return if @lastUpdate is time; v = @vec
+    return @toMoving time unless time < v.etaf
+    [ cosd, sind ] = v.approach_norm; acc = -v.local_acc
+    dt = time - v.glide_tf; dt2 = dt**2;
+    @o.x    = @dx + @mx*dt + .5*cosd*acc*dt2
+    @o.y    = @dy + @my*dt + .5*sind*acc*dt2
+    @o.v[0] =       @mx    +    cosd*acc*dt
+    @o.v[1] =       @my    +    sind*acc*dt
+    @lastUpdate = time
+  toMoving:(time)->
+    @acceleration = no; v = @vec; [ cosd, sind ] = v.approach_norm; acc = -v.local_acc
+    dt = v.deccel_t; dt2 = dt**2
+    @dx = @dx + @mx*dt + .5*cosd*acc*dt2
+    @dy = @dy + @my*dt + .5*sind*acc*dt2
+    @mx =       @mx    +    cosd*acc*dt
+    @my =       @my    +    sind*acc*dt
+    @o.d = v.glide_hd
+    ( @update = @o.update = @updateMoving )( time )
+  updateMoving:(time=NUU.time())=>
+    return if @lastUpdate is time; @lastUpdate = time; v = @vec
+    @o.x = @dx + @mx * dt = time - v.etaf
+    @o.y = @dy + @my * dt
+    @lastUpdate = time
+  toBuffer:-> NET.jsonCode + JSON.stringify @toJSON()
+  toJSON:-> Object.assign S:@S,x:@x,y:@y,d:@d,t:@t,v:@v,relto:@relto.id,vec:@vec
