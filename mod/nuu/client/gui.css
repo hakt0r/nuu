@@ -462,6 +462,10 @@ img.com.bottom {
   white-space:pre-wrap;
   word-wrap:break-word; }
 
+@keyframes blink {
+  0%   { opacity:1; }
+  50%  { opacity:0; } }
+
 .window.vt .vt-cursor {
   height:12px;
   margin:0;
@@ -475,6 +479,7 @@ img.com.bottom {
   left:0;
   position:relative;
   width:1em;
+  animation: blink 1s infinite;
   z-index:-1; }
 
 .window.vt center {
