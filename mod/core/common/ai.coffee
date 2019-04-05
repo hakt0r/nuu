@@ -34,14 +34,17 @@ $public class AI extends Ship
     opts.tpl      = opts.tpl  || Item.byName.Drone.itemId
     opts.target   = opts.target || false
     opts.npc      = if opts.npc? then opts.npc else yes
-    opts.state    = opts.state || {
-      translate: no
-      S: $moving
-      relto: opts.stel
-      v: [0,0]
-      x: floor random() * 1000 - 500
-      y: floor random() * 1000 - 500
-      d: floor random() * 359 }
+    unless opts.state
+      angl = random() * TAU
+      dist = random() * 1000
+      opts.state = {
+        translate: no
+        S: $moving
+        relto: opts.stel
+        v: [0,0]
+        x: cos(angl) * dist
+        y: sin(angl) * dist
+        d: floor random() * 359 }
     super opts
     @name = 'HKS ' + @id.toString(2) + ' (' + @aiType + ')'
     # console.log '::ai', "#{@name} at", opts.stel.name if debug
@@ -172,6 +175,7 @@ AI.register 'approach',
 
 $public class Drone extends AI
   constructor:(opts={})->
+    opts.strategy = 'attackPlayers'
     opts.stel = Drone.randomStellar() unless opts.stel
     super opts
   @list:[]
@@ -180,18 +184,23 @@ $public class Drone extends AI
     stel.update()
     stel
 
+AI.register 'returnToBase',
+  inRange:->
+    return unless @target
+    @setState S:$moving, relto:@target, v:@target.v.slice()
+    @changeStrategy 'attackPlayers'
+
 AI.register 'attackPlayers',
   inRange: ->
-    v = NavCom.aim @, @target
-    # if v.fire and not @fire
-    #@fire = true
-    console.log 'startShooting'
+    return if @fireFlag
+    @fireFlag = yes
     NET.weap.write 'ai', 0, @primarySlot, @, @target
+    console.log 'startShooting' if debug
   outRange: ->
-    # else if @fire and not v.fire
-    # @fire = false
-    console.log 'stopShooting'
+    return unless @fireFlag
+    @fireFlag = no
     NET.weap.write 'ai', 1, @primarySlot, @, @target
+    console.log 'stopShooting' if debug
   getTarget: ->
     @target = null
     return unless NUU.users.length > 0
@@ -202,10 +211,16 @@ AI.register 'attackPlayers',
       if ( closestDist > d = $dist(@,p.vehicle) ) and ( not p.vehicle.destructing ) and ( abs(d) < 1000000 )
         closestDist = d
         closest =  p.vehicle
-    return @target = null if closestDist > 5000
-    console.log '::ai', 'Drone SELECTED', closestDist if debug
+    if closestDist > 5000
+      bases = [ $obj.byName.Earth, $obj.byName.Moon ]
+      return 1000 if bases.includes @state.relto
+      @target = Array.random bases
+      @changeStrategy 'returnToBase'
+      console.log '::ai', 'drone:returnToBase' if true
+      return @target = null
+    console.log '::ai', 'drone:select', @target.name, "@" + hdist closestDist if debug
     @target = closest
-    null
+    return
 
 # ███    ███ ██ ███    ██ ███████ ██████
 # ████  ████ ██ ████   ██ ██      ██   ██
@@ -362,33 +377,53 @@ AI.register 'escort:defend',
 #      ██ ██   ██ ██ ██           ██
 # ███████ ██   ██ ██ ██      ███████
 
-Miner .ships = Trader.ships = Escort.ships = []
+Miner.ships = Trader.ships = Escort.ships = []
 
 NUU.on 'init:items:done', ->
+  Drone.ships = [
+    Item.byName.Drone.itemId
+    Item.byName.HeavyDrone.itemId
+    Item.byName.Vigilance.itemId
+  ]
+
   Miner.ships = [
     Item.byName.Mule.itemId
     Item.byName.Llama.itemId
+    Item.byName.Admonisher.itemId
+    Item.byName.EmpirePacifier.itemId
   ]
 
+  # Pirate.ships = [
+  #   Item.byName.Byakko.itemId
+  #   Item.byName.Kestrel.itemId
+  #   Item.byName.PirateKestrel.itemId
+  # ]
+
   Trader.ships = [
-    Item.byName.Kestrel.itemId
     Item.byName.Byakko.itemId
     Item.byName.Hawking.itemId
+    Item.byName.EmpireHawking.itemId
     Item.byName.Mule.itemId
-    Item.byName.Llama.itemId
-    Item.byName.ProteronWatson.itemId
-    Item.byName.Quicksilver.itemId
     Item.byName.Rhino.itemId
-    Item.byName.SoromidArx.itemId
-    Item.byName.ZalekDemon.itemId
+    Item.byName.PirateRhino.itemId
+    Item.byName.ProteronKahan.itemId
+    Item.byName.ProteronWatson.itemId
+    Item.byName.SiriusDivinity.itemId
+    Item.byName.SiriusDogma.itemId
   ]
 
   Escort.ships = [
     Item.byName.Ancestor.itemId
-    Item.byName.DvaeredGoddard.itemId
     Item.byName.DvaeredPhalanx.itemId
     Item.byName.EmpirePacifier.itemId
     Item.byName.EmpireShark.itemId
     Item.byName.FLFVendetta.itemId
     Item.byName.Pacifier.itemId
+    Item.byName.Koala.itemId
+    Item.byName.Llama.itemId
+    Item.byName.ProteronDerivative.itemId
+    Item.byName.Quicksilver.itemId
+    Item.byName.SiriusFidelity.itemId
+    Item.byName.SiriusShaman.itemId
+    Item.byName.Vendetta.itemId
   ]
