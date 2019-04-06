@@ -414,6 +414,7 @@
   100% { scale:1; } }
 
 .window.vt {
+  z-index: 1;
   opacity: 0.8;
   animation: fadein 0.5s ease-in-out; }
 
@@ -432,6 +433,7 @@ img.com {
   left: 0;
   right: 0;
   top: 0;
+  padding: 5px;
   opacity: 0.4;
   border: solid 1px #ccc;
   border-top: none;
