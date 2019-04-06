@@ -37,6 +37,25 @@
 # ██      ██  ██ ██  ██ ██   ██      ██
 # ██      ██ ██   ██ ██  █████  ███████
 
+###
+  WebGL with Canvas fallback powered by PIXI.js
+  # PITFALL: Hack PIXI to use Cache
+###
+
+PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode, sourceScale) ->
+  baseTexture = PIXI.utils.BaseTextureCache[imageUrl]
+  if !baseTexture
+    image = new Image
+    image.crossOrigin = 'anonymous'
+    baseTexture = new PIXI.BaseTexture(image, scaleMode)
+    baseTexture.imageUrl = imageUrl
+    baseTexture.sourceScale = sourceScale if sourceScale
+    baseTexture.resolution = PIXI.utils.getResolutionOfUrl(imageUrl)
+    Cache.get imageUrl, (cachedUrl) ->
+      image.src = cachedUrl # Setting this triggers load
+      PIXI.BaseTexture.addToCache baseTexture, imageUrl
+  baseTexture
+
 PIXI.Ticker         = PIXI.ticker.Ticker         unless PIXI.Ticker
 PIXI.AnimatedSprite = PIXI.extras.AnimatedSprite unless PIXI.AnimatedSprite
 PIXI.TilingSprite   = PIXI.extras.TilingSprite   unless PIXI.TilingSprite

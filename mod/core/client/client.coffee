@@ -91,25 +91,6 @@ for lib in deps.client.require
 NUU[k] = v for k,v of EventEmitter::; EventEmitter.call NUU
 NET[k] = v for k,v of EventEmitter::; EventEmitter.call NET
 
-###
-  WebGL with Canvas fallback powered by PIXI.js
-  # PITFALL: Hack PIXI to use Cache
-###
-
-PIXI.BaseTexture.fromImage = (imageUrl, crossorigin, scaleMode, sourceScale) ->
-  baseTexture = PIXI.utils.BaseTextureCache[imageUrl]
-  if !baseTexture
-    image = new Image
-    image.crossOrigin = 'anonymous'
-    baseTexture = new PIXI.BaseTexture(image, scaleMode)
-    baseTexture.imageUrl = imageUrl
-    baseTexture.sourceScale = sourceScale if sourceScale
-    baseTexture.resolution = PIXI.utils.getResolutionOfUrl(imageUrl)
-    Cache.get imageUrl, (cachedUrl) ->
-      image.src = cachedUrl # Setting this triggers load
-      PIXI.BaseTexture.addToCache baseTexture, imageUrl
-  baseTexture
-
 console.log ':nuu', 'loading libs'
 
 $ ->
@@ -120,7 +101,6 @@ NUU.on 'start', ->
   Object.assign rules, rules[NUU.mode||'dm']
   rules NUU
   NUU.emit 'settings'
-
 
 NUU.on 'gfx:ready', ->
   $.ajax '/build/objects.json', success: (result) ->

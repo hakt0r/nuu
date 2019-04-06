@@ -431,11 +431,22 @@ img.com {
   margin: auto;
   left: 0;
   right: 0;
-  top: 20px;
-  opacity: 0.4 }
+  top: 0;
+  opacity: 0.4;
+  border: solid 1px #ccc;
+  border-top: none;
+  border-radius: 4px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  }
 img.com.bottom {
+  border: solid 1px #ccc;
+  border-bottom: none;
+  border-radius: 4px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
   top: unset;
-  bottom: 20px; }
+  bottom: 0; }
 
 .window.vt button.demo {
   position:fixed;bottom:6px;right:5px;
