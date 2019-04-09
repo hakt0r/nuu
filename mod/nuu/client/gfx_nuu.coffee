@@ -93,10 +93,7 @@ Sprite.repositionPlayerSpace = (w=WIDTH,h=HEIGHT,hw=WDB2,hh=HGB2)->
 Sprite.animateSpace = (timestamp) ->
   return unless VEHICLE
   HUD.frame++
-  time = NUU.time()
-  VEHICLE.update time
-  window.OX = -VEHICLE.x + WDB2
-  window.OY = -VEHICLE.y + HGB2
+  VEHICLE.update time = NUU.time(); window.OX = -VEHICLE.x + WDB2; window.OY = -VEHICLE.y + HGB2
 
   sc = min 2, Sprite.scale
   if sc isnt @lastSC
@@ -105,23 +102,23 @@ Sprite.animateSpace = (timestamp) ->
     @stel.position.y = @debr.position.y = @ship.position.y = @weap.position.y = @tile.position.y = @play.position.y = @fx.position.y = @fg.position.y = .5 * ( HEIGHT - HEIGHT * sc )
     @lastSC = sc
 
-  # STARS
   [ vx, vy ] = $v.mult(
-    $v.normalize(VEHICLE.v.slice()),
-    Math.max 0.3, $v.mag(VEHICLE.v.slice()) * 1/Speed.max * 3 )
-  vx =  0.3 if vx is 0
-  vy = -0.3 if vy is 0
+    $v.normalize VEHICLE.v.slice()
+    Math.min 0.1, Math.max 0.3, $v.mag(VEHICLE.v.slice()) * 1/Speed.max * 3 )
+  vx = 0.07 if vx is 0
+  vy = 0.07 if vy is 0
 
-  @starfield.tilePosition.x -= vx * 2
-  @starfield.tilePosition.y -= vy * 2
   @nebulae.  position.x = VEHICLE.x * -0.0000034
   @nebulae.  position.y = VEHICLE.y * -0.0000034
+  @starfield.tilePosition.x -= vx * 10
+  @starfield.tilePosition.y -= vy * 10
   @parallax. tilePosition.x -= vx * 8
   @parallax. tilePosition.y -= vy * 8
 
   length = ( list = @visibleList ).length; i = -1
   while ++i < length
-    ( s = list[i] ).updateSprite time
+    continue if VEHICLE is s = list[i]
+    s.updateSprite NUU.time()
     continue unless beam = Weapon.beam[s.id]
     sp = beam.sprite
     sp.tilePosition.x += 0.5
@@ -142,6 +139,7 @@ Sprite.animateSpace = (timestamp) ->
 
   @renderHUD()
   @renderScanner()
+  VEHICLE.updateSprite time
   @renderer.render @stage
   return
 
