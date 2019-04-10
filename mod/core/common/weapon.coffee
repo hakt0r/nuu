@@ -183,7 +183,7 @@ Weapon.Beam = ->
   @release = =>
     @stop = true; @lock = false
     do @hide if isClient
-    delete Weapon.beam[@ship.id]
+    delete @ship.beam
     off
   @trigger = (src,@target) =>
     return if @lock; @lock = true; @stop = false
@@ -191,7 +191,7 @@ Weapon.Beam = ->
     return     if @target.destructing
     Weapon.hostility @ship, @target
     do @show if isClient
-    Weapon.beam[@ship.id] = @
+    @ship.beam = @
     @ms = NUU.time()
     @tt = @ms + @duration
     BeamWorker.add @

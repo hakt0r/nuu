@@ -117,9 +117,9 @@ Sprite.animateSpace = (timestamp) ->
 
   length = ( list = @visibleList ).length; i = -1
   while ++i < length
-    continue if VEHICLE is s = list[i]
-    s.updateSprite NUU.time()
-    continue unless beam = Weapon.beam[s.id]
+    s = list[i]
+    s.updateSprite time # NUU.time()
+    continue unless beam = s.beam
     sp = beam.sprite
     sp.tilePosition.x += 0.5
     sp.position.set s.x + OX, s.y + OY
@@ -139,7 +139,6 @@ Sprite.animateSpace = (timestamp) ->
 
   @renderHUD()
   @renderScanner()
-  VEHICLE.updateSprite time
   @renderer.render @stage
   return
 

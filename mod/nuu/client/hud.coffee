@@ -421,11 +421,14 @@ $static 'HUD', new class NUU.HUD
       @targetDir.position.set WDB2 + cos(relDir) * radius * 1.1, HGB2 + sin(relDir) * radius * 1.1
       @targetDir.rotation = ( relDir + PI/2 ) % TAU
       # NAVCOM-DATA
-      TARGET.ap_dist = $dist(VEHICLE,TARGET)
-      TARGET.ap_eta = Math.round( TARGET.ap_dist / (Math.sqrt( Math.pow(VEHICLE.v[0],2) + Math.pow(VEHICLE.v[1],2) ) / 0.04))
+      TARGET.ap_dist = dist = $dist(VEHICLE,TARGET)
+      if VEHICLE.state.S is $travel
+        eta = ( VEHICLE.state.vec.etaf - do NUU.time ) / 1000
+      else
+        TARGET.ap_eta = eta = Math.round( TARGET.ap_dist / (Math.sqrt( Math.pow(VEHICLE.v[0],2) + Math.pow(VEHICLE.v[1],2) ) / 0.04))
       t += "#{TARGET.name} [#{TARGET.id}]\n"
-      t += "d[#{htime(TARGET.ap_eta)}/#{hdist TARGET.ap_dist}]\n"
-      t += "v[#{round TARGET.v[0]}x#{round TARGET.v[1]}y]\n\n"
+      t += "d[#{htime eta}/#{hdist dist}]\n"
+      t += "v[#{round TARGET.v[0]*1000}x#{round TARGET.v[1]*1000}y]\n\n"
       t += "[#{list[cid]}:#{cid}:#{Target.id}]"
     else if not VEHICLE.dummy
       @targetShield.visible = @targetArmour.visible = @targetDir.visible = false
