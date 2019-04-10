@@ -99,24 +99,19 @@ Stellar.init = ->
     l.push id
   for i in rules.stars
     [ id, Constructor, name, sprite, orbit, state, relto, args ] = i
-    odx = orbits[relto+'_'+orbit].indexOf id
-    oct = ( orbits[relto+'_'+orbit] || [] ).length
+    args   = {} unless args
+    odx    = orbits[relto+'_'+orbit].indexOf id
+    oct    = ( orbits[relto+'_'+orbit] || [] ).length
     relto$ = $obj.byId[relto] || x:0,y:0,update:$void
     relto$.update()
-    if oct > 1
-      rand  = ( TAU / oct ) * odx
-      vel   = 0.05
-      stp   = TAU / ( ( TAU * orbit ) / vel )
-      state = S:state, relto:relto$, t:now, orb:orbit, vel:vel, stp:stp, off:rand
-    else
-      rand = random() * TAU
-      m = [0,min 5,   max 1,  orbit % 5]
-      if orbit > 100000   then m = [0,min 19,  max 10,  orbit % 19]
-      if orbit > 1000000  then m = [0,min 99,  max 20,  orbit % 99]
-      if orbit > 10000000 then m = [0,min 199, max 100, orbit % 199]
-      state = S:state, relto:relto$, x:relto$.x + cos(rand) * orbit, y:relto$.y + sin(rand) * orbit, v:m
-    opts = id:id, name:name, sprite:sprite, state:state
-    opts[k] = v for k,v of args
+    rand = if oct is 1 then TAU * random() else ( TAU / oct ) * odx
+    vel   = 0.05
+    if 0 < hrs = args.t
+      vel = ( TAU * orbit ) / ( hrs * 360000 ) # ten times faster
+    console.log name, vel.toFixed(10), args.i, oct, odx
+    stp   = TAU / ( ( TAU * orbit ) / vel )
+    state = S:state, relto:relto$, t:now, orb:orbit, vel:vel, stp:stp, off:rand
+    opts = Object.assign args||{}, id:id, name:name, sprite:sprite, state:state
     new Constructor opts
   return
 
