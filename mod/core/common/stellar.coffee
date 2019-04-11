@@ -108,7 +108,6 @@ Stellar.init = ->
     vel   = 0.05
     if 0 < hrs = args.t
       vel = ( TAU * orbit ) / ( hrs * 360000 ) # ten times faster
-    console.log name, vel.toFixed(10), args.i, oct, odx
     stp   = TAU / ( ( TAU * orbit ) / vel )
     state = S:state, relto:relto$, t:now, orb:orbit, vel:vel, stp:stp, off:rand
     opts = Object.assign args||{}, id:id, name:name, sprite:sprite, state:state

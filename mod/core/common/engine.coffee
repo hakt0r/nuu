@@ -162,6 +162,7 @@ $v       .sub = $v.sub       2
 $v       .add = $v.add       2
 $v       .dot = $v.dot       2
 $v       .mag = $v.mag       2
+$v       .div = $v.div       2
 $v      .dist = $v.dist      2
 $v      .mult = $v.mult      2
 $v     .limit = $v.limit     2
