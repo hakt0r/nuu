@@ -28,6 +28,7 @@ NUU.on '$obj:destroyed', (v) ->
   null
 
 NET.on 'hostile', addHostile = (id)->
+  count = 1
   doAdd = (i)->
     return console.log ':tgt', 'hostile:unknown', i unless v = $obj.byId[i]
     return if v.destructing
@@ -36,10 +37,12 @@ NET.on 'hostile', addHostile = (id)->
   if Array.isArray id
     Object.empty Target.hostile
     id.map doAdd
+    count = id.length
   else doAdd id
   Target.types[0] = Target.hostile
-  NUU.emit 'hostiles', Target.hostile
-  do Target.enemy
+  unless count is 0
+    NUU.emit 'hostiles', Target.hostile
+    do Target.enemy
 
 window.TARGET = null
 

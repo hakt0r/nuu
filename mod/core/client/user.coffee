@@ -27,7 +27,9 @@ $public class User
   constructor: (opts)->
     Object.assign @, opts
     console.log 'user', @ if debug
-    NUU.emit 'login:test' if @name.match /^test[0-9]+$/
+    if @user.nick.match /^test[0-9]+$/
+      NET.once 'sync', -> NUU.emit 'login:test'
+    return
 
 Object.defineProperty User::, 'vehicle',
   set: (v) ->

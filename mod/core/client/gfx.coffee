@@ -137,8 +137,8 @@ $static 'Sprite', new class NUU.Render extends EventEmitter
 
   start:(callback) =>
     @startTime = NUU.time()
-    callback null if callback
-    null
+    do callback if callback
+    return
 
   stop:-> @bg.removeChildren()
 
