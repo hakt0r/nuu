@@ -25,8 +25,9 @@ $public class User
   primary: id: 0
   secondary: id: 0
   constructor: (opts)->
-    @[k] = v for k,v of opts
+    Object.assign @, opts
     console.log 'user', @ if debug
+    NUU.emit 'login:test' if @name.match /^test[0-9]+$/
 
 Object.defineProperty User::, 'vehicle',
   set: (v) ->
