@@ -20,6 +20,12 @@
 
 ###
 
+NUU.on 'login:test', ->
+  Scanner.scale = 500000
+  Scanner.toggleFullscreen()
+  Target.set $obj.byName.Venus
+  return
+
 $public class User
   _vehicle: null
   primary: id: 0

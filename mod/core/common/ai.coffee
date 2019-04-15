@@ -121,6 +121,7 @@ AI.randomStellar = ->
 AI.register = (strategy,opts)-> AI.worker[opts.listKey = strategy] = $worker.PauseList opts, (time)->
   @update time
   @getTarget() unless @target
+  return 2000  if @state.S is $travel
   return 1000  unless @target
   v = NavCom.steer  @, @target, 'pursue'
   v = NavCom.decide @, v
@@ -240,6 +241,7 @@ $public class Miner extends AI
 AI.register 'collect',
   getTarget: ->
     @target = Asteroid.byId[ Array.random Object.keys Asteroid.byId ]
+    # @setState S:$travel, relto:@target
     console.log '::ai', "#{@name} to", @target.name if @target if debug
   onTarget: ->
     # @changeStrategy 'mine'
@@ -257,7 +259,7 @@ $public class Trader extends AI
   aiType: 'Trader'
   @list:[]
   constructor:(opts={})->
-    opts.strategy = null # opts.strategy || 'trade'
+    opts.strategy = 'trade' # opts.strategy || 'trade'
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
     @inventory = new Inventory data:{}, key:no
@@ -284,10 +286,11 @@ AI.register 'trade',
       return unless source = Array.random z.list
       @misson = item:item, source:source, dest:dest, count:count, task:'pickup'
       @target = source
+      # @setState S:$travel, relto:@target
       # console.log "new misson: #{item} from #{dest.name}@#{z.root.name} for #{source.name}" # if debug
-      return
     else
       @target = @misson.dest
+      # @setState S:$travel, relto:@target
       # m = @misson; console.log "bring: #{m.item} from #{m.source.name} to #{m.dest.name}@#{m.dest.zone.root.name}" # if debug
   onTarget: ->
     if @land @target

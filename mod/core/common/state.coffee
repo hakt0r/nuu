@@ -322,7 +322,7 @@ State.register class State.burn extends State
     @peak = r = Speed.max
     @cosd = cos @dir
     @sind = sin @dir
-    $v.mult $v.normalize(@v), r*.99 if r < $v.mag @v # reset to speed limit
+    $v.mult $v.norm(@v), r*.99 if r < $v.mag @v # reset to speed limit
     a = @v.slice()
     b = $v.add @v.slice(), $v.mult [@cosd,@sind], r
     d = $v.sub  b.slice(), a
@@ -606,9 +606,9 @@ State.register class State.orbit extends State
     dy = @o.y - @relto.y
     relm = $v.sub @relto.v.slice(), @o.v
     @orb = @orb || round sqrt dx * dx + dy * dy
-    @vel = v = max 0.02, min 0.01, min $v.mag(relm), @orb / 10000000
+    @vel = v = max 0.1, min 0.01, min $v.mag(relm), @orb / 10000000
     @stp = TAU / (( TAU * @orb ) / v )
-    @stp = -@stp if 0 > $v.cross(2) relm, [dx,dy]
+    @stp = -@stp if 0 > $v.cross relm, [dx,dy]
     @off = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
   cache:->
     @stpangl = if @stp > 0 then PI/2 else -PI/2
@@ -699,124 +699,188 @@ State.formation.fromBuffer = (o,msg)-> new State.formation {
 #    ██    ██████  ███████ ██    ██ █████   ██
 #    ██    ██   ██ ██   ██  ██  ██  ██      ██
 #    ██    ██   ██ ██   ██   ████   ███████ ███████
-$v.div = $v.div 2
+
+$burn_p = (h,t,a,v,p)-> accdt2b2=.5*a*t**2; [ p[0]+v[0]*t+h[0]*accdt2b2, p[1]+v[1]*t+h[1]*accdt2b2 ]
+$burn_r = (h,t,a,v  )-> accdt2b2=.5*a*t**2; [ v[0]*t+h[0]*accdt2b2, v[1]*t+h[1]*accdt2b2 ]
+$burn_v = (h,t,a,v  )-> at=a*t; [ v[0]+h[0]*at, v[1]+h[1]*at ]
+
+Object.defineProperty Array::, '$', get:-> do @slice
+
+$v.rotateH = (a,h)-> [a[0]*h[0]-a[1]*h[1],a[0]*h[1]+a[1]*h[0]]
+$v.angle = (a,b)-> atan2($v.norm($v.cross(a.$,b)), $v.dot(a.$,b))
+
+
+State.TravelVector = class TravelVector
+  constructor:(s,t,state)->
+    @eta    = 0
+    @locvel = state.v.$
+    @locpos = [state.x,state.y]
+    @locacc = s.thrustToAccel @thrust = 254
+    @topspd = Speed.max
+    @tgtopo = [t.x,t.y]
+    eta1 = @approach s,t,state; tp1 = @tgtpos.$; console.log 'travel:eta1'.red, htime(@eta/1000)
+    eta2 = @approach s,t,state; tp2 = @tgtpos.$; console.log 'travel:eta2'.red, 'eta', htime(@eta/1000), 'diff:', (eta2-eta1), 'tcip:', ( $v.mag $v.sub tp1.$, tp2 )
+    # eta3 = @approach s,t,state; tp3 = @tgtpos.$; console.log 'travel:eta3'.red, 'eta', htime(@eta/1000), 'diff:', (eta3-eta1), 'tcip:', ( $v.mag $v.sub tp2.$, tp3 ), @
+    t.state.update NUU.time()
+    return
+  approach:(s,t,state)->
+    t.update @eta + ST = state.t; @tgtpos = [t.x,t.y]; @tgtvel = t.v.$ # console.log 'chg'.red, $v.mag $v.sub @tgtpos.$, @tgtopo
+    tt180 = s.turnTime ( s.d + 180 ) % 360
+    @selspd = @selspd || @topspd
+    @pmapos = ( @pmapos || @locpos ).$
+    @apppth = $v.sub @tgtpos.$, @pmapos
+    do match = =>
+      hh = abs $v.angle @apppth, @locvel
+      if hh < PI/2
+        # console.log '@shift', hh, ( -PI < hh ), ( hh < PI )
+        @pmavel = $v.mult $v.norm(@apppth).$, @selspd
+        @matvel = $v.sub @pmavel.$, @locvel
+      else @matvel = $v.sub (@pmavel = [0,0]).$, @locvel
+      @matnrm = $v.norm  @matvel.$
+      @mattim = ( $v.mag @matvel ) / @locacc
+      @pmapos = $burn_p @matnrm, @mattim, @locacc, @locvel, @locpos
+      @pmaspd = $v.mag  @pmavel
+      @apppth = $v.sub  @tgtpos.$, @pmapos
+    do match; do match; do match
+    do match; do match; do match
+    @appdst = $v.mag  @apppth
+    @appnrm = $v.norm @apppth.$
+    @rappth = $v.mult @apppth.$, -1
+    @rapnrm = $v.norm @rappth.$
+    do partition = =>
+      @travel = $v.mult @appnrm.$, @selspd
+      @acctim = ( $v.mag(@travel) - @pmaspd ) / @locacc
+      # console.log $v.sub(@accrds.$,$v.add(@pmapos.$,$v.limit(@apppth.$),@accdst))
+      @decvec = $v.sub @tgtvel.$, @travel
+      @decvec = $v.sub [0,0], @travel
+      @decnrm = $v.norm @decvec.$
+      @dectim = $v.mag(@decvec) / @locacc
+      @accdst = $v.mag @accrds = $burn_r @appnrm, @acctim, @locacc, @pmavel
+      @decdst = $v.mag @decrds = $burn_r @decnrm, @dectim, @locacc, @travel
+      @glidst = @appdst - @decdst - @accdst
+    if 0 > @glidst # throttle down
+      @avldst = @appdst - @decdst # - @trndst = tt180 * @selspd
+      @selspd = sqrt @pmaspd**2 + @locacc * @avldst
+      do partition
+    @glitim = @glidst / @selspd
+    @decfti = ( @glifti = ( @accfti = ( @matfti = ST + @mattim ) + @acctim ) + @glitim ) + @dectim
+    @absETA = ST + ( @eta = @mattim + @acctim + @dectim + @glitim )
+    @mathdd = RAD * $v.heading @matvel, $v.zero
+    @glihdd = RAD * $v.heading @apppth, $v.zero
+    @glirhd = ( 360 + RAD * $v.heading @rappth, $v.zero ) % 360
+    @pacvel = $burn_v @appnrm, @acctim, @locacc, @pmavel
+    @pdevel = $burn_v @decnrm, @dectim, @locacc, @travel
+    @pglvel = @travel.$
+    @pacpos = $v.add @pmapos.$, $v.mult @appnrm.$, @accdst
+    @pglpos = $v.add @pacpos.$, $v.mult @appnrm.$, @glidst
+    @pdepos = $v.add @pglpos.$, $v.mult @appnrm.$, @decdst
+    console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $burn_v @appnrm, @acctim, @locacc, @pmavel
+    console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $burn_p @appnrm, @acctim, @locacc, @pmavel, @pmapos
+    console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst
+    console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $burn_p @decnrm, @dectim, @locacc, @pglvel, @pglpos
+    console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos
+    return @eta
+
+Object.defineProperty TravelVector::, name, enumerable:no,  configurable:no, writable:yes for name in [ 's', 't', 'state' ]
+Object.defineProperty TravelVector::, name, enumerable:yes, configurable:no, writable:yes for name in [ 'accdst', 'acctim', 'accfti', 'appdst', 'appnrm', 'apppth', 'decdst', 'dectim', 'decfti', 'eta', 'absETA', 'glidst', 'glihdd', 'glirhd', 'glitim', 'glifti', 'locacc', 'locvel', 'mathdd', 'matnrm', 'mattim', 'matfti', 'matvel', 'pacpos', 'pacvel', 'pdepos', 'pdevel', 'pglpos', 'pglvel', 'pmapos', 'pmavel', 'decnrm', 'rappth', 'tgtpos', 'tgtvel', 'topspd', 'travel' ]
 
 State.register class State.travel extends State
   lock:yes
-  acceleration:yes
-  translate:-> # sometimes I really miss goto
-    return if @vec
-    s = @o; t = @relto; @vec = v = eta:0
-    v.local_pos = [s.x,s.y]
-    v.local_vel = @o.v.slice()
-    v.local_speed = $v.mag v.local_vel
-    v.local_acc = s.thrustToAccel v.thrust = 252
-    v.local_aps = 1000 * v.local_acc
-    v.top_speed = Speed.max * .5
-    t.state.update @t
-    $approach = =>
-      t.state.update @t + v.eta
-      v.target_pos     = [t.x,t.y]
-      v.target_vel     = t.v.slice()
-      v.target_speed   = $v.mag v.target_vel
-      v.approach_path  = $v.sub v.target_pos.slice(), v.local_pos
-      v.approach_norm  = $v.normalize v.approach_path.slice()
-      v.approach_dist  = $v.mag v.approach_path
-      v.approach_head  = $v.heading v.approach_path, $v.zero
-      v.approach_r     = $v.mult v.approach_path.slice(), -1
-      v.approach_rnorm = $v.normalize v.approach_r.slice()
-      v.approach_rhead = $v.heading v.approach_r, $v.zero
-      v.travel_vel     = $v.mult v.approach_norm.slice(), v.top_speed
-      v.travel_speed   = $v.mag v.travel_vel
-      v.steer_vel      = $v.sub v.travel_vel.slice(), v.local_vel
-      v.accel_t        = abs ( v.local_vel[0]  - v.travel_vel[0] ) / (v.approach_norm[0]*v.local_acc)
-      v.deccel_t       = abs ( v.target_vel[0] - v.travel_vel[0] ) / (v.approach_norm[0]*v.local_acc)
-      [ cosd, sind ] = v.approach_norm
-      accdt2b2 = .5*(acc = v.local_acc)*(dt2 = (dt = v.accel_t)**2)
-      v.accel_dist = $v.mag [
-        v.local_vel[0]*dt+cosd*accdt2b2
-        v.local_vel[1]*dt+sind*accdt2b2 ]
-      [ cosd, sind ] = v.approach_rnorm
-      accdt2b2 = .5*(acc = v.local_acc)*(dt2 = (dt = v.deccel_t)**2)
-      v.deccel_dist = $v.mag [
-        v.travel_vel[0]*dt+cosd*accdt2b2
-        v.travel_vel[1]*dt+sind*accdt2b2 ]
-      v.glide_dist     = v.approach_dist - v.deccel_dist - v.accel_dist
-      v.glide_t        = v.glide_dist / v.top_speed
-      v.eta            = v.accel_t + v.deccel_t + v.glide_t
-      v.glide_hd       = RAD * v.approach_head
-      v.glide_rhd      = RAD * v.approach_rhead
-      v.accel_tf       = @t + v.accel_t
-      v.glide_tf       = v.accel_tf + v.glide_t
-      v.deccel_tf      = v.glide_tf + v.deccel_t
-      v.etaf           = @t + v.eta
-    eta1 = $approach(); tp0 = v.target_pos.slice()
-    console.log 'travel:eta1', htime(v.eta/1000)
-    eta2 = $approach()
-    console.log 'travel:eta2'.red,
-      'eta', htime(v.eta/1000),
-      'diff:', htime((eta2-eta1)/1000)
-      'tcip:', $v.mag $v.sub tp0.slice(), v.target_pos
-    util = require 'util'
-    console.log util.inspect(v).bold.inverse
-    t.state.update NUU.time()
+  constructor:(opts)->
+    super opts
+
+  cache:->
+    @vec = new TravelVector @o, @relto, @
+    @px = @x; @py = @y; [ @vx, @vy ] = @v
+    @o.d = @vec.mathdd
+    console.log "@@@", @vec
     return
-  update:(time=NUU.time())=>
+
+  update:(time=NUU.time())->
     return if @lastUpdate is time; v = @vec
-    return @toGlide time if time > v.accel_tf
-    [ cosd, sind ] = v.approach_norm; acc = v.local_acc
+    return @toAccel time if time > v.matfti
+    [ cosd, sind ] = v.matnrm; acc = v.locacc
     dt = time - @t; dt2 = dt**2
-    @o.x    = @x + @v[0]*dt + .5*cosd*acc*dt2
-    @o.y    = @y + @v[1]*dt + .5*sind*acc*dt2
-    @o.v[0] =      @v[0]    +    cosd*acc*dt
-    @o.v[1] =      @v[1]    +    sind*acc*dt
-    @o.d    = v.glide_hd
+    accdt2b2 = acc*dt2*.5; @o.x=@px+@vx*dt+cosd*accdt2b2; @o.y=@py+@vy*dt+sind*accdt2b2
+    accdt = acc*dt; @o.v[0]=@vx+cosd*accdt; @o.v[1]=@vy+sind*accdt
     @lastUpdate = time
+
+  toAccel:(time)->
+    v = @vec; acc = v.locacc; [ cosd, sind ] = v.matnrm; dt = v.mattim; dt2 = dt**2
+    @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
+    @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
+    console.log 'match=>accel:v', $v.mag $v.sub [@vx,@vy], v.pmavel
+    console.log 'match=>accel:p', $v.mag $v.sub [@px,@py], v.pmapos
+    [@vx,@vy] = v.pmavel; [@px,@py] = v.pmapos
+    @o.d = v.glihdd
+    ( @update = @o.update = @updateAccel.bind @ )( time )
+    return
+
+  updateAccel:(time=NUU.time())->
+    return if @lastUpdate is time; v = @vec
+    return @toGlide time if time > v.accfti
+    [ cosd, sind ] = v.appnrm; acc = v.locacc
+    dt = time - v.matfti; dt2 = dt**2
+    accdt2b2 = acc*dt2*.5; @o.x=@px+@vx*dt+cosd*accdt2b2; @o.y=@py+@vy*dt+sind*accdt2b2
+    accdt = acc*dt; @o.v[0]=@vx+cosd*accdt; @o.v[1]=@vy+sind*accdt
+    @lastUpdate = time
+
   toGlide:(time)->
-    @acceleration = no
-    v = @vec; [ cosd, sind ] = v.approach_norm; acc = v.local_acc
-    dt = v.accel_t; dt2 = dt**2
-    @dx      = @x + @v[0]*dt + .5*cosd*acc*dt2
-    @dy      = @y + @v[1]*dt + .5*sind*acc*dt2
-    @o.v[0] = @mx = @v[0]    +    cosd*acc*dt
-    @o.v[1] = @my = @v[1]    +    sind*acc*dt
-    @o.d = v.glide_hd
-    ( @update = @o.update = @updateGlide )( time )
-  updateGlide:(time=NUU.time())=>
+    v = @vec; acc = v.locacc; [ cosd, sind ] = v.appnrm; dt = v.acctim; dt2 = dt**2
+    @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
+    @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
+    console.log 'accel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pacvel
+    console.log 'accel=>glide:p', $v.mag $v.sub [@px,@py], v.pacpos
+    # [@vx,@vy] = v.pacvel; [@px,@py] = v.pacpos
+    @o.d = v.glihdd; @acceleration = no
+    ( @update = @o.update = @updateGlide.bind @ )( time )
+    return
+
+  updateGlide:(time=NUU.time())->
     return if @lastUpdate is time; v = @vec
-    return @toDeccel time if time > v.glide_tf
-    @o.x = @dx + @mx * dt = time - v.accel_tf
-    @o.y = @dy + @my * dt
+    return @toDeccel time if time > v.glifti
+    dt = time - v.accfti
+    @o.x=@px+@vx*dt; @o.y=@py+@vy*dt
     @lastUpdate = time
+
   toDeccel:(time)->
-    @acceleration = yes; v = @vec
-    @dx  = @dx + @mx * v.glide_t
-    @dy  = @dy + @my * v.glide_t
-    @o.d = v.glide_rhd
-    ( @update = @o.update = @updateDeccel )( time )
-  updateDeccel:(time=NUU.time())=>
+    v = @vec; dt = v.glitim
+    @px=@px+@vx*dt; @py=@py+@vy*dt
+    console.log 'glide=>deccel:v', $v.mag $v.sub [@vx,@vy], v.pglvel
+    console.log 'glide=>deccel:p', $v.mag $v.sub [@px,@py], v.pglpos
+    # [@vx,@vy] = v.pglvel; [@px,@py] = v.pglpos
+    @o.d = v.glirhd; @acceleration = yes
+    ( @update = @o.update = @updateDeccel.bind @ )( time )
+    return
+
+  updateDeccel:(time=NUU.time())->
     return if @lastUpdate is time; v = @vec
-    return @toMoving time unless time < v.etaf
-    [ cosd, sind ] = v.approach_norm; acc = -v.local_acc
-    dt = time - v.glide_tf; dt2 = dt**2;
-    @o.x    = @dx + @mx*dt + .5*cosd*acc*dt2
-    @o.y    = @dy + @my*dt + .5*sind*acc*dt2
-    @o.v[0] =       @mx    +    cosd*acc*dt
-    @o.v[1] =       @my    +    sind*acc*dt
+    return @toMoving time if time > v.decfti
+    [ cosd, sind ] = v.decnrm; acc = v.locacc
+    dt = time - v.glifti; dt2 = dt**2;
+    accdt2b2 = acc*dt2*.5; @o.x=@px+@vx*dt+cosd*accdt2b2; @o.y=@py+@vy*dt+sind*accdt2b2
+    accdt = acc*dt; @o.v[0]=@vx+cosd*accdt; @o.v[1]=@vy+sind*accdt
     @lastUpdate = time
+
   toMoving:(time)->
-    @acceleration = no; v = @vec; [ cosd, sind ] = v.approach_norm; acc = -v.local_acc
-    dt = v.deccel_t; dt2 = dt**2
-    @dx = @dx + @mx*dt + .5*cosd*acc*dt2
-    @dy = @dy + @my*dt + .5*sind*acc*dt2
-    @mx =       @mx    +    cosd*acc*dt
-    @my =       @my    +    sind*acc*dt
-    @o.d = v.glide_hd
-    ( @update = @o.update = @updateMoving )( time )
-  updateMoving:(time=NUU.time())=>
-    return if @lastUpdate is time; @lastUpdate = time; v = @vec
-    @o.x = @dx + @mx * dt = time - v.etaf
-    @o.y = @dy + @my * dt
-    @lastUpdate = time
+    @lock = @o.locked = @acceleration = no
+    v = @vec; acc = v.locacc; [ cosd, sind ] = v.decnrm; dt = v.dectim; dt2 = dt**2
+    @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
+    @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
+    console.log 'deccel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pdevel
+    console.log 'deccel=>glide:p', $v.mag $v.sub [@px,@py], v.pdepos
+    @relto.update v.absETA
+    console.log 'deccel=>glide:tp', $v.mag $v.sub [@relto.x,@relto.y], v.tgtpos
+    [@o.x,@o.y] = v.pdepos; [ @o.v[0], @o.v[1] ] = v.pdevel
+    # [@o.x,@o.y] = [@px,@py]; [ @o.v[0], @o.v[1] ] = [@vx,@vy]
+    @update = @o.update = ->
+    if isServer
+      # @o.setState S:$moving
+      @relto.update v.decfti
+      @o.setState S:$moving,t:v.decfti,relto:@relto
+      @relto.update()
+    # new State.moving o:@o,t:v.decfti,x:@px,y:@py,v:[@vx,@vy],relto:@relto
+    return
+
   toBuffer:-> @_buffer = NET.JSON + JSON.stringify state:[@toJSON()]
-  toJSON:-> S:@S,o:@o.id,x:@x,y:@y,d:@d,t:@t,v:@v,relto:@relto.id,vec:@vec
+  toJSON:-> S:@S,o:@o.id,x:@x,y:@y,d:@d,t:@t,v:@v,relto:@relto.id

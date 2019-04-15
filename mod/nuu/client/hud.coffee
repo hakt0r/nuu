@@ -433,7 +433,7 @@ $static 'HUD', new class NUU.HUD
       # NAVCOM-DATA
       TARGET.ap_dist = dist = $dist(VEHICLE,TARGET)
       if VEHICLE.state.S is $travel
-        eta = ( VEHICLE.state.vec.etaf - do NUU.time ) / 1000
+        eta = ( VEHICLE.state.vec.absETA - do NUU.time ) / 1000
       else
         TARGET.ap_eta = eta = Math.round( TARGET.ap_dist / (Math.sqrt( Math.pow(VEHICLE.v[0],2) + Math.pow(VEHICLE.v[1],2) ) / 0.04))
       t += "#{TARGET.name} [#{TARGET.id}]\n"
