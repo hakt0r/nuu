@@ -318,21 +318,25 @@ $static 'HUD', new class NUU.HUD
     #new uiVector @, 'speed',    0x00FF00
     new uiVector @, 'force',    0xFF00FF
     new uiVector @, 'approach', 0xFFFF00
-    #new uiVector @, 'match',    0xFF0000
-    #new uiVector @, 'creep',    0x00FFFF
+    new uiVector @, 'match',    0xFF0000
+    new uiVector @, 'accel',    0x00FF00
+    new uiVector @, 'glide',    0xFFFFFF
+    new uiVector @, 'deccel',   0x00FFFF
     do uiBar.init # HEALTH BARS
     do uiText.init # TEXT NODES
     @topLeft.position.set 10, 10
     do @resize # UPDATE DYNAMIC POSITIONS
 
-  resize: ->
-    LeftAlign  = (o,x,y)-> x = WDB2 - x - 125; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
-    RightAlign = (o,x,y)-> x = WDB2 + x + 125; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
+  resize:->
+    LeftAlign  = (o,x,y)=> x = WDB2 - x - @offsetX; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
+    RightAlign = (o,x,y)=> x = WDB2 + x + @offsetX; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
     @system.fontSize = @text.fontSize = @notice.fontSize = @debug.fontSize = @fontSize + 'px'
     @notice.position.set        WIDTH - 20 - @notice.width, 10
     @debug.position.set         10,  26
+    @offsetX = 125
+    @offsetX = WDB2 - 275 if Scanner.fullscreen
+    LeftAlign  @playerSprite,   100,  @playerSprite.height + 10 if @playerSprite
     LeftAlign  @system,         110 + @system.width, @system.height + 25
-    LeftAlign  @playerSprite,   100, @playerSprite.height + 10 if @playerSprite
     LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
     LeftAlign  @primary,        110 + @primary.width,   10 + @secondary.height + @primary.height
     LeftAlign  @throttle,       100, 20
@@ -340,17 +344,13 @@ $static 'HUD', new class NUU.HUD
     LeftAlign  @energy,         100, 10
     LeftAlign  @shield,         100, 110
     LeftAlign  @armour,         100, 105
+
     RightAlign @text,           110, 10 + @text.height
-    #RightAlign @speed       ,   55,  50
-    #RightAlign @creep     ,   55,  50
-    #RightAlign @match     ,   55,  50
-    #RightAlign @approach    ,   55,  50
-    #RightAlign @force    ,   55,  50
     RightAlign @targetShield,   0,   110
     RightAlign @targetArmour,   0,   105
     RightAlign @targetSprite,   0,   @targetSprite.height + 10 if @targetSprite
 
-  render: (g) ->
+  render:(g)->
     dir = ((VEHICLE.d + 180) % 360) / RAD
     radius  = VEHICLE.size / 2 + 10
     fox = WDB2; foy = HEIGHT - 108
@@ -394,28 +394,38 @@ $static 'HUD', new class NUU.HUD
       v = $v.mult $v.normalize(v), l
       #@speed.width = l
       #@speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
-      if vec = NavCom.decide @, NavCom.steer VEHICLE, TARGET, 'pursue' # VEHICLE.lastVec
-        t += "ap[#{hdist vec.creep_s}:#{vec.setThrottle}:#{rdec3 vec.error_threshold}:#{rdec3 vec.error}]\n"
-        if @force.visible = vec.approach?
-          @force.height   = 1
-          @force.width    = fol * Speed.maxi * min Speed.max, $v.mag VEHICLE.v.slice()
-          @force.rotation = $v.heading VEHICLE.v.slice(), $v.zero
-          @force.position.set fox, foy
-        if @approach.visible = vec.approach?
-          @approach.height   = 1
-          @approach.width    = fol * Speed.maxi * min Speed.max, vec.approach_vs
-          @approach.rotation = vec.approach_vh
-          @approach.position.set fox, foy
-        # if @match.visible = no # vec.match_d? and vec.approach_d < vec.match_d
-        #   @match.height   = 10
-        #   @match.width    = fol * Speed.maxi * min Speed.max, vec.match_d
-        #   @match.rotation = vec.approach_h
-        #   @match.position.set fox, foy
-        # if @creep.visible = no # vec.creep?
-        #   @creep.height   = 4
-        #   @creep.width    = fol * Speed.maxi * min Speed.max, vec.creep_s
-        #   @creep.rotation = vec.creep_h
-        #   @creep.position.set fox, foy
+      @glide.visible = @force.visible = @approach.visible = @match.visible = @deccel.visible = ( vec = VEHICLE.state.vec )?.travel?
+      if vec
+        {x,y} = VEHICLE
+        r = Scanner.radius
+        sc = Scanner.scale
+        ss = Speed.max / r
+        fy = foy + 3
+        t += "ap[#{hdist vec.deccel_s}:#{vec.setThrottle}:#{rdec3 vec.error_threshold}:#{rdec3 vec.error}]\n"
+        @force.height       = 1
+        @force.width        = min r, (( $v.mag VEHICLE.v.slice() )*ss)
+        @force.rotation     = $v.heading VEHICLE.v.slice(), [1,0]
+        @force.position.set fox, fy
+        @approach.height    = 2
+        @approach.width     = ( $v.mag vec.travel ) / sc
+        @approach.rotation  = $v.heading vec.apppth, [1,0]
+        @approach.position.set fox+(vec.pmapos[0]-x)/sc, fy+(vec.pmapos[1]-y)/sc
+        @match.height       = 3
+        @match.width        = $v.mag(d=$v.sub(vec.locpos.$,vec.pmapos)) / sc
+        @match.rotation     = PI + $v.heading d, [1,0]
+        @match.position.set fox+((vec.locpos[0]-x)/sc), fy+((vec.locpos[1]-y)/sc)
+        @accel.height       = 3
+        @accel.width        = vec.accdst / sc
+        @accel.rotation     = $v.heading vec.apppth, [1,0]
+        @accel.position.set fox+((vec.pmapos[0]-x)/sc), fy+((vec.pmapos[1]-y)/sc)
+        @glide.height       = 2
+        @glide.width        = vec.glidst / sc
+        @glide.rotation     = $v.heading vec.apppth, [1,0]
+        @glide.position.set fox+((vec.pacpos[0]-x)/sc), fy+((vec.pacpos[1]-y)/sc)
+        @deccel.height      = 3
+        @deccel.width       = vec.decdst / sc
+        @deccel.rotation    = $v.heading vec.apppth, [1,0]
+        @deccel.position.set fox+((vec.pglpos[0]-x)/sc), fy+((vec.pglpos[1]-y)/sc)
       # DIRECTION
       relDir = $v.heading TARGET.p, VEHICLE.p
       @targetDir.position.set WDB2 + cos(relDir) * radius * 1.1, HGB2 + sin(relDir) * radius * 1.1

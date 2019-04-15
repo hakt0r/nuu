@@ -72,24 +72,26 @@ $static 'Scanner', new class NUU.Scanner
   resize:=>
     @renderLongrange = @renderMidrange = yes
     if @fullscreen
-      W = min WIDTH - 20, HEIGHT - 115 - 20; W2 = W/2; W2R = W2/2
-      @$.position.set WDB2 - W2 - 7, HEIGHT - W - 7 - 115
+      W = min WIDTH - 28, HEIGHT - 38
+      W2 = W/2
+      W2R = W2/2
+      @$.position.set (WIDTH-W)/2,(HEIGHT-W)/2
     else
       W = @width; W2 = W/2; W2R = W2/2
       @$.position.set WDB2 - W2 - 7, HEIGHT - W2 - 7 - 115
     @radius = @W2 = W2; @W2R = W2R
-    @short.position.set W2R+7,W2R+7
-    @mid  .position.set W2R+7,W2R+7
-    @long .position.set W2R+7,W2R+7
+    @short.position.set W2R+3,W2R+1
+    @mid  .position.set W2R+3,W2R+1
+    @long .position.set W2R+3,W2R+1
     #@orbit.position.set W2R+7,W2R+7
     c = document.createElement 'canvas'
-    c.width = c.height = W2 * 2 + 28
+    c.width = c.height = WIDTH + 8
     g = c.getContext '2d'
     g.fillStyle = "#000"
     g.strokeStyle = "#444"
     g.strokeWidth = 2
     g.beginPath()
-    g.arc W2+7, W2+7, W2+6, 0, TAU
+    g.arc W2+2, W2+2, W2, 0, TAU
     g.fill()
     g.stroke()
     @bg.setTexture t = PIXI.Texture.from c

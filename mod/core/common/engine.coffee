@@ -101,7 +101,10 @@ $static 'max',           Math.max
 $static 'abs',           Math.abs
 $static 'pow',           Math.pow
 $static 'sin',           Math.sin
+$static 'asin',          Math.asin
 $static 'cos',           Math.cos
+$static 'acos',          Math.acos
+$static 'acosh',         Math.acosh
 $static 'tan',           Math.tan
 $static 'random',        Math.random
 $static 'round',         Math.round
@@ -161,14 +164,18 @@ $static 'sha512', (str) ->
 $v       .sub = $v.sub       2
 $v       .add = $v.add       2
 $v       .dot = $v.dot       2
+$v     .cross = $v.cross     2
 $v       .mag = $v.mag       2
 $v       .div = $v.div       2
 $v      .dist = $v.dist      2
 $v      .mult = $v.mult      2
 $v     .limit = $v.limit     2
+$v      .head = $v.heading   2
 $v   .heading = $v.heading   2
+$v      .norm = $v.normalize 2
 $v .normalize = $v.normalize 2
 $v      .zero = [0,0]
+$v       .one = [1,0]
 $v      .smod = (a) -> a - floor( a / 360 ) * 360
 $v    .reldeg = (dira,dirb) -> $v.smod( dira - dirb + 180 ) - 180
 $v   .umod360 = (v)-> ((( v % 360 ) + 360 ) % 360 )
