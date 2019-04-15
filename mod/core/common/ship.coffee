@@ -151,11 +151,11 @@ Ship::burnTime = (v,thurst,origin)->
     origin = @m
   $v.mag( $v.sub origin.slice(), v ) / a
 
-Ship::turnTime = (dir,origin)->
-  origin = @d unless origin
-  ddiff = -180 + $v.umod360 -180 + dir - origin
-  adiff = abs ddiff
-  turnTime = adiff / ( @turn || 1 )
+Ship::turnTime = (dir,origin=@d)->
+  abs(-180 + $v.umod360 -180 + dir - origin) / ( @turn || 1 )
+
+Ship::turnTimeSigned = (dir,origin=@d)->
+  ( -180 + $v.umod360 -180 + dir - origin ) / ( @turn || 1 )
 
 Ship::updateMods = ->
 

@@ -718,21 +718,21 @@ State.TravelVector = class TravelVector
     @locacc = s.thrustToAccel @thrust = 254
     @topspd = Speed.max
     @tgtopo = [t.x,t.y]
-    eta1 = @approach s,t,state; tp1 = @tgtpos.$; console.log 'travel:eta1'.red, htime(@eta/1000)
-    eta2 = @approach s,t,state; tp2 = @tgtpos.$; console.log 'travel:eta2'.red, 'eta', htime(@eta/1000), 'diff:', (eta2-eta1), 'tcip:', ( $v.mag $v.sub tp1.$, tp2 )
+    eta1 = @approach s,t,state; tp1 = @tgtpos.$; # console.log 'travel:eta1'.red, htime(@eta/1000)
+    eta2 = @approach s,t,state; tp2 = @tgtpos.$; # console.log 'travel:eta2'.red, 'eta', htime(@eta/1000), 'diff:', (eta2-eta1), 'tcip:', ( $v.mag $v.sub tp1.$, tp2 )
     # eta3 = @approach s,t,state; tp3 = @tgtpos.$; console.log 'travel:eta3'.red, 'eta', htime(@eta/1000), 'diff:', (eta3-eta1), 'tcip:', ( $v.mag $v.sub tp2.$, tp3 ), @
     t.state.update NUU.time()
     return
   approach:(s,t,state)->
     t.update @eta + ST = state.t; @tgtpos = [t.x,t.y]; @tgtvel = t.v.$ # console.log 'chg'.red, $v.mag $v.sub @tgtpos.$, @tgtopo
-    tt180 = s.turnTime ( s.d + 180 ) % 360
+    @turn = s.turn || 1
+    tt180 = s.turnTime 180, 0
     @selspd = @selspd || @topspd
     @pmapos = ( @pmapos || @locpos ).$
     @apppth = $v.sub @tgtpos.$, @pmapos
+    doShift = ( abs $v.angle @apppth, @locvel ) < PI/2
     do match = =>
-      hh = abs $v.angle @apppth, @locvel
-      if hh < PI/2
-        # console.log '@shift', hh, ( -PI < hh ), ( hh < PI )
+      if doShift
         @pmavel = $v.mult $v.norm(@apppth).$, @selspd
         @matvel = $v.sub @pmavel.$, @locvel
       else @matvel = $v.sub (@pmavel = [0,0]).$, @locvel
@@ -741,8 +741,7 @@ State.TravelVector = class TravelVector
       @pmapos = $burn_p @matnrm, @mattim, @locacc, @locvel, @locpos
       @pmaspd = $v.mag  @pmavel
       @apppth = $v.sub  @tgtpos.$, @pmapos
-    do match; do match; do match
-    do match; do match; do match
+    do match; do match; do match; do match; do match; do match
     @appdst = $v.mag  @apppth
     @appnrm = $v.norm @apppth.$
     @rappth = $v.mult @apppth.$, -1
@@ -759,7 +758,7 @@ State.TravelVector = class TravelVector
       @decdst = $v.mag @decrds = $burn_r @decnrm, @dectim, @locacc, @travel
       @glidst = @appdst - @decdst - @accdst
     if 0 > @glidst # throttle down
-      @avldst = @appdst - @decdst # - @trndst = tt180 * @selspd
+      @avldst = @appdst - @decdst - @trndst = tt180 * @selspd
       @selspd = sqrt @pmaspd**2 + @locacc * @avldst
       do partition
     @glitim = @glidst / @selspd
@@ -768,17 +767,20 @@ State.TravelVector = class TravelVector
     @mathdd = RAD * $v.heading @matvel, $v.zero
     @glihdd = RAD * $v.heading @apppth, $v.zero
     @glirhd = ( 360 + RAD * $v.heading @rappth, $v.zero ) % 360
+    @mattrn = if ( @mattrt = s.turnTimeSigned @mathdd, s.d     ) > 0 then @turn else ( @mattrt = abs @mattrt; -@turn )
+    @acctrn = if ( @acctrt = s.turnTimeSigned @glihdd, @mathdd ) > 0 then @turn else ( @acctrt = abs @acctrt; -@turn )
+    @glitrn = if ( @glitrt = s.turnTimeSigned @glirhd, @glihdd ) > 0 then @turn else ( @glitrt = abs @glitrt; -@turn )
     @pacvel = $burn_v @appnrm, @acctim, @locacc, @pmavel
     @pdevel = $burn_v @decnrm, @dectim, @locacc, @travel
     @pglvel = @travel.$
     @pacpos = $v.add @pmapos.$, $v.mult @appnrm.$, @accdst
     @pglpos = $v.add @pacpos.$, $v.mult @appnrm.$, @glidst
     @pdepos = $v.add @pglpos.$, $v.mult @appnrm.$, @decdst
-    console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $burn_v @appnrm, @acctim, @locacc, @pmavel
-    console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $burn_p @appnrm, @acctim, @locacc, @pmavel, @pmapos
-    console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst
-    console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $burn_p @decnrm, @dectim, @locacc, @pglvel, @pglpos
-    console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos
+    console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $burn_v @appnrm, @acctim, @locacc, @pmavel  if debug
+    console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $burn_p @appnrm, @acctim, @locacc, @pmavel, @pmapos  if debug
+    console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst  if debug
+    console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $burn_p @decnrm, @dectim, @locacc, @pglvel, @pglpos  if debug
+    console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos  if debug
     return @eta
 
 Object.defineProperty TravelVector::, name, enumerable:no,  configurable:no, writable:yes for name in [ 's', 't', 'state' ]
@@ -786,6 +788,7 @@ Object.defineProperty TravelVector::, name, enumerable:yes, configurable:no, wri
 
 State.register class State.travel extends State
   lock:yes
+  acceleration:yes
   constructor:(opts)->
     super opts
 
@@ -793,7 +796,6 @@ State.register class State.travel extends State
     @vec = new TravelVector @o, @relto, @
     @px = @x; @py = @y; [ @vx, @vy ] = @v
     @o.d = @vec.mathdd
-    console.log "@@@", @vec
     return
 
   update:(time=NUU.time())->
@@ -809,8 +811,8 @@ State.register class State.travel extends State
     v = @vec; acc = v.locacc; [ cosd, sind ] = v.matnrm; dt = v.mattim; dt2 = dt**2
     @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
     @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
-    console.log 'match=>accel:v', $v.mag $v.sub [@vx,@vy], v.pmavel
-    console.log 'match=>accel:p', $v.mag $v.sub [@px,@py], v.pmapos
+    console.log 'match=>accel:v', $v.mag $v.sub [@vx,@vy], v.pmavel if debug
+    console.log 'match=>accel:p', $v.mag $v.sub [@px,@py], v.pmapos if debug
     [@vx,@vy] = v.pmavel; [@px,@py] = v.pmapos
     @o.d = v.glihdd
     ( @update = @o.update = @updateAccel.bind @ )( time )
@@ -829,8 +831,8 @@ State.register class State.travel extends State
     v = @vec; acc = v.locacc; [ cosd, sind ] = v.appnrm; dt = v.acctim; dt2 = dt**2
     @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
     @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
-    console.log 'accel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pacvel
-    console.log 'accel=>glide:p', $v.mag $v.sub [@px,@py], v.pacpos
+    console.log 'accel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pacvel if debug
+    console.log 'accel=>glide:p', $v.mag $v.sub [@px,@py], v.pacpos if debug
     # [@vx,@vy] = v.pacvel; [@px,@py] = v.pacpos
     @o.d = v.glihdd; @acceleration = no
     ( @update = @o.update = @updateGlide.bind @ )( time )
@@ -841,13 +843,14 @@ State.register class State.travel extends State
     return @toDeccel time if time > v.glifti
     dt = time - v.accfti
     @o.x=@px+@vx*dt; @o.y=@py+@vy*dt
+    @o.d = $v.umod360 360 + v.glihdd + v.glitrn * min v.glitrt, dt
     @lastUpdate = time
 
   toDeccel:(time)->
     v = @vec; dt = v.glitim
     @px=@px+@vx*dt; @py=@py+@vy*dt
-    console.log 'glide=>deccel:v', $v.mag $v.sub [@vx,@vy], v.pglvel
-    console.log 'glide=>deccel:p', $v.mag $v.sub [@px,@py], v.pglpos
+    console.log 'glide=>deccel:v', $v.mag $v.sub [@vx,@vy], v.pglvel if debug
+    console.log 'glide=>deccel:p', $v.mag $v.sub [@px,@py], v.pglpos if debug
     # [@vx,@vy] = v.pglvel; [@px,@py] = v.pglpos
     @o.d = v.glirhd; @acceleration = yes
     ( @update = @o.update = @updateDeccel.bind @ )( time )
@@ -867,10 +870,10 @@ State.register class State.travel extends State
     v = @vec; acc = v.locacc; [ cosd, sind ] = v.decnrm; dt = v.dectim; dt2 = dt**2
     @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
     @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
-    console.log 'deccel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pdevel
-    console.log 'deccel=>glide:p', $v.mag $v.sub [@px,@py], v.pdepos
+    console.log 'deccel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pdevel if debug
+    console.log 'deccel=>glide:p', $v.mag $v.sub [@px,@py], v.pdepos if debug
     @relto.update v.absETA
-    console.log 'deccel=>glide:tp', $v.mag $v.sub [@relto.x,@relto.y], v.tgtpos
+    console.log 'deccel=>glide:tp', $v.mag $v.sub [@relto.x,@relto.y], v.tgtpos if debug
     [@o.x,@o.y] = v.pdepos; [ @o.v[0], @o.v[1] ] = v.pdevel
     # [@o.x,@o.y] = [@px,@py]; [ @o.v[0], @o.v[1] ] = [@vx,@vy]
     @update = @o.update = ->

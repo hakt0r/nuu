@@ -410,11 +410,11 @@ $static 'HUD', new class NUU.HUD
         @approach.width     = ( $v.mag vec.travel ) / sc
         @approach.rotation  = $v.heading vec.apppth, [1,0]
         @approach.position.set fox+(vec.pmapos[0]-x)/sc, fy+(vec.pmapos[1]-y)/sc
-        @match.height       = 3
+        @match.height       = 1
         @match.width        = $v.mag(d=$v.sub(vec.locpos.$,vec.pmapos)) / sc
         @match.rotation     = PI + $v.heading d, [1,0]
         @match.position.set fox+((vec.locpos[0]-x)/sc), fy+((vec.locpos[1]-y)/sc)
-        @accel.height       = 3
+        @accel.height       = 1
         @accel.width        = vec.accdst / sc
         @accel.rotation     = $v.heading vec.apppth, [1,0]
         @accel.position.set fox+((vec.pmapos[0]-x)/sc), fy+((vec.pmapos[1]-y)/sc)
@@ -422,7 +422,7 @@ $static 'HUD', new class NUU.HUD
         @glide.width        = vec.glidst / sc
         @glide.rotation     = $v.heading vec.apppth, [1,0]
         @glide.position.set fox+((vec.pacpos[0]-x)/sc), fy+((vec.pacpos[1]-y)/sc)
-        @deccel.height      = 3
+        @deccel.height      = 1
         @deccel.width       = vec.decdst / sc
         @deccel.rotation    = $v.heading vec.apppth, [1,0]
         @deccel.position.set fox+((vec.pglpos[0]-x)/sc), fy+((vec.pglpos[1]-y)/sc)
