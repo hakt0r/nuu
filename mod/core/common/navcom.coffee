@@ -191,16 +191,15 @@ $public class NavComVector
     @loctrn = s.turn || 1
     @spddif = $v.mag $v.sub t.v.$, s.v
     @posdif = $v.mag $v.sub @tgtopo.$, @locpos
+    @selspd = @selspd || @topspd
     @approach s,t,state
     @approach s,t,state
     t.state.update NUU.time()
   approach:(s,t,state)->
     t.update @relETA + @ST = state.t; @tgtpos = [t.x,t.y]; @tgtvel = t.v.$
-    @selspd = @selspd || @topspd
-    @pmapos = ( @pmapos || @locpos ).$
-    @apppth = $v.sub @tgtpos.$, @pmapos
+    @apppth = $v.sub @tgtpos.$, @pmapos = ( @pmapos || @locpos ).$
     if PI/2 > abs $v.angle @apppth, @locvel
-         @matchShift  s,t,state for i in [0..6]
+         @matchShift  s,t,state
     else @matchNeuter s,t,state
     @postMatch()
     @partition s,t,state
@@ -219,13 +218,16 @@ $public class NavComVector
     @timings s,t,state
     console.error "NavComVector:overshoot => unsolvable", @ if 0 > @avldst
   matchShift:(s,t,state)->
-    @pmavel = $v.mult $v.norm(@apppth).$, @selspd
+    @pmavel = $v.limit @apppth.$, @selspd
     @matvel = $v.sub @pmavel.$, @locvel
     @matnrm = $v.norm  @matvel.$
     @mattim = ( $v.mag @matvel ) / @locacc
     @pmapos = $v.burnp @matnrm, @mattim, @locacc, @locvel, @locpos
     @pmaspd = $v.mag  @pmavel
     @apppth = $v.sub  @tgtpos.$, @pmapos
+    if 1e-6 < v = abs $v.angle @apppth.$, @pmavel
+      console.log 'pma:va'.red, v
+      @matchShift s,t,state
   matchNeuter:(s,t,state)->
     @matvel = $v.sub (@pmavel = [0,0]).$, @locvel
     @matnrm = $v.norm  @matvel.$
@@ -239,7 +241,7 @@ $public class NavComVector
     @rappth = $v.mult @apppth.$, -1
     @rapnrm = $v.norm @rappth.$
   partition:(s,t,state,doShift)->
-    @travel = $v.mult @appnrm.$, @selspd
+    @travel = $v.limit @apppth.$, @selspd
     @acctim = ( $v.mag(@travel) - @pmaspd ) / @locacc
     @decvec = $v.sub @tgtvel.$, @travel
     @decvec = $v.sub [0,0], @travel
@@ -261,15 +263,19 @@ $public class NavComVector
     @pacvel = $v.burnv @appnrm, @acctim, @locacc, @pmavel
     @pdevel = $v.burnv @decnrm, @dectim, @locacc, @travel
     @pglvel = @travel.$
-    @pacpos = $v.add @pmapos.$, $v.mult @appnrm.$, @accdst
-    @pglpos = $v.add @pacpos.$, $v.mult @appnrm.$, @glidst
-    @pdepos = $v.add @pglpos.$, $v.mult @appnrm.$, @decdst
-    console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $v.burnv @appnrm, @acctim, @locacc, @pmavel  if debug
-    console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $v.burnp @appnrm, @acctim, @locacc, @pmavel, @pmapos  if debug
-    console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst  if debug
-    console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $v.burnp @decnrm, @dectim, @locacc, @pglvel, @pglpos  if debug
-    console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos if debug
+    @pacpos = $v.add @pmapos.$, $v.limit @apppth.$, @accdst
+    @pglpos = $v.add @pacpos.$, $v.limit @apppth.$, @glidst
+    @pdepos = $v.add @pglpos.$, $v.limit @apppth.$, @decdst
+    do @debug if debug
     return @relETA
+  debug:->
+    console.log 'pac:vt'.red, v if 1e-5 < v = abs $v.mag $v.sub @travel.$, @pacvel
+    console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $v.burnv @appnrm, @acctim, @locacc, @pmavel
+    console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $v.burnp @appnrm, @acctim, @locacc, @pmavel, @pmapos
+    console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst
+    console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $v.burnp @decnrm, @dectim, @locacc, @pglvel, @pglpos
+    console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos
+    console.log @
 
 # Object.defineProperty NavComVector::, name, enumerable:no,  configurable:no, writable:yes for name in [ 's', 't', 'state' ]
 # Object.defineProperty NavComVector::, name, enumerable:yes, configurable:no, writable:yes for name in [ 'accdst', 'acctim', 'accfti', 'appdst', 'appnrm', 'apppth', 'decdst', 'dectim', 'decfti', 'relETA', 'absETA', 'glidst', 'glihdd', 'glirhd', 'glitim', 'glifti', 'locacc', 'locvel', 'mathdd', 'matnrm', 'mattim', 'matfti', 'matvel', 'pacpos', 'pacvel', 'pdepos', 'pdevel', 'pglpos', 'pglvel', 'pmapos', 'pmavel', 'decnrm', 'rappth', 'tgtpos', 'tgtvel', 'topspd', 'travel' ]
