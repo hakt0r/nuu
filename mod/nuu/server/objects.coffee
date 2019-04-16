@@ -32,12 +32,17 @@ Ship::dropLoot = ->
   null
 
 Ship::respawn = ->
-  do @reset
-  @x = Math.random()*100
-  @y = Math.random()*100
-  @setState S:$moving, x:@x, y:@y, v:[0,0]
-  do @update
-  NET.mods.write  @, 'spawn'
+  @respawning = yes
+  setTimeout ( =>
+    @dropLoot()
+    do @reset
+    @x = Math.random()*100
+    @y = Math.random()*100
+    @setState S:$moving, x:@x, y:@y, v:[0,0]
+    do @update
+    NET.mods.write  @, 'spawn'
+    @respawning = no
+  ), 4500
 
 Ship::hit = (src,wp) ->
   return if @destructing

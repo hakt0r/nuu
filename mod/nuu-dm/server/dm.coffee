@@ -77,9 +77,7 @@ rules.dm.server = ->
     else if victim.mount then victim.mount.map (user)-> if user
       stats[user.db.nick].d++
       console.log '::dm', 'death'.red, user.db.nick.red, '['+perp.name.yellow+']', stats[user.db.nick].k.toString().green, stats[user.db.nick].d.toString().red
-      $timeout 4500, ->
-        victim.dropLoot()
-        victim.respawn()
+      victim.respawn()
     if perp.inhabited then perp.mount.map (user)-> if user
       stats[user.db.nick].k++
       i = user.db.unlocks; if v = i[victim.tplName] then i[victim.tplName]++ else i[victim.tplName] = 1; user.save()
