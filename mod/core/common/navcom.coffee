@@ -195,12 +195,13 @@ $public class NavComVector
     @approach s,t,state
     @approach s,t,state
     t.state.update NUU.time()
+
   approach:(s,t,state)->
     t.update @relETA + @ST = state.t; @tgtpos = [t.x,t.y]; @tgtvel = t.v.$
     @apppth = $v.sub @tgtpos.$, @pmapos = ( @pmapos || @locpos ).$
-    if PI/2 > abs $v.angle @apppth, @locvel
-         @matchShift  s,t,state
-    else @matchNeuter s,t,state
+    #if PI/2 - 0.2 > abs $v.angle @apppth, @locvel
+    @matchShift  s,t,state
+    #else @matchNeuter s,t,state
     @postMatch()
     @partition s,t,state
     if 0 > @glidst # throttle down
@@ -210,14 +211,18 @@ $public class NavComVector
       @selspd = sqrt @pmaspd**2 + @locacc * @avldst
       @partition s,t,state
     @timings s,t,state
+
   overshoot:(s,t,state)->
     @selspd = $v.mag(@tgtvel) * 2
     @matchNeuter s,t,state
     @postMatch()
     @partition s,t,state
     @timings s,t,state
-    console.error "NavComVector:overshoot => unsolvable", @ if 0 > @avldst
-  matchShift:(s,t,state)->
+    if 0 > @avldst
+      console.error "unsolvable overshoot @ #{s.name.green} => #{t.name.yellow}"
+      console.error @toString()
+
+  matchShift:(s,t,state,count=0,err=0)->
     @pmavel = $v.limit @apppth.$, @selspd
     @matvel = $v.sub @pmavel.$, @locvel
     @matnrm = $v.norm  @matvel.$
@@ -225,9 +230,15 @@ $public class NavComVector
     @pmapos = $v.burnp @matnrm, @mattim, @locacc, @locvel, @locpos
     @pmaspd = $v.mag  @pmavel
     @apppth = $v.sub  @tgtpos.$, @pmapos
-    if 1e-6 < v = abs $v.angle @apppth.$, @pmavel
-      console.log 'pma:va'.red, v
-      @matchShift s,t,state
+    return unless 1e-6 < v = abs e = $v.angle @apppth, @pmavel
+    return @matchNeuter s,t,state if 1 < v
+    console.log 'pma:va'.red, count, v
+    if 10 is count++
+      console.log 'pma=>neut'.red, v
+      return @matchNeuter s,t,state
+    @matchShift s,t,state,count,e
+    return
+
   matchNeuter:(s,t,state)->
     @matvel = $v.sub (@pmavel = [0,0]).$, @locvel
     @matnrm = $v.norm  @matvel.$
@@ -235,11 +246,13 @@ $public class NavComVector
     @pmapos = $v.burnp @matnrm, @mattim, @locacc, @locvel, @locpos
     @pmaspd = $v.mag  @pmavel
     @apppth = $v.sub  @tgtpos.$, @pmapos
+
   postMatch:->
     @appdst = $v.mag  @apppth
     @appnrm = $v.norm @apppth.$
     @rappth = $v.mult @apppth.$, -1
     @rapnrm = $v.norm @rappth.$
+
   partition:(s,t,state,doShift)->
     @travel = $v.limit @apppth.$, @selspd
     @acctim = ( $v.mag(@travel) - @pmaspd ) / @locacc
@@ -250,6 +263,7 @@ $public class NavComVector
     @accdst = $v.mag @accrds = $v.burnr @appnrm, @acctim, @locacc, @pmavel
     @decdst = $v.mag @decrds = $v.burnr @decnrm, @dectim, @locacc, @travel
     @glidst = @appdst - @decdst - @accdst
+
   timings:(s,t,state)->
     @glitim = @glidst / @selspd
     @decfti = ( @glifti = ( @accfti = ( @matfti = @ST + @mattim ) + @acctim ) + @glitim ) + @dectim
@@ -268,14 +282,63 @@ $public class NavComVector
     @pdepos = $v.add @pglpos.$, $v.limit @apppth.$, @decdst
     do @debug if debug
     return @relETA
-  debug:->
-    console.log 'pac:vt'.red, v if 1e-5 < v = abs $v.mag $v.sub @travel.$, @pacvel
-    console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $v.burnv @appnrm, @acctim, @locacc, @pmavel
-    console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $v.burnp @appnrm, @acctim, @locacc, @pmavel, @pmapos
-    console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst
-    console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $v.burnp @decnrm, @dectim, @locacc, @pglvel, @pglpos
-    console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos
-    console.log @
 
 # Object.defineProperty NavComVector::, name, enumerable:no,  configurable:no, writable:yes for name in [ 's', 't', 'state' ]
 # Object.defineProperty NavComVector::, name, enumerable:yes, configurable:no, writable:yes for name in [ 'accdst', 'acctim', 'accfti', 'appdst', 'appnrm', 'apppth', 'decdst', 'dectim', 'decfti', 'relETA', 'absETA', 'glidst', 'glihdd', 'glirhd', 'glitim', 'glifti', 'locacc', 'locvel', 'mathdd', 'matnrm', 'mattim', 'matfti', 'matvel', 'pacpos', 'pacvel', 'pdepos', 'pdevel', 'pglpos', 'pglvel', 'pmapos', 'pmavel', 'decnrm', 'rappth', 'tgtpos', 'tgtvel', 'topspd', 'travel' ]
+
+NavComVector::debug = ->
+  console.log 'pac:vt'.red, v if 1e-5 < v = abs $v.mag $v.sub @travel.$, @pacvel
+  console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $v.burnv @appnrm, @acctim, @locacc, @pmavel
+  console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $v.burnp @appnrm, @acctim, @locacc, @pmavel, @pmapos
+  console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst
+  console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $v.burnp @decnrm, @dectim, @locacc, @pglvel, @pglpos
+  console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos
+  console.log @
+
+NavComVector::toString = -> """
+  #{"locacc".bold.yellow}: #{@locacc.toString().yellow}
+  #{"locpos".bold.yellow}: #{@locpos.toString().yellow}
+  #{"loctrn".bold.yellow}: #{@loctrn.toString().yellow}
+  #{"locvel".bold.yellow}: #{@locvel.toString().yellow}
+  #{"tgtopo".bold.yellow.inverse}: #{@tgtopo.toString().yellow}
+  #{"posdif".bold.yellow}: #{@posdif.toString().yellow}
+  #{"spddif".bold.yellow}: #{@spddif.toString().yellow}
+  #{"topspd".bold.blue}: #{@topspd.toString().yellow}
+  #{"travel".bold.blue}: #{@travel.toString().yellow}
+  #{"appdst".bold.grey}: #{@appdst.toString().yellow}
+  #{"appnrm".bold.grey}: #{@appnrm.toString().yellow}
+  #{"apppth".bold.grey}: #{@apppth.toString().yellow}
+  #{"rapnrm".bold.grey}: #{@rapnrm.toString().yellow}
+  #{"rappth".bold.grey}: #{@rappth.toString().yellow}
+  #{"selspd".bold.magenta}: #{@selspd.toString().yellow}
+  #{"avldst".bold.magenta}: #{@avldst.toString().yellow}
+  #{"mathdd".bold.red}: #{@mathdd.toString().yellow}
+  #{"matnrm".bold.red}: #{@matnrm.toString().yellow}
+  #{"mattim".bold.red}: #{@mattim.toString().yellow}
+  #{"mattrn".bold.red}: #{@mattrn.toString().yellow}
+  #{"matvel".bold.red}: #{@matvel.toString().yellow}
+  #{"pmapos".bold}: #{@pmapos.toString().yellow}
+  #{"pdevel".bold}: #{@pdevel.toString().yellow}
+  #{"pmaspd".bold}: #{@pmaspd.toString().yellow}
+  #{"accdst".bold.green}: #{@accdst.toString().yellow}
+  #{"accfti".bold.green}: #{@accfti.toString().yellow}
+  #{"accrds".bold.green}: #{@accrds.toString().yellow}
+  #{"acctim".bold.green}: #{@acctim.toString().yellow}
+  #{"acctrn".bold.green}: #{@acctrn.toString().yellow}
+  #{"pacpos".bold}: #{@pacpos.toString().yellow}
+  #{"pacvel".bold}: #{@pacvel.toString().yellow}
+  #{"glidst".bold}: #{@glidst.toString().yellow}
+  #{"glihdd".bold}: #{@glihdd.toString().yellow}
+  #{"glirhd".bold}: #{@glirhd.toString().yellow}
+  #{"glitim".bold}: #{@glitim.toString().yellow}
+  #{"glitrn".bold}: #{@glitrn.toString().yellow}
+  #{"pglpos".bold}: #{@pglpos.toString().yellow}
+  #{"pglvel".bold}: #{@pglvel.toString().yellow}
+  #{"decdst".bold.blue}: #{@decdst.toString().yellow}
+  #{"decfti".bold.blue}: #{@decfti.toString().yellow}
+  #{"decnrm".bold.blue}: #{@decnrm.toString().yellow}
+  #{"decrds".bold.blue}: #{@decrds.toString().yellow}
+  #{"dectim".bold.blue}: #{@dectim.toString().yellow}
+  #{"decvec".bold.blue}: #{@decvec.toString().yellow}
+  #{"pdepos".bold}: #{@pdepos.toString().yellow}
+  """
