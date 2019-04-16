@@ -700,90 +700,6 @@ State.formation.fromBuffer = (o,msg)-> new State.formation {
 #    ██    ██   ██ ██   ██  ██  ██  ██      ██
 #    ██    ██   ██ ██   ██   ████   ███████ ███████
 
-State.TravelVector = class TravelVector
-  constructor:(s,t,state)->
-    @relETA = 0
-    @locvel = state.v.$
-    @locpos = [state.x,state.y]
-    @locacc = s.thrustToAccel @thrust = 254
-    @topspd = Speed.max
-    @tgtopo = [t.x,t.y]
-    @trt180 = s.turnTime 180, 0
-    @loctrn = s.turn || 1
-    @approach s,t,state
-    @approach s,t,state
-    t.state.update NUU.time()
-    return
-  overshoot:(s,t,state)->
-  matchShift:(s,t,state)->
-    @pmavel = $v.mult $v.norm(@apppth).$, @selspd
-    @matvel = $v.sub @pmavel.$, @locvel
-    @matnrm = $v.norm  @matvel.$
-    @mattim = ( $v.mag @matvel ) / @locacc
-    @pmapos = $v.burnp @matnrm, @mattim, @locacc, @locvel, @locpos
-    @pmaspd = $v.mag  @pmavel
-    @apppth = $v.sub  @tgtpos.$, @pmapos
-  matchNeuter:(s,t,state)->
-    @matvel = $v.sub (@pmavel = [0,0]).$, @locvel
-    @matnrm = $v.norm  @matvel.$
-    @mattim = ( $v.mag @matvel ) / @locacc
-    @pmapos = $v.burnp @matnrm, @mattim, @locacc, @locvel, @locpos
-    @pmaspd = $v.mag  @pmavel
-    @apppth = $v.sub  @tgtpos.$, @pmapos
-  partition:(s,t,state,doShift)->
-    @travel = $v.mult @appnrm.$, @selspd
-    @acctim = ( $v.mag(@travel) - @pmaspd ) / @locacc
-    @decvec = $v.sub @tgtvel.$, @travel
-    @decvec = $v.sub [0,0], @travel
-    @decnrm = $v.norm @decvec.$
-    @dectim = $v.mag(@decvec) / @locacc
-    @accdst = $v.mag @accrds = $v.burnr @appnrm, @acctim, @locacc, @pmavel
-    @decdst = $v.mag @decrds = $v.burnr @decnrm, @dectim, @locacc, @travel
-    @glidst = @appdst - @decdst - @accdst
-  approach:(s,t,state)->
-    t.update @relETA + ST = state.t; @tgtpos = [t.x,t.y]; @tgtvel = t.v.$
-    @selspd = @selspd || @topspd
-    @pmapos = ( @pmapos || @locpos ).$
-    @apppth = $v.sub @tgtpos.$, @pmapos
-    if doShift = ( abs $v.angle @apppth, @locvel ) < PI/2
-         @matchShift  s,t,state for i in [0..7]
-    else @matchNeuter s,t,state
-    @appdst = $v.mag  @apppth
-    @appnrm = $v.norm @apppth.$
-    @rappth = $v.mult @apppth.$, -1
-    @rapnrm = $v.norm @rappth.$
-    @partition s,t,state
-    if 0 > @glidst # throttle down
-      @avldst = @appdst - @decdst - @trndst = @trt180 * @selspd
-      return @overshoot s,t,state if 0 > @avldst
-      @selspd = sqrt @pmaspd**2 + @locacc * @avldst
-      console.log "part:selspd", @selspd, @appdst, @decdst, @trndst, @pmaspd**2, @locacc, @avldst
-      @partition s,t,state
-    @glitim = @glidst / @selspd
-    @decfti = ( @glifti = ( @accfti = ( @matfti = ST + @mattim ) + @acctim ) + @glitim ) + @dectim
-    @absETA = ST + ( @relETA = @mattim + @acctim + @dectim + @glitim )
-    @mathdd = RAD * $v.head @matvel, $v.zero
-    @glihdd = RAD * $v.head @apppth, $v.zero
-    @glirhd = ( 360 + RAD * $v.head @rappth, $v.zero ) % 360
-    @mattrn = if ( @mattrt = s.turnTimeSigned @mathdd, s.d     ) > 0 then @loctrn else ( @mattrt = abs @mattrt; -@loctrn )
-    @acctrn = if ( @acctrt = s.turnTimeSigned @glihdd, @mathdd ) > 0 then @loctrn else ( @acctrt = abs @acctrt; -@loctrn )
-    @glitrn = if ( @glitrt = s.turnTimeSigned @glirhd, @glihdd ) > 0 then @loctrn else ( @glitrt = abs @glitrt; -@loctrn )
-    @pacvel = $v.burnv @appnrm, @acctim, @locacc, @pmavel
-    @pdevel = $v.burnv @decnrm, @dectim, @locacc, @travel
-    @pglvel = @travel.$
-    @pacpos = $v.add @pmapos.$, $v.mult @appnrm.$, @accdst
-    @pglpos = $v.add @pacpos.$, $v.mult @appnrm.$, @glidst
-    @pdepos = $v.add @pglpos.$, $v.mult @appnrm.$, @decdst
-    console.log 'pac:vb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacvel.$, $v.burnv @appnrm, @acctim, @locacc, @pmavel  if debug
-    console.log 'pac:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pacpos.$, $v.burnp @appnrm, @acctim, @locacc, @pmavel, @pmapos  if debug
-    console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst  if debug
-    console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $v.burnp @decnrm, @dectim, @locacc, @pglvel, @pglpos  if debug
-    console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos  if debug
-    return @relETA
-
-Object.defineProperty TravelVector::, name, enumerable:no,  configurable:no, writable:yes for name in [ 's', 't', 'state' ]
-Object.defineProperty TravelVector::, name, enumerable:yes, configurable:no, writable:yes for name in [ 'accdst', 'acctim', 'accfti', 'appdst', 'appnrm', 'apppth', 'decdst', 'dectim', 'decfti', 'relETA', 'absETA', 'glidst', 'glihdd', 'glirhd', 'glitim', 'glifti', 'locacc', 'locvel', 'mathdd', 'matnrm', 'mattim', 'matfti', 'matvel', 'pacpos', 'pacvel', 'pdepos', 'pdevel', 'pglpos', 'pglvel', 'pmapos', 'pmavel', 'decnrm', 'rappth', 'tgtpos', 'tgtvel', 'topspd', 'travel' ]
-
 State.register class State.travel extends State
   lock:yes
   acceleration:yes
@@ -791,7 +707,7 @@ State.register class State.travel extends State
     super opts
 
   cache:->
-    @vec = new TravelVector @o, @relto, @
+    @vec = new NavComVector @o, @relto, @
     @px = @x; @py = @y; [ @vx, @vy ] = @v
     @o.d = @vec.mathdd
     if isNaN @vec.absETA
@@ -888,5 +804,31 @@ State.register class State.travel extends State
     # new State.moving o:@o,t:v.decfti,x:@px,y:@py,v:[@vx,@vy],relto:@relto
     return
 
-  toBuffer:-> @_buffer = NET.JSON + JSON.stringify state:[@toJSON()]
-  toJSON:-> S:@S,o:@o.id,x:@x,y:@y,d:@d,t:@t,v:@v,relto:@relto.id
+State.travel::toJSON =-> S:@S,o:@o.id,x:@x,y:@y,d:@d,t:@t,v:@v,relto:@relto.id
+State.travel::toBuffer = ->
+  return @_buffer if @_buffer; msg = Buffer.allocUnsafe 85; o = @o
+  o.burn = o.left = o.right = undefined
+  msg[0] = NET.stateCode; msg[1] = @S
+  msg.writeUInt16LE o.id,                                          2
+  msg.writeUInt16LE ( if @relto then @relto.id else 0 ),           4
+  msg.writeUInt16LE ( @d = parseInt @d ),                          6
+  msg.writeDoubleLE ( @x = parseInt @x ),                          8
+  msg.writeDoubleLE ( @y = parseInt @y ),                          24
+  msg.writeUInt32LE ( @t % 1000000     ),                          40
+  msg.writeDoubleLE   @v[0],          48; @v[0] = msg.readDoubleLE 48
+  msg.writeDoubleLE   @v[1],          64; @v[1] = msg.readDoubleLE 64
+  msg.writeFloatLE  ( @a || @a=0.0 ), 80; @a    = msg.readFloatLE  80
+  return @_buffer = msg.toString 'binary'
+
+State.travel.fromBuffer = (o,msg)->
+  o.burn = o.left = o.right = undefined
+  new State.travel {
+    o: o
+    relto:    $obj.byId[  msg.readUInt16LE 4 ]
+    d:                    msg.readUInt16LE 6
+    x:                    msg.readDoubleLE 8
+    y:                    msg.readDoubleLE 24
+    t: NUU.timePrefix() + msg.readUInt32LE 40
+    v: [                  msg.readDoubleLE 48
+                          msg.readDoubleLE 64 ]
+    a:                    msg.readFloatLE  80 }
