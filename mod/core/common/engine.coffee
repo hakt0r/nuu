@@ -271,6 +271,8 @@ String.random = (length) ->
 String.filename = (p)->
   p.replace(/.*\//, '').replace(/\..*/,'')
 
+Object.defineProperty String::,k,get:(->@) for k in [ 'bold','underline','strikethrough','italic','inverse','grey','black','yellow','red','green','blue','white','cyan','magenta','greyBG','blackBG','yellowBG','redBG','greenBG','blueBG','whiteBG','cyanBG','magentaBG'] if isClient
+
 console.colorDump = (opts={})->
   a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )
   a.join ''
