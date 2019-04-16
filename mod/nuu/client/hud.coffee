@@ -382,18 +382,18 @@ $static 'HUD', new class NUU.HUD
     unless TARGET
       v = VEHICLE.v.slice()
       l = Math.min 50, 50 / Speed.max * $v.mag(v)
-      v = $v.mult $v.normalize(v), l
+      v = $v.mult $v.norm(v), l
       #@speed.width = l
-      # @speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
+      # @speed.rotation = ( PI + $v.head $v.zero, m ) % TAU
     else if TARGET
       @targetShield.width = TARGET.shield / TARGET.shieldMax * 100
       @targetArmour.width = TARGET.armour / TARGET.armourMax * 100
       # MY-SPEED relto
       v = $v.sub VEHICLE.v.slice(), TARGET.v
       l = Math.min 50, 50 / Speed.max * $v.mag(v)
-      v = $v.mult $v.normalize(v), l
+      v = $v.mult $v.norm(v), l
       #@speed.width = l
-      #@speed.rotation = ( PI + $v.heading $v.zero, m ) % TAU
+      #@speed.rotation = ( PI + $v.head $v.zero, m ) % TAU
       @glide.visible = @force.visible = @approach.visible = @match.visible = @deccel.visible = ( vec = VEHICLE.state.vec )?.travel?
       if vec
         {x,y} = VEHICLE
@@ -404,30 +404,30 @@ $static 'HUD', new class NUU.HUD
         t += "ap[#{hdist vec.deccel_s}:#{vec.setThrottle}:#{rdec3 vec.error_threshold}:#{rdec3 vec.error}]\n"
         @force.height       = 1
         @force.width        = min r, (( $v.mag VEHICLE.v.slice() )*ss)
-        @force.rotation     = $v.heading VEHICLE.v.slice(), [1,0]
+        @force.rotation     = $v.head VEHICLE.v.slice(), [1,0]
         @force.position.set fox, fy
         @approach.height    = 2
         @approach.width     = ( $v.mag vec.travel ) / sc
-        @approach.rotation  = $v.heading vec.apppth, [1,0]
+        @approach.rotation  = $v.head vec.apppth, [1,0]
         @approach.position.set fox+(vec.pmapos[0]-x)/sc, fy+(vec.pmapos[1]-y)/sc
         @match.height       = 1
         @match.width        = $v.mag(d=$v.sub(vec.locpos.$,vec.pmapos)) / sc
-        @match.rotation     = PI + $v.heading d, [1,0]
+        @match.rotation     = PI + $v.head d, [1,0]
         @match.position.set fox+((vec.locpos[0]-x)/sc), fy+((vec.locpos[1]-y)/sc)
         @accel.height       = 1
         @accel.width        = vec.accdst / sc
-        @accel.rotation     = $v.heading vec.apppth, [1,0]
+        @accel.rotation     = $v.head vec.apppth, [1,0]
         @accel.position.set fox+((vec.pmapos[0]-x)/sc), fy+((vec.pmapos[1]-y)/sc)
         @glide.height       = 2
         @glide.width        = vec.glidst / sc
-        @glide.rotation     = $v.heading vec.apppth, [1,0]
+        @glide.rotation     = $v.head vec.apppth, [1,0]
         @glide.position.set fox+((vec.pacpos[0]-x)/sc), fy+((vec.pacpos[1]-y)/sc)
         @deccel.height      = 1
         @deccel.width       = vec.decdst / sc
-        @deccel.rotation    = $v.heading vec.apppth, [1,0]
+        @deccel.rotation    = $v.head vec.apppth, [1,0]
         @deccel.position.set fox+((vec.pglpos[0]-x)/sc), fy+((vec.pglpos[1]-y)/sc)
       # DIRECTION
-      relDir = $v.heading TARGET.p, VEHICLE.p
+      relDir = $v.head TARGET.p, VEHICLE.p
       @targetDir.position.set WDB2 + cos(relDir) * radius * 1.1, HGB2 + sin(relDir) * radius * 1.1
       @targetDir.rotation = ( relDir + PI/2 ) % TAU
       # NAVCOM-DATA

@@ -157,7 +157,7 @@ Track = $worker.List (time)->
     @blur() if @blur
     return
   else
-    td  = $v.heading(@target.p,@ship.p) * RAD
+    td  = $v.head(@target.p,@ship.p) * RAD
     tdd = (@ship.d+@dir-td+360)%360-180
   if @stats.track * 2 < abs tdd
        @dir += ( if tdd > 0 then 1 else -1 ) * @stats.track
@@ -357,7 +357,7 @@ if isServer
       NET.operation.write @, 'remove'
       @destructor()
       return false
-    dir = (360+RAD*$v.heading dist, $v.zero)%360
+    dir = (360+RAD*$v.head dist, $v.zero)%360
     dif = (dir-@d+540)%360-180
     if abs(dif) < 2
       return true if @prevState is 4; @prevState = 4

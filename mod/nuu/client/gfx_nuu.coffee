@@ -103,7 +103,7 @@ Sprite.animateSpace = (timestamp) ->
     @lastSC = sc
 
   [ vx, vy ] = $v.mult(
-    $v.normalize VEHICLE.v.slice()
+    $v.norm VEHICLE.v.slice()
     Math.min 0.1, Math.max 0.3, $v.mag(VEHICLE.v.slice()) * 1/Speed.max * 3 )
   vx = 0.07 if vx is 0
   vy = 0.07 if vy is 0

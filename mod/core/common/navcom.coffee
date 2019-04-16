@@ -35,7 +35,7 @@ NavCom.turnTime = (s,dir)->
 
 
 NavCom.vectorAddDir = (v,velocity)->
-  angle = PI + $v.heading $v.zero, velocity
+  angle = PI + $v.head $v.zero, velocity
   v.dir = round angle * RAD
   v.dir_diff = $v.reldeg v.current_dir, v.dir
   v.dir_diff_abs = abs v.dir_diff
@@ -68,12 +68,12 @@ NavCom.pursue = (s,t)->
   v.target_s    = $v.mag v.target_v
   v.approach    = $v.sub v.target_p.slice(), v.local_p
   v.approach_d  = $v.mag v.approach
-  v.approach_h  = $v.heading v.approach, $v.zero
+  v.approach_h  = $v.head v.approach, $v.zero
   set_acceleration = (thrust)->
     v.ship_as     = s.thrustToAccel v.thrust = thrust
     v.match       = $v.sub v.local_v.slice(), v.target_v
     v.match_s     = $v.mag v.match
-    v.match_h     = $v.heading $v.zero, v.match
+    v.match_h     = $v.head $v.zero, v.match
     v.match_tt    = s.turnTime v.match_h * RADi
     v.match_td    = v.local_s * v.match_tt
     v.match_d     = ( v.target_s**2 - v.local_s**2 ) / 2*v.ship_as
@@ -88,10 +88,10 @@ NavCom.pursue = (s,t)->
     set_acceleration 249 if v.match_t < 500
   else
     # set_acceleration 255 if v.approach_d < v.match_d and 1000000 < v.approach_d # retry with increased acc
-  v.creep       = $v.mult $v.normalize( v.approach.slice() ), if v.approach_d < v.match_d then -v.creep_s else v.creep_s
-  v.creep_h     = $v.heading ( $v.mult v.creep.slice(), -1 ), $v.zero
+  v.creep       = $v.mult $v.norm( v.approach.slice() ), if v.approach_d < v.match_d then -v.creep_s else v.creep_s
+  v.creep_h     = $v.head ( $v.mult v.creep.slice(), -1 ), $v.zero
   v.approach_v  = $v.add v.target_v.slice(), v.creep.slice()
-  v.approach_vh = $v.heading v.approach_v, $v.zero
+  v.approach_vh = $v.head v.approach_v, $v.zero
   v.approach_vs = $v.mag v.approach_v
   v.approach_t  = v.match_t + ( v.glide_d )
   v.wait_t      = v.match_t
@@ -131,7 +131,7 @@ NavCom.turnTo = (s,t,limit=5)->
 NavCom.aim = (s,target)->
   s.update time = NUU.time()
   target.update time
-  angle = $v.heading(target.p,s.p) * RAD
+  angle = $v.head(target.p,s.p) * RAD
   v = {}
   v.dir = dir = $v.umod360 angle
   v.dir_diff_abs = abs v.dir_diff = -180 + dir
@@ -153,7 +153,7 @@ NavCom.match = (v)->
   v.ship_a  = acc = ship.thrustToAccel v.thrust
   v.match_d = ( vme**2 - vtg**2 ) / ( 2*v.ship_a )
   v.match_t = ( 2*v.match_d ) / ( vme + vtg )
-  [cosd,sind] = $v.normalize vdf.slice()
+  [cosd,sind] = $v.norm vdf.slice()
   [px,py] = ship.p
   [vx,vy] = ship.v
   accmatcht2 = acc * ( t = v.match_t ) * 2

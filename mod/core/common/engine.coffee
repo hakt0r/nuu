@@ -143,7 +143,7 @@ Math.lineCircleCollide = (a, b, c, r) ->
   ptr     = c.slice()
   $v.sub seg, a
   $v.sub ptr, a
-  segu = $v.normalize seg
+  segu = $v.norm seg
   prl  = $v.dot ptr, segu
   if prl > $v.dist a, b then closest = b.slice()
   else if prl > 0 then $v.add closest, $v.mult(segu,prl)
@@ -171,14 +171,20 @@ $v      .dist = $v.dist      2
 $v      .mult = $v.mult      2
 $v     .limit = $v.limit     2
 $v      .head = $v.heading   2
-$v   .heading = $v.heading   2
 $v      .norm = $v.normalize 2
-$v .normalize = $v.normalize 2
 $v      .zero = [0,0]
 $v       .one = [1,0]
+
 $v      .smod = (a) -> a - floor( a / 360 ) * 360
 $v    .reldeg = (dira,dirb) -> $v.smod( dira - dirb + 180 ) - 180
 $v   .umod360 = (v)-> ((( v % 360 ) + 360 ) % 360 )
+$v     .burnp = (h,t,a,v,p)-> accdt2b2=.5*a*t**2; [ p[0]+v[0]*t+h[0]*accdt2b2, p[1]+v[1]*t+h[1]*accdt2b2 ]
+$v     .burnr = (h,t,a,v  )-> accdt2b2=.5*a*t**2; [ v[0]*t+h[0]*accdt2b2, v[1]*t+h[1]*accdt2b2 ]
+$v     .burnv = (h,t,a,v  )-> at=a*t; [ v[0]+h[0]*at, v[1]+h[1]*at ]
+$v   .rotateH = (a,h)-> [a[0]*h[0]-a[1]*h[1],a[0]*h[1]+a[1]*h[0]]
+$v     .angle = (a,b)-> atan2($v.norm($v.cross(a.$,b)), $v.dot(a.$,b))
+
+Object.defineProperty Array::, '$', get:-> do @slice
 
 $static '$dist',         (s,o) -> sqrt(pow(s.x-o.x,2)+pow(s.y-o.y,2))
 $static '$interval',     (i,f) -> setInterval f,i

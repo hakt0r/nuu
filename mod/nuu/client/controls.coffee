@@ -43,7 +43,7 @@ $static 'Mouse', new class MouseInput
     evt = evt
     @event = e = [ evt.offsetX, evt.offsetY ]
     @dest  = c = [ WDB2, HGB2 ]
-    @destDir   = ( 360 + parseInt $v.heading(e,c) * RAD ) % 360
+    @destDir   = ( 360 + parseInt $v.head(e,c) * RAD ) % 360
     null
 
   reset: ->

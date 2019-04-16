@@ -201,7 +201,7 @@ $static 'Scanner', new class NUU.Scanner
       a[0] = s.x - x
       a[1] = s.y - y
       l = min W2-5, ( $v.mag v = a ) / @scale
-      v = $v.mult $v.normalize(v), l
+      v = $v.mult $v.norm(v), l
       if L = s.label
         hw = L.width/2
         hh = L.height/2
@@ -221,7 +221,7 @@ $static 'Scanner', new class NUU.Scanner
         a[0] = rel.x - x
         a[1] = rel.y - y
         ol = min W2-5, ( $v.mag ov = a ) / @scale
-        ov = $v.mult $v.normalize(ov), ol
+        ov = $v.mult $v.norm(ov), ol
         g.endFill g.drawCircle v[0]+W2R, v[1]+W2R, o if o + ol < W2
     return
 
@@ -233,7 +233,7 @@ $static 'Scanner', new class NUU.Scanner
       a[0] = s.x - x
       a[1] = s.y - y
       l = min W2-5, ( $v.mag v = a ) / @scale
-      v = $v.mult $v.normalize(v), l
+      v = $v.mult $v.norm(v), l
       if L = s.label
         hw = L.width/2; hh = L.height/2
         L.position.set v[0]+W2R-hw, v[1]+W2R-hh

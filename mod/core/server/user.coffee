@@ -199,7 +199,7 @@ User::loadShip = ->
     opts.state = @db.orbit[1]
     opts.state.relto = relto
   else
-    # vp = -PI/4 + $v.heading $obj.byName.Venus.p, [1,0]
+    # vp = -PI/4 + $v.head $obj.byName.Venus.p, [1,0]
     # r = vp+random()*PI/2
     r = random()*TAU
     opts.state = S:$moving, v:[cos(r)*150,sin(r)*150], relto: $obj.byId[0]
