@@ -218,6 +218,7 @@ $public class NavComVector
     @postMatch()
     @partition s,t,state
     @timings s,t,state
+    return unless debug
     if 0 > @avldst
       console.error "unsolvable overshoot @ #{s.name.green} => #{t.name.yellow}"
       console.error @toString()
@@ -232,9 +233,9 @@ $public class NavComVector
     @apppth = $v.sub  @tgtpos.$, @pmapos
     return unless 1e-6 < v = abs e = $v.angle @apppth, @pmavel
     return @matchNeuter s,t,state if 1 < v
-    console.log 'pma:va'.red, count, v
+    # console.log 'pma:va'.red, count, v
     if 10 is count++
-      console.log 'pma=>neut'.red, v
+      # console.log 'pma=>neut'.red, v
       return @matchNeuter s,t,state
     @matchShift s,t,state,count,e
     return
