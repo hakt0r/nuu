@@ -318,8 +318,10 @@ AI.register 'trade',
             @inventory.data = {}
             # console.log '::ai', "#{@name} delivered #{m.item} to #{@landedAt.name}" # if debug
             delete @misson
-            @launch()
-            @changeStrategy 'trade'
+            setTimeout (=>
+              @launch()
+              @changeStrategy 'trade'
+            ), random()*20000
           else console.log @mission
       ), 10000
     else console.log '::ai', "#{@name} landFailed", @target.name # if debug
