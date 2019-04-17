@@ -204,12 +204,12 @@ $public class NavComVector
     #else @matchNeuter s,t,state
     @postMatch()
     @partition s,t,state
-    if 0 > @glidst # throttle down
-      @selspd = sqrt @pmaspd**2 + @locacc * @appdst/2
-      @avldst = @appdst - @decdst - @trndst = @trt180 * @selspd
-      return @overshoot s,t,state if 0 > @avldst
-      @selspd = sqrt @pmaspd**2 + @locacc * @avldst
+    return @overshoot s,t,state if @decdst < @apppth
+    count = 0
+    while 0 > @avldst = @appdst - @decdst - @trndst = @trt180 * @selspd
+      @selspd = @selspd ** .8
       @partition s,t,state
+      break if count++ is 50
     @timings s,t,state
 
   overshoot:(s,t,state)->
@@ -218,7 +218,6 @@ $public class NavComVector
     @postMatch()
     @partition s,t,state
     @timings s,t,state
-    return unless debug
     if 0 > @avldst
       console.error "unsolvable overshoot @ #{s.name.green} => #{t.name.yellow}"
       console.error @toString()
@@ -281,7 +280,8 @@ $public class NavComVector
     @pacpos = $v.add @pmapos.$, $v.limit @apppth.$, @accdst
     @pglpos = $v.add @pacpos.$, $v.limit @apppth.$, @glidst
     @pdepos = $v.add @pglpos.$, $v.limit @apppth.$, @decdst
-    do @debug if debug
+    # do @debug if @relETA > 18000000
+    # if debug
     return @relETA
 
 # Object.defineProperty NavComVector::, name, enumerable:no,  configurable:no, writable:yes for name in [ 's', 't', 'state' ]
@@ -294,52 +294,54 @@ NavComVector::debug = ->
   console.log 'pgl:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pglpos.$, $v.sub @pdepos.$, $v.limit @apppth.$, @glidst
   console.log 'pde:pb'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, $v.burnp @decnrm, @dectim, @locacc, @pglvel, @pglpos
   console.log 'pde:pt'.red, v if 1e-5 < v = abs $v.mag $v.sub @pdepos.$, @tgtpos
-  console.log @
+  console.log @toString()
 
 NavComVector::toString = -> """
-  #{"locacc".bold.yellow}: #{@locacc.toString().yellow}
-  #{"locpos".bold.yellow}: #{@locpos.toString().yellow}
-  #{"loctrn".bold.yellow}: #{@loctrn.toString().yellow}
-  #{"locvel".bold.yellow}: #{@locvel.toString().yellow}
-  #{"tgtopo".bold.yellow.inverse}: #{@tgtopo.toString().yellow}
-  #{"posdif".bold.yellow}: #{@posdif.toString().yellow}
-  #{"spddif".bold.yellow}: #{@spddif.toString().yellow}
-  #{"topspd".bold.blue}: #{@topspd.toString().yellow}
-  #{"travel".bold.blue}: #{@travel.toString().yellow}
-  #{"appdst".bold.grey}: #{@appdst.toString().yellow}
-  #{"appnrm".bold.grey}: #{@appnrm.toString().yellow}
-  #{"apppth".bold.grey}: #{@apppth.toString().yellow}
-  #{"rapnrm".bold.grey}: #{@rapnrm.toString().yellow}
-  #{"rappth".bold.grey}: #{@rappth.toString().yellow}
-  #{"selspd".bold.magenta}: #{@selspd.toString().yellow}
-  #{"avldst".bold.magenta}: #{@avldst.toString().yellow}
-  #{"mathdd".bold.red}: #{@mathdd.toString().yellow}
-  #{"matnrm".bold.red}: #{@matnrm.toString().yellow}
-  #{"mattim".bold.red}: #{@mattim.toString().yellow}
-  #{"mattrn".bold.red}: #{@mattrn.toString().yellow}
-  #{"matvel".bold.red}: #{@matvel.toString().yellow}
-  #{"pmapos".bold}: #{@pmapos.toString().yellow}
-  #{"pdevel".bold}: #{@pdevel.toString().yellow}
-  #{"pmaspd".bold}: #{@pmaspd.toString().yellow}
-  #{"accdst".bold.green}: #{@accdst.toString().yellow}
-  #{"accfti".bold.green}: #{@accfti.toString().yellow}
-  #{"accrds".bold.green}: #{@accrds.toString().yellow}
-  #{"acctim".bold.green}: #{@acctim.toString().yellow}
-  #{"acctrn".bold.green}: #{@acctrn.toString().yellow}
-  #{"pacpos".bold}: #{@pacpos.toString().yellow}
-  #{"pacvel".bold}: #{@pacvel.toString().yellow}
-  #{"glidst".bold}: #{@glidst.toString().yellow}
-  #{"glihdd".bold}: #{@glihdd.toString().yellow}
-  #{"glirhd".bold}: #{@glirhd.toString().yellow}
-  #{"glitim".bold}: #{@glitim.toString().yellow}
-  #{"glitrn".bold}: #{@glitrn.toString().yellow}
-  #{"pglpos".bold}: #{@pglpos.toString().yellow}
-  #{"pglvel".bold}: #{@pglvel.toString().yellow}
-  #{"decdst".bold.blue}: #{@decdst.toString().yellow}
-  #{"decfti".bold.blue}: #{@decfti.toString().yellow}
-  #{"decnrm".bold.blue}: #{@decnrm.toString().yellow}
-  #{"decrds".bold.blue}: #{@decrds.toString().yellow}
-  #{"dectim".bold.blue}: #{@dectim.toString().yellow}
-  #{"decvec".bold.blue}: #{@decvec.toString().yellow}
-  #{"pdepos".bold}: #{@pdepos.toString().yellow}
+  #{"locacc".bold.yellow}: #{(@locacc||'no').toString().yellow}
+  #{"locpos".bold.yellow}: #{(@locpos||'no').toString().yellow}
+  #{"loctrn".bold.yellow}: #{(@loctrn||'no').toString().yellow}
+  #{"locvel".bold.yellow}: #{(@locvel||'no').toString().yellow}
+  #{"tgtopo".bold.yellow.inverse}: #{(@tgtopo||'no').toString().yellow}
+  #{"posdif".bold.yellow}: #{(@posdif||'no').toString().yellow}
+  #{"spddif".bold.yellow}: #{(@spddif||'no').toString().yellow}
+  #{"topspd".bold.blue}: #{(@topspd||'no').toString().yellow}
+  #{"travel".bold.blue}: #{(@travel||'no').toString().yellow}
+  #{"appdst".bold.grey}: #{(@appdst||'no').toString().yellow}
+  #{"appnrm".bold.grey}: #{(@appnrm||'no').toString().yellow}
+  #{"apppth".bold.grey}: #{(@apppth||'no').toString().yellow}
+  #{"rapnrm".bold.grey}: #{(@rapnrm||'no').toString().yellow}
+  #{"rappth".bold.grey}: #{(@rappth||'no').toString().yellow}
+  #{"selspd".bold.magenta}: #{(@selspd||'no').toString().yellow}
+  #{"avldst".bold.magenta}: #{(@avldst||'no').toString().yellow}
+  #{"relETA".bold.magenta}: #{(@relETA||'no').toString().yellow}
+  #{"absETA".bold.magenta}: #{(@absETA||'no').toString().yellow}
+  #{"mathdd".bold.red}: #{(@mathdd||'no').toString().yellow}
+  #{"matnrm".bold.red}: #{(@matnrm||'no').toString().yellow}
+  #{"mattim".bold.red}: #{(@mattim||'no').toString().yellow}
+  #{"mattrn".bold.red}: #{(@mattrn||'no').toString().yellow}
+  #{"matvel".bold.red}: #{(@matvel||'no').toString().yellow}
+  #{"pmapos".bold}: #{(@pmapos||'no').toString().yellow}
+  #{"pdevel".bold}: #{(@pdevel||'no').toString().yellow}
+  #{"pmaspd".bold}: #{(@pmaspd||'no').toString().yellow}
+  #{"accdst".bold.green}: #{(@accdst||'no').toString().yellow}
+  #{"accfti".bold.green}: #{(@accfti||'no').toString().yellow}
+  #{"accrds".bold.green}: #{(@accrds||'no').toString().yellow}
+  #{"acctim".bold.green}: #{(@acctim||'no').toString().yellow}
+  #{"acctrn".bold.green}: #{(@acctrn||'no').toString().yellow}
+  #{"pacpos".bold}: #{(@pacpos||'no').toString().yellow}
+  #{"pacvel".bold}: #{(@pacvel||'no').toString().yellow}
+  #{"glidst".bold}: #{(@glidst||'no').toString().yellow}
+  #{"glihdd".bold}: #{(@glihdd||'no').toString().yellow}
+  #{"glirhd".bold}: #{(@glirhd||'no').toString().yellow}
+  #{"glitim".bold}: #{(@glitim||'no').toString().yellow}
+  #{"glitrn".bold}: #{(@glitrn||'no').toString().yellow}
+  #{"pglpos".bold}: #{(@pglpos||'no').toString().yellow}
+  #{"pglvel".bold}: #{(@pglvel||'no').toString().yellow}
+  #{"decdst".bold.blue}: #{(@decdst||'no').toString().yellow}
+  #{"decfti".bold.blue}: #{(@decfti||'no').toString().yellow}
+  #{"decnrm".bold.blue}: #{(@decnrm||'no').toString().yellow}
+  #{"decrds".bold.blue}: #{(@decrds||'no').toString().yellow}
+  #{"dectim".bold.blue}: #{(@dectim||'no').toString().yellow}
+  #{"decvec".bold.blue}: #{(@decvec||'no').toString().yellow}
+  #{"pdepos".bold}: #{(@pdepos||'no').toString().yellow}
   """

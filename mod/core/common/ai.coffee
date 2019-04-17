@@ -362,8 +362,8 @@ AI.register 'trade',
       # m = @misson; console.log "bring: #{m.item} from #{m.source.name} to #{m.dest.name}@#{m.dest.zone.root.name}" # if debug
   onTarget:->
     if @land @target
-      console.log '::ai', "#{@name} landManual", @target.name     if @steer
-      console.log '::ai', "#{@name} landTravel", @target.name unless @steer
+      console.log '::ai', "#{@name} landManual".yellow, @target.name    if @steer
+      # console.log '::ai', "#{@name} landTravel".green, @target.name unless @steer
       # if debug
       @changeStrategy @target = null
       tries = 0
@@ -397,7 +397,7 @@ AI.register 'trade',
       ), 10000
     else
       @steer = AI.steer
-      console.log '::ai', "#{@name} landFailed", @target.name
+      console.log '::ai', "#{@name} landFailed".red, @target.name
       # if debug
 
 # ███████ ███████  ██████  ██████  ██████  ████████
