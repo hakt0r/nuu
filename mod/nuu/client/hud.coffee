@@ -315,7 +315,6 @@ $static 'HUD', new class NUU.HUD
     @startTime = NUU.time()
     new uiArrow  @, 'dir',      'yellow'
     new uiArrow  @, 'targetDir',   'red'
-    #new uiVector @, 'speed',    0x00FF00
     new uiVector @, 'force',    0xFF00FF
     new uiVector @, 'approach', 0xFFFF00
     new uiVector @, 'match',    0xFF0000
@@ -325,6 +324,10 @@ $static 'HUD', new class NUU.HUD
     do uiBar.init # HEALTH BARS
     do uiText.init # TEXT NODES
     @topLeft.position.set 10, 10
+    @dir.visible = @targetDir.visible = no
+    @targetShield.visible = @targetArmour.visible = @targetShield.bg.visible = @targetArmour.bg.visible = no
+    @glide.visible = @force.visible = @approach.visible = @match.visible = @deccel.visible = @accel.visible = no
+    @targetDir.visible = no
     do @resize # UPDATE DYNAMIC POSITIONS
 
   resize:->
@@ -394,7 +397,7 @@ $static 'HUD', new class NUU.HUD
       v = $v.mult $v.norm(v), l
       #@speed.width = l
       #@speed.rotation = ( PI + $v.head $v.zero, m ) % TAU
-      @glide.visible = @force.visible = @approach.visible = @match.visible = @deccel.visible = ( vec = VEHICLE.state.vec )?.travel?
+      @glide.visible = @force.visible = @approach.visible = @match.visible = @deccel.visible = @accel.visible = ( vec = VEHICLE.state.vec )?.travel?
       if vec
         {x,y} = VEHICLE
         r = Scanner.radius
