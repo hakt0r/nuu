@@ -106,6 +106,17 @@ $obj::closestUser = ->
   return no unless closest
   return [closest,dist]
 
+$obj::closestAsteroid = ->
+  return no unless Asteroid.list.length > 0
+  closest = null; dist = Infinity
+  for p in Asteroid.list
+    continue if p.destructing
+    if dist > d = abs $dist @,p
+      closest = p
+      dist = d
+  return no unless dist < 10e3
+  return [closest,dist]
+
 AI::aiType       = 'ai'
 AI::npc          = true
 AI::fire         = no
@@ -139,7 +150,10 @@ AI.register = (strategy,opts)->
     if @target.respawning or @target.destructing
       @target = null
       return 0
-    return @state.vec.absETA - NUU.time() if @state.S is $travel
+    if @state.S is $travel
+      wait = max 0, @state.vec.absETA - NUU.time()
+      # console.log @name, 'travel', htime wait/1000
+      return wait
     @update time; @target.update time
     if ( inRange = @target.size * 10 > @dist @target ) isnt @lastInRange
       fnc = if inRange then 'inRange' else 'outRange'
@@ -184,6 +198,18 @@ AI.steer = ->
       return min 2000, max 0, v.steer_t
   return
 
+AI.shootOutRange = ->
+  return unless @fireFlag
+  @fireFlag = no
+  NET.weap.write 'ai', 1, @primarySlot, @, @target
+  console.log 'stopShooting' if debug
+
+AI.shootInRange = ->
+  return if @fireFlag
+  @fireFlag = yes
+  NET.weap.write 'ai', 0, @primarySlot, @, @target
+  console.log 'startShooting' if debug
+
 AI.register 'approach',
   getTarget:->
     @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
@@ -221,17 +247,9 @@ AI.register 'waitForUsers', getTarget:->
   return
 
 AI.register 'attackTarget',
-  steer:AI.steer
-  inRange:->
-    return if @fireFlag
-    @fireFlag = yes
-    NET.weap.write 'ai', 0, @primarySlot, @, @target
-    console.log 'startShooting' if debug
-  outRange:->
-    return unless @fireFlag
-    @fireFlag = no
-    NET.weap.write 'ai', 1, @primarySlot, @, @target
-    console.log 'stopShooting' if debug
+  steer: AI.steer
+  inRange: AI.shootInRange
+  outRange: AI.shootOutRange
   getTarget:->
     console.log '::ai', 'drone:targetDown', @target if debug
     @base = no
@@ -275,21 +293,29 @@ $public class Miner extends AI
   aiType: 'Miner'
   @list:[]
   constructor:(opts={})->
-    opts.strategy = opts.strategy || 'collect'
+    opts.strategy = opts.strategy || 'findNewAsteroid'
     opts.tpl = opts.tpl || Array.random Miner.ships
     super opts
     return
 
-AI.register 'collect',
+AI.register 'findNewAsteroid',
   getTarget:->
     @target = Asteroid.byId[ Array.random Object.keys Asteroid.byId ]
     @setState S:$travel, relto:@target
-    console.log '::ai', "#{@name} to", @target.name if @target if debug
-  onTarget:->
-    # @changeStrategy 'mine'
-    console.log '::ai', "#{@name} at", @target.name if @target if debug
-    @target = Stellar.byId[ Array.random Object.keys Asteroid.byId ]
-    console.log '::ai', "#{@name} to", @target.name if @target if debug
+  onTarget:-> @changeStrategy 'mine'
+
+AI.register 'mine',
+  steer: AI.steer
+  inRange: AI.shootInRange
+  outRange: AI.shootOutRange
+  getTarget:->
+    if a = @closestAsteroid()
+      @target = a[0]
+      console.log @name, "miner:mined=>next", @target.name
+    else
+      @changeStrategy 'findNewAsteroid' unless @target
+      console.log @name, "miner:mined=>findNew"
+    return
 
 # ████████ ██████   █████  ██████  ███████ ██████
 #    ██    ██   ██ ██   ██ ██   ██ ██      ██   ██
@@ -336,7 +362,9 @@ AI.register 'trade',
       # m = @misson; console.log "bring: #{m.item} from #{m.source.name} to #{m.dest.name}@#{m.dest.zone.root.name}" # if debug
   onTarget:->
     if @land @target
-      console.log '::ai', "#{@name} landManual", @target.name if @steer if debug
+      console.log '::ai', "#{@name} landManual", @target.name     if @steer
+      console.log '::ai', "#{@name} landTravel", @target.name unless @steer
+      # if debug
       @changeStrategy @target = null
       tries = 0
       setTimeout ( waitForResources = =>
@@ -369,7 +397,8 @@ AI.register 'trade',
       ), 10000
     else
       @steer = AI.steer
-      console.log '::ai', "#{@name} landFailed", @target.name if debug
+      console.log '::ai', "#{@name} landFailed", @target.name
+      # if debug
 
 # ███████ ███████  ██████  ██████  ██████  ████████
 # ██      ██      ██      ██    ██ ██   ██    ██
