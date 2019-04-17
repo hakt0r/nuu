@@ -115,10 +115,10 @@ $static 'Scanner', new class NUU.Scanner
     for s in list
       continue if s.label or not s.name
       [ name, fill, title ] = @labelStyle s
-      scope.addChild l = s.label = new PIXI.Text name,  fontFamily: 'monospace', fontSize:'8x', fill: fill
-      scope.addChild t = s.title = new PIXI.Text title, fontFamily: 'monospace', fontSize:'8x', fill: fill
-      l.scope = t.scope = scope
-      l.pivot.set .5, .5
+      scope.addChild l = s.label = new PIXI.Text name,  fontFamily: 'monospace', fontSize:'8px', fill: fill
+      scope.addChild t = s.title = new PIXI.Text title, fontFamily: 'monospace', fontSize:'8px', fill: fill
+      s.scope = l.scope = t.scope = scope
+      l.anchor.set .5
       t.pivot.set .5, .5
     return
 
@@ -128,14 +128,11 @@ $static 'Scanner', new class NUU.Scanner
       scope = label.scope
       scope.removeChild label
       scope.removeChild title = s.title
-      Array.remove scope.children, label
-      Array.remove scope.children, title
-      unless keep
-        delete s.label
-        delete s.title
-        label.destroy()
-        title.destroy()
+      delete s.label
+      delete s.title
       delete s.scope
+      label.destroy()
+      title.destroy()
     return
 
   addToRange:(name,scope,inRange)=> (list)=>
@@ -144,14 +141,13 @@ $static 'Scanner', new class NUU.Scanner
   updateLabel:(list,scope,inRange)->
     add = []
     for s in list
-      unless old = s.scope then add.push s
-      else
-        continue if old is scope or not label = s.label
-        @removeLabel [s], true
-        ( l = s.label ).scope = ( t = s.title ).scope = scope
+      if old = s.scope
+        continue if old is scope
+        old.removeChild l = s.label; scope.addChild l
+        old.removeChild t = s.title; scope.addChild t
+        s.scope = l.scope = t.scope = scope
         [l.text, l.style.fill,t.text] = @labelStyle s, inRange
-        scope.addChild l
-        scope.addChild t
+      else add.push s
     @addLabel add, scope
     return
 
@@ -176,7 +172,6 @@ $static 'Scanner', new class NUU.Scanner
     @updateLongrange = @updateMidrange = no
     @wasFullscreen   = @fullscreen
     @lastScale       = @scale
-    @renderRange x,y,W2,W2R,SHORTRANGE
     # if @orbits and Target
     #   orbits = Array.uniq [TARGET,VEHICLE].concat Object.values Target.hostile
     #   orbits.map (s)-> Array.pushUnique orbits, rel if rel = s.state.relto
@@ -191,6 +186,7 @@ $static 'Scanner', new class NUU.Scanner
       @long.cacheAsBitmap = no
       @renderRange x,y,W2,W2R,LONGRANGE
       @long.cacheAsBitmap = yes
+    @renderRange x,y,W2,W2R,SHORTRANGE
     return
 
   renderOrbits:(g,x,y,W2,W2R,list)->
@@ -235,11 +231,11 @@ $static 'Scanner', new class NUU.Scanner
       l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.norm(v), l
       if L = s.label
-        hw = L.width/2; hh = L.height/2
-        L.position.set v[0]+W2R-hw, v[1]+W2R-hh
+        L.position.set v[0]+W2R, v[1]+W2R
+        L.rotation = RADi * (s.d+90)
         T = s.title
-        if v[0] < 0 then T.position.set v[0]+W2R+4,         v[1]+W2R+1-hh
-        else             T.position.set v[0]+W2R-3-T.width, v[1]+W2R+1-hh
+        if v[0] < 0 then T.position.set v[0]+W2R+4,         v[1]+W2R+1-4
+        else             T.position.set v[0]+W2R-3-T.width, v[1]+W2R+1-4
     return
 
   toggle:=>
