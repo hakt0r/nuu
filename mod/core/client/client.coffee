@@ -40,9 +40,6 @@ $static 'DUMMY', dummy:yes, id:0, d:0, x:0, y:0, v: [0,0], update: (->), updateS
 $static 'VEHICLE',    DUMMY
 $static 'TARGET',     null
 $static 'TTL',        new Set
-$static 'SHORTRANGE', []
-$static 'MIDRANGE',   []
-$static 'LONGRANGE',  []
 
 $static 'WIDTH',  640
 $static 'HEIGHT', 480

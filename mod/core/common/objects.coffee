@@ -268,8 +268,13 @@ return if isServer
 # ██   ██ ██    ██ ██   ██ ██  ███    ██    ██ ██  ██ ██
 # ██   ██  ██████  ██   ██ ██ ███████  ██████  ██   ████
 
-$obj.HorizonShort = 1000000
-$obj.HorizonMid   = 200000000
+$static 'SHORTRANGE', []
+$static 'MIDRANGE',   []
+$static 'LONGRANGE',  []
+
+$obj.HorizonWeapons =  10e3
+$obj.HorizonShort   =  10e6
+$obj.HorizonMid     = 200e6
 $obj.nextMidrangeUpdate = 0
 $obj.nextLongrangeUpdate = 0
 
@@ -308,7 +313,7 @@ $obj.selectFrom = (list,hS,hM,x,y,time,aS,aM,aL,S,M,L,del)->
   i = -1; s = null; length = list.length
   while ++i < length
     continue unless s = list[i]
-    s.update time; dist = abs sqrt abs(x-s.x)**2 + abs(y-s.y)**2
+    s.update time; dist = sqrt (x-s.x)**2 + (y-s.y)**2
     if dist < hS
       continue if S.includes s
       aS.push s; del.add s; s.range = S; s.inRange = yes
@@ -318,7 +323,6 @@ $obj.selectFrom = (list,hS,hM,x,y,time,aS,aM,aL,S,M,L,del)->
     else
       continue if L.includes s
       aL.push s; del.add s; s.range = L
-  Scanner.updateLongrange = yes
   return
 
 $obj.announce = (key,event,add,del)->
