@@ -336,6 +336,7 @@ AI.register 'trade',
       # m = @misson; console.log "bring: #{m.item} from #{m.source.name} to #{m.dest.name}@#{m.dest.zone.root.name}" # if debug
   onTarget:->
     if @land @target
+      console.log '::ai', "#{@name} landManual", @target.name if @steer if debug
       @changeStrategy @target = null
       tries = 0
       setTimeout ( waitForResources = =>
@@ -366,7 +367,9 @@ AI.register 'trade',
             ), random()*20000
           else console.log @mission
       ), 10000
-    else console.log '::ai', "#{@name} landFailed", @target.name # if debug
+    else
+      @steer = AI.steer
+      console.log '::ai', "#{@name} landFailed", @target.name if debug
 
 # ███████ ███████  ██████  ██████  ██████  ████████
 # ██      ██      ██      ██    ██ ██   ██    ██
