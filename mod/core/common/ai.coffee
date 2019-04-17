@@ -54,7 +54,7 @@ $public class AI extends Ship
     @constructor.list.push @
     @changeStrategy strategy
 
-  @destructor: ->
+  destructor:->
     $worker.remove @worker if @worker
     Array.remove AI.list, @
     Array.remove @constructor.list, @
@@ -89,10 +89,22 @@ AI::hit = (src,wp) ->
 
 AI::changeStrategy = (strategy)->
   return if strategy is @strategy
-  console.log 'strategy', @name, @strategy, '=>', strategy # if @strategy if debug
+  console.log 'strategy', @name, @strategy, '=>', strategy, @target?.name if @constructor.name is 'Drone' if @strategy if debug
   ( AI.worker[@strategy].remove @; delete @strategy ) if @strategy
   ( AI.worker[@strategy = strategy].add   @         ) if strategy?
   return @
+
+$obj::closestUser = ->
+  return no unless NUU.users.length > 0
+  closest = null; dist = Infinity
+  for p in NUU.users
+    continue unless v = p.vehicle
+    continue     if v.destructing or v.respawning
+    if ( dist > d = $dist(@,v) ) and ( abs(d) < 1000000 )
+      dist = d
+      closest =  v
+  return no unless closest
+  return [closest,dist]
 
 AI::aiType       = 'ai'
 AI::npc          = true
@@ -118,24 +130,27 @@ AI.randomStellar = ->
   stel.update()
   stel
 
-AI.register = (strategy,opts)-> AI.worker[opts.listKey = strategy] = $worker.PauseList opts, (time)->
-  @getTarget() unless @target
-  return 10000 unless @target
-  if @target.respawning or @target.destructing
-    @target = null
-    return 0
-  return @state.vec.absETA - NUU.time() if @state.S is $travel
-  @update time; @target.update time
-  if ( inRange = @target.size * 10 > @dist @target ) isnt @lastInRange
-    fnc = if inRange then 'inRange' else 'outRange'
-    do @[fnc] if @[fnc]
-    @lastInRange = inRange
-  if ( onTarget = @target.size * 1.1 > @dist @target ) isnt @lastOnTarget
-    fnc = if onTarget then 'onTarget' else 'offTarget'
-    do @[fnc] if @[fnc]
-    @lastOnTarget = onTarget
-  @steer time if @steer
-  return
+AI.register = (strategy,opts)->
+  defaults = listKey:strategy,steer:no,inRange:no,outRange:no,onTarget:no,offTarget:no,getTarget:->
+  opts = Object.assign defaults, opts
+  AI.worker[strategy] = $worker.PauseList opts, (time)->
+    @getTarget() unless @target
+    return 10000 unless @target
+    if @target.respawning or @target.destructing
+      @target = null
+      return 0
+    return @state.vec.absETA - NUU.time() if @state.S is $travel
+    @update time; @target.update time
+    if ( inRange = @target.size * 10 > @dist @target ) isnt @lastInRange
+      fnc = if inRange then 'inRange' else 'outRange'
+      do @[fnc] if @[fnc]
+      @lastInRange = inRange
+    if ( onTarget = @target.size * 1.1 > @dist @target ) isnt @lastOnTarget
+      fnc = if onTarget then 'onTarget' else 'offTarget'
+      do @[fnc] if @[fnc]
+      @lastOnTarget = onTarget
+    @steer time if @steer
+    return
 
 AI.steer = ->
   v = NavCom.steer  @, @target, 'pursue'
@@ -157,7 +172,7 @@ AI.steer = ->
     when "execute"
       # console.log '::ai', "#{@name} at", @target.name if debug
       @onTarget v if @onTarget
-      @lastDir = -1; @lastThrottle = -1; @target = null
+      @lastDir = -1; @lastThrottle = -1
       @onDecision v if @onDecision
       return 1000
     when "burn"
@@ -170,10 +185,10 @@ AI.steer = ->
   return
 
 AI.register 'approach',
-  getTarget: ->
+  getTarget:->
     @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
     console.log '::ai', "#{@name} to", @target.name if @target if debug
-  onTarget: ->
+  onTarget:->
     console.log '::ai', "#{@name} at", @target.name if @target if debug
     @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
     console.log '::ai', "#{@name} to", @target.name if @target if debug
@@ -186,7 +201,7 @@ AI.register 'approach',
 
 $public class Drone extends AI
   constructor:(opts={})->
-    opts.strategy = 'attackPlayers'
+    opts.strategy = 'waitForUsers'
     opts.stel = Drone.randomStellar() unless opts.stel
     super opts
   @list:[]
@@ -195,65 +210,59 @@ $public class Drone extends AI
     stel.update()
     stel
 
+AI.register 'waitForUsers', getTarget:->
+  if u = do @closestUser
+    [closest,dist] = u
+    if dist < 5000
+      console.log '::ai', 'drone:select', closest.name, "@" + hdist dist if debug
+      @target = closest
+      @changeStrategy 'attackTarget'
+      return
+  return
+
+AI.register 'attackTarget',
+  steer:AI.steer
+  inRange:->
+    return if @fireFlag
+    @fireFlag = yes
+    NET.weap.write 'ai', 0, @primarySlot, @, @target
+    console.log 'startShooting' if debug
+  outRange:->
+    return unless @fireFlag
+    @fireFlag = no
+    NET.weap.write 'ai', 1, @primarySlot, @, @target
+    console.log 'stopShooting' if debug
+  getTarget:->
+    console.log '::ai', 'drone:targetDown', @target if debug
+    @base = no
+    @changeStrategy 'returnToBase'
+
 AI.register 'returnToBase',
-  steer:no
   onTarget:->
     return unless @target
-    console.log '::ai', 'drone:arrivedAtBase', @target.name if true
+    console.log '::ai', 'drone:arrivedAtBase', @target.name if debug
     @setState S:$moving, relto:@target, v:@target.v.slice()
     @arrived = not @target = @steer = no
   getTarget:->
     if @arrived
       @arrived = no
-      @changeStrategy 'attackPlayers'
-      console.log '::ai', 'drone=>attackPlayers', @name if true
+      @changeStrategy 'waitForUsers'
+      console.log '::ai', 'drone=>waitForUsers', @name if debug
       return
     @lastInRange = @lastOnTarget = no
-    unless @base
-      bases = [ $obj.byName.Earth, $obj.byName.Moon ]
+    unless @base = @homebase
+      bases = [ $obj.byName.Earth , $obj.byName.Moon ]
       if bases.includes(@state.relto) and 1000 > @dist(@state.relto)
-        # console.log '::ai', 'drone:alreadyAtBase' if true
+        console.log '::ai', 'drone:alreadyAtBase' if debug
         @steer = AI.steer
-        @target = @state.relto
-        return 1000
-    @target = @base = @base || Array.random bases
-    console.log '::ai', 'drone:returnToBase', @target.name if true
+        @target = @base = @homebase
+        return
+      @base = @homebase = Array.random bases
+    @target = @base
+    console.log '::ai', 'drone:returnToBase', @target.name if debug
     if 1e6 > @dist @target
-      @setState S:$travel, @target
-    else
-      @steer = AI.steer
-    return
-
-AI.register 'attackPlayers',
-  steer:false
-  inRange: ->
-    return if @fireFlag
-    @fireFlag = yes
-    NET.weap.write 'ai', 0, @primarySlot, @, @target
-    console.log 'startShooting' if debug
-  outRange: ->
-    return unless @fireFlag
-    @fireFlag = no
-    NET.weap.write 'ai', 1, @primarySlot, @, @target
-    console.log 'stopShooting' if debug
-  getTarget: ->
-    @target = closest = null
-    return unless NUU.users.length > 0
-    closestDist = Infinity
-    for p in NUU.users
-      continue unless v = p.vehicle
-      continue     if v.destructing or v.respawning
-      if ( closestDist > d = $dist(@,v) ) and ( abs(d) < 1000000 )
-        closestDist = d
-        closest =  v
-    if closestDist > 5000
-      unless @base
-        console.log '::ai', 'drone=>returnToBase', @name
-        @changeStrategy 'returnToBase'
-      return
-    @target = closest
-    @steer = AI.steer
-    console.log '::ai', 'drone:select', @target.name, "@" + hdist closestDist if true
+      @setState S:$travel, relto:@target
+    else @steer = AI.steer
     return
 
 # ███    ███ ██ ███    ██ ███████ ██████
@@ -272,11 +281,11 @@ $public class Miner extends AI
     return
 
 AI.register 'collect',
-  getTarget: ->
+  getTarget:->
     @target = Asteroid.byId[ Array.random Object.keys Asteroid.byId ]
     @setState S:$travel, relto:@target
     console.log '::ai', "#{@name} to", @target.name if @target if debug
-  onTarget: ->
+  onTarget:->
     # @changeStrategy 'mine'
     console.log '::ai', "#{@name} at", @target.name if @target if debug
     @target = Stellar.byId[ Array.random Object.keys Asteroid.byId ]
@@ -308,7 +317,7 @@ $public class Trader extends AI
     return
 
 AI.register 'trade',
-  getTarget: ->
+  getTarget:->
     if @inventory.total is 0 or not @misson
       return unless r = Object.randomPair Economy.need
       [ item, dest ] = r
@@ -325,7 +334,7 @@ AI.register 'trade',
       @target = @misson.dest
       @setState S:$travel, relto:@target
       # m = @misson; console.log "bring: #{m.item} from #{m.source.name} to #{m.dest.name}@#{m.dest.zone.root.name}" # if debug
-  onTarget: ->
+  onTarget:->
     if @land @target
       @changeStrategy @target = null
       tries = 0
@@ -391,7 +400,7 @@ AI.register 'escort:defend',
     if @escortFor
       unless p = $obj.byId[@escortFor]
         console.log '::ai', "#{@name} going berserk" if debug
-        @changeStrategy "attackPlayers"
+        @changeStrategy "attackTarget"
         return false
     else p = @
     if 0 is p.hostile.length
