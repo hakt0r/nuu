@@ -20,6 +20,12 @@
 
 ###
 
+# TIMING
+# do ( -> # HACK: Date.now TODO: migrate to NUU.time()
+# $static 'performance', require("perf_hooks").performance if isServer
+# Date._now = Date.now
+# Date.now = -> performance.timeOrigin + performance.now() )
+
 # LANG-CONSTANTS
 $static '$void', ->
 
