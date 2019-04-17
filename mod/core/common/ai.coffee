@@ -119,17 +119,27 @@ AI.randomStellar = ->
   stel
 
 AI.register = (strategy,opts)-> AI.worker[opts.listKey = strategy] = $worker.PauseList opts, (time)->
-  @update time
   @getTarget() unless @target
+  return 10000 unless @target
+  if @target.respawning or @target.destructing
+    @target = null
+    return 0
   return @state.vec.absETA - NUU.time() if @state.S is $travel
-  return 1000  unless @target
+  @update time; @target.update time
+  if ( inRange = @target.size * 10 > @dist @target ) isnt @lastInRange
+    fnc = if inRange then 'inRange' else 'outRange'
+    do @[fnc] if @[fnc]
+    @lastInRange = inRange
+  if ( onTarget = @target.size * 1.1 > @dist @target ) isnt @lastOnTarget
+    fnc = if onTarget then 'onTarget' else 'offTarget'
+    do @[fnc] if @[fnc]
+    @lastOnTarget = onTarget
+  @steer time if @steer
+  return
+
+AI.steer = ->
   v = NavCom.steer  @, @target, 'pursue'
   v = NavCom.decide @, v
-  @lastVec = v if isClient
-  if v.inRange isnt @lastInRange
-    fnc = if v.inRange then 'inRange' else 'outRange'
-    do @[fnc] if @[fnc]
-    @lastInRange = v.inRange
   v.wait_t = v.steer_t = 0 if v.approach_d < 10000
   switch v.recommend
     when "setdir"
@@ -186,12 +196,36 @@ $public class Drone extends AI
     stel
 
 AI.register 'returnToBase',
-  inRange:->
+  steer:no
+  onTarget:->
     return unless @target
+    console.log '::ai', 'drone:arrivedAtBase', @target.name if true
     @setState S:$moving, relto:@target, v:@target.v.slice()
-    @changeStrategy 'attackPlayers'
+    @arrived = not @target = @steer = no
+  getTarget:->
+    if @arrived
+      @arrived = no
+      @changeStrategy 'attackPlayers'
+      console.log '::ai', 'drone=>attackPlayers', @name if true
+      return
+    @lastInRange = @lastOnTarget = no
+    unless @base
+      bases = [ $obj.byName.Earth, $obj.byName.Moon ]
+      if bases.includes(@state.relto) and 1000 > @dist(@state.relto)
+        # console.log '::ai', 'drone:alreadyAtBase' if true
+        @steer = AI.steer
+        @target = @state.relto
+        return 1000
+    @target = @base = @base || Array.random bases
+    console.log '::ai', 'drone:returnToBase', @target.name if true
+    if 1e6 > @dist @target
+      @setState S:$travel, @target
+    else
+      @steer = AI.steer
+    return
 
 AI.register 'attackPlayers',
+  steer:false
   inRange: ->
     return if @fireFlag
     @fireFlag = yes
@@ -203,24 +237,23 @@ AI.register 'attackPlayers',
     NET.weap.write 'ai', 1, @primarySlot, @, @target
     console.log 'stopShooting' if debug
   getTarget: ->
-    @target = null
+    @target = closest = null
     return unless NUU.users.length > 0
-    closest = null
     closestDist = Infinity
     for p in NUU.users
-      continue unless p.vehicle
-      if ( closestDist > d = $dist(@,p.vehicle) ) and ( not p.vehicle.destructing ) and ( abs(d) < 1000000 )
+      continue unless v = p.vehicle
+      continue     if v.destructing or v.respawning
+      if ( closestDist > d = $dist(@,v) ) and ( abs(d) < 1000000 )
         closestDist = d
-        closest =  p.vehicle
+        closest =  v
     if closestDist > 5000
-      bases = [ $obj.byName.Earth, $obj.byName.Moon ]
-      return 1000 if bases.includes @state.relto
-      @target = Array.random bases
-      @changeStrategy 'returnToBase'
-      console.log '::ai', 'drone:returnToBase' if true
-      return @target = null
-    console.log '::ai', 'drone:select', @target.name, "@" + hdist closestDist if debug
+      unless @base
+        console.log '::ai', 'drone=>returnToBase', @name
+        @changeStrategy 'returnToBase'
+      return
     @target = closest
+    @steer = AI.steer
+    console.log '::ai', 'drone:select', @target.name, "@" + hdist closestDist if true
     return
 
 # ███    ███ ██ ███    ██ ███████ ██████
