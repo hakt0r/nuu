@@ -43,6 +43,9 @@ $public class Weapon extends Outfit
     Weapon[@tpl.extends].call @
   destructor:-> @release()
 
+Weapon.actionKey  = ['trigger','release','reload','aim']
+Weapon.actionCode =   trigger:0,release:1,reload:2,aim:3
+
 ### ██████   █████  ███    ███  █████   ██████  ███████
     ██   ██ ██   ██ ████  ████ ██   ██ ██       ██
     ██   ██ ███████ ██ ████ ██ ███████ ██   ███ █████
@@ -61,17 +64,27 @@ Weapon.impactLogic = (wp)->
       @armour -= dmg.physical
       status = Weapon.impactType.shieldsDown
   else @armour -= dmg.penetrate + dmg.physical
-  if 0 < @armour < 25
+  if 0 < @armour and @armour < 25
     status = Weapon.impactType.disabled
+    @update()
+    @setState S:$moving, lock:yes
+    @disabled = @locked = yes
+    @releaseAll()
   else if @armour < 0
     @armour = 0
     @shield = 0
-    @destructing = true
+    @destructing = yes
     status = Weapon.impactType.destroyed
   else status = Weapon.impactType.hit
-  if wp.name is 'CheatersRagnarokBeam'
-    console.log status, @shield, @armor, dmg.penetrate
+  console.log @name, 'hitFor', dmg.penetrate, @shield+'/'+@shieldMax, @armour+'/'+@armourMax if debug
   status
+
+Ship::releaseAll = ->
+  releaseCode = Weapon.actionCode.release
+  @slots.weapon.forEach (w)=> if e = w.equip
+    e.release null, null
+    NET.weap.write null, releaseCode, w, @, null
+  return
 
 ### ██   ██  ██████  ███████ ████████ ██ ██      ██ ████████ ██    ██
     ██   ██ ██    ██ ██         ██    ██ ██      ██    ██     ██  ██
@@ -111,44 +124,26 @@ Sync.hostile = new class HostileSync
        ██    ██   ██ ██   ██ ██    ██ ██         ██         ██
        ██    ██   ██ ██   ██  ██████  ███████    ██    ███████ ###
 
-Weapon.SelectTarget = $worker.ReduceList (time)->
+Weapon.SelectPlayer = $worker.ReduceList (time)->
   { ship, target, slot, lock } = @
-  closest     = null
-  closestDist = Infinity
-  ship.update time
-  for p in NUU.users
-    continue unless v = p.vehicle
-    continue     if v.destructing
-    v.update time
-    if ( closestDist > d = $dist(ship,v) ) and ( 1000000 > abs d )
-      closestDist = d
-      closest = v
-  @target = target = if closestDist > 5000 then null else closest
-  if target
-    console.log ship.name, 'has target', lock, target.name
-    @trigger null, target
-    NET.weap.write null, 0, slot, ship, target
+  return false  if ship.disabled
+  [closest,dist] = ship.closestUser()
+  if dist > 5000
+    console.log ship.name, 'has target', lock, closest.name
+    @trigger null, @target = closest
+    NET.weap.write null, 0, slot, ship, closest
     false
   else true
 
 Weapon.Defensive = $worker.ReduceList (time)->
   { ship, target, slot, lock } = @
-  unless ship.hostile? and 0 < ship.hostile.length
-    return true
-  closest     = null
-  closestDist = Infinity
-  ship.update time
-  for v in ship.hostile
-    continue if v.destructing
-    v.update time
-    if ( closestDist > d = $dist(ship,v) ) and ( 1000000 > abs d )
-      closestDist = d
-      closest = v
-  @target = target = if closestDist > 5000 then null else closest
-  if target
-    console.log ship.name, 'has target', lock, target.name
-    @trigger null, target
-    NET.weap.write null, 0, slot, ship, target
+  return true     if ship.disabled
+  return true unless ship.hostile? and 0 < ship.hostile.length
+  [closest,dist]   = ship.closestHostile()
+  if dist > 5000
+    console.log ship.name, 'has target', lock, closest.name if debug
+    @trigger null, @target = closest
+    NET.weap.write null, 0, slot, ship, closest
     false
   else true
 
@@ -220,7 +215,8 @@ Weapon.Beam = ->
 
 BeamWorker = $worker.ReduceList (time)->
   if @stop or @tt < time
-    return do @release
+    do @release
+    return false
   return true if isClient
   ship = @ship
   ship.update time

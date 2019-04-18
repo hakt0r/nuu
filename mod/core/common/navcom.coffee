@@ -268,8 +268,8 @@ $public class NavComVector
     @glitim = @glidst / @selspd
     @decfti = ( @glifti = ( @accfti = ( @matfti = @ST + @mattim ) + @acctim ) + @glitim ) + @dectim
     @absETA = @ST + @relETA = @mattim + @acctim + @dectim + @glitim
-    @mathdd = RAD * $v.head @matvel, $v.zero
-    @glihdd = RAD * $v.head @apppth, $v.zero
+    @mathdd = ( 360 + RAD * $v.head @matvel, $v.zero ) % 360
+    @glihdd = ( 360 + RAD * $v.head @apppth, $v.zero ) % 360
     @glirhd = ( 360 + RAD * $v.head @rappth, $v.zero ) % 360
     @mattrn = if ( @mattrt = s.turnTimeSigned @mathdd, s.d     ) > 0 then @loctrn else ( @mattrt = abs @mattrt; -@loctrn )
     @acctrn = if ( @acctrt = s.turnTimeSigned @glihdd, @mathdd ) > 0 then @loctrn else ( @acctrt = abs @acctrt; -@loctrn )

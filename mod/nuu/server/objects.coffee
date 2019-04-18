@@ -47,7 +47,6 @@ Ship::respawn = ->
     @setState S:$moving, x:@x, y:@y, v:[0,0]
     do @update
     NET.mods.write  @, 'spawn'
-    @respawning = no
   ), 4500
 
 Ship::hit = (src,wp) ->
@@ -58,8 +57,10 @@ Ship::hit = (src,wp) ->
       NET.mods.write @, 'hit', @shield, @armour
     when Weapon.impactType.shieldsDown
       NUU.emit 'ship:shieldsDown', @, src
+      NET.mods.write @, 'shield', @shield, @armour
     when Weapon.impactType.disabled
       NUU.emit 'ship:disabled', @, src
+      NET.mods.write @, 'disabled', @shield, @armour
     when Weapon.impactType.destroyed
       NUU.emit     'ship:destroyed', @, src
       NET.mods.write @, 'destroyed', 0, 0

@@ -76,6 +76,7 @@ NET.on 'modSlot', (msg,src) ->
 NET.on 'build', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
   return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_disabled'          if o.disabled
   return src.error '_not_in_orbit'  unless s = o.state.S is $orbit
   return src.error '_invalid_item'  unless b = Item.byType.station[msg]
   return src.error '_not_here'      unless p = o.state.relto.buildRoot
@@ -87,6 +88,7 @@ NET.on 'build', (msg,src) ->
 NET.on 'jump', (target,src) ->
   return src.error '_no_handle'     unless u = src.handle
   return src.error '_no_vehicle'    unless o = u.vehicle
+  return src.error '_disabled'          if o.disabled
   return src.error '_nx_target'     unless target = $obj.byId[parseInt target]
   return src.error '_no_fuel'       unless o.fuel > 500
   o.fuel -= 500; NET.health.write o
@@ -292,7 +294,8 @@ User::action = (t,mode) ->
   t.update time
   dist  = $dist o, t
   zone  = ( o.size + t.size ) * .5
-  @[mode] t, o, zone, dist if ['eva','launch','capture','dock','land','orbit','formation','travel'].includes mode
+  if ['eva','launch','capture','dock','land','orbit','formation','travel'].includes mode
+    @[mode] t, o, zone, dist
   return
 
 User::eva = (t,o,zone,dist)->
@@ -300,12 +303,13 @@ User::eva = (t,o,zone,dist)->
   return
 
 $obj::launch = ->
-  @locked = no
+  @locked = @landedAt = no
   @setState S:$moving
 
 User::launch = (t,o,zone,dist)->
   if ( o.state.S is $orbit or o.landedAt ) and @mountId is 0
-    o.launch o.landedAt = no
+    return if @disabled
+    o.launch()
     @save()
     NUU.jsoncastTo o, launch:yes
   else if @equip? and @equip.type is 'fighter bay'

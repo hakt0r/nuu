@@ -99,7 +99,7 @@ Ship.blueprint =
 
 Ship::destructor = ->
   $worker.remove @model
-  do @reset
+  do @reset; @destructing = yes
   for slot in @slots.weapon when slot and slot.equip
     slot.equip.release()
   $obj::destructor.call @
@@ -109,7 +109,7 @@ Ship::reset = ->
     h.target = no if h.target is @
     Array.remove h.hostile, @
   @hostile = []
-  @destructing = false
+  @disabled = @respawning = @locked = @destructing = no
   @energy = @energyMax
   @shield = @shieldMax
   @armour = @armourMax
@@ -158,7 +158,6 @@ Ship::turnTimeSigned = (dir,origin=@d)->
   ( -180 + $v.umod360 -180 + dir - origin ) / ( @turn || 1 )
 
 Ship::updateMods = ->
-
   # gather / calculate mods
   @mods = {}
   @mass = 0
@@ -183,7 +182,7 @@ Ship::updateMods = ->
   @[k] += @[k] * ( v / 100 ) for k,v of map
 
   # scale model values
-  @armourMax = @armour  = @stats.armour / 1000
+  @armourMax = @armour  = @stats.armour
   @fuelMax   = @fuel    = @fuel * 10
   @turn      = @turn   / 500
   @thrust    = @thrust / 10000
@@ -196,6 +195,7 @@ Ship::updateMods = ->
 
 ShipModel = $worker.ReduceList (time)->
   return false if @destructing
+  return true  if @disabled
   # return 1000 if @fuel <= 0
   add = null
   @fuel += @fuelRegen || 0.5

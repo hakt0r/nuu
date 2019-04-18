@@ -172,8 +172,9 @@ NET.define 2,'STATE',
   read:
     client: State.fromBuffer
     server: (msg,src) ->
-      o = src.handle.vehicle
-      return unless o.mount[0] is src.handle # only user on helm mount
+      return src.error '_no_vehicle' unless o = src.handle.vehicle
+      return src.error '_is_locked'      if o.locked
+      return src.error '_not_helm'   unless o.mount[0] is src.handle # only user on helm mount
       o.accel = o.boost = o.retro = o.right = o.left = o.idle = undefined; o[State.controls[msg[1]]] = true
       o.d = msg.readUInt16LE 2
       o.a = o.thrustToAccel msg[4]
@@ -229,6 +230,7 @@ NET.define 10,'STEER',
       return src.error '_no_mounts'     unless m = o.mount
       return src.error '_not_mounted' if -1 is idx = m.indexOf u
       return src.error '_no_steer'    if -1 is ['helm','weap'].indexOf t = o.mountType[idx] # FIXME:cache
+      return src.error '_is_locked'         if o.locked
       NET.steer.write o, idx, ( msg.readUInt16LE 1 ) % 360
 
 ###
@@ -245,6 +247,7 @@ NET.define 11,'BURN',
     return src.error '_no_vehicle' unless o = u.vehicle
     return src.error '_no_mounts'  unless m = o.mount
     return src.error '_not_helm'   unless 0 is idx = m.indexOf u
+    return src.error '_is_locked'      if o.locked
     NET.burn.write o, msg.readUInt16LE 1
   write:
     server:(o,value)->
@@ -263,9 +266,6 @@ NET.define 11,'BURN',
    ███ ███  ███████ ██   ██ ██       ██████  ██   ████
 ###
 
-weaponActionKey  = ['trigger','release','reload','aim']
-weaponActionCode =   trigger:0,release:1,reload:2,aim:3
-
 NET.define 3,'WEAP',
   read:
     client: (msg,src) ->
@@ -273,29 +273,29 @@ NET.define 3,'WEAP',
       return console.log 'weap', 'missing:sid' unless slot    = vehicle.slots.weapon[msg[2]]
       return console.log 'weap', 'missing:tid' unless target  = slot.target = $obj.byId[msg.readUInt16LE 5]
       action = if 0 is ( mode = msg[1] ) then 'trigger' else 'release'
-      console.log '$net', action, vehicle.id if debug
       slot.equip[action](null,target)
     server: (msg,src)->
+      return src.error '_no_vehicle' unless vehicle = src.handle.vehicle
+      return src.error '_no_slot'    unless slot = vehicle.slots.weapon[sid = msg[3]]
+      return src.error '_no_target'  unless target = slot.target = $obj.byId[msg.readUInt16LE 4]
+      return src.error '_disabled'       if vehicle.disabled
       mode = msg[1]
-      return unless vehicle = src.handle.vehicle
-      return unless slot = vehicle.slots.weapon[sid = msg[3]]
-      return unless target = slot.target = $obj.byId[msg.readUInt16LE 4]
       slot.id = sid # FIXME
       NET.weap.write src, mode, slot, vehicle, target
   write:
     client: (action,primary,slotid,tid)->
       return unless tid
       console.log 'weap', action,primary,slotid,tid if debug
-      msg = Buffer.from [NET.weapCode,weaponActionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
+      msg = Buffer.from [NET.weapCode,Weapon.actionKey.indexOf(action),(if primary then 0 else 1),slotid,0,0]
       msg.writeUInt16LE tid, 4
       NET.send msg.toString 'binary'
     server: (src,mode,slot,vehicle,target)->
       return console.log 'weap', 'nothing equipped',slot unless equipped = slot.equip
-      return console.log 'weap', 'no trigger/release' unless modeCall = equipped[weaponActionKey[mode]]
+      return console.log 'weap', 'no trigger/release' unless modeCall = equipped[Weapon.actionKey[mode]]
       modeCall src, target
       msg = Buffer.from [NET.weapCode, mode, slot.id, 0,0, 0,0 ]
       msg.writeUInt16LE vehicle.id, 3
-      msg.writeUInt16LE target.id,  5
+      msg.writeUInt16LE target.id,  5 if target
       NUU.nearcast ( msg.toString 'binary' ), vehicle
 
 ###
@@ -325,14 +325,16 @@ NET.define 4,'ACTION',
   ██      ██  ██████  ██████  ███████
 ###
 
-modsKey = ['spawn','destroyed','hit','stats']
+modsKey = ['spawn','destroyed','hit','shield','disabled','stats']
 NET.define 5,'MODS',
   read: client: (msg,src) ->
     mode = modsKey[msg[1]]
     vid  = msg.readUInt16LE 2
     return console.log ':net', 'mods', 'missing:vid', vid, mode unless ship = Shootable.byId[vid]
     type = ship.constructor.name.toLowerCase() + ':'
-    ship.destructing = on if mode is 'destroyed'
+    ship.destructing = yes if mode is 'destroyed'
+    ship.disabled    = yes if mode is 'disabled'
+    ship.reset()           if mode is 'spawn'
     NUU.emit '$obj:' + mode, ship, ship.shield = msg.readUInt16LE(4), ship.armour = msg.readUInt16LE(6)
   write: server: (ship,mod,a=0,b=0) ->
     msg = Buffer.from [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0, 0,0]

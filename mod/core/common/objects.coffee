@@ -119,6 +119,36 @@ $obj.register = (blueprint)->
   blueprint.list = []
   $public blueprint
 
+#  ██████ ██       ██████  ███████ ███████ ███████ ████████
+# ██      ██      ██    ██ ██      ██      ██         ██
+# ██      ██      ██    ██ ███████ █████   ███████    ██
+# ██      ██      ██    ██      ██ ██           ██    ██
+#  ██████ ███████  ██████  ███████ ███████ ███████    ██
+
+$obj::closestUser = ->
+  return no unless NUU.users.length > 0
+  closest = null; dist = Infinity
+  for p in NUU.users
+    continue unless v = p.vehicle
+    continue     if v.destructing or v.respawning
+    if ( dist > d = $dist(@,v) ) and ( abs(d) < 1000000 )
+      dist = d
+      closest =  v
+  return no unless closest
+  return [closest,dist]
+
+$obj::closestHostile = ->
+  return no unless @hostile
+  closest = null; dist = Infinity
+  for p in @hostile
+    continue unless v = p.vehicle
+    continue     if v.destructing or v.respawning
+    if ( dist > d = $dist(@,v) ) and ( abs(d) < 1000000 )
+      dist = d
+      closest =  v
+  return no unless closest
+  return [closest,dist]
+
 # ███████ ██    ██ ███    ██  ██████
 # ██       ██  ██  ████   ██ ██
 # ███████   ████   ██ ██  ██ ██
@@ -237,6 +267,12 @@ $obj.register class Cargo extends $obj
     @name = "[#{@item.name}]"
   toJSON: -> id:@id,key:@key,state:@state,item:@item
 
+#  █████  ███████ ████████ ███████ ██████   ██████  ██ ██████
+# ██   ██ ██         ██    ██      ██   ██ ██    ██ ██ ██   ██
+# ███████ ███████    ██    █████   ██████  ██    ██ ██ ██   ██
+# ██   ██      ██    ██    ██      ██   ██ ██    ██ ██ ██   ██
+# ██   ██ ███████    ██    ███████ ██   ██  ██████  ██ ██████
+
 $obj.register class Asteroid extends $obj
   @interfaces: [$obj,Shootable,Debris,Asteroid]
   constructor: (opts) ->
@@ -259,6 +295,17 @@ $obj.register class Asteroid extends $obj
     super opts
     @name = 'roid-' + @id
     @hp = 100
+
+$obj::closestAsteroid = ->
+  return no unless Asteroid.list.length > 0
+  closest = null; dist = Infinity
+  for p in Asteroid.list
+    continue if p.destructing
+    if dist > d = abs $dist @,p
+      closest = p
+      dist = d
+  return no unless dist < 10e3
+  return [closest,dist]
 
 return if isServer
 

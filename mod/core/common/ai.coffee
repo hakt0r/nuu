@@ -65,21 +65,23 @@ $public class AI extends Ship
   onHit:->
   onHostility:->
   onShieldsDown:->
-  onDisabled:->
-  onDestruct:->
+  onDisabled:-> @changeStrategy null
+  onDestruct:-> @changeStrategy null
 
 AI::hit = (src,wp) ->
   return if @destructing
-  switch Weapon.impactLogic.call @, wp
+  switch v = Weapon.impactLogic.call @, wp
     when Weapon.impactType.hit
       NUU.emit 'ship:hit', @, src, @shield, @armour
       NET.mods.write @, 'hit', @shield, @armour
       do @onHit
     when Weapon.impactType.shieldsDown
       NUU.emit 'ship:shieldsDown', @, src
+      NET.mods.write @, 'shield', @shield, @armour
       do @onShieldsDown
     when Weapon.impactType.disabled
       NUU.emit 'ship:disabled', @, src
+      NET.mods.write @, 'disabled', @shield, @armour
       do @onDisabled
     when Weapon.impactType.destroyed
       NUU.emit     'ship:destroyed', @, src
@@ -93,29 +95,6 @@ AI::changeStrategy = (strategy)->
   ( AI.worker[@strategy].remove @; delete @strategy ) if @strategy
   ( AI.worker[@strategy = strategy].add   @         ) if strategy?
   return @
-
-$obj::closestUser = ->
-  return no unless NUU.users.length > 0
-  closest = null; dist = Infinity
-  for p in NUU.users
-    continue unless v = p.vehicle
-    continue     if v.destructing or v.respawning
-    if ( dist > d = $dist(@,v) ) and ( abs(d) < 1000000 )
-      dist = d
-      closest =  v
-  return no unless closest
-  return [closest,dist]
-
-$obj::closestAsteroid = ->
-  return no unless Asteroid.list.length > 0
-  closest = null; dist = Infinity
-  for p in Asteroid.list
-    continue if p.destructing
-    if dist > d = abs $dist @,p
-      closest = p
-      dist = d
-  return no unless dist < 10e3
-  return [closest,dist]
 
 AI::aiType       = 'ai'
 AI::npc          = true

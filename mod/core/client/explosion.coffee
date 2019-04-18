@@ -46,14 +46,14 @@ $Animated Explosion, layer: 'fx', loop: no
 # A collage animation to 'splode ships and stuff :>
 $Animated.destroy = (v,t=4000,c=25) ->
   $Animated.explode v, min(t,round(random()*t)) for i in [0...c]
-  setTimeout ( -> v.destructing = no ), t
   null
 
 $Animated.explode = (v,t) ->
   setTimeout ( -> new Explosion v ), t
 
-NUU.on '$obj:hit', (v) ->
-  $Animated.explode v, 0
+NUU.on '$obj:hit',      (v) -> $Animated.explode v, 0
+NUU.on '$obj:shield',   (v) -> $Animated.explode v, 0
+NUU.on '$obj:disabled', (v) -> $Animated.explode v, 0
 
 NUU.on '$obj:destroyed', (v) ->
   return $Animated.destroy v, 1500, 5 unless v.constructor.name is 'Ship'
