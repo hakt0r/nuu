@@ -31,8 +31,14 @@ Ship::dropLoot = ->
   newRandom Debris for i in [0...10]
   null
 
+Ship::resetHostiles = ->
+  h = @hostile; @hostile = []
+  Array.remove s.hostile, @ for s in h
+  NUU.jsoncastTo @, hostile:@hostile if @inhabited
+
 Ship::respawn = ->
   @respawning = yes
+  @resetHostiles()
   setTimeout ( =>
     @dropLoot()
     do @reset

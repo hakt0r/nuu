@@ -79,15 +79,31 @@ Weapon.impactLogic = (wp)->
     ██   ██ ██    ██      ██    ██    ██ ██      ██    ██       ██
     ██   ██  ██████  ███████    ██    ██ ███████ ██    ██       ██    ###
 
-Weapon.hostility = (vehicle,target)->
-  # return false unless vehicle.hostile? and target.hostile?
-  if  target.hostile and -1 is  target.hostile.indexOf vehicle
-    target.hostile.push vehicle
+Weapon.hostility = (perp,target)->
+  if ( h = target.hostile ) and -1 is h.indexOf perp
+    h.push perp
     target.onHostility() if target.onHostility
-    NUU.jsoncastTo target, hostile: vehicle.id if target.inhabited
-  if vehicle.hostile and -1 is vehicle.hostile.indexOf target
-    vehicle.hostile.push target
-    NUU.jsoncastTo vehicle, hostile: target.id if vehicle.inhabited
+    Sync.hostile.add target if target.inhabited
+  if ( h = perp.hostile ) and -1 is h.indexOf target
+    h.push target
+    Sync.hostile.add perp if perp.inhabited
+
+Sync.hostile = new class HostileSync
+  inst:no
+  set:null
+  constructor:->
+    @set = new Set
+  add:(s)->
+    @set.add s
+    @inst = setTimeout @flush, TICK unless @inst
+    return
+  flush:=>
+    @set.forEach (s)->
+      console.log 'sync:host', s.name
+      NUU.jsoncastTo s, hostile:s.hostile.map $id$
+    @set = new Set
+    @inst = no
+    return
 
 ### ████████  █████  ██████   ██████  ███████ ████████ ███████
        ██    ██   ██ ██   ██ ██       ██         ██    ██

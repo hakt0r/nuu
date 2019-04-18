@@ -20,6 +20,8 @@
 
 ###
 
+$static '$id$', (i)-> i.id
+
 NUU.fix_sprites = (o)->
   for k,v of o
     w = v.size

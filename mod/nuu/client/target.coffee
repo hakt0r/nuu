@@ -35,14 +35,16 @@ NET.on 'hostile', addHostile = (id)->
     Target.hostile[v.id] = v
     NUU.emit 'hostile', i
   if Array.isArray id
-    Object.empty Target.hostile
+    Array.empty Target.hostile
     id.map doAdd
     count = id.length
   else doAdd id
   Target.types[0] = Target.hostile
-  unless count is 0
-    NUU.emit 'hostiles', Target.hostile
-    do Target.enemy
+  NUU.emit 'hostiles', Target.hostile
+  if Target.hostile.length is 0
+       do Target.nothing
+  else do Target.enemy
+  return
 
 window.TARGET = null
 
@@ -50,7 +52,7 @@ $public class Target
   @id: 0
   @class: 0
   @mode: 'land'
-  @hostile: h = {}
+  @hostile: h = []
   @typeNames : ['hostile','ship','stellar','all','roid','off']
   @types : [h,Ship.byId,Stellar.byId,$obj.byId,Asteroid.byId,[]]
 

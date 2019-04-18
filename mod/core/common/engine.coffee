@@ -249,7 +249,7 @@ Array.uniq = (a)->
   a.filter (v,i,s)-> v? and s.indexOf v is i
 
 Array.empty = (a)->
-  a.pop() while a.length > 0
+  a.splice 0, a.length
   a
 
 Array.pushUnique = (a,v)->
