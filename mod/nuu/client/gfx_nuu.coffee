@@ -36,8 +36,8 @@ makeStarfield = (mod...)->
 
 Sprite.initSplash = ->
   @layer 'bg', new PIXI.Container
-  @layer 'fx', new PIXI.Container
   @layer 'fg', new PIXI.Container
+  @layer 'fx', new PIXI.Container
   @bg.addChild @nebulae   = new PIXI.Container
   @bg.addChild @starfield = makeStarfield [1,0.3,250],[1.5,0.7,20],[2,0.7,5]
   @fx.addChild @parallax  = makeStarfield [1,0.2,500]
@@ -79,6 +79,7 @@ Sprite.initSpace = ->
   @layer 'weap', new PIXI.Container
   @layer 'ship', new PIXI.Container
   @layer 'play', new PIXI.Container
+  PIXI.bringToFront @fx, @stage
   do Scanner.show
   do HUD.show
   @repositionPlayer = @repositionPlayerSpace
