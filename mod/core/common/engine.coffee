@@ -286,6 +286,12 @@ console.colorDump = (opts={})->
 $static 'rules', ->
   if isClient then rules.client() else rules.server()
 
+$public class Singleton
+  constructor:(opts)->
+    Object.assign opts
+    @init()
+  init:->
+
 $public class Deterministic
   constructor:(@seed)->
     @callCount = 0
