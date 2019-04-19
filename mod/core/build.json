@@ -1,12 +1,13 @@
 { "client":{
     "require": [
       ["Crypto","crypto"],
-      ["EventEmitter","events","EventEmitter"],
+      ["EventEmitter","eventemitter3","EventEmitter"],
       ["Buffer","buffer","Buffer"],
       ["$","jquery"],
       ["PIXI","pixi.js"],
       ["$v","vectors"]],
     "libs": [
+      "eventemitter3",
       "crypto",
       "events",
       "jquery",
@@ -40,7 +41,7 @@
     "fs",
     "path",
     ["Crypto","crypto"],
-    ["EventEmitter","events","EventEmitter"],
+    ["EventEmitter","eventemitter3","EventEmitter"],
     ["$v","vectors"],
     ["$tag","tagscale"]],
   "sources": [
