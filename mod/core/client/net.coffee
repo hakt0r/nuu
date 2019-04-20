@@ -26,20 +26,30 @@ NET.login = (name, pass, callback, register=no) ->
 NET.register = (name, pass, callback) -> NET.login name, pass, callback, yes
 
 NET.on 'e', (message) -> notice 1000, Error.byId[message]
-NET.on 'sync', (opts) -> NUU.sync opts
 NET.on 'launch',      -> VEHICLE.landedAt = VEHICLE.orbit = null
 NET.on 'landed',  (id)->
   vt.hide()
   new Window.DockingMenu VEHICLE.landedAt = $obj.byId[id]
 
+NET.on 'sync', (opts) -> NUU.sync opts
 NUU.sync = (list,callback) ->
-  if list.del then for id in list.del when o = $obj.byId[id]
-    do o.destructor
-  if list.add then $obj.select list.add.map (obj)->
-    if o = $obj.byId[obj.id]
-      console.log '$obj', 'exists:replace', obj.id # if debug
-      o.destructor()
-    new $obj.byClass[obj.key] obj
+  do o.destructor for id in list.del when o = $obj.byId[id] if list.del
+  if todo = list.add
+    adds = []; back = []; lastLen = NaN
+    while lastLen isnt todo.length
+      lastLen = todo.length
+      for obj in todo
+        if o = $obj.byId[obj.id]
+          console.log '$obj', 'exists:replace', obj.id if debug
+          o.destructor()
+        if obj.id isnt 0 and ( s = obj.state ).relto? and not ( s.relto.id? or r = $obj.byId[s.relto] )
+          back.push obj
+        else
+          s.relto = r if r
+          adds.push new $obj.byClass[obj.key] obj
+      todo = back; back = []
+    $obj.select adds         if adds.length > 0
+    SyncRequest.addList back if back.length > 0
   else $obj.select yes
   callback null if callback
 

@@ -56,16 +56,19 @@ if isClient then NET.on 'state', (list)->
 if isClient then $public class State
   constructor:(opts) ->
     return if false is opts
-    @update = @updateRelTo if opts.relto and @updateRelTo
-    time = NUU.time()
     Object.assign @, opts
-    @o = if @o.id? then @o else $obj.byId[@o]
+    unless @o.id?
+      console.error '$state:object not resolved', @o if debug
+      return false
+    console.error  '$state:relto not resolved', @relto unless @relto.id? if debug
+    @update = @updateRelTo if @updateRelTo and @relto?
+    @o.update = @update.bind @
     @o.locked = @lock?
     @o.state = @
-    @o.update = @update.bind @
-    @relto.update time if @relto?.id? or @relto = $obj.byId[@relto]
-    do @cache if @cache
-    @update time
+    t = NUU.time()
+    @relto.update t if @relto
+    @cache()        if @cache
+    @update t
     # console.log @o.name, State.toKey[@S], @p, @v
 
 # ███████ ███████ ██████  ██    ██ ███████ ██████
