@@ -27,6 +27,13 @@ rules.dm.server = ->
 
   rules.stats = stats = {}
 
+  if process.env.CHEAT? then NET.on 'cheat', (msg,src) ->
+    return unless msg is process.env.CHEAT
+    user = src.handle
+    i = user.db.unlocks
+    i[name] = 100 for name in Object.keys(Item.byName)
+    user.save()
+
   NET.on 'shipname', (msg,src) ->
     return src.error '_invalid_msg'   unless typeof msg is 'string'
     return src.error '_no_handle'     unless u = src.handle
@@ -304,7 +311,7 @@ rules.dm.stars = [
   [ 208, Moon,    'Laomedeia',           'D05',                   23571000,    $orbit, 8, t:0]
   [ 209, Moon,    'Neso',                'D02',                   48387000,    $orbit, 8, t:0]
   [ 210, Moon,    'Hippocamp',           'D01',                   105283,      $orbit, 8, t:0]
-  # Pluto
+  # Companions Pluto
   [ 220, Moon,    'Charon',              'D01',                   19591,       $orbit, 10,t:0]
   [ 221, Moon,    'Nix',                 'D02',                   48671,       $orbit, 10,t:0]
   [ 222, Moon,    'Hydra',               'D01',                   64698,       $orbit, 10,t:0]

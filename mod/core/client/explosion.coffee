@@ -25,18 +25,19 @@ $obj.register class Explosion extends $obj
   @interfaces: [$obj]
   id: 'animation'
   parent: null
-  constructor: (parent)->
+  constructor: (parent,i=-1)->
     return unless parent and parent.id
     return if parent.destructing and parent.constructor.type is "station"
+    i = round random() if i is -1
     qs = parent.size/4
     hs = parent.size/2
     super
       parent:parent
       id:'animation' + $Animated.id++
-      sprite: Array.random Explosion.sizes
+      sprite:Explosion.sizes[i]
       state:
         S: $fixedTo
-        relto: parent.id
+        relto: parent
         x: -qs+random()*hs
         y: -qs+random()*hs
     Sound['explosion0.wav'].play() if Sound.on
@@ -45,15 +46,18 @@ $Animated Explosion, layer: 'fx', loop: no
 
 # A collage animation to 'splode ships and stuff :>
 $Animated.destroy = (v,t=4000,c=25) ->
-  $Animated.explode v, min(t,round(random()*t)) for i in [0...c]
-  null
+  $Animated.explode v, min(t,round(random()*t)) for i in [0...c-1]
+  $Animated.explode v, t, 3
+  setTimeout ( -> v.hide() ), t
+  setTimeout ( -> v.show() ), t + 3000
+  return
 
-$Animated.explode = (v,t) ->
-  setTimeout ( -> new Explosion v ), t
+$Animated.explode = (v,t,i) ->
+  setTimeout ( -> new Explosion v,i ), t
 
-NUU.on '$obj:hit',      (v) -> $Animated.explode v, 0
-NUU.on '$obj:shield',   (v) -> $Animated.explode v, 0
-NUU.on '$obj:disabled', (v) -> $Animated.explode v, 0
+NUU.on '$obj:hit',      (v) -> $Animated.explode v, 0, 1
+NUU.on '$obj:shield',   (v) -> $Animated.explode v, 0, 2
+NUU.on '$obj:disabled', (v) -> $Animated.explode v, 0, 3
 
 NUU.on '$obj:destroyed', (v) ->
   return $Animated.destroy v, 1500, 5 unless v.constructor.name is 'Ship'

@@ -62,10 +62,10 @@ PIXI.TilingSprite   = PIXI.extras.TilingSprite   unless PIXI.TilingSprite
 
 PIXI.bringToFront = (sprite, parent) ->
   sprite = if typeof sprite != 'undefined' then sprite.target or sprite else this
-  parent = parent or sprite.parent or 'children': false
+  parent = parent || sprite.parent || 'children': false
   return unless chd = parent.children
-  return unless -1 isnt idx = chd.indexOf sprite
-  chd.push sprite
+  parent.removeChild sprite
+  parent.addChild    sprite
   return
 
 PIXI.blurOut = (o,t=1500,s=2)-> new Promise (resolve)->

@@ -84,6 +84,17 @@ $obj.register class Stellar extends $obj
     consumes: @consumes }
   produce:-> e:@produces.e * @level
 
+Stellar::actions = ['travel','orbit','land','jump']
+Stellar::defaultAction = ->
+  d = VEHICLE.dist TARGET
+  mode = 'travel'
+  mode = 'orbit' if d < 10e3 and TARGET.bigMass
+  mode = 'land'  if d < TARGET.size + VEHICLE.size
+  mode
+
+Object.defineProperty Stellar::, 'zoneDomain', get:->
+  "#{@name}.#{@zone.root.name}"
+
 Stellar.init = ->
   console.log ':nuu', 'init:stars' if debug
   orbits = {}

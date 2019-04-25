@@ -116,7 +116,7 @@ AI.autospawn = -> $worker.push =>
     1000
 
 AI.randomStellar = ->
-  stel = $obj.byId[ Array.random Object.keys(Stellar.byId).concat Object.keys(Station.byId) ]
+  stel = Array.random Stellar.list.concat Station.list
   stel.update()
   stel
 
@@ -191,11 +191,11 @@ AI.shootInRange = ->
 
 AI.register 'approach',
   getTarget:->
-    @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
+    @target = Array.random Stellar.list
     console.log '::ai', "#{@name} to", @target.name if @target if debug
   onTarget:->
     console.log '::ai', "#{@name} at", @target.name if @target if debug
-    @target = Stellar.byId[ Array.random Object.keys Stellar.byId ]
+    @target = Array.random Stellar.list
     console.log '::ai', "#{@name} to", @target.name if @target if debug
 
 # ██████  ██████   ██████  ███    ██ ███████
@@ -315,15 +315,20 @@ $public class Trader extends AI
       new Escort escortFor:@id, formVec:vec.shift() )
     return
   onHostility:->
-    console.log @name, 'offended'
+    console.log @name, 'offended' if debug
     @onHostility = ->
     @changeStrategy 'escort:defend'
     e.changeStrategy 'escort:defend' for e in @escort
     return
 
 AI.register 'trade',
+  lostTarget:->
+    @target = null
+    @mission = false
+    @changeStrategy 'trade'
+    console.log '@trader', @name, 'lost mission target' if debug
   getTarget:->
-    if @inventory.total is 0 or not @misson
+    if @inventory.total is 0 or not @mission
       return unless r = Object.randomPair Economy.need
       [ item, dest ] = r
       return unless t = Object.randomPair dest
@@ -331,43 +336,46 @@ AI.register 'trade',
       return unless dest = $obj.byId[dest]
       return unless z = Array.random Economy.has item
       return unless source = Array.random z.list
-      @misson = item:item, source:source, dest:dest, count:count, task:'pickup'
+      @mission = item:item, source:source, dest:dest, count:count, task:'pickup'
       @target = source
       @setState S:$travel, relto:@target
-      # console.log "new misson: #{item} from #{dest.name}@#{z.root.name} for #{source.name}" # if debug
+      console.log "#{@name} new mission: #{item} from #{source.zoneDomain} to #{dest.zoneDomain}", @mission if debug
     else
-      @target = @misson.dest
-      @setState S:$travel, relto:@target
-      # m = @misson; console.log "bring: #{m.item} from #{m.source.name} to #{m.dest.name}@#{m.dest.zone.root.name}" # if debug
+      # if debug
   onTarget:->
     if @land @target
-      console.log '::ai', "#{@name} landManual".yellow, @target.name    if @steer
-      # console.log '::ai', "#{@name} landTravel".green, @target.name unless @steer
-      # if debug
+      console.log '::ai', "#{@name} landManual".yellow, @target.name if @steer if debug
+      console.log '::ai', "#{@name} landTravel".green, @target.name unless @steer if debug
+      unless @mission
+        @getTarget()
+        return
       @changeStrategy @target = null
       tries = 0
       setTimeout ( waitForResources = =>
-        switch @misson.task
+        switch @mission.task
           when 'pickup'
-            m = @misson
-            unless @misson.source.zone.inventory.give @inventory, m.item, m.count
+            m = @mission
+            unless @mission.source.zone.inventory.give @inventory, m.item, m.count
               if ++tries is 3
-                # console.log '::ai', "#{@name} missonFailed #{@landedAt.name}" # if debug
+                # console.log '::ai', "#{@name} missionFailed #{@landedAt.name}" # if debug
                 return
               setTimeout waitForResources, 10000
-              # console.log '::ai', "#{@name} wait at #{@landedAt.name}@#{@landedAt.zone.root.name}" # if debug
-              # console.log @misson.source.zone.inventory
+              console.log '::ai', "#{@name} wait at #{@landedAt.zoneDomain}" if debug
+              # console.log @mission.source.zone.inventory
               return
             m.task = 'deliver'
-            # console.log "pickup: #{m.item} from #{m.dest.name}@#{m.dest.zone.root.name} for #{m.source.name}" # if debug
+            console.log "pickup: #{m.item} from #{m.source.zoneDomain} to #{m.dest.zoneDomain}" if debug
             @launch()
+            @target = @mission.dest
+            @setState S:$travel, relto:@target
             @changeStrategy 'trade'
+            # m = @mission; console.log "#{@name} bring: #{m.item} from #{m.source.zoneDomain} to #{m.dest.name}@#{m.dest.zoneDomain}"
           when 'deliver'
-            m = @misson
+            m = @mission
             @inventory.give m.source.zone.inventory, m.item, m.count
             @inventory.data = {}
-            # console.log '::ai', "#{@name} delivered #{m.item} to #{@landedAt.name}" # if debug
-            delete @misson
+            console.log '::ai', "#{@name} delivered #{m.item} to #{@landedAt.zoneDomain}" if debug
+            delete @mission
             setTimeout (=>
               @launch()
               @changeStrategy 'trade'
@@ -376,8 +384,8 @@ AI.register 'trade',
       ), 10000
     else
       @steer = AI.steer
-      console.log '::ai', "#{@name} landFailed".red, @target.name
-      # if debug
+      console.log '::ai;trader', "#{@name} landFailed".red, @target.name, @mission if debug
+    return
 
 # ███████ ███████  ██████  ██████  ██████  ████████
 # ██      ██      ██      ██    ██ ██   ██    ██

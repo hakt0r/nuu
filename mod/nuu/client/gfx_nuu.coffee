@@ -40,7 +40,7 @@ Sprite.initSplash = ->
   @layer 'fx', new PIXI.Container
   @bg.addChild @nebulae   = new PIXI.Container
   @bg.addChild @starfield = makeStarfield [1,0.3,250],[1.5,0.7,20],[2,0.7,5]
-  @fx.addChild @parallax  = makeStarfield [1,0.2,500]
+  @bg.addChild @parallax  = makeStarfield [1,0.2,500]
   Nebula.deterministic = new Deterministic 'nuusplash'
   Nebula.random() for i in [0..2+max 1, Math.ceil Nebula.deterministic.double()*5]
   @starfield.alpha = 1.0

@@ -20,12 +20,12 @@
 
 ###
 
-NUU.on 'newTarget', (opts) -> Target.widget()
+NUU.on 'target:new', (opts) -> Target.widget()
 
 NUU.on '$obj:destroyed', (v) ->
   delete Target.hostile[k] for k,i of Target.hostile when i.id is v.id
-  do Target.enemy          if TARGET? and v.id is TARGET.id
-  null
+  Target.enemy() if Target.hostile.length > 0
+  return
 
 NET.on 'hostile', addHostile = (id)->
   count = 1
@@ -53,25 +53,29 @@ $public class Target
   @class: 0
   @mode: 'land'
   @hostile: h = []
-  @typeNames : ['hostile','ship','stellar','all','roid','off']
-  @types : [h,Ship.byId,Stellar.byId,$obj.byId,Asteroid.byId,[]]
+  @typeNames : ['off','hostile','ship','stellar','roid','all']
+  @types : [[],h,Ship.byId,Stellar.byId,Asteroid.byId,$obj.byId]
 
 Target.widget = ->
   HUD.widget 'target', "#{Target.mode}", yes
 
-Target.set = (target,callback,old=TARGET)->
-  return NUU.emit 'newTarget', null, old unless window.TARGET = target
-  if Target.class is 1 then Target.mode = 'dock'
-  if Target.class is 2
-    if TARGET and TARGET.constructor.name is 'Stellar'
-      Target.mode = 'orbit'
-    else Target.mode = 'land'
+Target.set = (target,callback)->
+  old.unref @ if old = TARGET
+  unless window.TARGET = target
+    NUU.emit 'target:new', null, old
+    return
+  target.ref @, (v)->
+    Target.enemy()
+    NUU.emit 'target:lost', v
+    return
+  unless ( actions = TARGET.actions ).includes oldMode = Target.mode
+     Target.mode = TARGET.defaultAction?() || actions[0] || ''
   return console.log ':tgt', 'nx:ty' unless ty = Target.types
   return console.log ':tgt', 'nx:cl' unless cl = ty[Target.class]
   return console.log ':tgt', 'nx:ks' unless ks = Object.keys cl
   Target.id = if -1 is id = ks.indexOf '' + target.id then 0 else id
-  callback TARGET if callback? and typeof callback is 'function'
-  NUU.emit 'newTarget', target, old
+  callback? TARGET
+  NUU.emit 'target:new', target, old
   return TARGET
 
 Target.mutate = (fnc)-> again = (callback,skipSelf=false)->
@@ -99,70 +103,68 @@ Target.closest = Target.mutate (ix,ct,cl,ks,skipSelf) ->
   return if closest? then ks.indexOf '' + closest.id else 0
 
 Target.nothing = ->
-  Target.class = 4
+  Target.class = 0
   Target.set null
 
 Target.enemy = ->
-  Target.class = 0 # hostile
+  Target.class = 1 # hostile
   if TARGET and Target.hostile[TARGET.id]
     HUD.targetSprite.tint = 0xFF0000
   else do Target.closest
 
 Target.nextClass = ->
-  list = Target.types
-  ct = list.length
+  ct = ( list = Target.types ).length
   Target.class = ++Target.class % ct
   do Target.closest
-  null
+  do Target.nextClass if Target.class is 1 and VEHICLE.hostile.length is 0
+  return
 
 Target.prevClass = ->
-  list = Target.types
-  ct = list.length
+  ct = ( list = Target.types ).length
   Target.class = ( ct + --Target.class ) % ct
   do Target.closest
-  null
+  do Target.prevClass if Target.class is 1 and VEHICLE.hostile.length is 0
+  return
 
 Target.toggleMode = ->
-  Target.mode = switch Target.mode
-    when 'orbit'     then 'dock'
-    when 'dock'      then 'land'
-    when 'land'      then 'formation'
-    when 'formation' then 'travel'
-    else                  'land'
+  li = TARGET.actions || ['n/a']
+  le = li.length
+  ci = li.indexOf Target.mode
+  Target.mode = if ci is -1 then ( TARGET.defaultAction?() || li[0] ) else  li[++ci%le]
   Target.widget()
-  null
+  return
 
 Target.eva = ->
   NET.action.write 0, 'eva'
-  null
+  return
 
 Target.launch = ->
   NET.action.write 0, 'launch'
-  null
+  return
 
 Target.orbit = ->
   return unless t = TARGET
   NET.action.write t, Target.mode
-  null
+  return
 
 Target.jump = ->
   return unless t = TARGET
   NET.json.write jump: t.id
-  null
+  return
 
 Target.capture = capture = ->
   return unless t = TARGET
   NET.action.write t, 'capture'
-  null
+  return
 
 Target.roid = ->
   Target.class = 4
   do Target.closest
 
 Target.captureClosest = ->
-  Target.class = 3 # all
+  Target.class = 5 # all
   Target.closest (t)-> capture t if t?
-  null
+  return
 
 Target.prompt = ->
   vt.prompt "target#", (

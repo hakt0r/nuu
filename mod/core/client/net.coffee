@@ -33,7 +33,9 @@ NET.on 'landed',  (id)->
 
 NET.on 'sync', (opts) -> NUU.sync opts
 NUU.sync = (list,callback) ->
-  do o.destructor for id in list.del when o = $obj.byId[id] if list.del
+  if list.del
+    for id in list.del when o = $obj.byId[id]
+      do o.destructor
   if todo = list.add
     adds = []; back = []; lastLen = NaN
     while lastLen isnt todo.length

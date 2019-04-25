@@ -60,7 +60,6 @@ NUU.on 'enterVehicle', shpHandler = (t) ->
     delete HUD.playerSprite
   return unless t?
   img = t.imgCom || t.img || '/build/imag/noscanimg.png'
-  debugger if img is '/build/imag/noscanimg.png'
   HUD.layer.addChild HUD.playerSprite = s = PIXI.Sprite.fromImage img
   r = s.width / s.height
   s.width  = 100
@@ -107,7 +106,7 @@ NUU.on 'switchWeapon', switchWeapon = (slot,weap) ->
     HUD.secondary.text = "locked [1]"
   HUD.resize()
 
-NUU.on 'newTarget', tgtHandler = (t) ->
+NUU.on 'target:new', tgtHandler = (t) ->
   if HUD.targetSprite
     HUD.layer.removeChild HUD.targetSprite
     delete HUD.targetSprite
@@ -258,10 +257,10 @@ class uiText
 
 uiText.init = -> new uiText HUD, name, opts for name,opts of {
   system:{align:'right',fill:$palette.green}
-  primary:{align:'right',fill:$palette.grey}
-  secondary:{align:'right',fill:$palette.grey}
+  primary:{fill:$palette.grey}
+  secondary:{fill:$palette.grey}
   topLeft:{fill:'grey'}
-  text:{}
+  text:{fill:$palette.grey}
   notice:{}
   debug:{}}
 
@@ -331,27 +330,29 @@ $static 'HUD', new class NUU.HUD
     do @resize # UPDATE DYNAMIC POSITIONS
 
   resize:->
-    LeftAlign  = (o,x,y)=> x = WDB2 - x - @offsetX; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
-    RightAlign = (o,x,y)=> x = WDB2 + x + @offsetX; y = HEIGHT - y; if o.setPosition then o.setPosition x,y else o.position.set x,y
     @system.fontSize = @text.fontSize = @notice.fontSize = @debug.fontSize = @fontSize + 'px'
-    @notice.position.set        WIDTH - 20 - @notice.width, 10
-    @debug.position.set         10,  26
-    @offsetX = 125
-    @offsetX = WDB2 - 275 if Scanner.fullscreen
-    LeftAlign  @playerSprite,   100,  @playerSprite.height + 10 if @playerSprite
-    LeftAlign  @system,         110 + @system.width, @system.height + 25
-    LeftAlign  @secondary,      110 + @secondary.width, 10 + @secondary.height
-    LeftAlign  @primary,        110 + @primary.width,   10 + @secondary.height + @primary.height
-    LeftAlign  @throttle,       100, 20
-    LeftAlign  @fuel,           100, 15
-    LeftAlign  @energy,         100, 10
-    LeftAlign  @shield,         100, 110
-    LeftAlign  @armour,         100, 105
-
-    RightAlign @text,           110, 10 + @text.height
-    RightAlign @targetShield,   0,   110
-    RightAlign @targetArmour,   0,   105
-    RightAlign @targetSprite,   0,   @targetSprite.height + 10 if @targetSprite
+    @notice.position.set WIDTH - 2 - @notice.width, 2
+    @debug.position.set 2,2
+    @offset = 110
+    @offset = 5 if Scanner.fullscreen or not Scanner.active
+    # self
+    @topLeft.anchor.set .5, 0
+    @topLeft.position.set        WDB2, 2
+    @playerSprite.position.set   WDB2 - 100 - @offset,                 HEIGHT - 12 - 100 + ( 100 - @playerSprite.height ) / 2 if @playerSprite
+    @throttle.position.set       WDB2 - 100 - @offset,                 HEIGHT - 12 - 20
+    @fuel.position.set           WDB2 - 100 - @offset,                 HEIGHT - 12 - 15
+    @energy.position.set         WDB2 - 100 - @offset,                 HEIGHT - 12 - 10
+    @shield.position.set         WDB2 - 100 - @offset,                 HEIGHT - 12 - 110
+    @armour.position.set         WDB2 - 100 - @offset,                 HEIGHT - 12 - 105
+    @secondary.position.set      WDB2 - 100 - @offset,                 HEIGHT - 12 - 75 - @secondary.height
+    @primary.position.set        WDB2 - 100 - @offset,                 HEIGHT - 12 - 75 - @secondary.height - @primary.height
+    @system.position.set         WDB2 - 100 - @offset - @system.width - 5, HEIGHT - 18 - @system.height
+    # target
+    @targetSprite.position.set   WDB2 + @offset,                       HEIGHT - 12 - 100 + ( 100 - @targetSprite.height ) / 2 if @targetSprite
+    @targetShield.position.set   WDB2 + @offset,                       HEIGHT - 12 - 110
+    @targetArmour.position.set   WDB2 + @offset,                       HEIGHT - 12 - 105
+    @text.position.set           WDB2 + @offset + 105,                 HEIGHT - 18 - @text.height
+    return
 
   render:(g)->
     dir = ((VEHICLE.d + 180) % 360) / RAD
@@ -376,7 +377,8 @@ $static 'HUD', new class NUU.HUD
       # WIDGETS
       t = ''
       t += v + '\n' for k,v of @widgetList
-      @system.text = t
+      t = t.trim()
+      @system.text = t if t isnt @system.text
     # TARGET
     t = ''
     cid = Target.class
@@ -404,7 +406,6 @@ $static 'HUD', new class NUU.HUD
         sc = Scanner.scale
         ss = Speed.max / r
         fy = foy + 3
-        t += "ap[#{hdist vec.deccel_s}:#{vec.setThrottle}:#{rdec3 vec.error_threshold}:#{rdec3 vec.error}]\n"
         @force.height       = 1
         @force.width        = min r, (( $v.mag VEHICLE.v.slice() )*ss)
         @force.rotation     = $v.head VEHICLE.v.slice(), [1,0]
@@ -439,15 +440,17 @@ $static 'HUD', new class NUU.HUD
         eta = ( VEHICLE.state.vec.absETA - do NUU.time ) / 1000
       else
         TARGET.ap_eta = eta = Math.round( TARGET.ap_dist / (Math.sqrt( Math.pow(VEHICLE.v[0],2) + Math.pow(VEHICLE.v[1],2) ) / 0.04))
+      t += "#{htime eta}\n"
+      t += "#{hdist dist}\n"
+      t += "[#{list[cid]}:#{cid}:#{Target.id}]\n"
+      # t += "v[#{round TARGET.v[0]*1000}x#{round TARGET.v[1]*1000}y]"
       t += "#{TARGET.name} [#{TARGET.id}]\n"
-      t += "d[#{htime eta}/#{hdist dist}]\n"
-      t += "v[#{round TARGET.v[0]*1000}x#{round TARGET.v[1]*1000}y]\n\n"
-      t += "[#{list[cid]}:#{cid}:#{Target.id}]"
     else if not VEHICLE.dummy
       @targetShield.visible = @targetArmour.visible = @targetDir.visible = false
       t += "[#{list[cid]}] no target"
     else t = ''
-    @text.text = t
+    t = t.trim()
+    @text.text = t if t isnt @text.text
     # NOTICES
     @notice.text = Notice.queue.join '\n'
     @notice.position.set WIDTH - 20 - @notice.width, 10

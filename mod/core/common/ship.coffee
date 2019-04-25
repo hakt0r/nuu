@@ -124,13 +124,19 @@ Ship::toJSON = -> {
   name:   @name
   loadout:@loadout }
 
-###
-Object.defineProperty Ship::, 'd',
-  get:-> @_d || 0
-  set:(v)->
-    debugger if v is -1
-    @_d = v
-###
+#  █████   ██████ ████████ ██  ██████  ███    ██ ███████
+# ██   ██ ██         ██    ██ ██    ██ ████   ██ ██
+# ███████ ██         ██    ██ ██    ██ ██ ██  ██ ███████
+# ██   ██ ██         ██    ██ ██    ██ ██  ██ ██      ██
+# ██   ██  ██████    ██    ██  ██████  ██   ████ ███████
+
+Ship::actions = ['travel','formation','dock']
+Ship::defaultAction = ->
+  d = VEHICLE.dist TARGET
+  mode = 'travel'
+  mode = 'formation' if d < 2e3
+  mode = 'dock'      if d < TARGET.size + VEHICLE.size
+  mode
 
 Object.defineProperty Ship::, 'eventHorizon',
   get:-> $v.mag $v.sub @p, ( State.future @state, Date.now() + t ).p
@@ -156,6 +162,12 @@ Ship::turnTime = (dir,origin=@d)->
 
 Ship::turnTimeSigned = (dir,origin=@d)->
   ( -180 + $v.umod360 -180 + dir - origin ) / ( @turn || 1 )
+
+# ███    ███  ██████  ██████  ███████
+# ████  ████ ██    ██ ██   ██ ██
+# ██ ████ ██ ██    ██ ██   ██ ███████
+# ██  ██  ██ ██    ██ ██   ██      ██
+# ██      ██  ██████  ██████  ███████
 
 Ship::updateMods = ->
   # gather / calculate mods
@@ -193,6 +205,12 @@ Ship::updateMods = ->
   ShipModel.add @
   null
 
+# ███    ███  ██████  ██████  ███████ ██
+# ████  ████ ██    ██ ██   ██ ██      ██
+# ██ ████ ██ ██    ██ ██   ██ █████   ██
+# ██  ██  ██ ██    ██ ██   ██ ██      ██
+# ██      ██  ██████  ██████  ███████ ███████
+
 ShipModel = $worker.ReduceList (time)->
   return false if @destructing
   return true  if @disabled
@@ -212,6 +230,12 @@ ShipModel = $worker.ReduceList (time)->
   NET.health.write @
   @lastUpdate = time
   100
+
+# ███████  █████  ██    ██ ███████
+# ██      ██   ██ ██    ██ ██
+# ███████ ███████ ██    ██ █████
+#      ██ ██   ██  ██  ██  ██
+# ███████ ██   ██   ████   ███████
 
 Ship::save = ->
   loadout = weapon:[], structure:[], utility:[]

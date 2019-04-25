@@ -190,10 +190,7 @@ User::destructor = ->
   f.call @ for f in User.cleanup
   true
 
-User::loadShip = ->
-  @vehicleType = 'Kestrel'
-  @vehicleType = @db.vehicle if @db.vehicle?
-  opts = {}
+User::spawnState = (opts={})->
   if @db.landed and relto = $obj.byId[@db.landed]
     opts.state = S:$fixedTo, x:0, y:0, relto:relto, translate:no
     opts.landedAt = relto
@@ -205,7 +202,13 @@ User::loadShip = ->
     # r = vp+random()*PI/2
     r = random()*TAU
     opts.state = S:$moving, v:[cos(r)*150,sin(r)*150], relto: $obj.byId[0]
-  v = @createVehicle @vehicleType, opts
+  opts
+
+User::loadShip = ->
+  @vehicleType = 'Kestrel'
+  @vehicleType = @db.vehicle if @db.vehicle?
+  opts = @spawnState()
+  v    = @createVehicle @vehicleType, opts
   @enterVehicle v, 0, yes
   return
 
@@ -294,8 +297,7 @@ User::action = (t,mode) ->
   t.update time
   dist  = $dist o, t
   zone  = ( o.size + t.size ) * .5
-  if ['eva','launch','capture','dock','land','orbit','formation','travel'].includes mode
-    @[mode] t, o, zone, dist
+  @[mode] t, o, zone, dist if Interact.key.includes(mode) and @[mode]
   return
 
 User::eva = (t,o,zone,dist)->
@@ -424,7 +426,7 @@ User::travel = (t,o,zone=100,dist)->
 
 Ship::travel = (t,o,zone=100,dist)->
   dist = t.dist o unless dist
-  return unless dist > 10000000
+  return unless dist > 2e3
   console.log 'ship', @name, 'travel to', t.name
   o.setState S:$travel, relto:t
   return

@@ -20,30 +20,38 @@
 
 ###
 
-freeId = []
-lastId = 0
-
 $public class $obj
-  @freeId: freeId
   @interfaces: []
+  @list:       []
+  @byId:       {}
+  @byClass:    []
+  @freeId:     []
+  @lastId:     0
+
   tpl: null
+
+  x:  0
+  y:  0
+  vx: 0
+  vy: 0
+  d:  0
   size: 0
-  hit: $void
+
+  hit:$void
 
   constructor: (opts={})->
     # read state if specified
-    delete opts.state if ( state = opts.state )
+    delete opts.state if state = opts.state
     Object.assign @, Item.byId[opts.tpl] if opts.tpl # apply template
     Object.assign @, opts # apply other keys
     # choose id
     unless @id?
-      @id = if freeId.length is 0 then lastId++ else freeId.shift()
-    else lastId = max(lastId,@id+1)
+      @id = if $obj.freeId.length is 0 then $obj.lastId++ else $obj.freeId.shift()
+    else $obj.lastId = max $obj.lastId, @id+1
     console.log '$obj', 'constructor$', @id, @name if debug
     # register
     i.list.push i.byId[@id] = @ for i in @constructor.interfaces
-    # ( @range = SHORTRANGE ).push @ if isClient
-    Scanner.addLabel @, SHORTRANGE if isClient
+    # Scanner.addLabel @, SHORTRANGE if isClient
     TTL.add @ if @ttlFinal
     # read or setup velocity
     @v = if v = state.v then v.slice() else [0,0]
@@ -64,13 +72,15 @@ $public class $obj
 
   destructor: ->
     @destructing = true # might be set already
+    @refs.forEach( (fn,k)=> fn.call k, @ ) if @refs
     for i in @constructor.interfaces
       console.log '$obj', @id, 'destructor$'+i.name if debug
       delete i.byId[@id]
       Array.remove i.list, @
-    Array.remove @range, @ if @range                if isClient
-    Array.remove VEHICLE.hostile, @                 if isClient
-    @hide()                                         if isClient
+    delete $obj.byName[@name]
+    Array.remove @range, @ if @range                   if isClient
+    Array.remove VEHICLE.hostile, @ if VEHICLE.hostile if isClient
+    @hide()                                            if isClient
     Sync.del @id
     console.log '$obj', @id, 'destructor$', @name   if debug
     return
@@ -82,24 +92,8 @@ Object.defineProperty $obj::, 'p',
   get: -> do @update; return [@x,@y]
   set: (@x,@y)->
 
-Object.defineProperty $obj::, 'eventHorizon',
-  get:-> $v.mag $v.sub @p, ( State.future @state, Date.now() + t ).p
-
-$obj.clusterTime   = 100
-$obj.clusterLength = round Speed.max * $obj.clusterTime
-
-Object.defineProperty $obj::, 'grid',
-  get:->
-    [x,y] = @p
-    x = round x / $obj.clusterLength
-    y = round y / $obj.clusterLength
-    [x,y]
-
-$obj.byId = {}
-$obj.list = []
-$obj.byClass = []
-
-$obj.create = (opts)-> new $obj.byClass[opts.key] opts
+$obj.create = (opts)->
+  new $obj.byClass[opts.key] opts
 
 $obj.register = (blueprint)->
   if blueprint.implements
@@ -113,11 +107,46 @@ $obj.register = (blueprint)->
     # console.log blueprint.name, 'is', Interface.name
     blueprint.is = {} unless blueprint.is
     blueprint.is[Interface.name] = true
-  blueprint::key = ( $obj.byClass.push blueprint ) - 1
+  blueprint::key = -1 + $obj.byClass.push blueprint
   blueprint.byName = {}
   blueprint.byId = {}
   blueprint.list = []
   $public blueprint
+
+#  █████   ██████ ████████ ██  ██████  ███    ██ ███████
+# ██   ██ ██         ██    ██ ██    ██ ████   ██ ██
+# ███████ ██         ██    ██ ██    ██ ██ ██  ██ ███████
+# ██   ██ ██         ██    ██ ██    ██ ██  ██ ██      ██
+# ██   ██  ██████    ██    ██  ██████  ██   ████ ███████
+
+
+$obj::actions = ['travel','formation']
+$obj::defaultAction = ->
+  d = VEHICLE.dist TARGET
+  return 'formation' if d < 2e3
+  'travel'
+
+#    █████   ██████ ████████ ██ ██    ██ ███████    ██████  ███████ ███████
+#   ██   ██ ██         ██    ██ ██    ██ ██         ██   ██ ██      ██
+#   ███████ ██         ██    ██ ██    ██ █████      ██████  █████   █████
+#   ██   ██ ██         ██    ██  ██  ██  ██         ██   ██ ██      ██
+#   ██   ██  ██████    ██    ██   ████   ███████    ██   ██ ███████ ██
+
+$obj::ref = (other,callback)->
+  { @ref, @unref } = $obj
+  @refs = new Map
+  @ref other, callback
+$obj::unref = -> @
+
+$obj.ref = (other,callback)-> @refs.set other, callback; @
+$obj.unref = (other)-> @refs.delete other; @
+
+Object.defineProperty $obj::, 'target',
+  set:(v)->
+    if @_target then @_target.unref @
+    if v        then @_target = v.ref @, (v)=> @targetLost?(v)
+  get:-> @_target
+  default: null
 
 #  ██████ ██       ██████  ███████ ███████ ███████ ████████
 # ██      ██      ██    ██ ██      ██      ██         ██
@@ -149,29 +178,41 @@ $obj::closestHostile = ->
   return no unless closest
   return [closest,dist]
 
+$obj::closestBigMass = ->
+  dist = Infinity; closest = null
+  for r in Stellar.list
+    continue unless r.bigMass
+    r.update @t
+    continue if dist < d = @o r
+    dist = d
+    closest = r
+  return [dist,closest]
+
 # ███████ ██    ██ ███    ██  ██████
 # ██       ██  ██  ████   ██ ██
 # ███████   ████   ██ ██  ██ ██
 #      ██    ██    ██  ██ ██ ██
 # ███████    ██    ██   ████  ██████
 #
-# queue object-creation notification
+# accumulate object-lifecycle notification
 
 $static 'Sync', new class SyncQ
   constructor:->
+    @free = []
+    @reset()
+  reset:->
     @adds = []
     @dels = []
     @inst = false
-    @free = []
   flush:=>
-    do @sendLeaves                                if isServer
-    NUU.emit '$obj:del', dels = @dels         unless 0 is @dels.length
-    NUU.emit '$obj:add', adds = @adds         unless 0 is @adds.length
-    NUU.jsoncast sync: add:@adds, del:@dels       if isServer
-    do @sendEnters                                if isServer
-    @free = @dels.map (i)-> i.id
-    @inst = false; @adds = []; @dels = []
-    setTimeout @clean, 0 unless 0 is @free.length
+    @sendLeaves()                           if isServer
+    NUU.emit '$obj:del', @dels          unless 0 is @dels.length
+    NUU.emit '$obj:add', @adds          unless 0 is @adds.length
+    NUU.jsoncast sync: add:@adds, del:@dels if isServer
+    @sendEnters()                           if isServer
+    @free = @dels
+    setTimeout @clean unless 0 is @free.length
+    @reset()
     return
   clean:=>
     $obj.freeId = $obj.freeId.concat @free
@@ -222,14 +263,13 @@ if isServer
 #    ██       ██    ███████
 
 $worker.push NUU.checkTTL = ->
-  i = -1; s = null; list = TTL; length = list.length
-  while ++i < length
-    s = list[i]
-    continue unless s.ttl and s.ttl < time
-    s.hide()
+  i = -1; s = null; list = TTL.values(); length = TTL.size
+  time = NUU.time()
+  while ( r = list.next() ).done is false
+    continue if ( s = r.value ).ttl > time
     s.destructor() if s.ttlFinal
-    TTL.remove s
-  return
+    TTL.delete s
+  return true
 
 # ███████ ██ ███    ███ ██████  ██      ███████ ████████  ██████  ███    ██ ███████
 # ██      ██ ████  ████ ██   ██ ██      ██         ██    ██    ██ ████   ██ ██
@@ -256,6 +296,7 @@ $obj.register class Debris extends $obj
 
 $obj.register class Cargo extends $obj
   @interfaces: [$obj,Shootable,Collectable,Debris]
+  actions: ['capture']
   sprite: 'cargo'
   name: 'Cargo Box'
   item: null
@@ -314,6 +355,19 @@ return if isServer
 # ███████ ██    ██ ██████  ██   ███   ██    ██ ██ ██  ██
 # ██   ██ ██    ██ ██   ██ ██  ███    ██    ██ ██  ██ ██
 # ██   ██  ██████  ██   ██ ██ ███████  ██████  ██   ████
+
+$obj.clusterTime   = 100
+$obj.clusterLength = round Speed.max * $obj.clusterTime
+
+Object.defineProperty $obj::, 'eventHorizon',
+  get:-> $v.mag $v.sub @p, ( State.future @state, Date.now() + t ).p
+
+Object.defineProperty $obj::, 'grid',
+  get:->
+    [x,y] = @p
+    x = round x / $obj.clusterLength
+    y = round y / $obj.clusterLength
+    [x,y]
 
 $static 'SHORTRANGE', []
 $static 'MIDRANGE',   []

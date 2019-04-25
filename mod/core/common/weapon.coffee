@@ -1,3 +1,4 @@
+
 ###
 
   * c) 2007-2019 Sebastian Glaser <anx@ulzq.de>
@@ -55,7 +56,6 @@ Weapon.actionCode =   trigger:0,release:1,reload:2,aim:3
 Weapon.impactType  =   hit:0,shieldsDown:1,disabled:2,destroyed:3
 Weapon.impactTypeKey = ['hit','shieldsDown','disabled','destroyed']
 Weapon.impactLogic = (wp)->
-  debugger if wp.name is 'CheatersRagnarokBeam'
   dmg = wp.stats
   if @shield > 0
     @shield -= dmg.penetrate
@@ -112,7 +112,7 @@ Sync.hostile = new class HostileSync
     return
   flush:=>
     @set.forEach (s)->
-      console.log 'sync:host', s.name
+      console.log 'sync:hostiles', s.name if debug
       NUU.jsoncastTo s, hostile:s.hostile.map $id$
     @set = new Set
     @inst = no
@@ -126,8 +126,9 @@ Sync.hostile = new class HostileSync
 
 Weapon.SelectPlayer = $worker.ReduceList (time)->
   { ship, target, slot, lock } = @
-  return false  if ship.disabled
-  [closest,dist] = ship.closestUser()
+  return false     if ship.disabled
+  return false unless u = ship.closestUser()
+  [closest,dist] = u
   if dist > 5000
     console.log ship.name, 'has target', lock, closest.name
     @trigger null, @target = closest
@@ -139,7 +140,8 @@ Weapon.Defensive = $worker.ReduceList (time)->
   { ship, target, slot, lock } = @
   return true     if ship.disabled
   return true unless ship.hostile? and 0 < ship.hostile.length
-  [closest,dist]   = ship.closestHostile()
+  return true unless h = ship.closestHostile()
+  [closest,dist] = h
   if dist > 5000
     console.log ship.name, 'has target', lock, closest.name if debug
     @trigger null, @target = closest
@@ -306,6 +308,9 @@ if isClient # client implements the simple case
     @trigger = $void
 
   $obj.register class Missile extends $obj
+    constructor:(opts)->
+      opts.target = $obj.byId[opts.target]
+      super opts
     @implements: [$Missile]
     @interfaces: [$obj,Debris]
 

@@ -288,7 +288,7 @@ $static 'rules', ->
 
 $public class Singleton
   constructor:(opts)->
-    Object.assign opts
+    Object.assign @, opts
     @init()
   init:->
 

@@ -80,30 +80,36 @@ if isClient then $public class State
 if isServer then $public class State
   constructor:(opts) ->
     return if false is opts
-    @o = if ( id = opts.o ).id? then id else $obj.byId[id]
-    @o.locked = @lock?
-    @t = time = NUU.time()
-    @o.update time if @o.update
-    if ( opts.relto?.id? or opts.relto = $obj.byId[opts.relto] )
-      opts.relto.update time
-    else @findRelTo opts
-    opts.update = @updateRelTo if opts.relto and @updateRelTo
+    opts.o = o = if ( id = opts.o ).id? then id else $obj.byId[id]
+    opts.t = opts.t || NUU.time()
+    if oldState = opts.o.state
+      oldState.update()
+      oldState.cleanup()
+    { @x,@y,@d,@a,@v } = o
+    opts.a = if opts.a? then opts.a else ( if o.thrustToAccel then o.thrustToAccel o.thrust else 0 )
     Object.assign @, opts
-    @o.v = @v = @v || @o.v
-    @o.x = @x = @x || @o.x
-    @o.y = @y = @y || @o.y
-    @o.d = @d = @d || @o.d
-    @o.a = @a = @a || @o.thrust
-    @o.v = @v.slice()
-    @v   = @v.slice()
-    @o.state  = @
-    @o.update = @update.bind @
-    do @translate if @translate
-    do @cache     if @cache
+    Object.assign o, x:@x,y:@y,d:@d,a:@a,v:@v
+    o.v = ( @v = @v.slice() ).slice()
+    o.state  = @
+    o.locked = @lock is true
+    if ( @relto?.id? ) or ( @relto = $obj.byId[@relto] ) # or @findRelTo opts
+      @update = @updateRelTo || @update
+      @relto.ref @, @reltoLost
+      @relto.update @t
+    o.update = @update.bind @
+    @translate oldState if @translate
+    @cache()            if @cache
     @toBuffer()
-    @update time
+    @update @t
     NET.state.write @
+  reltoLost:->
+    console.log @o.name, 'lost relto', @relto.name
+    @o.setState S:$moving, relto:$obj.byId[0]
+  cleanup:-> @relto.unref @ if @relto
     # console.log @o.name, State.toKey[@S], @p, @v # if @o.name is "Exosuit"
+
+if isServer then NET.stateSync = $worker.DeadLine 1000, 5000,
+  -> NUU.bincast @state._buffer, @ unless @destructing
 
 # ███    ███ ███████ ███    ███ ██████  ███████ ██████
 # ████  ████ ██      ████  ████ ██   ██ ██      ██   ██
@@ -129,22 +135,16 @@ Object.defineProperty State::, 'p',
   get: -> return [ @x, @y ]
   set:(p) -> [ @x, @y ] = p
 
-State::findRelTo = (opts) ->
-  @o.update()
-  if ( r = @o.state?.relto ) and r.bigMass
+State::findRelTo = (oldState) ->
+  @o.update() if @o.update
+  if ( r = oldState?.relto ) and r.bigMass
     if ( 10000 > d = $dist @o, r )
-      opts.relto = r
-      opts.relto.update @t
-    else opts.relto = null
+      @relto = r
+      @relto.update @t
+    else @relto = null
   else
-    opts.relto = null
-    dist = 10000
-    for r in Stellar.list
-      continue unless r.bigMass
-      r.update @t
-      continue if dist < d = $dist @o, r
-      dist = d
-      opts.relto = r
+    [dist,closest] = @o.closestBigMass()
+    relto  = closest if dist < 10000
   return
 
 State::clone = ->

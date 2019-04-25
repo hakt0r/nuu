@@ -49,6 +49,10 @@ $static 'Scanner', new class NUU.Scanner
   constructor:-> Sprite.renderScanner = ->
 
   show:->
+    for k,v of @color when sym = v[1]
+      t = new PIXI.Text sym, fontFamily: 'monospace', fontSize:'8px', fill: 'white'
+      t.updateText()
+      v[2] = t.texture
     @$ = new PIXI.Container
     @bg = new PIXI.Sprite
     @bg.alpha = 0.4
@@ -58,12 +62,12 @@ $static 'Scanner', new class NUU.Scanner
     @$.addChild @mid   = new PIXI.Container; @mid .alpha = 0.7
     @$.addChild @short = new PIXI.Container
     NUU.on '$obj:add',         @addLabel   .bind @
-    NUU.on '$obj:del',         @removeLabel.bind @
     NUU.on '$obj:range:short', @addToRange 'short', @short, yes
     NUU.on '$obj:range:mid',   @addToRange 'mid',   @mid,   yes
     NUU.on '$obj:range:long',  @addToRange 'long',  @long,  yes
     Sprite.layer 'scanner', @$
-    NUU.on 'newTarget', @newTarget
+    NUU.on 'target:new', @newTarget
+    NUU.on 'target:lost', @lostTarget
     Sprite.renderScanner = @render
     Sprite.on 'resize', @resize
     do @resize
@@ -72,13 +76,13 @@ $static 'Scanner', new class NUU.Scanner
   resize:=>
     @renderLongrange = @renderMidrange = yes
     if @fullscreen
-      W = min WIDTH - 28, HEIGHT - 38
+      W = max WIDTH - 28, HEIGHT - 38
       W2 = W/2
       W2R = W2/2
       @$.position.set (WIDTH-W)/2,(HEIGHT-W)/2
     else
       W = @width; W2 = W/2; W2R = W2/2
-      @$.position.set WDB2 - W2 - 7, HEIGHT - W2 - 7 - 115
+      @$.position.set WDB2-W2-2, HEIGHT - W - 18
     @radius = @W2 = W2; @W2R = W2R
     @short.position.set W2R+3,W2R+1
     @mid  .position.set W2R+3,W2R+1
@@ -100,8 +104,14 @@ $static 'Scanner', new class NUU.Scanner
     do @render
 
   labelStyle:(s,inRange=false)->
-    return ['◆','white',''] unless t = @color[s.constructor.name]
-    [fill, name] = t
+    fallback = @color.Stellar
+    return [
+      fallback[0]
+      fallback[1]
+      ''
+      fallback[2]
+    ] unless t = @color[s.constructor.name]
+    [fill, name, sym] = t
     title = ''
     if      s.constructor is Star    then title = s.name || 'Star'
     else if s.constructor is Planet  then title = s.name || 'Planet'
@@ -109,30 +119,33 @@ $static 'Scanner', new class NUU.Scanner
     # else if s.constructor is Station then title = s.name || 'Station'
     # title = ''    if inRange
     fill = 'red'  if s is TARGET
-    return [name,fill,title]
+    return [name,fill,title,sym]
 
   addLabel:(list,scope=@short)->
+    list = [list] unless list.push
     for s in list
       continue if s.label or not s.name
-      [ name, fill, title ] = @labelStyle s
-      scope.addChild l = s.label = new PIXI.Text name,  fontFamily: 'monospace', fontSize:'8px', fill: fill
+      [ name, fill, title, tex ] = @labelStyle s
+      scope.addChild l = s.label = new PIXI.Sprite tex
       scope.addChild t = s.title = new PIXI.Text title, fontFamily: 'monospace', fontSize:'8px', fill: fill
       s.scope = l.scope = t.scope = scope
+      l.tint  = fill
       l.anchor.set .5
       t.pivot.set .5, .5
+      s.ref @, @removeLabel
     return
 
-  removeLabel:(list,keep)->
-    for s in list
-      continue unless label = s.label
-      scope = label.scope
-      scope.removeChild label
-      scope.removeChild title = s.title
-      delete s.label
-      delete s.title
-      delete s.scope
-      label.destroy()
-      title.destroy()
+  removeLabel:(s)->
+    return unless s.id?
+    return unless label = s.label
+    scope = label.scope
+    scope.removeChild label
+    scope.removeChild title = s.title
+    delete s.label
+    delete s.title
+    delete s.scope
+    label.destroy()
+    title.destroy()
     return
 
   addToRange:(name,scope,inRange)=> (list)=>
@@ -146,7 +159,9 @@ $static 'Scanner', new class NUU.Scanner
         old.removeChild l = s.label; scope.addChild l
         old.removeChild t = s.title; scope.addChild t
         s.scope = l.scope = t.scope = scope
-        [l.text, l.style.fill,t.text] = @labelStyle s, inRange
+        [sym, fill, text] = @labelStyle s, inRange
+        t.text = text if text isnt t.text
+        l.tint = fill
       else add.push s
     @addLabel add, scope
     return
@@ -154,12 +169,17 @@ $static 'Scanner', new class NUU.Scanner
   newTarget:(obj,old)=>
     if obj and l = obj.label
       t = obj.title
-      [l.text, l.style.fill,t.text] = @labelStyle obj, yes
+      [sym, fill, text] = @labelStyle obj, yes
+      t.text = text if text isnt t.text
+      l.tint = fill
       PIXI.bringToFront l
     if old and l = old.label
       t = old.title
-      [l.text, l.style.fill,t.text] = @labelStyle old
+      [sym, fill, text] = @labelStyle old
+      t.text = text if text isnt t.text
+      l.tint = fill
     return
+  lostTarget:(old)=> @newTarget null, old
 
   render:=>
     return unless @active
@@ -242,6 +262,7 @@ $static 'Scanner', new class NUU.Scanner
     @$.visible = @active = not @active
     if @active then Sprite.stage.addChild @$
     else Sprite.stage.removeChild @$
+    PIXI.bringToFront HUD.layer
     return
 
   toggleFullscreen:=>

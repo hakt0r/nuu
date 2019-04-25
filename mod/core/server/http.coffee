@@ -157,7 +157,7 @@ NUU.jsoncastTo = (v,data) ->
   return unless v.inhabited
   data = NET.JSON + JSON.stringify data
   v.mount.map (user)-> if user and src = user.sock
-    console.log '::ws', 'jsoncastTo', v.id, data
+    console.log '::ws', 'jsoncastTo', v.id, data if debug
     src.send data, $websocket.error(src)
   return
 

@@ -181,9 +181,6 @@ NET.define 2,'STATE',
       o.applyControlFlags()
       src
 
-if isServer then NET.stateSync = $worker.DeadLine 1000, 5000,
-  -> NUU.bincast @state._buffer, @
-
 ###
   ███████ ████████ ███████ ███████ ██████
   ██         ██    ██      ██      ██   ██
@@ -306,14 +303,16 @@ NET.define 3,'WEAP',
   ██   ██  ██████    ██    ██  ██████  ██   ████
 ###
 
-action_key = ['eva','launch','land','orbit','dock','capture','formation','travel']
+$static 'Interact', new Singleton {
+  key:['eva','launch','land','orbit','dock','capture','formation','travel'] }
+
 NET.define 4,'ACTION',
   read:server:(msg,src) ->
     return console.log ':net', 'action:nx:t', msg unless t = $obj.byId[msg.readUInt16LE 2]
-    src.handle.action t, action_key[msg[1]]
+    src.handle.action t, Interact.key[msg[1]]
   write:client:(t,mode) ->
     console.log mode+'$', t.name, t.id if debug
-    msg = Buffer.from [NET.actionCode,action_key.indexOf(mode),0,0]
+    msg = Buffer.from [NET.actionCode,Interact.key.indexOf(mode),0,0]
     msg.writeUInt16LE t.id, 2
     NET.send msg.toString 'binary'
 
@@ -334,7 +333,9 @@ NET.define 5,'MODS',
     type = ship.constructor.name.toLowerCase() + ':'
     ship.destructing = yes if mode is 'destroyed'
     ship.disabled    = yes if mode is 'disabled'
-    ship.reset()           if mode is 'spawn'
+    if mode is 'spawn'
+      ship.reset()
+      $obj.select true if ship is VEHICLE
     NUU.emit '$obj:' + mode, ship, ship.shield = msg.readUInt16LE(4), ship.armour = msg.readUInt16LE(6)
   write: server: (ship,mod,a=0,b=0) ->
     msg = Buffer.from [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0, 0,0]

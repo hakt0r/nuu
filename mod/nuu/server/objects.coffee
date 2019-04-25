@@ -29,7 +29,7 @@ Ship::dropLoot = ->
     v: [ @v[0] + Math.random()*2 - 1, @v[1] + Math.random()*2 - 1 ]
   newRandom Cargo  for i in [0...10]
   newRandom Debris for i in [0...10]
-  null
+  return
 
 Ship::resetHostiles = ->
   h = @hostile; @hostile = []
@@ -37,17 +37,30 @@ Ship::resetHostiles = ->
   NUU.jsoncastTo @, hostile:@hostile if @inhabited
 
 Ship::respawn = ->
+  @locked = true
   @respawning = yes
   @resetHostiles()
   setTimeout ( =>
     @dropLoot()
+  ), 4000
+  setTimeout ( =>
     do @reset
-    @x = Math.random()*100
-    @y = Math.random()*100
-    @setState S:$moving, x:@x, y:@y, v:[0,0]
+    if @user
+      opts = @user.spawnState()
+      @setState opts.state; delete opts.state
+      Object.assign @, opts
+    else
+      @x = Math.random()*100
+      @y = Math.random()*100
+      @setState S:$moving, x:@x, y:@y, v:[0,0]
+    if @state.S is $moving
+      @locked = true
+      setTimeout ( => @locked = false ), 3000
+    if @landedAt
+      NUU.jsoncastTo @, landed: @landedAt.id
     do @update
-    NET.mods.write  @, 'spawn'
-  ), 4500
+    NET.mods.write @, 'spawn'
+  ), 5000
 
 Ship::hit = (src,wp) ->
   return if @destructing
