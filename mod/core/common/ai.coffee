@@ -128,6 +128,7 @@ AI.register = (strategy,opts)->
     return 10000 unless @target
     if @target.respawning or @target.destructing
       @target = null
+      @getTarget()
       return 0
     if @state.S is $travel
       wait = max 0, @state.vec.absETA - NUU.time()
@@ -239,13 +240,9 @@ AI.register 'returnToBase',
     return unless @target
     console.log '::ai', 'drone:arrivedAtBase', @target.name if debug
     @setState S:$moving, relto:@target, v:@target.v.slice()
-    @arrived = not @target = @steer = no
+    @target = null; @steer = no
+    @changeStrategy 'waitForUsers'
   getTarget:->
-    if @arrived
-      @arrived = no
-      @changeStrategy 'waitForUsers'
-      console.log '::ai', 'drone=>waitForUsers', @name if debug
-      return
     @lastInRange = @lastOnTarget = no
     unless @base = @homebase
       bases = [ $obj.byName.Earth , $obj.byName.Moon ]
