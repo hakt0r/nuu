@@ -145,6 +145,7 @@ Object.defineProperty $obj::, 'target',
   set:(v)->
     if @_target then @_target.unref @
     if v        then @_target = v.ref @, (v)=> @targetLost?(v)
+    else             @_target = null
   get:-> @_target
   default: null
 
