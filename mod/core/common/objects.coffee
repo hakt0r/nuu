@@ -346,7 +346,6 @@ $obj::closestAsteroid = ->
     if dist > d = abs $dist @,p
       closest = p
       dist = d
-  return no unless dist < 10e3
   return [closest,dist]
 
 return if isServer
