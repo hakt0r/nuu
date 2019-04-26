@@ -45,7 +45,10 @@ $obj.register class Explosion extends $obj
 $Animated Explosion, layer: 'fx', loop: no
 
 # A collage animation to 'splode ships and stuff :>
-$Animated.destroy = (v,t=4000,c=25) ->
+$Animated.destroy = (v,t=100,c=5) ->
+  $Animated.explode v, min(t,round(random()*t)), 1 for i in [0...c-1]
+
+$Animated.respawn = (v,t=4000,c=25) ->
   $Animated.explode v, min(t,round(random()*t)) for i in [0...c-1]
   $Animated.explode v, t, 3
   setTimeout ( -> v.hide() ), t
@@ -60,5 +63,5 @@ NUU.on '$obj:shield',   (v) -> $Animated.explode v, 0, 2
 NUU.on '$obj:disabled', (v) -> $Animated.explode v, 0, 3
 
 NUU.on '$obj:destroyed', (v) ->
-  return $Animated.destroy v, 1500, 5 unless v.constructor.name is 'Ship'
-  return $Animated.destroy v
+  return $Animated.destroy v, 100, 5 unless v.constructor.name is 'Ship'
+  return $Animated.respawn v
