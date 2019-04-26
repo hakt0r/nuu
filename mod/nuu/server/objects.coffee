@@ -108,7 +108,7 @@ Asteroid::hit = (perp,weapon)->
   NET.mods.write @, ( if @hp is 0 then 'destroyed' else 'hit' ), 0, @hp
   return unless @hp is 0
   if @resource.length > 1 then for r in @resource
-    v = @v.slice(); v[0]+=-6+random()*6; v[1]+=-6+random()*6
+    v = @v.slice(); v[0]+=-.2+random()*.4; v[1]+=-.2+random()*.4
     Weapon.hostility perp, new Asteroid
       hostile: []
       resource: r
