@@ -277,23 +277,20 @@ $public class Miner extends AI
     super opts
     return
 
-AI.register 'findNewAsteroid',
-  getTarget:->
-    @target = Asteroid.byId[ Array.random Object.keys Asteroid.byId ]
-    @setState S:$travel, relto:@target
-  onTarget:-> @changeStrategy 'mine'
+AI.register 'findNewAsteroid', getTarget:->
+  return unless a = @closestAsteroid()
+  [@target,dist] = a
+  @setState S:$travel, relto:@target if dist > 2e3
+  console.log @name, "miner:mined=>next", @target.name
+  return
 
 AI.register 'mine',
   steer: AI.steer
   inRange: AI.shootInRange
   outRange: AI.shootOutRange
   getTarget:->
-    if a = @closestAsteroid()
-      @target = a[0]
-      console.log @name, "miner:mined=>next", @target.name
-    else
-      @changeStrategy 'findNewAsteroid' unless @target
-      console.log @name, "miner:mined=>findNew"
+    console.log @name, "miner:mined=>findNew"
+    @changeStrategy 'findNewAsteroid'
     return
 
 # ████████ ██████   █████  ██████  ███████ ██████
