@@ -53,6 +53,10 @@ $Animated.respawn = (v,t=4000,c=25) ->
   $Animated.explode v, t, 3
   setTimeout ( -> v.hide() ), t
   setTimeout ( -> v.show() ), t + 3000
+  if v is VEHICLE
+    for t in [0..8]
+      ( (t)-> setTimeout (-> HUD.widget 'respawn',(8-t)+'s'), t*1000 )(t)
+    setTimeout (-> HUD.widget 'respawn',null), 9000
   return
 
 $Animated.explode = (v,t,i) ->
