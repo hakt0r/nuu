@@ -339,19 +339,28 @@ $static 'HUD', new class NUU.HUD
     @topLeft.anchor.set .5, 0
     @topLeft.position.set        WDB2, 2
     @playerSprite.position.set   WDB2 - 100 - @offset,                 HEIGHT - 12 - 100 + ( 100 - @playerSprite.height ) / 2 if @playerSprite
-    @throttle.position.set       WDB2 - 100 - @offset,                 HEIGHT - 12 - 20
-    @fuel.position.set           WDB2 - 100 - @offset,                 HEIGHT - 12 - 15
-    @energy.position.set         WDB2 - 100 - @offset,                 HEIGHT - 12 - 10
-    @shield.position.set         WDB2 - 100 - @offset,                 HEIGHT - 12 - 110
-    @armour.position.set         WDB2 - 100 - @offset,                 HEIGHT - 12 - 105
+
     @secondary.position.set      WDB2 - 100 - @offset,                 HEIGHT - 12 - 75 - @secondary.height
     @primary.position.set        WDB2 - 100 - @offset,                 HEIGHT - 12 - 75 - @secondary.height - @primary.height
     @system.position.set         WDB2 - 100 - @offset - @system.width - 5, HEIGHT - 18 - @system.height
+
+    @throttle.position.set        WDB2 - 100 - @offset,                 HEIGHT - 12 - 20
+    @throttle.bg.position.set     WDB2 - 100 - @offset,                 HEIGHT - 12 - 20
+    @fuel.position.set            WDB2 - 100 - @offset,                 HEIGHT - 12 - 15
+    @fuel.bg.position.set         WDB2 - 100 - @offset,                 HEIGHT - 12 - 15
+    @energy.position.set          WDB2 - 100 - @offset,                 HEIGHT - 12 - 10
+    @energy.bg.position.set       WDB2 - 100 - @offset,                 HEIGHT - 12 - 10
+    @shield.position.set          WDB2 - 100 - @offset,                 HEIGHT - 12 - 110
+    @shield.bg.position.set       WDB2 - 100 - @offset,                 HEIGHT - 12 - 110
+    @armour.position.set          WDB2 - 100 - @offset,                 HEIGHT - 12 - 105
+    @armour.bg.position.set       WDB2 - 100 - @offset,                 HEIGHT - 12 - 105
     # target
-    @targetSprite.position.set   WDB2 + @offset,                       HEIGHT - 12 - 100 + ( 100 - @targetSprite.height ) / 2 if @targetSprite
-    @targetShield.position.set   WDB2 + @offset,                       HEIGHT - 12 - 110
-    @targetArmour.position.set   WDB2 + @offset,                       HEIGHT - 12 - 105
-    @text.position.set           WDB2 + @offset + 105,                 HEIGHT - 18 - @text.height
+    @targetSprite.position.set    WDB2 + @offset,                       HEIGHT - 12 - 100 + ( 100 - @targetSprite.height ) / 2 if @targetSprite
+    @text.position.set            WDB2 + @offset + 105,                 HEIGHT - 18 - @text.height
+    @targetShield.position.set    WDB2 + @offset,                       HEIGHT - 12 - 110
+    @targetShield.bg.position.set WDB2 + @offset,                       HEIGHT - 12 - 110
+    @targetArmour.position.set    WDB2 + @offset,                       HEIGHT - 12 - 105
+    @targetArmour.bg.position.set WDB2 + @offset,                       HEIGHT - 12 - 105
     return
 
   render:(g)->

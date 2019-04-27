@@ -50,25 +50,25 @@ $static 'Scanner', new class NUU.Scanner
 
   show:->
     for k,v of @color when sym = v[1]
-      t = new PIXI.Text sym, fontFamily: 'monospace', fontSize:'8px', fill: 'white'
+      t = new PIXI.Text sym, fontFamily: 'monospace', fontSize:'20px', fill: 'white'
       t.updateText()
       v[2] = t.texture
     @$ = new PIXI.Container
     @bg = new PIXI.Sprite
-    @bg.alpha = 0.4
+    @bg.alpha = 0.7
     @$.addChild @bg
     # @$.addChild @orbit = new PIXI.Graphics true
-    @$.addChild @long  = new PIXI.Container; @long.alpha = 0.4
-    @$.addChild @mid   = new PIXI.Container; @mid .alpha = 0.7
+    @$.addChild @long  = new PIXI.Container
+    @$.addChild @mid   = new PIXI.Container
     @$.addChild @short = new PIXI.Container
-    NUU.on '$obj:add',         @addLabel   .bind @
-    NUU.on '$obj:range:short', @addToRange 'short', @short, yes
-    NUU.on '$obj:range:mid',   @addToRange 'mid',   @mid,   yes
-    NUU.on '$obj:range:long',  @addToRange 'long',  @long,  yes
-    Sprite.layer 'scanner', @$
-    NUU.on 'target:new', @newTarget
-    NUU.on 'target:lost', @lostTarget
+    NUU.on '$obj:add',         @addObjects
+    NUU.on '$obj:range:short', @addToRange 'short', @short, no
+    NUU.on '$obj:range:mid',   @addToRange 'mid',   @mid,   no
+    NUU.on '$obj:range:long',  @addToRange 'long',  @long,  no
+    NUU.on 'target:new',       @newTarget
+    NUU.on 'target:lost',      @lostTarget
     Sprite.renderScanner = @render
+    Sprite.layer 'scanner', @$
     Sprite.on 'resize', @resize
     do @resize
     return
@@ -76,108 +76,152 @@ $static 'Scanner', new class NUU.Scanner
   resize:=>
     @renderLongrange = @renderMidrange = yes
     if @fullscreen
-      W = max WIDTH - 28, HEIGHT - 38
+      W = max(WIDTH,HEIGHT)/-10 + sqrt WIDTH**2 + HEIGHT**2
       W2 = W/2
       W2R = W2/2
       @$.position.set (WIDTH-W)/2,(HEIGHT-W)/2
+      @short.position.set W2R,W2R
+      @mid  .position.set W2R,W2R
+      @long .position.set W2R,W2R
+      @$.removeChild @bg
     else
       W = @width; W2 = W/2; W2R = W2/2
-      @$.position.set WDB2-W2-2, HEIGHT - W - 18
+      @$.position.set WDB2-W2-3, HEIGHT - W - 18
+      @short.position.set W2R+3,W2R+1
+      @mid  .position.set W2R+3,W2R+1
+      @long .position.set W2R+3,W2R+1
+      #@orbit.position.set W2R+7,W2R+7
+      c = document.createElement 'canvas'
+      c.width = c.height = WIDTH + 8
+      g = c.getContext '2d'
+      g.fillStyle = "#000"
+      g.strokeStyle = "#444"
+      g.strokeWidth = 2
+      g.beginPath()
+      g.arc W2+2, W2+2, W2, 0, TAU
+      g.fill()
+      g.stroke()
+      @bg.setTexture t = PIXI.Texture.from c
+      @bg.___tex__.destroy() if @bg.___tex__
+      @bg.___tex__ = t
+      @$.addChildAt @bg, 0
     @radius = @W2 = W2; @W2R = W2R
-    @short.position.set W2R+3,W2R+1
-    @mid  .position.set W2R+3,W2R+1
-    @long .position.set W2R+3,W2R+1
-    #@orbit.position.set W2R+7,W2R+7
-    c = document.createElement 'canvas'
-    c.width = c.height = WIDTH + 8
-    g = c.getContext '2d'
-    g.fillStyle = "#000"
-    g.strokeStyle = "#444"
-    g.strokeWidth = 2
-    g.beginPath()
-    g.arc W2+2, W2+2, W2, 0, TAU
-    g.fill()
-    g.stroke()
-    @bg.setTexture t = PIXI.Texture.from c
-    @bg.___tex__.destroy() if @bg.___tex__
-    @bg.___tex__ = t
     do @render
 
-  labelStyle:(s,inRange=false)->
+  symbolStyle:(s,inRange=false)->
     fallback = @color.Stellar
-    return [
-      fallback[0]
-      fallback[1]
-      ''
-      fallback[2]
-    ] unless t = @color[s.constructor.name]
-    [fill, name, sym] = t
+    return [ fallback[0], fallback[1], '', fallback[2] ] unless t = @color[s.constructor.name]
+    [fill, name, texture] = t
     title = ''
-    if      s.constructor is Star    then title = s.name || 'Star'
-    else if s.constructor is Planet  then title = s.name || 'Planet'
-    # else if s.constructor is Moon    then title = s.name || 'Moon'
-    # else if s.constructor is Station then title = s.name || 'Station'
-    # title = ''    if inRange
-    fill = 'red'  if s is TARGET
-    return [name,fill,title,sym]
+    title = s.name if inRange
+    alpha = .2
+    switch s.constructor
+      when Star, Planet
+        title = s.name || s.constructor.name
+        alpha = .5
+      when Station
+        alpha = 1
+      when Ship
+        alpha = .2
+    if s is TARGET
+      fill  = 0xffffff
+      alpha = 1
+      title = s.name || s.constructor.name
+    return [name,fill,title,texture,alpha]
 
-  addLabel:(list,scope=@short)->
+  addObjects:(list,scope=@short,inRange)=>
     list = [list] unless list.push
     for s in list
-      continue if s.label or not s.name
-      [ name, fill, title, tex ] = @labelStyle s
-      scope.addChild l = s.label = new PIXI.Sprite tex
-      scope.addChild t = s.title = new PIXI.Text title, fontFamily: 'monospace', fontSize:'8px', fill: fill
-      s.scope = l.scope = t.scope = scope
-      l.tint  = fill
-      l.anchor.set .5
-      t.pivot.set .5, .5
-      s.ref @, @removeLabel
-    return
-
-  removeLabel:(s)->
-    return unless s.id?
-    return unless label = s.label
-    scope = label.scope
-    scope.removeChild label
-    scope.removeChild title = s.title
-    delete s.label
-    delete s.title
-    delete s.scope
-    label.destroy()
-    title.destroy()
+      continue if s.symbol # or not s.name
+      [ name, fill, title, texture, alpha ] = @symbolStyle s, inRange
+      @makeSymbol s, texture, fill, alpha, scope
+      @makeTitle  s, title, fill, alpha, scope
+      s.scope = scope
+      s.ref @, @removeSymbol
     return
 
   addToRange:(name,scope,inRange)=> (list)=>
-    @updateLabel list, scope, inRange
+    @updateSymbols list, scope, inRange
 
-  updateLabel:(list,scope,inRange)->
+  updateSymbols:(list,scope,inRange)->
     add = []
     for s in list
       if old = s.scope
         continue if old is scope
-        old.removeChild l = s.label; scope.addChild l
-        old.removeChild t = s.title; scope.addChild t
-        s.scope = l.scope = t.scope = scope
-        [sym, fill, text] = @labelStyle s, inRange
-        t.text = text if text isnt t.text
-        l.tint = fill
+        @updateSymbol s,scope,old,inRange
       else add.push s
-    @addLabel add, scope
+    @addObjects add, scope
+    return
+
+  updateSymbol:(s,scope,old=s.scope,inRange=false)->
+    s.scope = scope
+    [sym, fill, text, tex, alpha] = @symbolStyle s, inRange
+    if symbol = s.symbol
+      old.removeChild symbol; scope.addChild symbol
+      symbol.tint  = fill
+      symbol.scope = scope
+      symbol.alpha = alpha
+      symbol.scale.set if TARGET is s then 1 else .5
+    if title = s.title
+      old.removeChild title
+      if text is ''
+        title.destroy()
+        delete s.title
+      else
+        if text isnt title.text
+          title.text = text
+          title.updateText()
+        scope.addChild title
+        title.scope = scope
+        title.tint  = fill
+        title.alpha = alpha
+        title.style.strokeThickness = if TARGET is s then 2 else 0
+        title.updateText()
+    else if text isnt ''
+      @makeTitle s, text, fill, alpha, scope
+    return
+
+  makeSymbol:(s,tex,fill,alpha,scope)->
+    scope.addChild symbol = s.symbol = new PIXI.Sprite tex
+    symbol.scope = scope
+    symbol.tint  = fill
+    symbol.alpha = alpha
+    symbol.scale.set .5
+    symbol.anchor.set .5,.5
+    symbol
+
+  makeTitle:(s,text,fill,alpha,scope)->
+    return null if title is ''
+    scope.addChild title = s.title = new PIXI.Text text, fontFamily: 'Lato', fontSize:'10px', fill: 0xFFFFFF
+    title.updateText()
+    title.anchor.set 0, .5
+    title.tint  = fill
+    title.scope = scope
+    title.alpha = alpha
+    title.style.stroke = 0x000000
+    title
+
+  removeSymbol:(s)->
+    return unless s.id?
+    scope = s.scope; delete s.scope
+    if symbol = s.symbol
+      scope.removeChild symbol
+      symbol.destroy()
+      delete s.symbol
+    if title = s.title
+      scope.removeChild title
+      title.destroy()
+      delete s.title
     return
 
   newTarget:(obj,old)=>
-    if obj and l = obj.label
-      t = obj.title
-      [sym, fill, text] = @labelStyle obj, yes
-      t.text = text if text isnt t.text
-      l.tint = fill
-      PIXI.bringToFront l
-    if old and l = old.label
-      t = old.title
-      [sym, fill, text] = @labelStyle old
-      t.text = text if text isnt t.text
-      l.tint = fill
+    for r in [{s:obj,inRange:yes},{s:old,inRange:no}] when r.s
+      {s,inRange} = r
+      if symbol = s.symbol
+        @updateSymbol s,s.scope,s.scope,inRange
+      else @addObjects [s],s.scope,inRange
+    @updateMidrange = @updateLongrange = yes
+    do @render
     return
   lostTarget:(old)=> @newTarget null, old
 
@@ -218,7 +262,7 @@ $static 'Scanner', new class NUU.Scanner
       a[1] = s.y - y
       l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.norm(v), l
-      if L = s.label
+      if L = s.symbol
         hw = L.width/2
         hh = L.height/2
         L.position.set v[0]+W2R-hw, v[1]+W2R-hh
@@ -243,6 +287,7 @@ $static 'Scanner', new class NUU.Scanner
 
   renderRange:(x,y,W2,W2R,list)->
     a = [0,0]; length = list.length; i = 0
+    TG = TARGET
     while i < length
       s = list[i++]
       w = max 1, min 2, s.size * 100 / @scale
@@ -250,12 +295,15 @@ $static 'Scanner', new class NUU.Scanner
       a[1] = s.y - y
       l = min W2-5, ( $v.mag v = a ) / @scale
       v = $v.mult $v.norm(v), l
-      if L = s.label
+      if L = s.symbol
         L.position.set v[0]+W2R, v[1]+W2R
         L.rotation = RADi * (s.d+90)
-        T = s.title
-        if v[0] < 0 then T.position.set v[0]+W2R+4,         v[1]+W2R+1-4
-        else             T.position.set v[0]+W2R-3-T.width, v[1]+W2R+1-4
+      if T = s.title
+        d = if s is TG then 10 else 5
+        if v[0] < 0
+          T.position.set v[0]+W2R+d, v[1]+W2R
+        else
+          T.position.set v[0]+W2R-d-T.width, v[1]+W2R
     return
 
   toggle:=>
@@ -266,9 +314,8 @@ $static 'Scanner', new class NUU.Scanner
     return
 
   toggleFullscreen:=>
-    if not @active then Sprite.stage.addChild @$
-    @active = true
     @fullscreen = not @fullscreen
+    @toggle() if not @active
     do @resize
     return
 
