@@ -22,8 +22,8 @@
 
 NUU.on 'login:test', ->
   Scanner.scale = 500000
-  Scanner.toggleFullscreen()
-  Target.set $obj.byName.Venus
+  # Scanner.toggleFullscreen()
+  # Target.set $obj.byName.Venus
   return
 
 $public class User
