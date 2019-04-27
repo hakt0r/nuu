@@ -9,6 +9,8 @@
       "target",
       "sound"]},
   "server":{
+    "require":[
+      ["NameGen","random-ship-names"]],
     "sources": [
       "engine",
       "objects"]}}

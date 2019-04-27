@@ -33,6 +33,7 @@
     "fast-image-size": "^0.1.2",
     "morgan": "^1.9.1",
     "multer": "^1.4.1",
+    "random-ship-names": "^1.0.0",
     "serve-index": "^1.9.1",
     "serve-static": "^1.0.4",
     "tagscale": "git+https://github.com/hakt0r/node-tagscale.git",

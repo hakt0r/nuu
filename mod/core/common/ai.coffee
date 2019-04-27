@@ -46,7 +46,6 @@ $public class AI extends Ship
         y: sin(angl) * dist
         d: floor random() * 359 }
     super opts
-    @name = 'HKS ' + @id.toString(2) + ' (' + @aiType + ')'
     # console.log '::ai', "#{@name} at", opts.stel.name if debug
     @primarySlot = @slots.weapon[0]
     @primaryWeap = @slots.weapon[0].equip
@@ -210,6 +209,7 @@ $public class Drone extends AI
     opts.strategy = 'waitForUsers'
     opts.stel = Drone.randomStellar() unless opts.stel
     super opts
+    @name = 'HKS/' + @id.toString 36
   @list:[]
   @randomStellar:->
     stel = $obj.byId[ Array.random [3] ]
@@ -269,6 +269,7 @@ $public class Miner extends AI
   aiType: 'Miner'
   @list:[]
   constructor:(opts={})->
+    opts.name = NameGen.civilian
     opts.strategy = opts.strategy || 'findNewAsteroid'
     opts.tpl = opts.tpl || Array.random Miner.ships
     super opts
@@ -300,6 +301,7 @@ $public class Trader extends AI
   aiType: 'Trader'
   @list:[]
   constructor:(opts={})->
+    opts.name = NameGen.civilian
     opts.strategy = 'trade' # opts.strategy || 'trade'
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
@@ -395,6 +397,7 @@ $public class Escort extends AI
     phi = p.d * RAD
     fx = 0 + x*cos(phi) - y*sin(phi)
     fy = 0 + x*sin(phi) + y*cos(phi)
+    opts.name = NameGen.republicFighter
     opts.state = S:$formation, x:fx, y:fy, d:p.d, v:p.v.slice(), relto:p, translate:no
     opts.tpl = opts.tpl || Array.random Escort.ships
     super opts
