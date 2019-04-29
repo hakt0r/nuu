@@ -114,10 +114,15 @@ NUU.on 'target:new', tgtHandler = (t) ->
   console.log 'targ', t if debug
   img = t.imgCom || t.img || '/build/imag/noscanimg.png'
   HUD.layer.addChild HUD.targetSprite = s = PIXI.Sprite.fromImage img
-  r = s.width / s.height
+  if s.height < s.width
+    r = s.height / s.width
+    s.width  = 100
+    s.height = r * 100
+  else
+    r = s.width / s.height
+    s.width = r * 100
+    s.height = 100
   s.tint = 0x0000FF
-  s.width  = 100
-  s.height = r * 100
   s.alpha  = 0.3
   Sprite.resize()
   clearTimeout tgtHandler.timer
