@@ -37,6 +37,9 @@ $public class $obj
 
   hit:$void
 
+  symbol: false
+  title:  false
+
   constructor: (opts={})->
     # read state if specified
     delete opts.state if state = opts.state

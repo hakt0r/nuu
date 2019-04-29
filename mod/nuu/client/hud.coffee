@@ -472,6 +472,13 @@ $static 'HUD', new class NUU.HUD
     @notice.position.set WIDTH - 20 - @notice.width, 10
     # DEBUG STATS
     # fps = round((NUU.time() - @startTime) / @frame)
+
+    # ██████  ███████ ██████  ██    ██  ██████
+    # ██   ██ ██      ██   ██ ██    ██ ██
+    # ██   ██ █████   ██████  ██    ██ ██   ███
+    # ██   ██ ██      ██   ██ ██    ██ ██    ██
+    # ██████  ███████ ██████   ██████   ██████
+
     @debug.text = unless debug then '' else "\n" +
       "     time: #{Date.now()} #{NET.FPS}tps\n" +
       "     ping: #{round Ping.avrgPing}ms delta: #{round Ping.avrgDelta}ms\n"+
@@ -483,7 +490,13 @@ $static 'HUD', new class NUU.HUD
       "    state: #{State.toKey[VEHICLE.state.S]} #{if VEHICLE.state.relto? then 'relto ' + VEHICLE.state.relto.name +  ' ' else''}"+
       "#{parseInt VEHICLE.d}d #{VEHICLE.x.toFixed 0}x #{VEHICLE.y.toFixed 0}y " +
       "#{round VEHICLE.v[0]}vx #{round VEHICLE.v[1]}vy #{1000 * round $v.mag VEHICLE.v}pps\n" +
-      "  scanner: #{Scanner.scale}\n"
+      "  scanner: #{Scanner.scale} " +
+      " s:#{Scanner.ship.children.length}" +
+      " a:#{Scanner.roid.children.length}" +
+      " d:#{Scanner.dynamic.children.length}" +
+      " p:#{Scanner.planet.children.length}" +
+      " m:#{Scanner.moon.children.length}" +
+      " b:#{Scanner.station.children.length}\n"
     @resize()
 
   widgetList: []

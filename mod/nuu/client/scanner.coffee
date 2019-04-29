@@ -36,15 +36,15 @@ $static 'Scanner', new class NUU.Scanner
   color:
     Orbit:    [0x330000]
     SubOrbit: [0x330033]
-    Stellar:  [0xFFFFFF,'◆']
-    Asteroid: [0xFFFFFF,'◆']
-    Debris:   [0xCCCCCC,'◆']
-    Cargo:    [0xCCCC00,'◆']
-    Planet:   [0xCCFFCC,'◎']
-    Moon:     [0x00FFFF,'◌']
-    Station:  [0xFF00FF,'◊']
-    Ship:     [0xCC00FF,'◭']
-    Star:     [0xFFFF00,'◍']
+    Stellar:  [0xFFFFFF,'◆',null,'dynamic',false] # gen
+    Debris:   [0xCCCCCC,'◆',null,'dynamic',false] # gen
+    Cargo:    [0xCCCC00,'◆',null,'dynamic',false] # gen
+    Star:     [0xFFFF00,'◍',null,'star',   10   ] # star
+    Planet:   [0xCCFFCC,'◎',null,'planet', 500  ] # planet
+    Moon:     [0x00FFFF,'◌',null,'moon',   5000 ] # moon
+    Asteroid: [0xFFFFFF,'◆',null,'roid',   10000] # roid
+    Station:  [0xFF00FF,'◊',null,'station',1000 ] # station
+    Ship:     [0xCC00FF,'◭',null,'ship',   10000] # ship
 
   constructor:-> Sprite.renderScanner = ->
 
@@ -58,15 +58,18 @@ $static 'Scanner', new class NUU.Scanner
     @bg.alpha = 0.7
     @$.addChild @bg
     # @$.addChild @orbit = new PIXI.Graphics true
-    @$.addChild @long  = new PIXI.Container
-    @$.addChild @mid   = new PIXI.Container
-    @$.addChild @short = new PIXI.Container
-    NUU.on '$obj:add',         @addObjects
-    NUU.on '$obj:range:short', @addToRange 'short', @short, no
-    NUU.on '$obj:range:mid',   @addToRange 'mid',   @mid,   no
-    NUU.on '$obj:range:long',  @addToRange 'long',  @long,  no
-    NUU.on 'target:new',       @newTarget
-    NUU.on 'target:lost',      @lostTarget
+    @$.addChild @dynamic = new PIXI.Container
+    @$.addChild @star    = new PIXI.ParticleContainer 10
+    @$.addChild @planet  = new PIXI.ParticleContainer 500
+    @$.addChild @moon    = new PIXI.ParticleContainer 5000
+    @$.addChild @roid    = new PIXI.ParticleContainer 10000
+    @$.addChild @station = new PIXI.ParticleContainer 1000
+    @$.addChild @ship    = new PIXI.ParticleContainer 10000
+    @$.addChild @title   = new PIXI.Container
+    NUU.on '$obj:add',    @addObjects
+    NUU.on '$obj:del',    @removeObjects
+    NUU.on 'target:new',  @newTarget
+    NUU.on 'target:lost', @lostTarget
     Sprite.renderScanner = @render
     Sprite.layer 'scanner', @$
     Sprite.on 'resize', @resize
@@ -80,16 +83,18 @@ $static 'Scanner', new class NUU.Scanner
       W2 = W/2
       W2R = W2/2
       @$.position.set (WIDTH-W)/2,(HEIGHT-W)/2
-      @short.position.set W2R,W2R
-      @mid  .position.set W2R,W2R
-      @long .position.set W2R,W2R
+      @dynamic.position.set W2R,W2R; @title.position.set W2R,W2R
+      @star.position.set W2R,W2R;    @planet.position.set W2R,W2R
+      @moon.position.set W2R,W2R;    @roid.position.set W2R,W2R
+      @station.position.set W2R,W2R; @ship.position.set W2R,W2R
       @$.removeChild @bg
     else
       W = @width; W2 = W/2; W2R = W2/2
       @$.position.set WDB2-W2-3, HEIGHT - W - 18
-      @short.position.set W2R+3,W2R+1
-      @mid  .position.set W2R+3,W2R+1
-      @long .position.set W2R+3,W2R+1
+      @dynamic.position.set W2R,W2R; @title.position.set W2R,W2R
+      @star.position.set W2R,W2R;    @planet.position.set W2R,W2R
+      @moon.position.set W2R,W2R;    @roid.position.set W2R,W2R
+      @station.position.set W2R,W2R; @ship.position.set W2R,W2R
       #@orbit.position.set W2R+7,W2R+7
       c = document.createElement 'canvas'
       c.width = c.height = WIDTH + 8
@@ -110,8 +115,10 @@ $static 'Scanner', new class NUU.Scanner
 
   symbolStyle:(s,inRange=false)->
     fallback = @color.Stellar
-    return [ fallback[0], fallback[1], '', fallback[2] ] unless t = @color[s.constructor.name]
-    [fill, name, texture] = t
+    scope = @dynamic
+    return [ fallback[0], fallback[1], '', fallback[2], 0.2, scope ] unless t = @color[s.constructor.name]
+    [fill, name, texture, scopeName] = t
+    scope = @[scopeName]
     title = ''
     title = s.name if inRange
     alpha = .2
@@ -127,35 +134,25 @@ $static 'Scanner', new class NUU.Scanner
       fill  = 0xffffff
       alpha = 1
       title = s.name || s.constructor.name
-    return [name,fill,title,texture,alpha]
+    return [name,fill,title,texture,alpha,scope]
 
-  addObjects:(list,scope=@short,inRange)=>
+  addObjects:(list,inRange)=>
     list = [list] unless list.push
-    for s in list
-      continue if s.symbol # or not s.name
-      [ name, fill, title, texture, alpha ] = @symbolStyle s, inRange
+    for s in list when not s.symbol
+      [ name,fill,title,texture,alpha,scope ] = @symbolStyle s, inRange
       @makeSymbol s, texture, fill, alpha, scope
-      @makeTitle  s, title, fill, alpha, scope
+      @makeTitle  s, title,   fill, alpha, scope
       s.scope = scope
       s.ref @, @removeSymbol
     return
 
-  addToRange:(name,scope,inRange)=> (list)=>
-    @updateSymbols list, scope, inRange
-
-  updateSymbols:(list,scope,inRange)->
-    add = []
-    for s in list
-      if old = s.scope
-        continue if old is scope
-        @updateSymbol s,scope,old,inRange
-      else add.push s
-    @addObjects add, scope
+  removeObjects:(list)=>
+    list = [list] unless list.push
+    removeSymbol s for s in list when s.symbol
     return
 
-  updateSymbol:(s,scope,old=s.scope,inRange=false)->
-    s.scope = scope
-    [sym, fill, text, tex, alpha] = @symbolStyle s, inRange
+  updateSymbol:(s,old=s.scope,inRange=false)->
+    [sym, fill, text, tex, alpha, scope] = @symbolStyle s, inRange
     if symbol = s.symbol
       old.removeChild symbol; scope.addChild symbol
       symbol.tint  = fill
@@ -163,7 +160,7 @@ $static 'Scanner', new class NUU.Scanner
       symbol.alpha = alpha
       symbol.scale.set if TARGET is s then 1 else .5
     if title = s.title
-      old.removeChild title
+      @title.removeChild title
       if text is ''
         title.destroy()
         delete s.title
@@ -171,7 +168,7 @@ $static 'Scanner', new class NUU.Scanner
         if text isnt title.text
           title.text = text
           title.updateText()
-        scope.addChild title
+        @title.addChild title
         title.scope = scope
         title.tint  = fill
         title.alpha = alpha
@@ -183,6 +180,7 @@ $static 'Scanner', new class NUU.Scanner
 
   makeSymbol:(s,tex,fill,alpha,scope)->
     scope.addChild symbol = s.symbol = new PIXI.Sprite tex
+    symbol.o = s
     symbol.scope = scope
     symbol.tint  = fill
     symbol.alpha = alpha
@@ -190,13 +188,13 @@ $static 'Scanner', new class NUU.Scanner
     symbol.anchor.set .5,.5
     symbol
 
-  makeTitle:(s,text,fill,alpha,scope)->
+  makeTitle:(s,text,fill,alpha)->
     return null if title is ''
-    scope.addChild title = s.title = new PIXI.Text text, fontFamily: 'Lato', fontSize:'10px', fill: 0xFFFFFF
+    @title.addChild title = s.title = new PIXI.Text text, fontFamily: 'Lato', fontSize:'10px', fill: 0xFFFFFF
     title.updateText()
+    title.o = s
     title.anchor.set 0, .5
     title.tint  = fill
-    title.scope = scope
     title.alpha = alpha
     title.style.stroke = 0x000000
     title
@@ -207,103 +205,57 @@ $static 'Scanner', new class NUU.Scanner
     if symbol = s.symbol
       scope.removeChild symbol
       symbol.destroy()
-      delete s.symbol
+      s.symbol = false
     if title = s.title
-      scope.removeChild title
+      @title.removeChild title
       title.destroy()
-      delete s.title
+      s.title = false
     return
 
   newTarget:(obj,old)=>
     for r in [{s:obj,inRange:yes},{s:old,inRange:no}] when r.s
       {s,inRange} = r
       if symbol = s.symbol
-        @updateSymbol s,s.scope,s.scope,inRange
+        @updateSymbol s,s.scope,inRange
       else @addObjects [s],s.scope,inRange
-    @updateMidrange = @updateLongrange = yes
     do @render
     return
   lostTarget:(old)=> @newTarget null, old
 
   render:=>
     return unless @active
-    return unless pl = VEHICLE
-    { W2, W2R } = @
-    { x,y } = pl
-    renderAll       = @wasFullscreen isnt @fullscreen or @scale isnt @lastScale
-    renderMidrange  = @updateMidrange  or renderAll
-    renderLongrange = @updateLongrange or renderAll
-    @updateLongrange = @updateMidrange = no
-    @wasFullscreen   = @fullscreen
-    @lastScale       = @scale
-    # if @orbits and Target
-    #   orbits = Array.uniq [TARGET,VEHICLE].concat Object.values Target.hostile
-    #   orbits.map (s)-> Array.pushUnique orbits, rel if rel = s.state.relto
-    #   @orbit.cacheAsBitmap = no
-    #   @renderOrbits @orbit,x,y,W2,W2R,orbits
-    #   @orbit.cacheAsBitmap = yes
-    if renderMidrange
-      @mid.cacheAsBitmap = no
-      @renderRange x,y,W2,W2R,MIDRANGE
-      @mid.cacheAsBitmap = yes
-    if renderLongrange
-      @long.cacheAsBitmap = no
-      @renderRange x,y,W2,W2R,LONGRANGE
-      @long.cacheAsBitmap = yes
-    @renderRange x,y,W2,W2R,SHORTRANGE
-    return
-
-  renderOrbits:(g,x,y,W2,W2R,list)->
-    g.clear(); g.fillAlpha = 0.2
-    a = [0,0]
-    for s in list
-      w = max 1, min 2, s.size * 100 / @scale
-      a[0] = s.x - x
-      a[1] = s.y - y
-      l = min W2-5, ( $v.mag v = a ) / @scale
-      v = $v.mult $v.norm(v), l
-      if L = s.symbol
-        hw = L.width/2
-        hh = L.height/2
-        L.position.set v[0]+W2R-hw, v[1]+W2R-hh
-        T = s.title
-        if v[0] < 0 then T.position.set v[0]+W2R+4,         v[1]+W2R+1-hh
-        else             T.position.set v[0]+W2R-3-T.width, v[1]+W2R+1-hh
-      g.lineStyle 2, @color.SubOrbit
-      mv = max abs(v[0]), abs(v[1])
-      mc = max abs(W2R),  abs(W2R)
-      if s is TARGET then for o in s.orbits || [] when mc * 1.25 > mv + o / @scale
-        g.endFill g.drawCircle v[0]+W2R, v[1]+W2R, o / @scale
-      g.lineStyle 2, @color.Orbit
-      if ( st = s.state ).S is $orbit
-        rel = st.relto
-        o = st.orb / @scale
-        a[0] = rel.x - x
-        a[1] = rel.y - y
-        ol = min W2-5, ( $v.mag ov = a ) / @scale
-        ov = $v.mult $v.norm(ov), ol
-        g.endFill g.drawCircle v[0]+W2R, v[1]+W2R, o if o + ol < W2
-    return
-
-  renderRange:(x,y,W2,W2R,list)->
-    a = [0,0]; length = list.length; i = 0
-    TG = TARGET
-    while i < length
-      s = list[i++]
-      w = max 1, min 2, s.size * 100 / @scale
-      a[0] = s.x - x
-      a[1] = s.y - y
-      l = min W2-5, ( $v.mag v = a ) / @scale
-      v = $v.mult $v.norm(v), l
-      if L = s.symbol
-        L.position.set v[0]+W2R, v[1]+W2R
-        L.rotation = RADi * (s.d+90)
-      if T = s.title
-        d = if s is TG then 10 else 5
-        if v[0] < 0
-          T.position.set v[0]+W2R+d, v[1]+W2R
-        else
-          T.position.set v[0]+W2R-d-T.width, v[1]+W2R
+    return unless PL = VEHICLE
+    { W2, W2R }    = @
+    { x,y }        = PL
+    TG             = TARGET
+    @wasFullscreen = @fullscreen
+    @lastScale     = @scale
+    for scope in [@dynamic,@star,@planet,@moon,@roid,@station,@ship]
+      for c in scope.children
+        s = c.o
+        { x:sx, y:sy, d, symbol } = s
+        dx = sx - x
+        dy = sy - y
+        mag = sqrt(dx**2+dy**2)
+        scl = min W2-5,mag/@scale
+        dx = (dx/mag)*scl+W2R
+        dy = (dy/mag)*scl+W2R
+        symbol.position.x = dx
+        symbol.position.y = dy
+        symbol.rotation = RADi * (d+90)
+    cld = @title.children.slice()
+    for c in @title.children
+      s = c.o
+      { x:sx, y:sy, title } = s
+      dx = sx - x
+      dy = sy - y
+      mag = sqrt(dx**2+dy**2)
+      scl = min W2-5,mag/@scale
+      dx = (dx/mag)*scl+W2R
+      dy = (dy/mag)*scl+W2R
+      o = if s is TG then 10 else 5
+      if dx < 0 then title.position.set dx+o,             dy
+      else           title.position.set dx-o-title.width, dy
     return
 
   toggle:=>
@@ -321,6 +273,8 @@ $static 'Scanner', new class NUU.Scanner
 
   zoomIn:=>  @scale = max 1,         @scale / 2
   zoomOut:=> @scale = min 134217728, @scale * 2
+
+Object.defineProperty PIXI.Sprite::, 'o', default:null, writable:yes
 
 Kbd.macro 'scanToggleFS', 'aEnter',  'Toggle Scanner FS',  Scanner.toggleFullscreen
 Kbd.macro 'scanToggle',   'Enter',   'Toggle Scanner',     Scanner.toggle
