@@ -300,45 +300,6 @@ $obj.register class Cargo extends $obj
     @name = "[#{@item.name}]"
   toJSON: -> id:@id,key:@key,state:@state,item:@item
 
-#  █████  ███████ ████████ ███████ ██████   ██████  ██ ██████
-# ██   ██ ██         ██    ██      ██   ██ ██    ██ ██ ██   ██
-# ███████ ███████    ██    █████   ██████  ██    ██ ██ ██   ██
-# ██   ██      ██    ██    ██      ██   ██ ██    ██ ██ ██   ██
-# ██   ██ ███████    ██    ███████ ██   ██  ██████  ██ ██████
-
-$obj.register class Asteroid extends $obj
-  @interfaces: [$obj,Shootable,Debris,Asteroid]
-  constructor: (opts) ->
-    unless opts
-      r    = 0.8 + random() / 5
-      phi  = random() * TAU
-      size = max 10, floor random() * 73
-      belt = Array.random [503250000,5.984e+9]
-      opts =
-        resource: ( Element.random() for i in [0...5] )
-        size: size
-        state:
-          S: $orbit
-          x: sqrt(r) * cos(phi) * belt
-          y: sqrt(r) * sin(phi) * belt
-          relto: Stellar.byId[0]
-    img = opts.size - 10
-    img = '0' + img if img < 10
-    opts.sprite = 'asteroid-D' + img
-    super opts
-    @name = 'roid-' + @id
-    @hp = 100
-
-$obj::closestAsteroid = ->
-  return no unless Asteroid.list.length > 0
-  closest = null; dist = Infinity
-  for p in Asteroid.list
-    continue if p.destructing
-    if dist > d = abs $dist @,p
-      closest = p
-      dist = d
-  return [closest,dist]
-
 return if isServer
 
 # ██   ██  ██████  ██████  ██ ███████  ██████  ███    ██

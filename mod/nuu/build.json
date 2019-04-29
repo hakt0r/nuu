@@ -8,6 +8,9 @@
       "scanner",
       "target",
       "sound"]},
+  "common":{
+    "sources": [
+      "asteroid"]},
   "server":{
     "require":[
       ["NameGen","random-ship-names"]],

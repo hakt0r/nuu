@@ -148,7 +148,10 @@ $public class User
     src.authenticated = yes
     src.removeListener "message", src.router
     src.on  "message", src.router = NET.route src
-    src.json 'user.login.success': {user:@db}, sync:add:$obj.list # TODO: inRange & Stellar only
+    isync = $obj.list.filter (i)->
+      # TODO: inRange & Stellar only
+      not i.virtual is yes
+    src.json 'user.login.success': {user:@db}, sync:add:isync
     NUU.emit 'user:joined', @
     if existingUser = User.byId[@db.id]
       return existingUser.rejoin src

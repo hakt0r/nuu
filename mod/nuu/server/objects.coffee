@@ -93,27 +93,3 @@ Station::hit = (src,wp) ->
       NUU.emit     'station:destroyed', @, src
       NET.mods.write @, 'destroyed', 0, 0
   return
-
-Asteroid.autospawn = (opts={})-> $worker.push =>
-  roids  = @list.length
-  if roids < opts.max
-    dt = opts.max - roids
-    new Asteroid for i in [0...dt]
-  1000
-
-Asteroid::hit = (perp,weapon)->
-  return if @destructing
-  return unless dmg = weapon.stats.physical
-  @hp = max 0, @hp - dmg
-  NET.mods.write @, ( if @hp is 0 then 'destroyed' else 'hit' ), 0, @hp
-  return unless @hp is 0
-  if @resource.length > 1 then for r in @resource
-    v = @v.slice(); v[0]+=-.2+random()*.4; v[1]+=-.2+random()*.4
-    Weapon.hostility perp, new Asteroid
-      hostile: []
-      resource: r
-      size: size = max 10, floor random() * @size / 2
-      state: S:$moving, x:@x, y:@y, v:v
-  NUU.emit 'asteroid:destroyed', perp, @resource
-  @destructor()
-  null
