@@ -25,8 +25,6 @@ $public class $obj
   @list:       []
   @byId:       {}
   @byClass:    []
-  @freeId:     []
-  @lastId:     0
 
   tpl: null
 
@@ -45,22 +43,20 @@ $public class $obj
     Object.assign @, Item.byId[opts.tpl] if opts.tpl # apply template
     Object.assign @, opts # apply other keys
     # choose id
-    unless @id?
-      @id = if $obj.freeId.length is 0 then $obj.lastId++ else $obj.freeId.shift()
-    else $obj.lastId = max $obj.lastId, @id+1
+    ( if @id? then $id.eternal.take @ else $id.dynamic.get @  ) if isServer
     console.log '$obj', 'constructor$', @id, @name if debug
     # register
     i.list.push i.byId[@id] = @ for i in @constructor.interfaces
-    # Scanner.addLabel @, SHORTRANGE if isClient
-    TTL.add @ if @ttlFinal
     # read or setup velocity
     @v = if v = state.v then v.slice() else [0,0]
     @x = state.x || 0
     @y = state.x || 0
     @d = state.d || 0
     @setState state
-    do @loadAssets # loads metadata on server
-    Sync.add @
+    @loadAssets() # loads metadata on server
+    TTL .add @ if @ttlFinal
+    Sync.add @ unless @virtual if isServer
+    Sync.add @ if isClient
     return
 
   loadAssets: ->
@@ -74,7 +70,7 @@ $public class $obj
     @destructing = true # might be set already
     @refs.forEach( (fn,k)=> fn.call k, @ ) if @refs
     for i in @constructor.interfaces
-      console.log '$obj', @id, 'destructor$'+i.name if debug
+      console.log '$obj', @id, 'destructor$'+i.name    if debug
       delete i.byId[@id]
       Array.remove i.list, @
     delete $obj.byName[@name]
@@ -82,7 +78,8 @@ $public class $obj
     Array.remove VEHICLE.hostile, @ if VEHICLE.hostile if isClient
     @hide()                                            if isClient
     Sync.del @id
-    console.log '$obj', @id, 'destructor$', @name   if debug
+    @pool.free @id                                     if isServer
+    console.log '$obj', @id, 'destructor$', @name      if debug
     return
 
   dist: (o)-> sqrt abs(o.x-@x)**2 - abs(o.y-@y)**2
@@ -198,9 +195,7 @@ $obj::closestBigMass = ->
 # accumulate object-lifecycle notification
 
 $static 'Sync', new class SyncQ
-  constructor:->
-    @free = []
-    @reset()
+  constructor:-> @reset()
   reset:->
     @adds = []
     @dels = []
@@ -211,12 +206,8 @@ $static 'Sync', new class SyncQ
     NUU.emit '$obj:add', @adds          unless 0 is @adds.length
     NUU.jsoncast sync: add:@adds, del:@dels if isServer
     @sendEnters()                           if isServer
-    @free = @dels
-    setTimeout @clean unless 0 is @free.length
     @reset()
     return
-  clean:=>
-    $obj.freeId = $obj.freeId.concat @free
   add:(obj)=>
     NUU.player.vehicle = obj if obj.id is NUU.player.vehicleId if isClient
     @inst = setTimeout @flush unless @inst

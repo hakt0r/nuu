@@ -45,6 +45,7 @@
     ["$v","vectors"],
     ["$tag","tagscale"]],
   "sources": [
+    "ids",
     "server",
     "db",
     "user",
