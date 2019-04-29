@@ -35,8 +35,11 @@ for k,v of Element
 total_weight = weight.reduce (prev, cur, i, arr) ->
   prev + parseFloat cur
 
+Element.deterministic = (noise)->
+  list[floor list.length * noise.double()]
+
 Element.random = ->
-  random_num = rand(0, total_weight)
+  random_num = rand 0, total_weight
   weight_sum = 0
   i = 0
   while i < list.length
@@ -44,4 +47,3 @@ Element.random = ->
     weight_sum =+ (parseFloat weight_sum).toFixed(2)
     return list[i] if random_num <= weight_sum
     i++
-
