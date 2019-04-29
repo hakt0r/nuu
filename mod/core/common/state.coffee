@@ -609,7 +609,7 @@ State.register class State.orbit extends State
     dy = @o.y - @relto.y
     relm = $v.sub @relto.v.slice(), @o.v
     @orb = @orb || round sqrt dx * dx + dy * dy
-    @vel = v = max 0.1, min 0.01, min $v.mag(relm), @orb / 10000000
+    @vel = v = max 0.1, min 0.01, min $v.mag(relm), @orb / 1e7
     @stp = TAU / (( TAU * @orb ) / v )
     @stp = -@stp if 0 > $v.cross relm, [dx,dy]
     @off = ( TAU + -(PI/2) + atan2 dx, -dy ) % TAU
@@ -650,6 +650,15 @@ State.orbit.fromBuffer = (o,msg)-> o.flags = 0; new State.orbit {
   stp:                  msg.readDoubleLE 30
   off:                  msg.readDoubleLE 46
   vel:                  msg.readDoubleLE 62 }
+
+State.orbit.relto = (relto,orbit,speed,offset)->
+  return
+    S:     $orbit
+    orb:   orbit
+    vel:   v = speed || orbit / 1e7
+    stp:   TAU / (( TAU * orbit ) / v )
+    off:   offset || 0.0
+    relto: relto
 
 # ███████  ██████  ██████  ███    ███  █████  ████████ ██  ██████  ███    ██
 # ██      ██    ██ ██   ██ ████  ████ ██   ██    ██    ██ ██    ██ ████   ██
