@@ -142,7 +142,7 @@ AI.register = (strategy,opts)->
       fnc = if onTarget then 'onTarget' else 'offTarget'
       do @[fnc] if @[fnc]
       @lastOnTarget = onTarget
-    @steer time if @steer
+    @steer time if @target and @steer
     return
 
 AI.steer = ->
