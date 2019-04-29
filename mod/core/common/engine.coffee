@@ -297,7 +297,18 @@ $public class Deterministic
     @callCount = 0
     @current = Crypto.createHash('sha512').update(@seed).digest()
   double:->
-    ++@callCount
+    @round() if @current.length <= 8*@callCount
+    d = @current.readDoubleLE 8*@callCount
+    d = @current.reduce ( (i,v)-> ( ( v + i * PI ) % PI ) / PI ), d
+    return @double @callCount++ if isNaN d
+    @callCount++
+    return d
+  doubell:->
+    r = 0
+    r += @double(); r += @double(); r += @double(); r += @double(); r += @double(); r += @double()
+    r / 6
+  round:->
+    @callCount = 0
     @current = Crypto.createHash('sha512').update(@current).digest()
-    @current.reduce (i,v=0)-> ( ( v + i * PI ) % PI ) / PI
+    # console.log 'round', @current.toString('hex')
   element:(a)-> a[round @double() * ( a.length - 1 )]
