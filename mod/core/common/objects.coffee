@@ -80,7 +80,7 @@ $public class $obj
     Array.remove @range, @ if @range                   if isClient
     Array.remove VEHICLE.hostile, @ if VEHICLE.hostile if isClient
     @hide()                                            if isClient
-    Sync.del @id
+    Sync.del @
     @pool.free @id                                     if isServer
     console.log '$obj', @id, 'destructor$', @name      if debug
     return
@@ -212,13 +212,17 @@ $static 'Sync', new class SyncQ
     @reset()
     return
   add:(obj)=>
+    return if obj.virtual
+    return if obj.effect
     NUU.player.vehicle = obj if obj.id is NUU.player.vehicleId if isClient
     @inst = setTimeout @flush unless @inst
     @adds.push obj
     obj
   del:(obj)=>
+    return if obj.virtual
+    return if obj.effect
     @inst = setTimeout @flush unless @inst
-    @dels.push obj
+    @dels.push obj.id
     obj
 
 if isServer
@@ -387,4 +391,7 @@ $obj.announce = (key,event,add,del)->
     .filter (i)-> not del.has i
     .concat add
     NUU.emit event, add
-  else window[key] = window[key].filter (i)-> not del.has i
+  else if del.length > 0
+    window[key] = window[key].filter (i)-> not del.has i
+
+###

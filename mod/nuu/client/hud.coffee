@@ -52,6 +52,9 @@ Weapon.guiName = (e)->
   ███████   ████   ███████ ██   ████    ██    ███████
 ###
 
+NUU.on 'mouse:grab',    -> HUD.widget 'mouse', 'mouse', true if window.HUD
+NUU.on 'mouse:release', -> HUD.widget 'mouse', null          if window.HUD
+
 NUU.on 'enterVehicle', shpHandler = (t) ->
   HUD[k].visible = HUD[k+'bg'].visible = true for k,v of HUD.healhBars
   console.log 'ship', t if debug

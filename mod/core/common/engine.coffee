@@ -99,6 +99,7 @@ $static 'RADi',          1 / RAD
 $static 'DARi',          1 / DAR
 
 # MATH
+$static 'ceil',          Math.ceil
 $static 'floor',         Math.floor
 $static 'atan2',         Math.atan2
 $static 'sqrt',          Math.sqrt
@@ -278,6 +279,12 @@ String.filename = (p)->
   p.replace(/.*\//, '').replace(/\..*/,'')
 
 Object.defineProperty String::,k,get:(->@) for k in [ 'bold','underline','strikethrough','italic','inverse','grey','black','yellow','red','green','blue','white','cyan','magenta','greyBG','blackBG','yellowBG','redBG','greenBG','blueBG','whiteBG','cyanBG','magentaBG'] if isClient
+
+Function::toInlineCode = ->
+  source = @toString().trim().split('\n')
+  source.pop()
+  source.shift()
+  source.join('\n')
 
 console.colorDump = (opts={})->
   a = ( (' '+k+' ').red.inverse + '' + (' '+v.toString()+' ').white.inverse.bold for k,v of opts )

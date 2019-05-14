@@ -53,13 +53,13 @@ $static 'Mouse', new class MouseInput
     document.removeEventListener 'wheel', @onwheel, passive:no
     document.addEventListener 'wheel', @blockZoom, passive:no
     @trigger = @triggerSec = @state = off
-    HUD.widget 'mouse', null
+    NUU.emit 'mouse:release'
     clearInterval @timer
     @timer = null
-    null
+    return
 
   callback: ->
-    v = VEHICLE
+    return unless ( v = VEHICLE )?.mountType
     dirChanged = @destDir isnt @lastDir
     accelChanged = @lastAccel isnt @accel
     return if VEHICLE.locked and 0 is NUU.player.mountId
@@ -72,7 +72,7 @@ $static 'Mouse', new class MouseInput
       when 'weap'
         NET.steer.write @destDir
     @lastDir = @destDir; @lastAccel = @accel
-    null
+    return
 
   oncontextmenu: (evt)-> false
 
@@ -150,7 +150,7 @@ $static 'Mouse', new class MouseInput
     @state = not @state
     body = document.querySelector 'body'
     if @state
-      HUD.widget 'mouse', 'mouse', true
+      NUU.emit 'mouse:grab'
       document.onmousemove   = @update
       document.removeEventListener 'wheel', @blockZoom, passive:no
       document.addEventListener 'wheel', @onwheel, passive:no
@@ -159,7 +159,7 @@ $static 'Mouse', new class MouseInput
       document.oncontextmenu = @oncontextmenu
       @timer = setInterval @callback, TICK
     else @reset()
-    null
+    return
 
 Object.assign Kbd.defaultMap,
   boost:      'sArrowUp'

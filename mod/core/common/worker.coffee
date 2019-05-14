@@ -23,35 +23,41 @@
 window.global = window if window?
 global.TIME  = NUU.time()
 
-class Worker
-  constructor : (interval) ->
-    r = f = null
-    lista = []; lista.real = 0; lista.name = 'a'
-    listb = []; listb.real = 0; listb.name = 'b'
-    flip = no; cur = listb; nxt = lista
-    @push   = push = (f) -> nxt[nxt.real++] = f
-    @remove = remove = (f) -> f.stop = true if f
-    pushback = (f,t) -> setTimeout (-> push f), t
-    callback = =>
-      if (flip = not flip)
-        cur = lista; @list = nxt = listb
-      else cur = listb; @list = nxt = lista
-      c = nxt.real = 0
-      began = NUU.time()
-      for idx in [0...cur.real]
-        global.TIME  = NUU.time()
-        global.ETIME = Math.floor(TIME/1000000)*1000000
-        if typeof (f = cur[idx]) isnt 'function'
-        else if f.stop
-        else if typeof (r = f NUU.time() ) is 'number'
-          pushback f, r; continue
-        else if r isnt no
-          nxt[nxt.real++] = f
-      @count = nxt.real
-      @last = NUU.time() - began
-    @timer = setInterval callback, interval
+$static '$worker', new class TickWorker
+  constructor:(interval=TICK)->
+    @list   = []
+    @remove = @remove.bind @
+    @tick   = @tick.bind @
+    @push   = @push.bind @
+    @timer  = setInterval @tick, interval
+  tick:->
+    list = @list.filter @notStopped
+    while f = list.shift()
+      continue if f.notBefore > time = NUU.time()
+      global.TIME  = time
+      global.ETIME = Math.floor(TIME/1000000)*1000000
+      if typeof f isnt 'function'
+      else if f.stop
+      else if not isNaN r = f time
+           f.notBefore = NUU.time() + r
+      else f.stop = r isnt false
+    @list = @list.filter @notStopped
+  push:(f)-> f.stop = false; @list.push f; f
+  remove:(f)-> f.stop = true
+  notStopped:(f)-> f.stop isnt true
 
-$static '$worker', new Worker TICK
+class $worker.InlineThread
+  constructor:(init=@init)->
+    source =  [ '( async function(self){' ]
+    source.push @workerInit.toInlineCode() if @workerInit
+    source.push @worker    .toInlineCode() if @worker
+    source.push '} ).call(this,self)'
+    if source.length isnt 2
+      @thread = new Worker URL.createObjectURL new Blob [source.join '\n'],type:'text/javascript'
+      @thread.onmessage = (m)=>
+        @[k]? v for k,v of m.data
+        return
+    @init?()
 
 $worker.List = (worker)->
   list = c = n = count = null

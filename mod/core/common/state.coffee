@@ -620,10 +620,12 @@ State.register class State.orbit extends State
     @relto.update time unless @relto.id is 0
     t = time - @t
     angl = ((( TAU + @off + t * @stp ) % TAU ) + TAU ) % TAU
-    @o.x = @relto.x + @orb * cos angl
-    @o.y = @relto.y + @orb * sin angl
+    cosa = cos angl; sina = sin angl
+    @o.x = @relto.x + @orb * cosa
+    @o.y = @relto.y + @orb * sina
     angl = ( @stpangl + angl + TAU ) % TAU
-    @o.v = [ @relto.v[0] + (@vel * cos angl), @relto.v[1] + (@vel * sin angl) ]
+    @o.v[0] = @relto.v[0] + (@vel * cosa)
+    @o.v[1] = @relto.v[1] + (@vel * sina)
     @o.d = angl * RAD
     @lastUpdate = time
     return

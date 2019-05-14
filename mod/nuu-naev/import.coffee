@@ -212,8 +212,11 @@ module.exports = (destinationFile,callback)->
     r.size   = Math.floor Math.max r.width / r.cols, r.height / r.rows
     r.radius = Math.floor r.size / 2
     # console.log '@', p, n, r if p.match /cargo/
+    r.type = 'art'    if p.match '/imag/'
+    r.type = 'store'  if p.match '/store/'
+    r.type = 'engine' if p.match '/engine/'
+    continue if p.match '/imag/'
     list[n] = r
   read 'build'
   fs.writeFileSync path.join( GAME_DIR,'build','imag','sprites_naev.json' ), JSON.stringify parseNumbers list
-
   callback null

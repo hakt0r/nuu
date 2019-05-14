@@ -25,27 +25,36 @@ $obj.register class Ship extends $obj
   @byName: {}
   @byTpl: {}
 
-  iff:  ''
-  name: ''
+  iff:         ''
+  name:        ''
 
-  thrust:   0.1
-  turn:     10.0
-  type:     0
-  cargo:    10
-  throttle: .75
+  mass:        20
+  cargo:       10
 
-  reactorOut: 10.0
-  energy:     100
-  energyMax:  100
+  thrust:      0.1
+  turn:        10.0
+  type:        0
+  throttle:    .75
+  inventory:   null
+  slots:       null
+  mount:       null
+
+  reactorOut:  10.0
+  energy:      100
+  energyMax:   100
 
   armour:      100
   armourMax:   100
   shield:      100
   shieldMax:   100
   shieldRegen: 0.1
-
   fuel:        100
   fuelMax:     100
+  fuelRegen:   0
+
+  destructing: false
+  disabled:    false
+  exploding:   false
 
   sprite:
     name: 'shuttle'
@@ -54,9 +63,6 @@ $obj.register class Ship extends $obj
     count: 108
   size: 32
 
-  mount:     null
-  inventory: null
-  slots:     null
 
   constructor:(opts)->
     super opts
@@ -98,7 +104,7 @@ Ship.blueprint =
   stats: crew:1, mass:1, fuel_consumption:0
 
 Ship::destructor = ->
-  $worker.remove @model
+  ShipModel.remove @
   do @reset; @destructing = yes
   for slot in @slots.weapon when slot and slot.equip
     slot.equip.release()
@@ -211,22 +217,18 @@ Ship::updateMods = ->
 # ██  ██  ██ ██    ██ ██   ██ ██      ██
 # ██      ██  ██████  ██████  ███████ ███████
 
-ShipModel = $worker.ReduceList (time)->
-  return false if @destructing
-  return true  if @disabled
-  # return 1000 if @fuel <= 0
-  add = null
-  @fuel += @fuelRegen || 0.5
-  @fuel -= max 0, @state.a if @state.acceleration
+ShipModel = $worker.PauseList listkey:'model', Ship::updateModel = (time)->
+  return -1 if @destructing
+  return 1000  if @disabled
+  a = @state.a || 0
+  @fuel = max 0, min @fuelMax, @fuel + @fuelRegen - a
   unless @shield is @shieldMax and @energy is @energyMax
     @energy = min @energyMax, @energy + @reactorOut
     @shield += add = min( @shield + min(@shieldRegen,@energy), @shieldMax) - @shield
     @energy -= add
-  @fuel = @fuelMax if @fuel > @fuelMax
-  @fuel = 0        if @fuel <= 0
-  return 100 unless isServer
+  return 200 if isClient
   @setState S:$moving if @fuel is 0 and @state.acceleration
-  return 100 unless @mount[0] and @lastUpdate + 3000 < time
+  return 200 unless @mount[0] and @lastUpdate + 3000 < time
   NET.health.write @
   @lastUpdate = time
   100
