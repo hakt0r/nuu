@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="256"
+   height="256"
+   viewBox="0 0 67.733333 67.733335"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   sodipodi:docname="noscanimg.svg"
+   inkscape:export-filename="/home/awt/code/nuu/mod/nuu/artwork/noscanimg.png"
+   inkscape:export-xdpi="650.23999"
+   inkscape:export-ydpi="650.23999">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.84206903"
+     inkscape:cx="122.22004"
+     inkscape:cy="224.00459"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:window-width="640"
+     inkscape:window-height="1061"
+     inkscape:window-x="896"
+     inkscape:window-y="1080"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-229.26663)">
+    <path
+       style="opacity:1;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.26458332;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 33.866925,236.11169 A 27.650146,27.021731 0 0 0 6.2164163,263.1333 27.650146,27.021731 0 0 0 33.866925,290.15491 27.650146,27.021731 0 0 0 61.516917,263.1333 27.650146,27.021731 0 0 0 33.866925,236.11169 Z m 0,4.60592 A 22.937054,22.415754 0 0 1 56.804027,263.1333 22.937054,22.415754 0 0 1 33.866925,285.54898 22.937054,22.415754 0 0 1 10.929823,263.1333 22.937054,22.415754 0 0 1 33.866925,240.71761 Z"
+       id="path819"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:900;font-stretch:normal;font-size:10.18660259px;line-height:15.91656685px;font-family:Lato;-inkscape-font-specification:'Lato Heavy';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.63666266px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="43.084904"
+       y="266.84378"
+       id="text817"><tspan
+         sodipodi:role="line"
+         id="tspan815"
+         x="43.084904"
+         y="266.84378"
+         style="font-style:normal;font-variant:normal;font-weight:900;font-stretch:normal;font-family:Lato;-inkscape-font-specification:'Lato Heavy';fill:#ff0000;stroke-width:0.63666266px">ERR</tspan></text>
+  </g>
+</svg>

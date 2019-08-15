@@ -128,12 +128,14 @@ Station.template =
     sprite:     'station-powerplant'
     population: 0
     provides:   e:5000
+    scannerSymbol:'䷡'
 
   Farm:
     sprite:     'station-agriculture'
     population: 10
     allocates:  e:100, Farmland:100, H20:10
     produces:   Food:100
+    scannerSymbol:'🍽'
 
   LargeFarm:
     upgrades:   'Farm'
@@ -142,6 +144,7 @@ Station.template =
     allocates:  e:10, Farmland:1000
     consumes:   H20:20
     produces:   Food:1000
+    scannerSymbol:'🍽'
 
   Habitat:
     upgrades:   'Farm'
@@ -149,17 +152,20 @@ Station.template =
     population: 100000
     allocates:  e:10, Executives:10, H20:10000, Food:100000
     provides:   Executives:100, Workers:50000
+    scannerSymbol:'🏘'
 
   Mine:
     sprite:     'station-commerce'
     population: 2000
     allocates:  e:200, Food:100
+    scannerSymbol:'⚒'
 
   Trade:
     sprite:     'station-commerce2'
     population: 10000
     massMax:    1000000
     allocates:  e:100, Executives:30, Food:1000
+    scannerSymbol:'💰'
 
   Factory:
     sprite:     'station-shipyard'
@@ -167,3 +173,4 @@ Station.template =
     allocates:  e:100, Executives:10, Food:10
     consumes:   Fe:10
     produces:   Kestrel: 1
+    scannerSymbol:'🏭'

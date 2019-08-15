@@ -310,6 +310,24 @@ State.moving.fromBuffer = (o,msg)-> new State.moving {
   v: [                  msg.readDoubleLE 48
                         msg.readDoubleLE 64 ] }
 
+State.moving.shader = """
+uniform float Object[0xFFFF*8];
+const int px     = 0;
+const int py     = 1;
+const int vx     = 2;
+const int vy     = 3;
+const int symbol = 4;
+const int tint   = 5;
+const int relto  = 6;
+vec2 moving(float t, int objId){
+  int offset = objId * fields;
+  rel = moving(t, Object[offset+relto])
+  vec2 pos = vec2( Object[offset+px], Object[offset+px] );
+  vec2 vel = vec2( Object[offset+px], Object[offset+px] );
+  return rel + pos + vel * dt  );
+}
+"""
+
 # ██████  ██    ██ ██████  ███    ██
 # ██   ██ ██    ██ ██   ██ ████   ██
 # ██████  ██    ██ ██████  ██ ██  ██
@@ -631,6 +649,15 @@ State.register class State.orbit extends State
     return
   toJSON:->
     S:@S,o:@o.id,relto:@relto.id,t:@t,orb:@orb,stp:@stp,off:@off,vel:@vel
+
+State.orbit.shader = """
+const TAU = 6.283185307179586;
+vec4 orbit(vec4 obj, vec4 rel){
+  float angl =
+  vec4 cur =
+
+}
+"""
 
 State.orbit::toBuffer = ->
   return @_buffer if @_buffer; msg = Buffer.allocUnsafe 79; o = @o

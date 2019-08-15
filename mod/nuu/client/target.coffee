@@ -20,9 +20,10 @@
 
 ###
 
-NUU.on 'target:new', (opts) -> Target.widget()
+NUU.on 'target:new', (opts)->
+  Target.widget()
 
-NUU.on '$obj:destroyed', (v) ->
+NUU.on '$obj:destroyed', (v)->
   delete Target.hostile[k] for k,i of Target.hostile when i.id is v.id
   Target.enemy() if Target.hostile.length > 0
   return
@@ -107,10 +108,9 @@ Target.nothing = ->
   Target.set null
 
 Target.enemy = ->
+  return if TARGET and Target.hostile[TARGET.id]
   Target.class = 1 # hostile
-  if TARGET and Target.hostile[TARGET.id]
-    HUD.targetSprite.tint = 0xFF0000
-  else do Target.closest
+  do Target.closest
 
 Target.nextClass = ->
   ct = ( list = Target.types ).length

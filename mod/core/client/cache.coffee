@@ -20,9 +20,8 @@
 
 ###
 
-class Bottle
-  constructor: (@limit) ->
-    @stack = []; @active = 0
+$public class Bottle
+  constructor:(@limit)-> @stack = []; @active = 0
   next: =>
     if @stack.length is 0 then @active--
     else @stack.shift() @next
@@ -62,6 +61,21 @@ $static 'Cache', new class BlobCacheIndexedDB
       @get k, c for c in v for k, v of queue
       NUU.emit 'cache:ready'
     null
+
+  getTexture: (url)-> new Promise (resolve,reject)=>
+    t = @db.transaction ['nuu'], "readonly"
+    p = url.replace /^\//,''
+    q = t.objectStore('nuu').get p
+    q.onerror = reject
+    q.onsuccess = (event)=>
+      r = new Image
+      r.onload = (event) ->
+        t = new THREE.Texture r
+        t.needsUpdate = yes
+        resolve t
+      if blob = event.target.result then r.src = URL.createObjectURL blob
+      else            @fetch p, (blob)=> r.src = URL.createObjectURL blob
+    return
 
   get: (path,callback) ->
     path = path.replace(/^\//,'')

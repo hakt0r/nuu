@@ -55,13 +55,6 @@ NUU.sync = (list,callback) ->
   else $obj.select yes
   callback null if callback
 
-NUU.firstSync = (opts,callback)->
-  @player = new User opts
-  do Sprite.initSpace
-  Sound.radio.init()
-  Sprite.start =>
-    @start callback
-
 NET.queryJSON = (opts,callback)->
   p = new Promise (resolve,reject)->
     key = Object.keys(opts)[0]
@@ -89,7 +82,8 @@ class NET.Connection
       'user.login.success','user.login.challenge','user.login.register','user.login.failed','user.login.nx' ]
     NET.on 'user.login.success', (opts) =>
       vt.status 'Login', '<i style="color:green">Success</i> [<i style="color:yellow">' + @name + '</i>]'
-      NUU.firstSync opts, => callback true
+      await NUU.loginComplete opts
+      callback true
       NUU.emit 'connect', @
     NET.once 'user.login.failed', (opts) =>
       vt.status 'Login', '<b style="color:red">Failed</b> [<i style="color:yellow">' + @name + '</i>]'

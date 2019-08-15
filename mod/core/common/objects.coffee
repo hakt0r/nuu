@@ -202,10 +202,11 @@ $static 'Sync', new class SyncQ
   reset:->
     @adds = []
     @dels = []
+    @delIds = []
     @inst = false
   flush:=>
     @sendLeaves()                           if isServer
-    NUU.emit '$obj:del', @dels          unless 0 is @dels.length
+    NUU.emit '$obj:del', @delIds, @dels unless 0 is @dels.length
     NUU.emit '$obj:add', @adds          unless 0 is @adds.length
     NUU.jsoncast sync: add:@adds, del:@dels if isServer
     @sendEnters()                           if isServer
@@ -222,7 +223,8 @@ $static 'Sync', new class SyncQ
     return if obj.virtual
     return if obj.effect
     @inst = setTimeout @flush unless @inst
-    @dels.push obj.id
+    @dels.push obj
+    @delIds.push obj.id
     obj
 
 if isServer
@@ -327,6 +329,8 @@ Object.defineProperty $obj::, 'grid',
     x = round x / $obj.clusterLength
     y = round y / $obj.clusterLength
     [x,y]
+
+###
 
 $static 'SHORTRANGE', []
 $static 'MIDRANGE',   []

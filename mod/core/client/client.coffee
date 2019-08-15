@@ -100,15 +100,6 @@ NUU.on 'start', ->
   NUU.emit 'settings'
 
 NUU.on 'gfx:ready', ->
-  $.ajax '/build/objects.json', success: (result) ->
-    Item.init result
-    vt.hide = ->
-      $('img.com').remove()
-      Window::hide.call @
-    a = Item.byClass.com.sort -> Math.random() - .5
-    $('body').append $ """<img class="com" src="/build/gfx/#{a.pop().logo}.png"/>"""
-    $('body').append $ """<img class="com bottom" src="/build/gfx/#{a.pop().logo}.png"/>"""
-  $static 'vt', new VT100
   VT100.write """\
 <center style="white-space: nowrap">\
 <svg viewBox="0 0 62 20"><defs><path id="U" d="M5 0C2.25 0 0 2.25 0 5v10c0 2.75 2.25 5 5 5h10c2.75 0 5-2.25 5-5V5c0-2.75-2.25-5-5-5h-1.5v10h-7V0H5z" style="fill:#333;border:solid red 1px"/></defs><use href="#U" transform="rotate(180 10 10)"/><use href="#U" transform="translate(21)"/><use href="#U" transform="translate(42)"/></svg>\
@@ -125,6 +116,21 @@ NUU.on 'gfx:ready', ->
 ➜ Press alt-C for demo
 
   """
-  unless debug then NUU.loginPrompt()
-  else $timeout 500, => NET.login 'anx', sha512(''), -> vt.hide()
+  NUU.loginPrompt()
+  Item.init await new Promise (resolve)-> $.ajax '/build/objects.json', success:resolve
+  vt.hide = ->
+    $('img.com').remove()
+    Window::hide.call @
+  a = Item.byClass.com.sort -> Math.random() - .5
+  $('body').append $ """<img class="com" src="/build/gfx/#{a.pop().logo}.png"/>"""
+  $('body').append $ """<img class="com bottom" src="/build/gfx/#{a.pop().logo}.png"/>"""
   return
+
+NUU.loginComplete = (opts)->
+  @player = new User opts
+  Sound.radio.init()
+  console.log ''
+  await GFX.initGame()
+  await GFX.start()
+  NUU.emit 'start'
+  Promise.resolve()

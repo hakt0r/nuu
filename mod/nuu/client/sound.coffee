@@ -24,7 +24,7 @@ NUU.on 'settings:apply', ->
   Sound.on      = NUU.settings.sound
   Sound.effects = NUU.settings.soundEffects
   if Sound.chat = NUU.settings.soundChat
-    HUD.widget 'radio', "##{Sound.channel}", yes
+    HUD.updateTopBar 'channel', """<span class="active">##{Sound.channel}</span>"""
   return
 
 $public class Sound
@@ -58,17 +58,10 @@ $public class Sound
 
 Sound.init = (callback)->
   Sound.radio = new Radio
-  # splashSound = ->
-  #   Sound.radio.ctx.resume()
-  #   Sound.radio.add Sound['hail.ogg'].url, volume:0.01, keep:yes
-  #   document.removeEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
-  #   document.removeEventListener 'keydown',   splashSound, passive:no, once:yes, capture:yes
-  # document.addEventListener 'mousedown', splashSound, passive:no, once:yes, capture:yes
-  # document.addEventListener 'keydown',  splashSound, passive:no, once:yes, capture:yes
-  list = ( Sound.load 'build/sounds/' + name for name in Sound.autoload )
-  Promise.all(list)
-  .then Sound.defaults
-  .then callback
+  await Promise.all ( Sound.load 'build/sounds/' + name for name in Sound.autoload )
+  Sound.defaults()
+  callback() if callback
+  # Sound.gestureThief()
   return
 NUU.on 'gfx:ready', Sound.init
 
@@ -98,6 +91,29 @@ Sound.defaults = ->
   NUU.on 'ship:hit', -> Sound['explosion1.wav'].play() if Sound.on
   NUU.on 'shot', -> Sound['laser.wav'].play() if Sound.on
 
+# TODO: Steal login gesture ( click on login or enter )
+# Convince browser to play network messages from moment
+# of login. According to docs ctx.resume() should
+# suffice, but sth. is wrong, obviously.
+
+Sound.gestureThief = ->
+  splashSound = ->
+    @radio.init()
+    @radio.ctx.resume()
+    @radio.add Sound['hail.ogg'].url, volume:0.01, keep:yes
+    @recStream = await navigator.mediaDevices.getUserMedia audio: true
+    @recorder = new MediaRecorder @recStream, mimeType: 'audio/webm'
+    @recorder.ondataavailable = (e)=>
+      return resolve false if @aborted
+      @recording = no; @recStream.getAudioTracks()[0].stop();
+    @recorder.start()
+    setTimeout ( => @recorder.stop() ), 1000
+    document.removeEventListener 'mousedown', splashSoundBound, passive:no, once:yes, capture:yes
+    document.removeEventListener 'keydown',   splashSoundBound, passive:no, once:yes, capture:yes
+  splashSoundBound = splashSound.bind Sound
+  document.addEventListener 'mousedown', splashSoundBound, passive:no, once:yes, capture:yes
+  document.addEventListener 'keydown',  splashSoundBound, passive:no, once:yes, capture:yes
+
 # ██ ██████   █████   ██████
 # ██ ██   ██ ██   ██ ██
 # ██ ██████  ███████ ██
@@ -111,7 +127,7 @@ $public class Radio
   init:->
     @ctx = new AudioContext latencyHint: "playback", sampleRate: 48000
     @out = @ctx.destination
-    @add Sound['hail.ogg'].url, volume:0.1, keep:yes
+    # @add Sound['hail.ogg'].url, volume:0.1, keep:yes
     return unless Sound.radioEffect
     @out = @band = @ctx.createBiquadFilter()
     @band.type = "bandpass"
@@ -143,10 +159,9 @@ Radio::add = (url,opts={})->
   opts.id = "msg#{@msg++}"
   opts.url = url
   s = new Sound opts
-  s.load().then =>
-    @$.push s
-    do @play
-    return
+  await s.load()
+  @$.push s
+  do @play
   return
 
 Radio::play = ->
@@ -157,13 +172,16 @@ Radio::play = ->
   @src = @ctx.createMediaElementSource @current.$
   @src.connect @out
   @current.$.play()
-  HUD.widget 'radio', "#{@current.nick}@#{Sound.channel}", yes
+  console.log @current
+  HUD.updateTopBar 'channel', """<span class="active">##{Sound.channel}</span><span class=user>#{
+    if n = @current.nick then '@'+n else '$nuu'
+  }</span>"""
   @current.$.onended = @current.$.onerror = => do @cleanAndNext
   setTimeout ( => do @play ), 100
   return
 
 Radio::cleanAndNext = ->
-  HUD.widget 'radio', "##{Sound.channel}", yes
+  HUD.updateTopBar 'channel', """<span class="active">##{Sound.channel}</span>"""
   @src.disconnect @out
   URL.revokeObjectURL @src.url
   delete Sound[@current.id]
@@ -175,21 +193,20 @@ Sound.channel = 'global'
 
 Sound.recordMessage = ->
   return unless Sound.chat
-  HUD.widget 'radio', "##{Sound.channel}[*]", yes
+  HUD.updateTopBar 'channel', """<span class="speaking">##{Sound.channel} 🎙</span>"""
   NET.audio.write Sound.channel, await @startRecording()
-  HUD.widget 'radio', "##{Sound.channel}", yes
+  HUD.updateTopBar 'channel', """<span class="active">##{Sound.channel}</span>"""
   return
 
 Sound.startRecording = -> new Promise (resolve,reject)=>
   do @abortRecording if @recording
-  navigator.mediaDevices.getUserMedia audio: true
-  .then (@recStream)=>
-    @recorder = new MediaRecorder @recStream, mimeType: 'audio/webm'
-    @recorder.ondataavailable = (e)=>
-      return resolve false if @aborted
-      @recording = no; @recStream.getAudioTracks()[0].stop();
-      resolve e.data
-    @recorder.start()
+  @recStream = await navigator.mediaDevices.getUserMedia audio: true
+  @recorder = new MediaRecorder @recStream, mimeType: 'audio/webm'
+  @recorder.ondataavailable = (e)=>
+    return resolve false if @aborted
+    @recording = no; @recStream.getAudioTracks()[0].stop();
+    resolve e.data
+  @recorder.start()
 
 Sound.sendMessage = ->
   do @recorder.stop if @recorder and 'inactive' isnt @recorder.state
@@ -215,14 +232,14 @@ Kbd.macro 'pttPlay', 'cKeyX', 'Play radio', ->
 
 Kbd.macro 'pttToggle', 'sKeyX', 'Toggle radio', ->
   if NUU.settings.soundChat = Sound.chat = not Sound.chat
-       HUD.widget 'radio', "##{Sound.channel}", yes
-  else HUD.widget 'radio', null, yes
+       HUD.updateTopBar 'channel', """<span class="active">##{Sound.channel}</span>"""
+  else HUD.updateTopBar 'channel', """<span class="inactive">##{Sound.channel}</span>"""
   do NUU.saveSettings
   return
 
 Kbd.macro 'pttChannel', 'aKeyX', 'Set channel', up:->
   vt.prompt 'channel', ( (c)->
-    HUD.widget 'radio', "##{Sound.channel = c}", yes if Sound.chat
+    HUD.updateTopBar 'channel', """#<span class="active">#{Sound.channel = c}</span>""" if Sound.chat
     return
   ), yes
   return

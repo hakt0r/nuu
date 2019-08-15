@@ -137,6 +137,7 @@ rules.dm.stars = [
   [ 11,  Station, 'Serenity',            'station-battlestation', 1000,        $orbit, 0, template:'Fortress' ]
   [ 12,  Station, 'Nibiru',              'station-sphere',        10000000000, $orbit, 0, template:'Outpost' ]
   [ 13,  Planet,  'Testa'     ,          'A01',                   2300000,     $orbit, 0 ]
+  [ 14,  Star,    'Sol-1',               'orange02',              10000,       $orbit, 0 ]
   # Moons of Mars
   [ 20,  Moon,    'Phobos',              'D04',                   9380,        $orbit, 5, t:0]
   [ 21,  Moon,    'Deimos',              'D04',                   23460,       $orbit, 5, t:0]

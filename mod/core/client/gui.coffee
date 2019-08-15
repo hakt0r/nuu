@@ -32,19 +32,21 @@ window.log = (args...) ->
   console.user args.join(' ')
 
 window.Notice = class Notice
-  @queue : []
-  constructor : (@msg,@timeout=1000) ->
-    @timeout += Date.now()
-  toString : -> @msg
-
-setInterval ( =>
-  n = Date.now()
-  Notice.queue = Notice.queue.filter (e) -> e.timeout > n
-), 100
+  @queue:[]
+  @update:->
+    n = Date.now()
+    Notice.queue = Notice.queue.filter (e) -> e.timeout > n
+    HUD.notice$.innerHTML = Notice.queue.join '\n'
+    return unless Notice.queue.length > 0
+    clearTimeout notice.trigger; notice.trigger = setTimeout Notice.update, 100
+    return
+  constructor:(@msg,@timeout=1000)-> @timeout += Date.now()
+  toString:-> @msg
 
 window.notice = (timeout,msg) ->
   msg = [msg] if typeof msg is 'string'
   Notice.queue.push new Notice line, timeout for line in msg
+  clearTimeout notice.trigger; notice.trigger = setTimeout Notice.update
   null
 
 # ██     ██ ██ ███    ██ ██████   ██████  ██     ██

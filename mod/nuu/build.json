@@ -1,5 +1,6 @@
 { "client": {
     "sources":[
+      "starfield",
       "controls",
       "autopilot",
       "gui_nuu",

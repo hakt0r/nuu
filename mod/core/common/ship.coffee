@@ -113,7 +113,7 @@ Ship::destructor = ->
 Ship::reset = ->
   for h in @hostile
     h.target = no if h.target is @
-    Array.remove h.hostile, @
+    Array.remove h.hostile, @ if h.hostile
   @hostile = []
   @disabled = @respawning = @locked = @destructing = no
   @energy = @energyMax
@@ -129,6 +129,14 @@ Ship::toJSON = -> {
   tpl:    @tpl
   name:   @name
   loadout:@loadout }
+
+Ship.formation =
+  wing: [
+    [150, -40],[-150 ,-40]
+    [300, -80],[-300 ,-80]
+    [150,-120],[-150,-120]
+    [300,-160],[-300,-160]
+  ]
 
 #  █████   ██████ ████████ ██  ██████  ███    ██ ███████
 # ██   ██ ██         ██    ██ ██    ██ ████   ██ ██
@@ -185,25 +193,25 @@ Ship::updateMods = ->
         @mass += item.stats.mass || 0
         unless type is 'weapon'
           for k,v of item.stats when k isnt 'turret'
-            if @mods[k] then @[k] += v
-            else @[k] = v
+            if @mods[k] then @stats[k] += v
+            else @stats[k] = v
             @mods[k] = true
   console.log 'smod', 'mass', @stats.mass - @mass if debug
-
   # apply mods
-  map =
-    thrust:      @stats.thrust_mod || 100
-    turn:        @stats.turn_mod   || 100
-    shield:      @stats.shield_mod || 100
-    shieldMax:   @stats.shield_mod || 100
-    shieldRegen: @stats.shield_mod || 100
-  @[k] += @[k] * ( v / 100 ) for k,v of map
+  # map =
+  #   thrust:      @stats.thrust || 100
+  #   turn:        @stats.turn   || 100
+  #   shield:      @stats.shield || 100
+  #   shieldRegen: @stats.shield_regen || 100
+  # @stats[k] += @stats[k] * ( v / 100 ) for k,v of map
 
-  # scale model values
-  @armourMax = @armour  = @stats.armour
-  @fuelMax   = @fuel    = @fuel * 10
-  @turn      = @turn   / 500
-  @thrust    = @thrust / 10000
+  # get and scale model values
+  @shieldMax = @shield  = @stats.shield
+  @shieldRegen = @stats.shield_regen
+  @armourMax = @armour = @stats.armour
+  @fuelMax   = @fuel   = @stats.fuel * 10
+  @turn      = @stats.turn   / 500
+  @thrust    = @stats.thrust / 10000
 
   # add/exchange model-worker
   @lastUpdate = 0

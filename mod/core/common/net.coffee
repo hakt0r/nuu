@@ -336,12 +336,12 @@ NET.define 5,'MODS',
     if mode is 'spawn'
       ship.reset()
       $obj.select true if ship is VEHICLE
-    NUU.emit '$obj:' + mode, ship, ship.shield = msg.readUInt16LE(4), ship.armour = msg.readUInt16LE(6)
+    NUU.emit '$obj:' + mode, ship, ship.shield = msg.readUInt32LE(4), ship.armour = msg.readUInt32LE(8)
   write: server: (ship,mod,a=0,b=0) ->
-    msg = Buffer.from [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0, 0,0]
+    msg = Buffer.from [NET.modsCode, modsKey.indexOf(mod), 0,0, 0,0,0,0, 0,0,0,0]
     msg.writeUInt16LE ship.id, 2
-    msg.writeUInt16LE parseInt(a), 4
-    msg.writeUInt16LE parseInt(b), 6
+    msg.writeUInt32LE parseInt(a), 4
+    msg.writeUInt32LE parseInt(b), 8
     NUU.nearcast ( msg.toString 'binary' ), ship
 
 ###

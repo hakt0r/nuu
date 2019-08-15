@@ -42,9 +42,9 @@ Object.defineProperty User::, 'vehicle',
     return unless v
     window.VEHICLE = @_vehicle = v
     v.hide()
-    v.layer = 'play'
+    v.layer = GFX.PLAYER
     v.show()
-    Sprite.repositionPlayer()
+    GFX.repositionPlayer()
     @vehicleId = v.id
     NUU.emit 'enterVehicle', v
     switchWeap(-1) NUU.player, 'primary'

@@ -44,7 +44,7 @@ NUU.init = $void
 
 NUU.time = Date.now
 NUU.timePrefix = ->
-  1000000 * Math.floor @time() / 1000000
+  1e6 * Math.floor @time() / 1e6
 
 NUU.threadList = {}
 NUU.thread = (name,time,fnc) ->
@@ -198,24 +198,30 @@ $static '$interval',     (i,f) -> setInterval f,i
 $static '$timeout',      (i,f) -> setTimeout f,i
 
 $static 'hdist', (m) ->
-  if m < 1000 then            (m).toFixed(0) + "px"
-  else if m < 1000000 then    (m / 1000).toFixed(2) + "Kpx"
-  else if m < 1000000000 then (m / 1000000).toFixed(2) + "Mpx"
-  else                        (m / 1000000000).toFixed(2) + "Gpx"
+  if      m < 1e3 then (m      ).toFixed(0) + "px"
+  else if m < 1e6 then (m / 1e3).toFixed(2) + "Kpx"
+  else if m < 1e9 then (m / 1e6).toFixed(2) + "Mpx"
+  else                 (m / 1e9).toFixed(2) + "Gpx"
+
+$static 'hscale', (m) ->
+  if      m < 1e3 then (m      ).toFixed(0)
+  else if m < 1e6 then (m / 1e3).toFixed(2) + "K"
+  else if m < 1e9 then (m / 1e6).toFixed(2) + "M"
+  else                 (m / 1e9).toFixed(2) + "G"
 
 $static 'htime', (t) ->
-  s  = Math.floor(t % 60)
-  m  = Math.floor(t / 60 % 60)
-  h  = Math.floor(t / 60 / 60)
-  d  = Math.floor(t / 60 / 60 / 24)
-  y  = Math.floor(t / 60 / 60 / 24 / 365)
-  ky = Math.floor(t / 60 / 60 / 24 / 365 / 1000)
-  vy = Math.floor(t / 60 / 60 / 24 / 365 / 1000 / 1000)
-  gy = Math.floor(t / 60 / 60 / 24 / 365 / 1000 / 1000 / 1000)
+  s  = Math.floor t % 60
+  m  = Math.floor t / 60 % 60
+  h  = Math.floor t / 3.6e3
+  d  = Math.floor t / 8.64e4
+  y  = Math.floor t / 3.1536e7
+  ky = Math.floor t / 3.1536e10
+  vy = Math.floor t / 3.1536e13
+  gy = Math.floor t / 3.1536e16
   if t < 60 then s + "s"
-  else if t < 60 * 60 then m + "m" + s + "s"
-  else if t < 60 * 60 * 24 then h + "h" + m + "m" + s + "s"
-  else if t < 60 * 60 * 24 * 356 then d + "d " + h + ":" + m + ":" + s + "h"
+  else if t <     3600 then m + "m" + s + "s"
+  else if t <    86400 then h + "h" + m + "m" + s + "s"
+  else if t < 30758400 then d + "d " + h + ":" + m + ":" + s + "h"
   else t.toFixed 0
 
 if debug

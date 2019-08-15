@@ -29,6 +29,7 @@
       "debug",
       "client"],
     "scripts": [
+      "three.js",
       "lib.js",
       "client.js"]},
 "server":{

@@ -63,7 +63,9 @@ Weapon.impactLogic = (wp)->
       @shield = 0
       @armour -= dmg.physical
       status = Weapon.impactType.shieldsDown
-  else @armour -= dmg.penetrate + dmg.physical
+  else
+    @shield = 0
+    @armour -= dmg.penetrate + dmg.physical
   if 0 < @armour and @armour < 25
     status = Weapon.impactType.disabled
     @update()
@@ -78,6 +80,13 @@ Weapon.impactLogic = (wp)->
   else status = Weapon.impactType.hit
   console.log @name, 'hitFor', dmg.penetrate, @shield+'/'+@shieldMax, @armour+'/'+@armourMax if debug
   status
+
+Station::releaseAll = ->
+  releaseCode = Weapon.actionCode.release
+  @slots.weapon.forEach (w)=> if e = w.equip
+    e.release null, null
+    NET.weap.write null, releaseCode, w, @, null
+  return
 
 Ship::releaseAll = ->
   releaseCode = Weapon.actionCode.release
@@ -194,17 +203,18 @@ Weapon.Beam = ->
     @release()
     Track.remove @ if @turret
   @release = =>
-    @stop = true; @lock = false
+    @stop = true
+    @lock = false
     do @hide if isClient
-    delete @ship.beam
+    @ship.beam = false
     off
   @trigger = (src,@target) =>
     return if @lock; @lock = true; @stop = false
-    return unless @target             if isServer
+    return unless @target       if isServer
     return     if @target.destructing
     Weapon.hostility @ship, @target
-    do @show if isClient
     @ship.beam = @
+    do @show if isClient
     @ms = NUU.time()
     @tt = @ms + @duration
     BeamWorker.add @
@@ -240,15 +250,15 @@ BeamWorker = $worker.ReduceList (time)->
     ██      ██   ██  ██████   █████  ███████  ██████    ██    ██ ███████ ███████ ###
 
 class ProjectileVector
-  constructor:(@perp,@weap,@ms,@tt,@sx,@sy,@vx,@vy)->
+  constructor:(@perp,@weap,@ms,@tt,@sx,@sy,@vx,@vy,@a)->
 
 Weapon.Projectile = ->
   Weapon.Projectile.loadAssets.call @ if isClient
-  @delay  = @stats.delay * 500
-  @ttl    = 1000 / @stats.speed * 1000
-  @pps    = @stats.speed / 333
-  @dir    = 0
-  @lock = @stop = false
+  @delay = @stats.delay * 500
+  @ttl   = 1000 / @stats.speed * 1000
+  @pps   = @stats.speed / 333
+  @dir   = 0
+  @lock  = @stop = false
   Track.add @ if @turret
   @trigger = (src,@target)=>
     return if @lock; @lock = true; @stop = false
@@ -262,16 +272,26 @@ ProjectileEmitter = $worker.ReduceList (time)->
   @release() if not @target or @target.destructing
   return stop = @lock = false if @stop
   return true if @next > time
-  @next = time + @delay
+  @next = time + @delay / 100
   ship = @ship
   ship.update time
   cs = cos d = (( ship.d + @dir ) % 360 ) * RADi
   sn = sin d
-  v = [ ship.v[0] + cs * @pps, ship.v[1] + sn * @pps ]
+  v = [ -ship.v[0] + cs * @pps, -ship.v[1] + sn * @pps ]
   x = ship.x # + slot.x * cs
   y = ship.y # + slot.y * sn
-  ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, v[0], v[1] if isServer
-  new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d                  if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
+  ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, v[0], v[1], a
   NUU.emit 'shot', @                                                                       if isClient
   true
 
@@ -283,6 +303,7 @@ ProjectileDetector = $worker.ReduceList (time)->
     y = floor @sy + @vy * t
     continue if target.size < $dist (x:x,y:y), target
     target.hit @perp, @weap if isServer
+    @a.destroy()            if isClient
     return false
   true
 
@@ -322,12 +343,15 @@ if isServer
       when 'fighter'
         ship = Item.byName[ammo.stats.ship]
         (src,target)=>
+          ship.formationSlots = Ship.formation.wing.slice() unless ship.formationSlots
           Weapon.hostility @ship, target
           time = NUU.time()
           new Escort
             escortFor: @ship.id
-            state: Missile.ejectState time, @ship, 0.004
+            formVec: ship.formationSlots.shift()
+            state: Missile.ejectState time, @ship, 0.002
             tpl: ship.itemId
+            iff: ship.iff
       else (src,target)=>
         Weapon.hostility @ship, target
         new Missile source:@ship, target:target

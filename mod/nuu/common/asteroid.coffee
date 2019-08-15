@@ -9,16 +9,17 @@
 
 $obj.register class Asteroid extends $obj
   @interfaces: [$obj,Shootable,Debris,Asteroid]
-  virtual: yes
   constructor: (opts)->
     opts.sprite = 'asteroid-D' + ( opts.size - 10 ).toString().padStart 2,'0'
     super opts
-    @name = 'roid-' + @id
     @armour = @armourMax = 10 * @size
   toJSON:-> undefined
 
+Asteroid::virtual = yes if isServer
+
 $obj.register class Asteroid.Belt extends $obj
-  @interfaces: [$obj]
+  bigMass:yes
+  @interfaces: [$obj,Stellar]
   constructor: (opts={})->
     opts = Object.assign {
       seed: 'asdasdas213'
@@ -27,7 +28,7 @@ $obj.register class Asteroid.Belt extends $obj
       count: 1000
     }, opts
     opts.parent = $obj.byId[opts.parent] if isClient
-    opts.state = opts.state || State.orbit.relto opts.parent, opts.belt, 1e9
+    opts.state = opts.state || State.orbit.relto opts.parent, opts.belt, 1
     super opts
     unless @base
       @ids = new IdPool name:@name, max:@count unless @ids?
@@ -37,11 +38,12 @@ $obj.register class Asteroid.Belt extends $obj
     for i in [0..@count]
       oo = @belt - @width/2 + @width*@noise.doubell()
       @list[i] = new Asteroid
-        resource: ( Element.deterministic @noise for i in [0...5])
+        resource: ( Element.deterministic @noise for j in [0...5])
         state:    State.orbit.relto @parent, oo, 1, TAU * @noise.double()
         size:     max 10, floor @noise.double() * 73
         belt:     @
         id:       @base + i
+        name:     @name + '-' + ( @base + i )
     $obj.select @list if isClient
   loadAssets:->
   toJSON:-> id:@id,key:@key,state:@state,seed:@seed,base:@base,count:@count,belt:@belt,width:@width,name:@name,parent:@parent.id
@@ -62,15 +64,15 @@ Asteroid.autospawn = (opts={})->
   NUU.on 'start', ->
     center = $obj.byId[0]
     roids = [
-      { name:"Asteroid Belt",         parent:center,             belt:4.0325e8, width:3e8,      count:500 }
+      { name:"Asteroid Belt",         parent:center,             belt:4.0325e8, width:3e8,     count:200 }
       { name:"Kuyper Belt",           parent:center,             belt:5.984e9,  width:2.992e9, count:500 }
-      { name:"D Ring",                parent:$obj.byName.Saturn, belt:78315,    width:7610,    count:100 }
-      { name:"C Ring",                parent:$obj.byName.Saturn, belt:100671,   width:17342,   count:100 }
-      { name:"B Ring",                parent:$obj.byName.Saturn, belt:130370,   width:25580,   count:100 }
-      { name:"Cassini Division",	    parent:$obj.byName.Saturn, belt:124465,   width:4590,    count:100 }
-      { name:"A ring",	              parent:$obj.byName.Saturn, belt:144077,   width:14605,   count:100 }
-      { name:"Roche Division",	      parent:$obj.byName.Saturn, belt:140682,   width:2605,    count:100 }
-      { name:"F Ring",	              parent:$obj.byName.Saturn, belt:139930,   width:500,     count:100 }
+      { name:"D Ring",                parent:$obj.byName.Saturn, belt:78315,    width:7610,    count:50 }
+      { name:"C Ring",                parent:$obj.byName.Saturn, belt:100671,   width:17342,   count:50 }
+      { name:"B Ring",                parent:$obj.byName.Saturn, belt:130370,   width:25580,   count:50 }
+      { name:"Cassini Division",	    parent:$obj.byName.Saturn, belt:124465,   width:4590,    count:50 }
+      { name:"A ring",	              parent:$obj.byName.Saturn, belt:144077,   width:14605,   count:50 }
+      { name:"Roche Division",	      parent:$obj.byName.Saturn, belt:140682,   width:2605,    count:50 }
+      { name:"F Ring",	              parent:$obj.byName.Saturn, belt:139930,   width:500,     count:50 }
       { name:"Janus/Epimetheus Ring", parent:$obj.byName.Saturn, belt:156500,   width:5000,    count:100 }
       { name:"G Ring",	              parent:$obj.byName.Saturn, belt:179500,   width:9000,    count:100 }
       { name:"Methone Ring Arc",	    parent:$obj.byName.Saturn, belt:194230,   width:500,     count:100, arc:PI/2 }
@@ -78,7 +80,6 @@ Asteroid.autospawn = (opts={})->
       { name:"Pallene Ring",	        parent:$obj.byName.Saturn, belt:214750,   width:2500,    count:100 }
       { name:"E Ring",                parent:$obj.byName.Saturn, belt:630000,   width:300000,  count:100 }
       { name:"Phoebe Ring",           parent:$obj.byName.Saturn, belt:4500000,  width:9000000, count:100 }]
-    console.log roids
     new Asteroid.Belt o for o in roids
     return
   $worker.push =>

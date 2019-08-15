@@ -306,9 +306,9 @@ $public class Trader extends AI
     opts.tpl = opts.tpl || Array.random Trader.ships
     super opts
     @inventory = new Inventory data:{}, key:no
-    vec = [[150,-40],[-150,-40],[300,-80],[300,-80]]
+    @formationSlots = Ship.formation.wing.slice()
     @escort = ( for i in [0..floor random()*3]
-      new Escort escortFor:@id, formVec:vec.shift() )
+      new Escort escortFor:@id, formVec:@formationSlots.shift() )
     return
   onHostility:->
     console.log @name, 'offended' if debug
@@ -398,7 +398,7 @@ $public class Escort extends AI
     fx = 0 + x*cos(phi) - y*sin(phi)
     fy = 0 + x*sin(phi) + y*cos(phi)
     opts.name = NameGen.republicFighter
-    opts.state = S:$formation, x:fx, y:fy, d:p.d, v:p.v.slice(), relto:p, translate:no
+    opts.state = opts.state || S:$formation, x:fx, y:fy, d:p.d, v:p.v.slice(), relto:p, translate:no
     opts.tpl = opts.tpl || Array.random Escort.ships
     super opts
   onHostility:->

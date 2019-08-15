@@ -1,4 +1,20 @@
 {
-  "suit":        { "size": 46, "cols":1 },
-  "suit_engine": { "size": 46, "cols":1 }
+  "suit":               { "size": 46, "cols":1 },
+  "suit_engine":        { "size": 46, "cols":1 },
+  "chs":                { "type":"gov" },
+  "hks":                { "type":"gov" },
+  "admiralassembly":    { "type":"com" },
+  "faypoe":             { "type":"com" },
+  "ganymede_gas":       { "type":"com" },
+  "gforce":             { "type":"com" },
+  "greywash":           { "type":"com" },
+  "jetson":             { "type":"com" },
+  "ponomarevagaussgun": { "type":"com" },
+  "russels":            { "type":"com" },
+  "siriusrobotics":     { "type":"com" },
+  "solarsuits":         { "type":"com" },
+  "taikuipment":        { "type":"com" },
+  "tau":                { "type":"com" },
+  "tepeshkovalaser":    { "type":"com" },
+  "valkyrie":           { "type":"com" }
 }
