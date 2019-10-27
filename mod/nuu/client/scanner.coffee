@@ -181,7 +181,7 @@ class GFX.ScannerDelegate
     source.label   .set @label
     source.position.set @position
     source.velocity.set @velocity
-    @position[2] = 2000; @sliceId[0] = 0xFFFF; @time[3] = 0
+    @position[2] = 2000; @label[0] = 0xFFFF
     @info[0] = @info[1] = @info[2] = @info[3] = 0
     @velocity[0] = @velocity[1] = @velocity[2] = @velocity[3] = @position[0] = @position[1] = 0
     @batch.texture.dropSource source.source
@@ -230,7 +230,7 @@ GFX.Delegate class GFX.Text
     source.label   .set @label
     source.position.set @position
     source.velocity.set @velocity
-    @position[2] = 2000; @sliceId[0] = 0xFFFF; @time[3] = 0
+    @position[2] = 2000; @sliceId[0] = 0xFFFF
     @info[0] = @info[1] = @info[2] = @info[3] = 0
     @velocity[0] = @velocity[1] = @velocity[2] = @velocity[3] = @position[0] = @position[1] = 0
     @batch.texture.dropSource source.source

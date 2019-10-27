@@ -303,6 +303,7 @@ class GFX.Slice
     @free.push @
     true
   optimize:(w=@main.width,h=@main.height)->
+    console.log 'optimize'
     clone = new GFX.Slice -1, w, h
     list = @isClaimed.values()
     @free = @free.sort (a,b)-> b.s - a.s
