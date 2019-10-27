@@ -23,7 +23,6 @@
   "dependencies": {
     "async": "^0.6.2",
     "body-parser": "^1.18.3",
-    "colors": "^0.6.2",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.4",
     "eventemitter3": "^3.1.0",
@@ -37,6 +36,7 @@
     "serve-index": "^1.9.1",
     "serve-static": "^1.0.4",
     "tagscale": "git+https://github.com/hakt0r/node-tagscale.git",
+    "three": "^0.109.0",
     "vectors": "^0.1.0",
     "ws": "^5.2.2"
   },
@@ -48,11 +48,9 @@
     "jquery": "^3.4.0",
     "marked": "^0.6.2",
     "mkdirp": "^0.5.1",
-    "pixi.js": "^5.0.0",
     "request": "^2.88.0",
     "touch": "^0.0.3",
     "uglify-js": "^3.5.4",
-    "voronoi-map": "^0.0.1",
     "x2js": "^3.2.6"
   },
   "keywords": [
@@ -61,6 +59,8 @@
     "space"
   ],
   "optionalDependencies": {
-    "bufferutil": "^3.0.5"
+    "bufferutil": "^3.0.5",
+    "colors": "^0.6.2",
+    "node-forge": "^0.9.1"
   }
 }

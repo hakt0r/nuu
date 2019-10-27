@@ -4,14 +4,12 @@
       ["EventEmitter","eventemitter3","EventEmitter"],
       ["Buffer","buffer","Buffer"],
       ["$","jquery"],
-      ["PIXI","pixi.js"],
       ["$v","vectors"]],
     "libs": [
       "eventemitter3",
       "crypto",
       "events",
       "jquery",
-      "pixi.js",
       "buffer",
       "vectors"],
     "sources": [

@@ -88,6 +88,7 @@ require('./csmake.coffee')( global.STAGES =
    )(c)
 
   assets: (c)->
+    await link( 'node_modules/three/build/three.min.js', 'build/three.js' )(->)
     for name,script of SCRIPTS when script.build
       await new Promise script.build
     c null
