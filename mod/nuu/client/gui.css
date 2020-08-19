@@ -728,18 +728,17 @@ h1,h2 {
 .hud .panel.ship {
   box-shadow: inset black 0px 0px 11px 6px;
   left: calc(50% - 200px);
-  transform:
-    perspective(50px)
-    translate(-50%)
-    rotate3d(-1,-1,-2,10deg); }
+  background: black; border: solid #fff6 2px;
+  transform: perspective(50px) translate(-50%) rotate3d(0.1,0.2,-2,10deg); }
 
 .hud .panel.target {
   box-shadow: inset black 0px 0px 11px 6px;
   right: calc(50% - 200px);
+  background: black; border: solid #fff6 2px;
   transform:
     perspective(50px)
     translate(50%)
-    rotate3d(-1,1,2,10deg); }
+    rotate3d(-0.1,0.2,2,10deg); }
 
 .hud .comm {
   width: 140px;
