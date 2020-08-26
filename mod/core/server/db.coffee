@@ -20,6 +20,9 @@
 
 ###
 
+unless fs.existsSync 'db'
+  fs.mkdirSync 'db'
+
 $tag.db = (name,obj={}) ->
   obj.ready = ( -> ) unless obj.ready
   db = new $tag.XScale obj.path = path.join 'db', ( obj.name = name ) + '.db'
