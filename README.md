@@ -147,8 +147,8 @@ These are the default keybindings as found on as US/QWERTY-keyboard. You can cha
   * c) 2002-2003 Sebastian Glaser <anx@ulzq.de> (as Uprising)
   * c) 2003-2004 Sebastian Glaser <anx@ulzq.de> (as U)
   * c) 2006 Sebastian Glaser <anx@ulzq.de> (as Uu)
-  * c) 2007-2019 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2019 flyc0r
+  * c) 2007-2020 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2020 flyc0r
 
   The nuu project intends to use all the asset files according to
   their respective licenses.

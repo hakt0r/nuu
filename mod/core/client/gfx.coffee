@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2019 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2018 flyc0r
+  * c) 2007-2020 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2020 flyc0r
 
   This file is part of NUU.
 

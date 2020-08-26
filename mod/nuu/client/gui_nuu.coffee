@@ -15,8 +15,8 @@ Window.About = class AboutWindow extends Window
       <div class="tab" id="game">
         <img src="/build/imag/logo_2018_2.svg">
         <p><ul class="copyrights">
-          <li>c) 2007-2019 Sebastian Glaser <anx@ulzq.de></li>
-          <li>c) 2007-2018 flyc0r</li>
+          <li>c) 2007-2020 Sebastian Glaser <anx@ulzq.de></li>
+          <li>c) 2007-2020 flyc0r</li>
         </ul></p>
 
         <p class="desc">The nuu project intends to use all the asset files
