@@ -12,7 +12,7 @@
     "clean": "npm prune --production",
     "prepare": "coffee tools/build.coffee assets",
     "test": "npm run build; CLIENT=true npm start",
-    "inspect": "npm run build; CLIENT=true node --inspect-brk ."
+    "inspect": "npm run build; CLIENT=true DEBUG=true node --inspect-brk ."
   },
   "repository": {
     "type": "git",

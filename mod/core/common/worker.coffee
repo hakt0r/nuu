@@ -130,7 +130,7 @@ $worker.PauseList = (opts,worker)->
       item[listKey] = time + res
       list[n++] = item
     listWorker.count = n
-    return
+    return true
   listWorker.worker = worker
   listWorker.list   = []
   listWorker.count  = 0

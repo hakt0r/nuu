@@ -52,6 +52,7 @@ $public class AI extends Ship
     AI.list.push @
     @constructor.list.push @
     @changeStrategy strategy
+    # console.log 'ai', @name, 'startWithStrategy', strategy
 
   destructor:->
     $worker.remove @worker if @worker
@@ -89,8 +90,8 @@ AI::hit = (src,wp) ->
   return
 
 AI::changeStrategy = (strategy)->
+  console.log 'strategy', @name, @strategy, '=>', strategy, @target?.name # if @constructor.name is 'Drone' if @strategy if debug
   return if strategy is @strategy
-  console.log 'strategy', @name, @strategy, '=>', strategy, @target?.name if @constructor.name is 'Drone' if @strategy if debug
   ( AI.worker[@strategy].remove @; delete @strategy ) if @strategy
   ( AI.worker[@strategy = strategy].add   @         ) if strategy?
   return @
@@ -106,7 +107,7 @@ AI::escortTarget = null
 
 AI.worker = {}
 AI.list = []
-AI.autospawn = -> $worker.push =>
+AI.autospawn = -> $worker.push ->
   for Type in [Drone,Trader,Miner]
     drones = Type.list.length
     if drones < Type.max
@@ -123,6 +124,7 @@ AI.register = (strategy,opts)->
   defaults = listKey:strategy,steer:no,inRange:no,outRange:no,onTarget:no,offTarget:no,getTarget:->
   opts = Object.assign defaults, opts
   AI.worker[strategy] = $worker.PauseList opts, (time)->
+    # console.log @target if strategy is 'findNewAsteroid'
     @getTarget() unless @target
     return 10000 unless @target
     if @target.respawning or @target.destructing
