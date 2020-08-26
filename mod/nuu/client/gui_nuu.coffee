@@ -37,11 +37,11 @@ Window.About = class AboutWindow extends Window
     """
     @$.find('.close').on 'click', => @close()
     @tabs = @$.find '.tab'
-    @tabs.each (k,i) =>
+    @tabs.each (k,i) ->
       src = $(i).attr 'data-src'
       console.log src
       return unless src
-      $.get src, (data,s,x) => $(i).html data
+      $.get src, (data,s,x)-> $(i).html data
     btns = @$.find '.tabbtn'
     w = @
     btns.on 'click', -> w.activate @href

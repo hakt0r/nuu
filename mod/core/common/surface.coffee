@@ -42,6 +42,6 @@ Stellar::genMap = ->
   noisyEdges.buildNoisyEdges(map, lava, map.mapRandom.seed)
   @map = map
 
-Stellar::renderMap : (c) ->
+Stellar::renderMap = (c) ->
   vm.canvasRender.graphicsReset(c, map.SIZE.width, map.SIZE.height, vm.style.displayColors)
   vm.canvasRender.renderDebugPolygons(c, map, vm.style.displayColors)

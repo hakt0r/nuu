@@ -114,7 +114,7 @@ NUU.on 'switchWeapon', switchWeapon = (slot,weap) ->
     HUD.primary$.style.fill = if e.color then e.color
     HUD.primary$.innerHTML = "#{Weapon.guiName e} #{Weapon.guiSymbol e}"
   else
-    HUD.primary$.style.fill = $palette.grey;
+    HUD.primary$.style.fill = $palette.grey
     HUD.primary$.innerHTML = "locked [0]"
   if e = p.secondary.slot
     s = NUU.symbol[e.extends]
@@ -219,7 +219,7 @@ $static 'HUD', new class NUU.HUD
   addVector:(name,color)->
     @$.append @[name+'$'] = vector = $.make """<div class="vector #{name}"></div>"""
     vector.style.backgroundColor = color
-    @[name] = setVector: (x1,y1,x2,y2,limit=Infinity)=>
+    @[name] = setVector: (x1,y1,x2,y2,limit=Infinity)->
       vector.style.left  = x1 + 'px'
       vector.style.top   = y1 + 'px'
       vector.style.width = ( min limit, sqrt (x1-x2)**2 + (y1-y2)**2 ) + 'px'

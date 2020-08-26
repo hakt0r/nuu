@@ -256,7 +256,7 @@ GFX.ScannerLayer::makeTextures = ->
   # tmp = document.createElement 'canvas'; tmp.width = tmp.height = @mapSize; document.body.append tmp; t = tmp.getContext '2d'
   tmp = new OffscreenCanvas ic*10, ic*10; t = tmp.getContext '2d'
   cnv = new OffscreenCanvas @mapSize, @mapSize; g = cnv.getContext '2d'
-  t.font         = g.font         = "#{fs}px monospace";
+  t.font         = g.font         = "#{fs}px monospace"
   t.fillStyle    = g.fillStyle    = 'white'
   t.textBaseline = g.textBaseline = 'top'
   t.fontWeight   = g.fontWeight   = 'bold'

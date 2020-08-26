@@ -820,7 +820,7 @@ State.register class State.travel extends State
     return if @lastUpdate is time; v = @vec
     return @toMoving time if time > v.decfti
     [ cosd, sind ] = v.decnrm; acc = v.locacc
-    dt = time - v.glifti; dt2 = dt**2;
+    dt = time - v.glifti; dt2 = dt**2
     accdt2b2 = acc*dt2*.5; @o.x=@px+@vx*dt+cosd*accdt2b2; @o.y=@py+@vy*dt+sind*accdt2b2
     accdt = acc*dt; @o.v[0]=@vx+cosd*accdt; @o.v[1]=@vy+sind*accdt
     @lastUpdate = time

@@ -85,7 +85,7 @@ $static 'GFX', new class NUU.SpriteSurface extends EventEmitter
       NUU.emit 'gfx:ready'
       return
 
-  loadMeta:-> new Promise (resolve,reject)=>
+  loadMeta:-> new Promise (resolve,reject)->
     $.ajax '/build/images.json', error:reject, success:(result)-> resolve $static '$meta', result
     return
 

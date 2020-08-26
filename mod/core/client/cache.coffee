@@ -37,14 +37,14 @@ iDBtx     = window.IDBTransaction or window.webkitIDBTransaction or window.OIDBT
 $static 'Cache', new class BlobCacheIndexedDB
   constructor: ->
     dbVersion = 1.0
-    createObjectStore = (dataBase) => dataBase.createObjectStore 'nuu'
+    createObjectStore = (dataBase) -> dataBase.createObjectStore 'nuu'
     req = indexedDB.open 'nuucache', dbVersion
-    req.onerror = (event) => console.log 'data', 'Error creating/accessing IndexedDB database'
-    req.onupgradeneeded = (event) => createObjectStore event.target.result
+    req.onerror = (event) -> console.log 'data', 'Error creating/accessing IndexedDB database'
+    req.onupgradeneeded = (event) -> createObjectStore event.target.result
     req.onsuccess = (event) =>
       console.log 'data', 'Success creating/accessing IndexedDB database' if debug
       @db = req.result
-      @db.onerror = (event) => console.log 'data','Error creating/accessing IndexedDB database'
+      @db.onerror = (event) -> console.log 'data','Error creating/accessing IndexedDB database'
       if @db.setVersion # Interim solution for Google Chrome to create an objectStore. Will be deprecated
         if @db.version isnt dbVersion
           setVersion = @db.setVersion dbVersion
@@ -53,7 +53,7 @@ $static 'Cache', new class BlobCacheIndexedDB
       else do ready
       null
     @get_ = @get; queue = {}
-    @get = (path,callback) =>
+    @get = (path,callback) ->
       l = queue[path] || queue[path] = []
       l.push callback if -1 is l.indexOf callback
     ready = =>
@@ -74,20 +74,20 @@ $static 'Cache', new class BlobCacheIndexedDB
         t.needsUpdate = yes
         resolve t
       if blob = event.target.result then r.src = URL.createObjectURL blob
-      else            @fetch p, (blob)=> r.src = URL.createObjectURL blob
+      else            @fetch p, (blob)-> r.src = URL.createObjectURL blob
     return
 
   get: (path,callback) ->
     path = path.replace(/^\//,'')
     tx = @db.transaction([ 'nuu' ], "readonly")
     q = tx.objectStore('nuu').get(path)
-    q.onerror = (event) => console.log event
+    q.onerror = (event) -> console.log event
     q.onsuccess = (event) =>
       if ( imgFile = event.target.result )
         imgURL = URL.createObjectURL imgFile
         callback imgURL
         # URL.revokeObjectURL imgURL
-      else @fetch path, (blob)=>
+      else @fetch path, (blob)->
         imgURL = URL.createObjectURL blob
         callback imgURL
         # URL.revokeObjectURL imgURL
@@ -100,7 +100,7 @@ $static 'Cache', new class BlobCacheIndexedDB
       x = new XMLHttpRequest
       x.responseType = 'blob'
       x.open 'GET', path, true
-      x.addEventListener 'error', (e) => console.log 'data', 'fetch-error', path, e
+      x.addEventListener 'error', (e) -> console.log 'data', 'fetch-error', path, e
       x.addEventListener 'load', => if x.status == 200
         tx = @db.transaction [ 'nuu' ], "readwrite"
         put = tx.objectStore('nuu').put x.response, path

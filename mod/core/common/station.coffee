@@ -53,8 +53,9 @@ $obj.register class Station extends Stellar
     @slots = # Mock items for now
       weapon: [ @weapon.slot ]
       structure: [
-        id:0, size:'large', equip:null
-        id:0, size:'large', equip:null ]
+        {id:0, size:'large', equip:null}
+        {id:0, size:'large', equip:null}
+      ]
     @name += "-#{@id}"
     # @name += " (#{@constructor.name})" if isClient
     return                             if isClient

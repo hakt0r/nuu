@@ -138,9 +138,9 @@ NET.define 0,'JSON',
 ###
 
 NET.define 1,'PING', read:
-  client: (msg,src) =>
+  client: (msg,src) ->
     Ping.add msg[1], msg.readDoubleLE 2
-  server: (msg,src) =>
+  server: (msg,src) ->
     b = Buffer.from [NET.pingCode,msg[1],0,0,0,0,0,0,0,0]
     b.writeDoubleLE Date.now(), 2
     src.send b.toString('binary')

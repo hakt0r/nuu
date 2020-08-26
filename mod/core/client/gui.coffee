@@ -89,7 +89,7 @@ $public class Window
   keyHandler: (evt,code)=>
     switch code
       when @closeKey, 'Escape'
-        @close();
+        @close()
         evt.preventDefault()
         return false
     true
@@ -145,7 +145,7 @@ $public class ModalListWindow extends Window
         ad = if code is 'ArrowLeft' then -1 else 1
         nx = $ lb[( ct + ix + ad ) % ct]
         cur.find('button').removeClass 'active'
-        nx.addClass 'active'; cur[0].action = => nx.first().click()
+        nx.addClass 'active'; cur[0].action = -> nx.first().click()
     return unless next
     $(list).removeClass 'active'
     next.addClass 'active'
@@ -154,7 +154,7 @@ $public class ModalListWindow extends Window
     next.parent()[0].scrollTo top: pt + nt
     return if 0 is ( btns = next.find 'button' ).length
     next.parent().find('button').removeClass 'active'
-    btns.first().addClass 'active'; next[0].action = => btns.first().click()
+    btns.first().addClass 'active'; next[0].action = -> btns.first().click()
 
 # ███████ ██████  ██ ████████  ██████  ██████
 # ██      ██   ██ ██    ██    ██    ██ ██   ██
@@ -564,21 +564,21 @@ NUU.loginPrompt = ->
     return true if e.altKey and e.code is 'KeyR' and NUU.registerPrompt()
     return true if e.altKey and e.code is 'KeyC' and demo()
     false
-  onuser = (u)=>
+  onuser = (u)->
     return true if ( user = u ) is null and NUU.loginPrompt()
     NUU.passPrompt p_pass, onpass
     true
-  onpass = (p) =>
+  onpass = (p) ->
     pass = p
     vt.promptQuery = null
     setTimeout dologin, 0
     false
-  dologin = =>
+  dologin = ->
     NUU.testButton.remove() if NUU.testButton
     vt.status 'Login', 'Opening connnection...'
     vt.show()
     NET.login user, pass, onlogin
-  onlogin = (success) =>
+  onlogin = (success) ->
     return NUU.loginPrompt() unless success
     setTimeout ( ->
       vt.status 'NUU', 'ready'

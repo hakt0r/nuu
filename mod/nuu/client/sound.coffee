@@ -105,7 +105,7 @@ Sound.gestureThief = ->
     @recorder = new MediaRecorder @recStream, mimeType: 'audio/webm'
     @recorder.ondataavailable = (e)=>
       return resolve false if @aborted
-      @recording = no; @recStream.getAudioTracks()[0].stop();
+      @recording = no; @recStream.getAudioTracks()[0].stop()
     @recorder.start()
     setTimeout ( => @recorder.stop() ), 1000
     document.removeEventListener 'mousedown', splashSoundBound, passive:no, once:yes, capture:yes
@@ -204,7 +204,7 @@ Sound.startRecording = -> new Promise (resolve,reject)=>
   @recorder = new MediaRecorder @recStream, mimeType: 'audio/webm'
   @recorder.ondataavailable = (e)=>
     return resolve false if @aborted
-    @recording = no; @recStream.getAudioTracks()[0].stop();
+    @recording = no; @recStream.getAudioTracks()[0].stop()
     resolve e.data
   @recorder.start()
 
@@ -216,7 +216,7 @@ Sound.abortRecording = ->
   return unless @recording
   @aborted = true
   do @recorder.stop
-  @recStream.getAudioTracks()[0].stop();
+  @recStream.getAudioTracks()[0].stop()
   @aborted = @recording = no
   return
 

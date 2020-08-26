@@ -58,7 +58,7 @@ NUU.sync = (list,callback) ->
 NET.queryJSON = (opts,callback)->
   p = new Promise (resolve,reject)->
     key = Object.keys(opts)[0]
-    clear = =>
+    clear = ->
       NET.removeListener 'e', onerror
       NET.removeListener key, ondone
     NET.json.write opts
@@ -119,7 +119,7 @@ class NET.Connection
     try s = if WebSocket? then new WebSocket @addr else new MozWebSocket @addr
     catch e then @onerror e
     s.binaryType = 'arraybuffer'
-    @connectTimeout = setTimeout ( =>
+    @connectTimeout = setTimeout ( ->
       s.close() unless s.readyState is 1
     ), 5000
     NET[k] = @[k] for k in [ 'send' ]

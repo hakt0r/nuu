@@ -91,7 +91,7 @@ Window.Unlocks = class Unlocks extends ModalListWindow
   title: 'Unlocks'
   closeKey: 'KeyU'
   fetch:(done)->
-    NET.queryJSON unlocks:'', (unlocks)=>
+    NET.queryJSON unlocks:'', (unlocks)->
       window.UNLOCKS = unlocks
       done unlocks
     null
@@ -152,7 +152,7 @@ Window.SlotSelection = class SlotSelectionWindow extends ModalListWindow
       null
     img.width = 32; img.height = 32
     img.src = '/build/imag/loading.png'
-    Cache.get '/build/gfx/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)=> img.src = url
+    Cache.get '/build/gfx/store/' + ( tpl.info.gfx_store || tpl.sprite ) + '.png', (url)-> img.src = url
 
 Window.Loadout = class Loadout extends ModalListWindow
   constructor: (vehicle=VEHICLE)->
@@ -192,7 +192,7 @@ Window.Loadout = class Loadout extends ModalListWindow
       mass: #{e.stats.mass}"
     x.prepend img = new Image
     img.src = '/build/imag/loading.png'
-    Cache.get '/build/gfx/store/' + ( e.info.gfx_store || e.sprite ) + '.png', (url)=> img.src = url
+    Cache.get '/build/gfx/store/' + ( e.info.gfx_store || e.sprite ) + '.png', (url)-> img.src = url
     return x
   slotSelection: (type,slot) -> =>
     new Window.SlotSelection @, type, slot

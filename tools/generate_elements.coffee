@@ -275,22 +275,22 @@ Uranium	U(234)	234.040947	0.006	U(235)	235.043925	0.72	U(238)	238.050786	99.27
 """
 el = {}
 for line in input.split('\n')
-	# line = line.trim()
-	m = line.split('\t')
-	if (v = m.shift()) isnt ''
- 		el[v] = e = isotopes : {}
-	while v = m.shift()
-		e.isotopes[v] = mass : m.shift(), isobundance : m.shift()
+  # line = line.trim()
+  m = line.split('\t')
+  if (v = m.shift()) isnt ''
+    el[v] = e = isotopes : {}
+  while v = m.shift()
+    e.isotopes[v] = mass : m.shift(), isobundance : m.shift()
 
 for line in input2.split('\n')
-	m = line.split('\t')
-	if el[m[0]]
-		if m[1].match /×/
-			t = m[1].split '\.×10-'
-			s = ''; s += '0' for cc in [1...t[1]]
-			el[m[0]].abundance = s
-		else el[m[0]].abundance = parseFloat m[1]
-	else el[m[0]] = synth : yes, abundance : 0.0
+  m = line.split('\t')
+  if el[m[0]]
+    if m[1].match /×/
+      t = m[1].split '\.×10-'
+      s = ''; s += '0' for cc in [1...t[1]]
+      el[m[0]].abundance = s
+    else el[m[0]].abundance = parseFloat m[1]
+  else el[m[0]] = synth : yes, abundance : 0.0
 
 util = require 'util'
 console.log util.inspect el
