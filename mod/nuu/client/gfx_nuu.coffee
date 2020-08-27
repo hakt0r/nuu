@@ -337,8 +337,9 @@ new class $obj.Select extends $worker.InlineThread
     visible2 = 10000**2
     short2   = 5e7**2
     length   = list.length
-    {x,y}    = VEHICLE
     time     = NUU.time()
+    VEHICLE.updateScanner()
+    {x,y}    = VEHICLE
     for s,i in list
       s.updateScanner time,x,y,false
       dx = s.x-x
