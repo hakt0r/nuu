@@ -23,6 +23,7 @@
 NET.login = (name, pass, callback, register=no) ->
   console.log ':net', 'login', name if debug
   new NET.Connection name, pass, callback, register
+
 NET.register = (name, pass, callback) -> NET.login name, pass, callback, yes
 
 NET.on 'e', (message) -> notice 1000, Error.byId[message]
@@ -76,6 +77,7 @@ class NET.Connection
       .replace('http','ws')
       .replace(/start/,'')
       .replace(/#.*/,'')
+      .replace(/\?.*$/,'')
       .replace(/\/$/,'') + '/nuu'
     @lsalt = String.random 255 + Math.random @pass.length
     NET.removeAllListeners e for e in [
@@ -135,7 +137,8 @@ class NET.Connection
 
   onopen: (e) => $.ajax url: 'build/hashsums', success: (d) =>
     h = {}; d.trim().split('\n').map (i)-> i = i.split /[ \t]+/; h[i[1]] = i[0]
-    return window.location.reload() unless h['build/client.js'] is NUU.hash['build/client.js']
+    unless h['build/client.js'] is NUU.hash['build/client.js']
+      return window.location = window.location.pathname + '?hash=' + h['build/client.js']
     vt.status "Connected", '[<i style="color:yellow">' + @addr + '</i>]'
     vt.status "Login", "Getting challenge for " + '[<i style="color:yellow">' + @name + '</i>]'
     NET.json.write login: @name
@@ -161,14 +164,14 @@ class NET.Connection
     return console.log 'blocked' if @reconnect.underway
     @reconnect.underway = yes
     HUD.widget 'reconnect', 'wait -----'
-    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚----' ), 1000
-    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚---' ), 2000
-    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚--' ), 3000
-    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚❚-' ), 4000
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚----' ), 200
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚---' ), 400
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚--' ), 600
+    setTimeout ( -> HUD.widget 'reconnect', 'wait ❚❚❚❚-' ), 800
     setTimeout ( =>
       HUD.widget 'reconnect', '[***]'
       @connect @addr
-    ), 5000
+    ), 1000
 
 # Stats
 NET.PPS =

@@ -105,8 +105,10 @@ NUU.on 'gfx:ready', ->
 <svg viewBox="0 0 62 20"><defs><path id="U" d="M5 0C2.25 0 0 2.25 0 5v10c0 2.75 2.25 5 5 5h10c2.75 0 5-2.25 5-5V5c0-2.75-2.25-5-5-5h-1.5v10h-7V0H5z" style="fill:#333;border:solid red 1px"/></defs><use href="#U" transform="rotate(180 10 10)"/><use href="#U" transform="translate(21)"/><use href="#U" transform="translate(42)"/></svg>\
 </center>\
 <div style="position:absolute;right: 0;top:0;left: 0;">
-  <img class="powered" src="https://cdn-1.wp.nginx.com/wp-content/uploads/2018/03/icon-NGINX-OSS.svg"><img class="powered" src="https://nodejs.org/static/images/logos/nodejs-new-white.png">
-  <img class="powered" src="http://pixijs.download/pixijs-text.svg" style="float:right"></div>"""
+  <img class="powered" src="build/imag/nginx.svg">
+  <img class="powered" src="build/imag/nodejs.png">
+  <img class="powered" src="build/imag/threejs.png">
+</div>"""
   vt.write NUU.intro = """
 --- [ FakeNN ] BREAKING ------------------------------------------------------------------------\
 <span class="center news">Earth and Luna have been overrun by the drones our own creation, and now,</span>\

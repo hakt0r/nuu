@@ -586,4 +586,5 @@ NUU.loginPrompt = ->
       vt.hide()
     ), 0
   vt.prompt override:yes, key:onkey, then:onuser, p:p_user
+  demo() if ( window.location.search.match(/\?hash=/) )
   true
