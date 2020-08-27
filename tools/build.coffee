@@ -153,4 +153,28 @@ require('./csmake.coffee')( global.STAGES =
   debug:  (c)-> depend(assets)(-> exec("node --debug .")(c))
   run:    (c)-> depend(assets)(-> exec("node . &")(c))
   all:    (c)-> run c
+  devel:  (c)->
+    timer = null;
+    isUpdate = (path)->
+      return true if path.match /.coffee$/
+      false
+    restart = (path,e) ->
+      console.log ' [Trigger]', path
+      return if timer
+      timer = setTimeout doRestart, 100
+    doRestart = ->
+      console.log ' [Restart]'
+      proc.kill("SIGHUP") if proc
+      timer = null
+    chokidar = require 'chokidar'
+    cp.spawnSync    'yarn', ['build']
+    proc = cp.spawn 'yarn', ['start'] #, stdio:'inherit'
+    watcher = chokidar.watch( './mod/', {
+      ignored: /(^|[\/\\])\../,
+      persistent: true
+    })
+    watcher.on 'add',    (path)-> restart path if isUpdate path
+    watcher.on 'change', (path)-> restart path if isUpdate path
+    watcher.on 'unlink', (path)-> restart path if isUpdate path
+    do restart
 )
