@@ -165,9 +165,23 @@ img[src] {
   width: 96%; }
 
 .window img.powered {
+  position: absolute;
+  top:0;
   border-radius: 10px;
   display: inline;
-  height: 24px; }
+  width: 40px; }
+
+.window img.powered:nth-of-type(1){
+  left:0; }
+
+.window img.powered:nth-of-type(2){
+  left:45px; }
+
+.window img.powered:nth-of-type(3){
+  right:0;
+  width: 60px;
+  filter: drop-shadow(white 0px 0px 1px) drop-shadow(white 0px 0px 0px);
+}
 
 .window img.powered.inverse {
   background: #FFF; }

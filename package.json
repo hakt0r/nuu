@@ -43,6 +43,7 @@
   "gitHead": "86252dbc933a7215583393968322ce92c24c903d",
   "devDependencies": {
     "browserify": "^16.5.2",
+    "chokidar": "^3.4.2",
     "coffeescript": "^2.5.1",
     "file-size": "^0.0.5",
     "jquery": "^3.5.1",
