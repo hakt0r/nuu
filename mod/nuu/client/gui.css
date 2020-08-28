@@ -1,5 +1,5 @@
 * {
-  font-family: monospace !important;
+  font-family: monospace;
   font-size: 10px;
   font-style: normal !important;
   line-height: 16px;
@@ -725,7 +725,7 @@ h1,h2 {
 
 .hud, .hud * {
   pointer-events: none;
-  font-family: "Lato" !important; }
+  font-family: 'Russo One', sans-serif !important; }
 
 .hud .panel {
   display: block;
@@ -733,22 +733,24 @@ h1,h2 {
   bottom: 10px;
   width: 140px;
   height: 140px;
-  border: #123e1226 solid 2px;
+  border: white solid 2px;
   background: #00ff0011;
   border-radius: 200px;
   padding: 10px;
-  opacity: 0.7; }
+  opacity: 0.7;
+  filter: drop-shadow(0px 0px 22px green);
+}
 
 .hud .panel.ship {
   box-shadow: inset black 0px 0px 11px 6px;
   left: calc(50% - 200px);
-  background: black; border: solid #fff6 2px;
+  background: black;
   transform: perspective(50px) translate(-50%) rotate3d(0.1,0.2,-2,10deg); }
 
 .hud .panel.target {
   box-shadow: inset black 0px 0px 11px 6px;
   right: calc(50% - 200px);
-  background: black; border: solid #fff6 2px;
+  background: black;
   transform:
     perspective(50px)
     translate(50%)
@@ -762,15 +764,18 @@ h1,h2 {
   opacity: 0.7; }
 
 .hud .target.hostile {
-  background-color: #ff00003b
+  background-color: #ff00003b;
+  filter: drop-shadow(0px 0px 2px #ff00003b);
 }
 
 .hud .target.ally {
-  background-color: blue
+  background-color: blue;
+  filter: drop-shadow(0px 0px 22px green);
 }
 
 .hud .target.npc {
-  background-color: yellow
+  background-color: yellow;
+  filter: drop-shadow(0px 0px 2px yellow);
 }
 
 .hud .panel.scanner {
@@ -781,7 +786,9 @@ h1,h2 {
   width: 215px;
   height: 215px;
   box-shadow: inset black 0px 0px 11px 6px;
-  border: #123e1226 solid 2px; }
+  border: white solid 2px;
+  filter: drop-shadow(0px 0px 22px green);
+}
 
 .scanner .scale {
   color: darkturquoise;
@@ -791,7 +798,9 @@ h1,h2 {
   left: 0;
   right: 0;
   text-shadow: black 1px 1px 1px;
-  font-weight: bold; }
+  font-weight: bold;
+  filter: drop-shadow(0px 0px 22px green);
+}
 
 .scanner-full .hud .panel.scanner, .scanner-off .hud .panel.scanner {
   display: none; }
@@ -837,7 +846,9 @@ h1,h2 {
   height: 5px;
   position: absolute;
   border-radius: 3px;
-  background-color: #ff00003b; }
+  background-color: #ff00003b;
+  filter: drop-shadow(0px 0px 22px green);
+}
 
 .bar .value {
   height: 5px;
@@ -953,7 +964,12 @@ h1,h2 {
   color: white; }
 
 .name {
-  color: gray; }
+  color: white;
+}
+
+.mounts span {
+  text-shadow: black 1px 1px 1px 1px;
+}
 
 
 .mounts .symbol {
