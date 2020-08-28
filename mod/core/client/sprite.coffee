@@ -63,7 +63,7 @@ $public class GFX.SingleSprite extends GFX.SpriteBatch
   used:0
   constructor:(width=8192,height=16384)->
     super width, height
-    @texture = new GFX.BatchTexture width, height, @
+    @texture = new GFX.BatchTexture width, height, @, debug
     @initialize
       attributes:
         position: type:Float32Array, count:3, init:[0,0,2000]
@@ -210,7 +210,7 @@ class GFX.BatchTexture extends THREE.DataTexture
   isBatchTexture: true
   MAX_SLICES:     0xFFFF
   sliceId:        0
-  constructor:(width=1024,height=1024,parent)->
+  constructor:(width=1024,height=1024,parent,debug)->
     super     ( new Uint8Array width * height * 4 ), width, height, THREE.RGBAFormat
     @slices   = GFX.Slice.Allocator width, height
     @refs     = new Set
@@ -226,11 +226,16 @@ class GFX.BatchTexture extends THREE.DataTexture
     @sliceDivision        = new Float32Array @MAX_SLICES * 4
     @slicePositionTexture = new THREE.DataTexture @slicePosition, 0xFF, 0xFF, THREE.RGBAFormat, THREE.FloatType
     @sliceDivisionTexture = new THREE.DataTexture @sliceDivision, 0xFF, 0xFF, THREE.RGBAFormat, THREE.FloatType
-
-    return
-    GFX.scene.add @debug = d = new THREE.Sprite new THREE.SpriteMaterial map:@
-    do r = => @debug.scale.set 128, 128, 1; @debug.position.set(-GFX.wdb2+66,GFX.hgb2-66,1)
+    return unless debug
+    GFX.scene.add @debugBG = d = new THREE.Sprite new THREE.SpriteMaterial color: 0xffffff
+    GFX.scene.add @debug = d = new THREE.Sprite new THREE.SpriteMaterial map:@, color: 0xffffff
+    do r = =>
+      @debugBG.scale.set 128, 128, 1
+      @debugBG.position.set(-GFX.wdb2+66,GFX.hgb2-66,1)
+      @debug.scale.set 128, 128, 1
+      @debug.position.set(-GFX.wdb2+66,GFX.hgb2-66,1)
     GFX.on 'resize', r
+    return
 
 GFX.BatchTexture::updateDivision = (slice,meta)->
   id4 = slice.id * 4
@@ -319,9 +324,11 @@ GFX.SpriteBatch::Sprite = (source,opts)->
 
 GFX.Delegate = (Type)-> Object.assign Type::,
   show:->
+    # console.log 'show', @
     @slice = @batch.texture.addSource @source, @
     @batch.addDelegate @
   hide:->
+    # console.log 'hide', @
     @batch.texture.dropSource @source
     @batch.removeDelegate @
   destroy:->
