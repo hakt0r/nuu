@@ -39,7 +39,7 @@ NET.on 'logout', (msg,src) ->
 NET.on 'debug', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
   return src.error '_no_admin'      unless u.db.isAdmin or u.db.nick is 'anx'
-  NUU.emit 'debug:start'
+  NUU.emit 'debug'
 
 NET.on 'switchMount', (msg,src) ->
   return src.error '_no_handle'     unless u = src.handle
