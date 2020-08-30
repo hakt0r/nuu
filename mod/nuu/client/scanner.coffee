@@ -528,17 +528,30 @@ void main() {
     sp.y = -sp.y ; }
 
   // CULL ASTEROIDS
-  if (( info.y == 4. )&&( info.x != 99. )){
-    if ( sl == uRadius ){ z = 2000.; } }
+  // if (( info.y == 4. )&&( info.x != 99. )){
+  //   if ( sl == uRadius ){ z = 2000.; } }
+
+  // CULL SMALL OBJECT LABELS
+  // if ( ( info.y == 4. ) && ( info.x != 99. ) ){
+  //   if ( sl == uRadius ){ z = 2000.; }
+  // }
+
 
   // ADD HUD-OFFSET
   sp.y += uGlobalY;
+
+  // SCALE AT DISTANCE
+  float normDistance = length(sp) / uRadius;
+  
+  if ( normDistance > 0.75 ){
+    normDistance = max( 0.2, 1.0 - ( normDistance - 0.75 ) * 4.0 );
+  } else { normDistance = 1.0; }
 
   // RENDER ICON
   if ( sliceId == 65535. ){
     vLabel = 65535.;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( sp, z, 1.0 );
-    gl_PointSize = uPointSize;
+    gl_PointSize = uPointSize * normDistance;
     return;
   }
 
