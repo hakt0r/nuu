@@ -1,4 +1,4 @@
 {
-  "suit":        { "size": 46, "cols":1 },
-  "suit_engine": { "size": 46, "cols":1 }
+  "st_suit":        { "size": 24, "cols":6 },
+  "st_suit_engine": { "size": 24, "cols":6 }
 }

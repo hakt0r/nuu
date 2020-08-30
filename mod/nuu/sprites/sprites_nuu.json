@@ -1,6 +1,6 @@
 {
-  "suit":               { "size": 46, "cols":1 },
-  "suit_engine":        { "size": 46, "cols":1 },
+  "st_suit":            { "size": 24, "width":144, "height":144, "count": 36, "cols":6, "rows": 6 },
+  "st_suit_engine":     { "size": 24, "width":144, "height":144, "count": 36, "cols":6, "rows": 6 },
   "chs":                { "type":"gov" },
   "hks":                { "type":"gov" },
   "admiralassembly":    { "type":"com" },

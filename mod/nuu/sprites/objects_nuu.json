@@ -1,7 +1,7 @@
 [
 { "class": "ship",
   "name": "Human",
-  "sprite": "suit",
+  "sprite": "st_suit",
   "slots":{
     "structure":[{"size":"suit","default":"Human Skin"}],
     "utility":[{"size":"suit","default":"Human Heart"}],
@@ -13,7 +13,7 @@
 
 { "class": "ship",
   "name": "Exosuit",
-  "sprite": "suit",
+  "sprite": "st_suit",
   "slots":{
     "structure":[
       {"size":"suit","default":"Stock Fabric"},

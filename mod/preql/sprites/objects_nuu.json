@@ -1,6 +1,6 @@
 { "ship": [
 
-{ "name":"Human","sprite":"suit",
+{ "name":"Human","sprite":"st_suit",
   "slots":{
     "structure":[{"size":"suit","default":"Human Skin"}],
     "utility":[{"size":"suit","default":"Human Heart"}],
@@ -10,7 +10,7 @@
     "mass":1,
     "fuel_consumption":0} },
 
-{ "name":"Exosuit","sprite":"suit",
+{ "name":"Exosuit","sprite":"st_suit",
   "slots":{
     "structure":[
       {"size":"suit","default":"Stock Fabric"},
