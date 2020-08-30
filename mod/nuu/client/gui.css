@@ -730,30 +730,23 @@ h1,h2 {
 .hud .panel {
   display: block;
   position: fixed;
-  bottom: 10px;
+  bottom: 30px;
   width: 140px;
   height: 140px;
-  border: white solid 2px;
-  background: #00ff0011;
-  border-radius: 200px;
+  background: transparent;
   padding: 10px;
-  opacity: 0.7;
-  filter: drop-shadow(0px 0px 22px green);
 }
 
 .hud .panel.ship {
-  box-shadow: inset black 0px 0px 11px 6px;
-  left: calc(50% - 200px);
-  background: black;
-  transform: perspective(50px) translate(-50%) rotate3d(0.1,0.2,-2,10deg); }
+  /* left: calc(50% - 220px); */
+  left:200px;
+  transform: perspective(50px) rotate3d(0.1,0.2,-2,10deg); }
 
 .hud .panel.target {
-  box-shadow: inset black 0px 0px 11px 6px;
-  right: calc(50% - 200px);
-  background: black;
+  /* right: calc(50% - 220px); */
+  right: 50px;
   transform:
     perspective(50px)
-    translate(50%)
     rotate3d(-0.1,0.2,2,10deg); }
 
 .hud .comm {
@@ -761,7 +754,8 @@ h1,h2 {
   height: 140px;
   object-fit: scale-down;
   border-radius: 100px;
-  opacity: 0.7; }
+  filter: drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 2px white) drop-shadow(0px 0px 5px green);
+}
 
 .hud .target.hostile {
   background-color: #ff00003b;
@@ -779,14 +773,11 @@ h1,h2 {
 }
 
 .hud .panel.scanner {
-  box-shadow: inset black 0px 0px 11px 6px;
   left: 50%;
   transform: translate(-50%);
   bottom: 7px;
   width: 215px;
   height: 215px;
-  box-shadow: inset black 0px 0px 11px 6px;
-  border: white solid 2px;
   filter: drop-shadow(0px 0px 22px green);
 }
 
@@ -805,11 +796,13 @@ h1,h2 {
 .scanner-full .hud .panel.scanner, .scanner-off .hud .panel.scanner {
   display: none; }
 
+  /*
 .scanner-full .hud .panel.ship, .scanner-off .hud .panel.ship {
-  left: calc(50% - 100px); }
+  left: calc(50% - 370px); }
 
 .scanner-full .hud .panel.target, .scanner-off .hud .panel.target {
-  right: calc(50% - 100px); }
+  right: calc(50% - 370px); }
+*/
 
 .hud .info {
   font-weight: 900;
