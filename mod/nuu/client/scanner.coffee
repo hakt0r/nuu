@@ -200,7 +200,7 @@ GFX.Delegate class GFX.Text
     @id = @batch.getId()
     Object.assign @, opts
     @style = Object.assign (
-      font:         'bold 12px Lato'
+      font:         'bold 12px Russo One'
       fillStyle:    'white'
       strokeStyle:  'black'
       textBaseline: 'top'
