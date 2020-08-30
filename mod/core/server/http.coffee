@@ -168,7 +168,7 @@ NUU.splashPage = (audio=no,isExcuse=no) ->
   page = """
 <!DOCTYPE html>
 <html lang="en"><head>
-  <title>nuu (v#{$version} - Gordon Cooper)</title>
+  <title>nuu (v#{$version} - Valentina Tereshkova)</title>
   <link rel="shortcut icon" href="build/favicon.ico"/>
   <style>#{css}</style>
   <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
@@ -226,7 +226,7 @@ NUU.splashPage = (audio=no,isExcuse=no) ->
 
 NUU.startPage = ->
   page = """<html><head>
-  <title>nuu (v#{$version} - Gordon Cooper)</title>
+  <title>nuu (v#{$version} - Valentina Tereshkova)</title>
   <link rel="shortcut icon" href="build/favicon.ico" />
   <link rel="stylesheet" type="text/css" href="build/gui.css"/>
   <meta name="author" content="anx@ulzq.de"/> <meta name="author" content="flyc0r@ulzq.de"/>
