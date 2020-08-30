@@ -292,6 +292,9 @@ User::leaveVehicle = ->
 
 User::action = (t,mode) ->
   o = @vehicle
+  unless mode
+    console.log ':act', 'no mode'.red
+    return
   if o.locked and not ( mode is 'launch' or mode is 'capture' )
     console.log ':act', 'cannot', mode.red
     return
