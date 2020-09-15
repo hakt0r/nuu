@@ -34,7 +34,7 @@ Ship::dropLoot = ->
 Ship::resetHostiles = ->
   h = @hostile; @hostile = []
   return unless h
-  Array.remove s.hostile, @ for s in h
+  Array.remove s.hostile, @ for s in h when s.hostile?
   NUU.jsoncastTo @, hostile:@hostile if @inhabited
 
 Ship::respawn = ->
