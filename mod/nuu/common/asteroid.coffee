@@ -64,22 +64,22 @@ Asteroid.autospawn = (opts={})->
   NUU.on 'start', ->
     center = $obj.byId[0]
     roids = [
-      { name:"Asteroid Belt",         parent:center,             belt:4.0325e8, width:3e8,     count:200 }
-      { name:"Kuyper Belt",           parent:center,             belt:5.984e9,  width:2.992e9, count:500 }
-      { name:"D Ring",                parent:$obj.byName.Saturn, belt:78315,    width:7610,    count:50 }
-      { name:"C Ring",                parent:$obj.byName.Saturn, belt:100671,   width:17342,   count:50 }
-      { name:"B Ring",                parent:$obj.byName.Saturn, belt:130370,   width:25580,   count:50 }
-      { name:"Cassini Division",	    parent:$obj.byName.Saturn, belt:124465,   width:4590,    count:50 }
-      { name:"A ring",	              parent:$obj.byName.Saturn, belt:144077,   width:14605,   count:50 }
-      { name:"Roche Division",	      parent:$obj.byName.Saturn, belt:140682,   width:2605,    count:50 }
-      { name:"F Ring",	              parent:$obj.byName.Saturn, belt:139930,   width:500,     count:50 }
-      { name:"Janus/Epimetheus Ring", parent:$obj.byName.Saturn, belt:156500,   width:5000,    count:100 }
-      { name:"G Ring",	              parent:$obj.byName.Saturn, belt:179500,   width:9000,    count:100 }
-      { name:"Methone Ring Arc",	    parent:$obj.byName.Saturn, belt:194230,   width:500,     count:100, arc:PI/2 }
-      { name:"Anthe Ring Arc",  	    parent:$obj.byName.Saturn, belt:197665,   width:500,     count:100, arc:PI/2 }
-      { name:"Pallene Ring",	        parent:$obj.byName.Saturn, belt:214750,   width:2500,    count:100 }
-      { name:"E Ring",                parent:$obj.byName.Saturn, belt:630000,   width:300000,  count:100 }
-      { name:"Phoebe Ring",           parent:$obj.byName.Saturn, belt:4500000,  width:9000000, count:100 }]
+      { name:"Asteroid Belt",         parent:center,             belt:4.0325e8, width:3e8,     count:2000 }
+      { name:"Kuyper Belt",           parent:center,             belt:5.984e9,  width:2.992e9, count:5000 }
+      { name:"D Ring",                parent:$obj.byName.Saturn, belt:78315,    width:7610,    count:500 }
+      { name:"C Ring",                parent:$obj.byName.Saturn, belt:100671,   width:17342,   count:500 }
+      { name:"B Ring",                parent:$obj.byName.Saturn, belt:130370,   width:25580,   count:500 }
+      { name:"Cassini Division",	    parent:$obj.byName.Saturn, belt:124465,   width:4590,    count:500 }
+      { name:"A ring",	              parent:$obj.byName.Saturn, belt:144077,   width:14605,   count:500 }
+      { name:"Roche Division",	      parent:$obj.byName.Saturn, belt:140682,   width:2605,    count:500 }
+      { name:"F Ring",	              parent:$obj.byName.Saturn, belt:139930,   width:500,     count:500 }
+      { name:"Janus/Epimetheus Ring", parent:$obj.byName.Saturn, belt:156500,   width:5000,    count:1000 }
+      { name:"G Ring",	              parent:$obj.byName.Saturn, belt:179500,   width:9000,    count:1000 }
+      { name:"Methone Ring Arc",	    parent:$obj.byName.Saturn, belt:194230,   width:500,     count:1000, arc:PI/2 }
+      { name:"Anthe Ring Arc",  	    parent:$obj.byName.Saturn, belt:197665,   width:500,     count:1000, arc:PI/2 }
+      { name:"Pallene Ring",	        parent:$obj.byName.Saturn, belt:214750,   width:2500,    count:1000 }
+      { name:"E Ring",                parent:$obj.byName.Saturn, belt:630000,   width:300000,  count:1000 }
+      { name:"Phoebe Ring",           parent:$obj.byName.Saturn, belt:4500000,  width:9000000, count:1000 }]
     new Asteroid.Belt o for o in roids
     return
   $worker.push =>
@@ -103,6 +103,7 @@ Asteroid::hit = (perp,weapon)->
       resource: r
       size: size = max 10, floor random() * @size / 2
       state: S:$moving, x:@x, y:@y, v:v
+  else console.log "no resources"
   NUU.emit 'asteroid:destroyed', perp, @resource
   @destructor()
   null
