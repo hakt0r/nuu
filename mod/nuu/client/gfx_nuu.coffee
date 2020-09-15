@@ -9,7 +9,7 @@ GFX.splashInit = ->
 
 GFX.initGame = ->
   GFX.singles = new GFX.SingleSprite
-  GFX.beam = new GFX.BeamRenderer
+  GFX.beam    = new GFX.BeamRenderer
   # list = ( [k,v] for k,v of $meta )
   # .filter (i)-> not ( i[1].rows > 1 or i[1].rows > 1 )
   # .sort (a,b)->
@@ -179,7 +179,12 @@ $abstract 'Animated',
       animated: true
     }, $meta[@sprite]
     @sprite = GFX.singles.Sprite "/build/gfx/#{@sprite}.png", meta
-  updateSprite:(t,x,y)-> @update t; pos = @sprite.position; pos[0] = @x-x; pos[1] = @y-y; true
+  updateSprite:(t,x,y)->
+    @update t
+    pos = @sprite.position
+    pos[0] = @x-x
+    pos[1] = @y-y
+    true
 
 $Animated.id = 0
 $Animated Debris, sprite: 'debris0'
