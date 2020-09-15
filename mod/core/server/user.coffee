@@ -213,6 +213,15 @@ User::loadShip = ->
   opts = @spawnState()
   v    = @createVehicle @vehicleType, opts
   @enterVehicle v, 0, yes
+  # TODO: only if in same fleet
+  #  add vairants like spawn near other player etc.
+  #  this is just the pattern
+  if Object.keys(User.byId).length > 1
+    first = Object.values(User.byId).shift()
+    t = first.vehicle
+    t.update()
+    console.log 'attachTo', first.name
+    @vehicle.setState S:$formation, relto:t, x:t.x+100, y:t.y+100
   return
 
 User.testUser =
