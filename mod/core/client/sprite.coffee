@@ -105,8 +105,8 @@ GFX.SingleSprite::update = (time=NUU.time())->
     s = list[i]
     p = s.sprite.position
     t = time - s.ms
-    p[0] = ox - s.sx + s.vx * t
-    p[1] = oy - s.sy + s.vy * t
+    p[0] = s.sx + s.vx * t - ox
+    p[1] = s.sy + s.vy * t - oy
     if s.tt < time
       s.sprite.destroy()
       list[i] = false
