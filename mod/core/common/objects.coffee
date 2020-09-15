@@ -294,6 +294,10 @@ $obj.register class Debris extends $obj
   @interfaces: [$obj,Shootable,Collectable,Debris]
   name: 'Debris'
   sprite: 'debris2'
+  ttlFinal: yes
+  constructor: (opts={})->
+    super opts
+    @ttl  = NUU.time() + 30000 unless @ttl
   toJSON: -> id:@id,key:@key,state:@state
 
 $obj.register class Cargo extends $obj
@@ -306,7 +310,7 @@ $obj.register class Cargo extends $obj
   constructor: (opts={})->
     super opts
     @ttl  = NUU.time() + 30000 unless @ttl
-    @item = Item.random() unless @item
+    @item = Item.random()      unless @item  if isServer
     @name = "[#{@item.name}]"
   toJSON: -> id:@id,key:@key,state:@state,item:@item
 
