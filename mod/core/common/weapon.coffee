@@ -251,6 +251,7 @@ BeamWorker = $worker.ReduceList (time)->
 
 class ProjectileVector
   constructor:(@perp,@weap,@ms,@tt,@sx,@sy,@vx,@vy,@a)->
+    @pp = [@x,@y]
 
 Weapon.Projectile = ->
   Weapon.Projectile.loadAssets.call @ if isClient
@@ -272,39 +273,35 @@ ProjectileEmitter = $worker.ReduceList (time)->
   @release() if not @target or @target.destructing
   return stop = @lock = false if @stop
   return true if @next > time
-  @next = time + @delay / 100
+  @next = time + @delay
   ship = @ship
   ship.update time
-  cs = cos d = (( ship.d + @dir ) % 360 ) * RADi
+  d = (( ship.d + @dir + 360 ) % 360 ) * RADi
+  cs = cos d
   sn = sin d
-  v = [ -ship.v[0] + cs * @pps, -ship.v[1] + sn * @pps ]
+  vx = ship.v[0] + cs * @pps
+  vy = ship.v[1] + sn * @pps
   x = ship.x # + slot.x * cs
   y = ship.y # + slot.y * sn
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  a = new ProjectileAnimation ship, @, time, time + @ttl, x, y, v[0], v[1], d              if isClient
-  ProjectileDetector.add new ProjectileVector ship, @, time, time + @ttl, x, y, v[0], v[1], a
-  NUU.emit 'shot', @                                                                       if isClient
+  a =                    new ProjectileAnimation ship, @, time, time + @ttl, x, y, vx, vy, d if isClient
+  ProjectileDetector.add new ProjectileVector    ship, @, time, time + @ttl, x, y, vx, vy, a
+  NUU.emit 'shot', @                                                                         if isClient
   true
 
 ProjectileDetector = $worker.ReduceList (time)->
   return false if @tt < time
+  t = time - @ms
+  x = @sx + @vx * t
+  y = @sy + @vy * t
+  pos = [x,y]
+  pp  = @pp
   for target in @perp.hostile
-    t = time - @ms
-    x = floor @sx + @vx * t
-    y = floor @sy + @vy * t
-    continue if target.size < $dist (x:x,y:y), target
+    target.update time
+    continue unless Math.lineCircleCollide pp, pos, target.p, target.size
     target.hit @perp, @weap if isServer
     @a.destroy()            if isClient
     return false
+  @pp = pos
   true
 
 ### ███    ███ ██ ███████ ███████ ██ ██      ███████
