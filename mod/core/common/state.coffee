@@ -753,7 +753,7 @@ State.register class State.travel extends State
     @o.d = @vec.mathdd
     if isNaN @vec.absETA
       console.log "@@@", @o.name, '=>', @relto.name, ( round @o.dist(@relto))
-      console.log @o.p
+      console.log @o.x, @o.y
       console.log @relto.p
       console.log @vec
     return
