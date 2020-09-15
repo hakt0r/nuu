@@ -26,7 +26,7 @@ Ship::dropLoot = ->
     S: $moving
     x: @x + -@size/2 + Math.random()*@size
     y: @y + -@size/2 + Math.random()*@size
-    v: [ @v[0] + Math.random()*2 - 1, @v[1] + Math.random()*2 - 1 ]
+    v: [ @v[0] + Math.random() * .2 - .1, @v[1] + Math.random()* .2 - .1 ]
   newRandom Cargo  for i in [0...10]
   newRandom Debris for i in [0...10]
   return
