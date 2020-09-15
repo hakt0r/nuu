@@ -135,8 +135,8 @@ varying mat2 vRotation;
 
 const float TAU      = 6.283185307179586;
 const float BYTE2RAD = TAU/255.;
-const float DPX = 1./255.;
-const float HIDE = 2000.;
+const float DPX      = 1./255.;
+const float HIDE     = 2000.;
 
 float roundFloat(float v){
   float f = floor(v);
