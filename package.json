@@ -62,6 +62,6 @@
   "optionalDependencies": {
     "bufferutil": "^3.0.5",
     "colors": "^0.6.2",
-    "node-forge": "^0.9.1"
+    "node-forge": "^0.10.0"
   }
 }
