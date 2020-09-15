@@ -77,6 +77,7 @@ $public class $obj
       delete i.byId[@id]
       Array.remove i.list, @
     delete $obj.byName[@name]
+    @scanner.remove() if @scanner                      if isClient
     Array.remove @range, @ if @range                   if isClient
     Array.remove VEHICLE.hostile, @ if VEHICLE.hostile if isClient
     @hide()                                            if isClient
