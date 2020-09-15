@@ -176,6 +176,8 @@ class GFX.ScannerDelegate
     @label    = @batch.sliceIdArray .subarray @id, @id+1
     @position = @batch.positionArray.subarray id3, id3+3
     @velocity = @batch.velocityArray.subarray id4, id4+4
+  remove:->
+    @batch.removeDelegate @
   swap:(source)->
     return unless source.label
     source.info    .set @info
