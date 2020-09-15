@@ -261,8 +261,6 @@ Weapon.Projectile.loadAssets = ->
   return # w = @meta.width / @meta.cols; new PIXI.Rectangle 0,0,w,w
 
 window.ProjectileAnimation = (@perp,@weap,@ms,@tt,@sx,@sy,@vx,@vy,@dir)->
-  @sx -= 2 * ( @sx - VEHICLE.x ) # < WORKAROUND: TODO: this is a bug... whats going on?
-  @sy -= 2 * ( @sy - VEHICLE.y ) # < WORKAROUND: TODO: this is a bug... whats going on?
   sprite = @weap.sprite
   @sprite = GFX.singles.Sprite "/build/gfx/#{sprite}.png", $meta[sprite]
   @sprite.show()
