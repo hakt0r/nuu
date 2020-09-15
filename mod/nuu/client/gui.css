@@ -757,19 +757,18 @@ h1,h2 {
   filter: drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 2px white) drop-shadow(0px 0px 5px green);
 }
 
-.hud .target.hostile {
-  background-color: #ff00003b;
-  filter: drop-shadow(0px 0px 2px #ff00003b);
+.hud .target.hostile .comm {
+  filter: drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 2px white) drop-shadow(0px 0px 5px red);
+
 }
 
-.hud .target.ally {
-  background-color: blue;
-  filter: drop-shadow(0px 0px 22px green);
+.hud .target.ally .comm {
+  filter: drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 2px white) drop-shadow(0px 0px 5px blue);
+
 }
 
-.hud .target.npc {
-  background-color: yellow;
-  filter: drop-shadow(0px 0px 2px yellow);
+.hud .target.npc .comm {
+  filter: drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 0px black) drop-shadow(0px 0px 2px white) drop-shadow(0px 0px 5px yellow);
 }
 
 .hud .panel.scanner {
