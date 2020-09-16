@@ -90,6 +90,18 @@ Asteroid.autospawn = (opts={})->
     1000
   return
 
+$obj.register class Asteroid.Fragment extends $obj
+  @interfaces: [$obj,Shootable,Debris,Asteroid]
+  ttlFinal:    true
+  localObject: true
+  constructor: (opts)->
+    console.log 'fragment'
+    opts.sprite = 'asteroid-D' + ( opts.size - 10 ).toString().padStart 2, '0'
+    opts.ttl = NUU.time() + 60000
+    super opts
+    @armour = @armourMax = 10 * @size
+  toJSON:-> id:@id, key:@key, hostile:@hostile, resource:@resource, state:@state, size:@size, ttl:@ttl
+
 Asteroid::hit = (perp,weapon)->
   return if @destructing
   return unless dmg = weapon.stats.physical
@@ -97,13 +109,21 @@ Asteroid::hit = (perp,weapon)->
   NET.mods.write @, ( if @armour is 0 then 'destroyed' else 'hit' ), 0, @armour
   return unless @armour is 0
   if @resource.length > 1 then for r in @resource
-    v = @v.slice(); v[0]+=-.02+random()*.04; v[1]+=-.02+random()*.04
-    Weapon.hostility perp, new Asteroid
+    @update()
+    v = [
+      @v[0] += -.02 + random() * .04
+      @v[1] += -.02 + random() * .04
+    ]
+    fragment = new Asteroid
+      toJSON:-> id:@id, key:@key, hostile:@hostile, resource:@resource, state:@state, size:@size, ttl:@ttl
+      virtual: false
       hostile: []
-      resource: r
+      resource: [r]
       size: size = max 10, floor random() * @size / 2
-      state: S:$moving, x:@x, y:@y, v:v
-  else console.log "no resources"
-  NUU.emit 'asteroid:destroyed', perp, @resource
+      state: S:$moving, x:@x, y:@y, v:@v.slice()
+    Weapon.hostility perp, fragment
+  else
+    NUU.emit 'asteroid:destroyed', perp, @resource
+    console.log "mined fragment"
   @destructor()
   null
