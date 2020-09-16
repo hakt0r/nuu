@@ -121,7 +121,7 @@ $public class GFX.ScannerLayer extends GFX.SpriteBatch
   constructor:->
     super()
     @labelMap = new Map
-    @texture = new GFX.BatchTexture 512, 512
+    @texture = new GFX.BatchTexture 1024, 1024
     @makeTextures()
     $obj.byClass.forEach (obj)->
       obj::scannerSymbol = $obj.symbol.indexOf s if isNaN s = obj::scannerSymbol
