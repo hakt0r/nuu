@@ -206,11 +206,11 @@ $static 'Sync', new class SyncQ
     @delIds = []
     @inst = false
   flush:=>
-    @sendLeaves()                           if isServer
-    NUU.emit '$obj:del', @delIds, @dels unless 0 is @dels.length
-    NUU.emit '$obj:add', @adds          unless 0 is @adds.length
-    NUU.jsoncast sync: add:@adds, del:@dels if isServer
-    @sendEnters()                           if isServer
+    @sendLeaves()                             if isServer
+    NUU.emit '$obj:del', @delIds, @dels   unless 0 is @dels.length
+    NUU.emit '$obj:add', @adds            unless 0 is @adds.length
+    NUU.jsoncast sync: add:@adds, del:@delIds if isServer
+    @sendEnters()                             if isServer
     @reset()
     return
   add:(obj)=>
