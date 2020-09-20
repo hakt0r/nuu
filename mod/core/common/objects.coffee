@@ -298,7 +298,7 @@ $obj.register class Debris extends $obj
   constructor: (opts={})->
     super opts
     @ttl  = NUU.time() + 30000 unless @ttl
-  toJSON: -> id:@id,key:@key,state:@state
+  toJSON: -> id:@id,key:@key,state:@state,ttl:@ttl
 
 $obj.register class Cargo extends $obj
   @interfaces: [$obj,Shootable,Collectable,Debris]
