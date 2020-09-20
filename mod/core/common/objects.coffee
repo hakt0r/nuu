@@ -309,8 +309,9 @@ $obj.register class Cargo extends $obj
   ttlFinal: yes
   constructor: (opts={})->
     super opts
-    @ttl  = NUU.time() + 30000 unless @ttl
-    @item = Item.random()      unless @item  if isServer
+    @ttl  = NUU.time() + 30000          unless @ttl
+    @item = Item.random({not:['ship']}) unless @item  if isServer
+    console.log @item if @item.type is 'ship'
     @name = "[#{@item.name}]"
   toJSON: -> id:@id,key:@key,state:@state,item:@item
 

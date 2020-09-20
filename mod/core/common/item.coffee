@@ -37,8 +37,12 @@ $public class Item
   @byProp: {}
   @byClass: ship:[],outfit:[],gov:[],skill:[],com:[],stellar:[],station:[]
 
-Item.random = ->
-  Array.random Object.values Item.byId
+Item.random = (opts={})->
+  item = Array.random Object.values Item.byId
+  return item unless opts.not
+  while opts.not.includes item.type
+    item = Array.random Object.values Item.byId
+  return item
 
 Item.init = (seed) ->
   items = seed
