@@ -38,7 +38,7 @@
     "tagscale": "git+https://github.com/hakt0r/node-tagscale.git",
     "three": "^0.109.0",
     "vectors": "^0.1.0",
-    "ws": "^5.2.2"
+    "ws": "^7.4.6"
   },
   "gitHead": "86252dbc933a7215583393968322ce92c24c903d",
   "devDependencies": {
