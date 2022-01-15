@@ -47,7 +47,7 @@
     "coffeescript": "^2.5.1",
     "file-size": "^0.0.5",
     "jquery": "^3.5.1",
-    "marked": "^0.7.0",
+    "marked": "^4.0.10",
     "mkdirp": "^0.5.5",
     "request": "^2.88.2",
     "touch": "^0.0.3",
