@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node .",
+    "devel": "coffee tools/build.coffee run",
     "build": "test -d node_modules/browserify || npm i; coffee tools/build.coffee assets",
     "clean": "npm prune --production",
     "prepare": "coffee tools/build.coffee assets",
@@ -36,7 +37,7 @@
     "serve-index": "^1.9.1",
     "serve-static": "^1.14.1",
     "tagscale": "git+https://github.com/hakt0r/node-tagscale.git",
-    "three": "^0.109.0",
+    "three": "^0.136.0",
     "vectors": "^0.1.0",
     "ws": "^5.2.2"
   },
@@ -47,7 +48,7 @@
     "coffeescript": "^2.5.1",
     "file-size": "^0.0.5",
     "jquery": "^3.5.1",
-    "marked": "^0.7.0",
+    "marked": "^4.0.10",
     "mkdirp": "^0.5.5",
     "request": "^2.88.2",
     "touch": "^0.0.3",
@@ -62,6 +63,6 @@
   "optionalDependencies": {
     "bufferutil": "^3.0.5",
     "colors": "^0.6.2",
-    "node-forge": "^0.10.0"
+    "node-forge": "^1.2.1"
   }
 }
