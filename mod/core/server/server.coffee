@@ -79,7 +79,7 @@ if fs.existsSync lockPath
     console.log 'lock', 'killed'.green, pid.toString().red
   catch
     console.log ':nuu', 'stale lockfile', pid
-fs.writeFileSync lockPath, process.pid
+fs.writeFileSync lockPath, String process.pid
 fs.open lockPath, 0, ->
 
 process.chdir BASEDIR = path.dirname __dirname
