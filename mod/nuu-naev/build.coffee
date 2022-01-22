@@ -48,7 +48,7 @@ markdown = (src,tgt)-> (c)->
 
     txt = o.join '\n'
     fs.writeFile tgt.replace('html','txt'), blurb + txt, ->
-    fs.writeFile tgt, marked(blurb + txt), c
+    fs.writeFile tgt, marked.marked(blurb + txt), c
     null
   null
 
