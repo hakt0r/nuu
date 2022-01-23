@@ -166,8 +166,8 @@ require('./csmake.coffee')( global.STAGES =
       console.log ' [Restart]'
       proc.kill("SIGHUP") if proc
       timer = null
-      cp.spawnSync    'yarn', ['build'], stdio:'inherit'
-      proc = cp.spawn 'yarn', ['start'], stdio:'inherit'
+      cp.spawnSync    'npm', ['run','build'], stdio:'inherit'
+      proc = cp.spawn 'npm', ['run','start'], stdio:'inherit'
     chokidar = require 'chokidar'
     watcher = chokidar.watch( './mod/', {
       ignored: /(^|[\/\\])\../,

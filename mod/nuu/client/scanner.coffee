@@ -27,7 +27,7 @@
 # ███████  ██████ ██   ██ ██   ████ ██   ████ ███████ ██   ██
 
 $obj.symbol = [
-  '🌑','🌍','⚫','🞄','⯁','◆','🌒','⧫','▲','⚑','⛏','⛊','⚡','🕱','🍽','❖','🅰','⯌','🞉','◐','⬢','䷡','🏘','⚒','💰','🏭' ]
+  '🌑','🌍','⚫','✪','⯁','◆','🌒','⧫','▲','⚑','⛏','⛊','⚡','🕱','🍽','❖','🅰','⯌','🞉','◐','⬢','䷡','🏘','⚒','💰','🏭' ]
 
 $obj.color  = [
   0xFFFFFF,0xCCCCCC,0xFFAA22,0x2222FF,0xFFFF00,0x66FF00,0x00FFFF,0xFF00FF,0xAA22FF,0xFF0000 ]
@@ -38,10 +38,10 @@ $obj::scannerLayer = 1
 $obj::scannerSymbol = '◆'
 
 Stellar::  scannerTint = 1; Stellar::  scannerLayer =  2; Stellar::  scannerSymbol = '◆'
-Asteroid:: scannerTint = 1; Asteroid:: scannerLayer =  3; Asteroid:: scannerSymbol = '#'
+Asteroid:: scannerTint = 1; Asteroid:: scannerLayer =  3; Asteroid:: scannerSymbol = '◆'
 Debris::   scannerTint = 2; Debris::   scannerLayer =  4; Debris::   scannerSymbol = '❖'
 Cargo::    scannerTint = 3; Cargo::    scannerLayer =  5; Cargo::    scannerSymbol = '🅰'
-Star::     scannerTint = 4; Star::     scannerLayer = 10; Star::     scannerSymbol = '*'
+Star::     scannerTint = 4; Star::     scannerLayer = 10; Star::     scannerSymbol = '⬢'
 Planet::   scannerTint = 5; Planet::   scannerLayer =  9; Planet::   scannerSymbol = '🌍'
 Moon::     scannerTint = 6; Moon::     scannerLayer =  8; Moon::     scannerSymbol = '🌒'
 Station::  scannerTint = 7; Station::  scannerLayer =  7; Station::  scannerSymbol = '⬢'
@@ -260,7 +260,7 @@ GFX.ScannerLayer::makeTextures = ->
   # tmp = document.createElement 'canvas'; tmp.width = tmp.height = @mapSize; document.body.append tmp; t = tmp.getContext '2d'
   tmp = new OffscreenCanvas ic*10, ic*10; t = tmp.getContext '2d'
   cnv = new OffscreenCanvas @mapSize, @mapSize; g = cnv.getContext '2d'
-  t.font         = g.font         = "#{fs}px monospace"
+  t.font         = g.font         = "#{fs}px 'Last Resort', monospace"
   t.fillStyle    = g.fillStyle    = 'white'
   t.textBaseline = g.textBaseline = 'top'
   t.fontWeight   = g.fontWeight   = 'bold'
