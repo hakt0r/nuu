@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2020 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2020 flyc0r
+  * c) 2007-2022 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2022 flyc0r
 
   This file is part of NUU.
 
@@ -38,12 +38,12 @@ $obj::scannerLayer = 1
 $obj::scannerSymbol = '◆'
 
 Stellar::  scannerTint = 1; Stellar::  scannerLayer =  2; Stellar::  scannerSymbol = '◆'
-Asteroid:: scannerTint = 1; Asteroid:: scannerLayer =  3; Asteroid:: scannerSymbol = '⯁'
+Asteroid:: scannerTint = 1; Asteroid:: scannerLayer =  3; Asteroid:: scannerSymbol = '#'
 Debris::   scannerTint = 2; Debris::   scannerLayer =  4; Debris::   scannerSymbol = '❖'
 Cargo::    scannerTint = 3; Cargo::    scannerLayer =  5; Cargo::    scannerSymbol = '🅰'
-Star::     scannerTint = 4; Star::     scannerLayer = 10; Star::     scannerSymbol = '⯌'
-Planet::   scannerTint = 5; Planet::   scannerLayer =  9; Planet::   scannerSymbol = '🞉'
-Moon::     scannerTint = 6; Moon::     scannerLayer =  8; Moon::     scannerSymbol = '◐'
+Star::     scannerTint = 4; Star::     scannerLayer = 10; Star::     scannerSymbol = '*'
+Planet::   scannerTint = 5; Planet::   scannerLayer =  9; Planet::   scannerSymbol = '🌍'
+Moon::     scannerTint = 6; Moon::     scannerLayer =  8; Moon::     scannerSymbol = '🌒'
 Station::  scannerTint = 7; Station::  scannerLayer =  7; Station::  scannerSymbol = '⬢'
 Ship::     scannerTint = 8; Ship::     scannerLayer =  6; Ship::     scannerSymbol = '▲'
 
@@ -202,7 +202,7 @@ GFX.Delegate class GFX.Text
     @id = @batch.getId()
     Object.assign @, opts
     @style = Object.assign (
-      font:         'bold 12px Russo One'
+      font:         'bold 6px Russo One'
       fillStyle:    'white'
       strokeStyle:  'black'
       textBaseline: 'top'

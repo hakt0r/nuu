@@ -110,17 +110,14 @@ Asteroid::hit = (perp,weapon)->
   return unless @armour is 0
   if @resource.length > 1 then for r in @resource
     @update()
-    v = [
-      @v[0] += -.02 + random() * .04
-      @v[1] += -.02 + random() * .04
-    ]
+    console.log @v
     fragment = new Asteroid
       toJSON:-> id:@id, key:@key, hostile:@hostile, resource:@resource, state:@state, size:@size, ttl:@ttl
       virtual: false
       hostile: []
       resource: [r]
       size: size = max 10, floor random() * @size / 2
-      state: S:$moving, x:@x, y:@y, v:@v.slice()
+      state: S:$moving, x:@x, y:@y, v: [ @v[0] - .02 + random() * .04, @v[1] - .02 + random() * .04 ]
     Weapon.hostility perp, fragment
   else
     NUU.emit 'asteroid:destroyed', perp, @resource

@@ -1,7 +1,7 @@
 ###
 
-  * c) 2007-2020 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2020 flyc0r
+  * c) 2007-2022 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2022 flyc0r
 
   This file is part of NUU.
 
@@ -35,7 +35,7 @@ $public class VT100 extends Window
     console.user = @write
     @write """\
     <br/><span class="center">nuu console / v#{$version}</span>\
-    <span class="center">(c) 2007-2020 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2020 flyc0r</span>\
+    <span class="center">(c) 2007-2022 Sebastian Glaser &lt;anx@ulzq.de&gt; / (c) 2007-2022 flyc0r</span>\
     <span class="center">GNU General Public License v3 / see license screen (alt-L)</span>"""
     return
 

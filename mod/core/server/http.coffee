@@ -3,8 +3,8 @@
   This file was ported from express-ws@3.0.0
     https://github.com/HenningM/express-ws
 
-  * c) 2007-2020 Sebastian Glaser <anx@ulzq.de>
-  * c) 2007-2020 flyc0r
+  * c) 2007-2022 Sebastian Glaser <anx@ulzq.de>
+  * c) 2007-2022 flyc0r
 
   Port for NUU:
     Sebastian Glaser <anx@ulzq.de>
@@ -213,7 +213,7 @@ NUU.splashPage = (audio=no,isExcuse=no) ->
   <span class="nobreak">You are seeing this page because JavaScript should be <b>off by default</b>.</span><br/>
   <span class="nobreak">If you consent to using JavaScript, please click <a href="/start">here</a>. <wbr/>Play intro with <a href="/intro">sound</a>.</span>
   <hr/>
-  &copy; 2007-2020 Sebastian Glaser &lt;anx@ulzq.de&gt; | &copy; 2007-2020 flyc0r
+  &copy; 2007-2022 Sebastian Glaser &lt;anx@ulzq.de&gt; | &copy; 2007-2022 flyc0r
   <hr/>
 </div>
 #{audioTag}
