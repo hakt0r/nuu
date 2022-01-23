@@ -108,22 +108,25 @@ NET.on 'jump', (target,src) ->
 
 NUU.users = []
 
-$tag.db 'UserDB',
-  fields:
-    online: no
-    nick: ''
-    mail: ''
-    pass: ''
-    regtime: -> NUU.time() / 1000
-    credits: 100
-  exports: ->
-    nick: nick
-    mail: mail
-    regtime: regtime
-    credits: credits
-  bootstrap:
-   anx:    nick: 'anx',    id:0, mail: 'anx@ulzq.de',      pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07'
-   flyc0r: nick: 'flyc0r', id:1, mail: 'flyc0r@localhost', pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07'
+UserSchema = new $tag.Schema
+  online: no
+  nick: type: String, default: ''
+  mail: type: String, default: ''
+  pass: type: String, default: ''
+  regtime:
+    type: Number
+    default: -> NUU.time() / 1000
+  credits: type: Number, default: 100
+
+UserSchema.exports = ->
+  nick: nick
+  mail: mail
+  regtime: regtime
+  credits: credits
+
+UserSchema.bootstrap =
+  anx:    nick: 'anx',    id:0, mail: 'anx@ulzq.de',      pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07'
+  flyc0r: nick: 'flyc0r', id:1, mail: 'flyc0r@localhost', pass: 'e6e81040502d36d3d83a43be4610f1478bdf267b243223ef27da7418a4af3645a6d716f0f926cea22790cb1903227ed2e754ca7f2c40c17d180704ee47f7330f', salt:'', regtime:'2009-11-07'
 
 $public class User
   @byId: {}

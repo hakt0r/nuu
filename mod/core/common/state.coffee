@@ -655,7 +655,6 @@ const TAU = 6.283185307179586;
 vec4 orbit(vec4 obj, vec4 rel){
   float angl =
   vec4 cur =
-
 }
 """
 
@@ -771,8 +770,8 @@ State.register class State.travel extends State
     v = @vec; acc = v.locacc; [ cosd, sind ] = v.matnrm; dt = v.mattim; dt2 = dt**2
     @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
     @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
-    console.log 'match=>accel:v', $v.mag $v.sub [@vx,@vy], v.pmavel if debug
-    console.log 'match=>accel:p', $v.mag $v.sub [@px,@py], v.pmapos if debug
+    # console.log 'match=>accel:v', $v.mag $v.sub [@vx,@vy], v.pmavel if debug
+    # console.log 'match=>accel:p', $v.mag $v.sub [@px,@py], v.pmapos if debug
     [@vx,@vy] = v.pmavel; [@px,@py] = v.pmapos
     @o.d = v.glihdd
     ( @update = @o.update = @updateAccel.bind @ )( time )
@@ -791,8 +790,8 @@ State.register class State.travel extends State
     v = @vec; acc = v.locacc; [ cosd, sind ] = v.appnrm; dt = v.acctim; dt2 = dt**2
     @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
     @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
-    console.log 'accel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pacvel if debug
-    console.log 'accel=>glide:p', $v.mag $v.sub [@px,@py], v.pacpos if debug
+    # console.log 'accel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pacvel if debug
+    # console.log 'accel=>glide:p', $v.mag $v.sub [@px,@py], v.pacpos if debug
     # [@vx,@vy] = v.pacvel; [@px,@py] = v.pacpos
     @o.d = v.glihdd; @acceleration = no
     ( @update = @o.update = @updateGlide.bind @ )( time )
@@ -809,8 +808,8 @@ State.register class State.travel extends State
   toDeccel:(time)->
     v = @vec; dt = v.glitim
     @px=@px+@vx*dt; @py=@py+@vy*dt
-    console.log 'glide=>deccel:v', $v.mag $v.sub [@vx,@vy], v.pglvel if debug
-    console.log 'glide=>deccel:p', $v.mag $v.sub [@px,@py], v.pglpos if debug
+    # console.log 'glide=>deccel:v', $v.mag $v.sub [@vx,@vy], v.pglvel if debug
+    # console.log 'glide=>deccel:p', $v.mag $v.sub [@px,@py], v.pglpos if debug
     # [@vx,@vy] = v.pglvel; [@px,@py] = v.pglpos
     @o.d = v.glirhd; @acceleration = yes
     ( @update = @o.update = @updateDeccel.bind @ )( time )
@@ -830,10 +829,10 @@ State.register class State.travel extends State
     v = @vec; acc = v.locacc; [ cosd, sind ] = v.decnrm; dt = v.dectim; dt2 = dt**2
     @px=@px+@vx*dt+.5*cosd*acc*dt2; @py=@py+@vy*dt+.5*sind*acc*dt2
     @vx=@vx+cosd*acc*dt; @vy=@vy+sind*acc*dt
-    console.log 'deccel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pdevel if debug
-    console.log 'deccel=>glide:p', $v.mag $v.sub [@px,@py], v.pdepos if debug
+    # console.log 'deccel=>glide:v', $v.mag $v.sub [@vx,@vy], v.pdevel if debug
+    # console.log 'deccel=>glide:p', $v.mag $v.sub [@px,@py], v.pdepos if debug
     @relto.update v.absETA
-    console.log 'deccel=>glide:tp', $v.mag $v.sub [@relto.x,@relto.y], v.tgtpos if debug
+    # console.log 'deccel=>glide:tp', $v.mag $v.sub [@relto.x,@relto.y], v.tgtpos if debug
     [@o.x,@o.y] = v.pdepos; [ @o.v[0], @o.v[1] ] = v.pdevel
     # [@o.x,@o.y] = [@px,@py]; [ @o.v[0], @o.v[1] ] = [@vx,@vy]
     @update = @o.update = ->

@@ -42,7 +42,7 @@
     ["Crypto","crypto"],
     ["EventEmitter","eventemitter3","EventEmitter"],
     ["$v","vectors"],
-    ["$tag","tagscale"]],
+    ["$tag","pd"]],
   "sources": [
     "ids",
     "server",

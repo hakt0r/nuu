@@ -56,7 +56,7 @@ functions =
     console.log '_create:', id: @id
 
 setInterval ( ->
-  $tag.flushAll()
+  # $tag.flushAll()
 ), 1000
 
 NUU.emit "server:db"

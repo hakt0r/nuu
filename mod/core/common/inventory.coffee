@@ -20,7 +20,30 @@
 
 ###
 
-NUU.on "server:db", ( -> $tag.db 'InventoryDB' ) if isServer
+if isServer
+  { Database, Schema } = $tag
+
+NUU.on "server:db", ( ->
+  # $tag.db 'InventoryDB'
+  InventorySchema = new Schema
+    id: { type: Number, default: 1 }
+    name: { type: String, required: true }
+    description: { type: String, default: '' }
+    type: { type: String, required: true }
+    amount: { type: Number, default: 0 }
+    price: { type: Number, default: 0 }
+    weight: { type: Number, default: 0 }
+    image: { type: String, default: '' }
+    created: { type: Date, default: Date.now }
+    updated: { type: Date, default: Date.now }
+    deleted: { type: Date, default: null }
+  global.InventoryDB = $tag.model
+    name: 'InventoryDB'
+    path: 'db/InventoryDB'
+    schema: InventorySchema
+  console.log Object.keys global.InventoryDB
+  return
+) if isServer
 
 $public class Inventory
   @byKey: {}
@@ -30,7 +53,7 @@ $public class Inventory
     return existing if existing = Inventory.byKey[@key]
     ( @[k] = v for k,v of EventEmitter::; EventEmitter.call @ ) if isClient
     Inventory.byKey[@key] = @
-    do @read  if @key
+    do @read if @key
     do @tally if @data
 
 Inventory::close = -> delete Inventory.byKey[@key]
@@ -42,7 +65,7 @@ Inventory::tally = ->
 
 Inventory::read = NUU.$target
   server: ->
-    @exists = false isnt @data = InventoryDB.get @key
+    @exists = false isnt @data = InventoryDB.$.getSync(@key) || {}
     return if @data or not @create
     @write @data = {}
     return
@@ -53,12 +76,12 @@ Inventory::read = NUU.$target
 Inventory::write = NUU.$target
   server: ->
     do @tally
-    InventoryDB.set @key, @data if @key
+    InventoryDB.$.set @key, @data if @key
     return
   client: ->
 
 Inventory::has = (item,count=1)->
-  return false unless d  = @data[item]
+  return false unless d = @data[item]
   return false unless d >= count
   return d
 

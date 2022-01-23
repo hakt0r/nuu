@@ -180,7 +180,7 @@ GFX.getBoundingBox = (ctx, left, top, width, height) ->
   top:topMost, left:leftMost, bottom:bottomMost, right:rightMost, width:rightMost-leftMost, height:bottomMost-topMost
 
 GFX.debugShader = (type,source)->
-  gl = GFX.renderer.context
+  gl = GFX.renderer.getContext()
   type = gl[type]
   shader = gl.createShader type
   if type is gl.VERTEX_SHADER then source = """
@@ -226,7 +226,7 @@ THREE.BufferGeometry::defineAttributes = (object,max,attributes)->
       a.set(init,i*l) while ++i < max
     else if init is '$id'
       a[i] = i for i in [0..max]
-    @addAttribute k, attribute
+    @setAttribute k, attribute
   return
 
 #  ██████  █████   ██████ ██   ██ ███████
