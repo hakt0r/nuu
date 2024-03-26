@@ -27,7 +27,7 @@
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.5",
     "eventemitter3": "^3.1.2",
-    "express": "^4.17.1",
+    "express": "^4.19.2",
     "express-json": "^1.0.0",
     "express-session": "^1.17.1",
     "fast-image-size": "^0.1.2",
